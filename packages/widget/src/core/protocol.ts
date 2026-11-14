@@ -35,7 +35,7 @@ export const eventSchemas = {
   vote: z.object({
     postId: z.string(),
     voted: z.boolean(),
-    voteCount: countSchema,
+    voteCount: z.optional(countSchema),
   }),
   "comment:created": z.object({
     postId: z.string(),
@@ -116,6 +116,11 @@ export const outboundMessageSchema = z.union([
     user: z.nullable(widgetUserSchema),
   }),
   z.object({ type: z.literal("quackback:unread"), count: countSchema }),
+  // The visitor pressed "Capture screenshot" in the open panel (RFC 0003 feature 6).
+  z.object({
+    type: z.literal("quackback:capture"),
+    id: z.string().check(z.regex(/^[A-Za-z0-9_-]{1,64}$/)),
+  }),
   eventMessageSchema,
 ]);
 

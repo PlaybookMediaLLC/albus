@@ -76,6 +76,7 @@ export const changeSchema = z.object({
     "settings.developer_updated",
     "settings.labs_updated",
     "file.created",
+    "file.deleted",
     "settings.logo_updated",
     "settings.logo_removed",
     "settings.favicon_updated",
@@ -371,6 +372,23 @@ export const changeSchema = z.object({
     "branding.auto_undone",
     "settings.undone",
     "conversation.test_deleted",
+    // RFC 0003 (feedback value). "changelog.published" (above) is reused.
+    "signal.created",
+    "signal.accepted",
+    "signal.dismissed",
+    // Lane L1: a dismissed signal goes back to the review queue.
+    "signal.restored",
+    "survey.created",
+    "survey.updated",
+    "survey.closed",
+    "survey.responded",
+    "post.scored",
+    "post.vote_importance_set",
+    "changelog.reacted",
+    "changelog.unreacted",
+    "board.settings_updated",
+    // RFC 0003 lane L2: a deleted draft survey.
+    "survey.deleted",
   ]),
   entityType: z.enum([
     "board",
@@ -428,6 +446,9 @@ export const changeSchema = z.object({
     "merge_suggestion",
     // RFC 0001: the sidebar app of lane X1.
     "app",
+    // RFC 0003.
+    "feedback_signal",
+    "survey",
   ]),
   entityId: z.string().min(1).max(200),
   payload: z.record(z.string(), z.string().max(500)).default({}),

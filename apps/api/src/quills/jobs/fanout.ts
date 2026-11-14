@@ -38,11 +38,15 @@ import {
 } from "../framework/platform-reads";
 import { pendingCode } from "../widget/contact-email";
 import { inviteUrl, mintInviteToken } from "../portal/invite-token";
+import { portalPaths } from "../portal/paths";
 import {
   mintUnsubscribeToken,
+  unsubscribePageUrl,
   unsubscribeUrl,
 } from "../portal/unsubscribe-token";
+import { crmNoteDue } from "../integrations/crm-notes";
 import { githubCommentDue } from "./handlers/github-comment";
+import { shippedSubscribers } from "./handlers/shipped-mail";
 import { statusSubscribers } from "./handlers/status-mail";
 import { supportSubscribers } from "./handlers/support-mail";
 import { enqueueQuillsJob, type QuillsQueue } from "./queue";
@@ -223,10 +227,8 @@ async function workspaceOf(db: Database) {
   return row;
 }
 
-// ponytail: apps/web has no Quills post page yet; this is the portal path the invite link also uses.
-// Point it at the real route when the portal UI lands.
 const postUrl = (workspaceId: string, postId: string) =>
-  `${(process.env.KANEO_CLIENT_URL || "http://localhost:5173").replace(/\/+$/, "")}/portal/${encodeURIComponent(workspaceId)}/posts/${postId}`;
+  portalPaths.post(workspaceId, postId);
 
 /** An invite mail with a new link. `withMessage`: the sender's note goes with the first send only. */
 const inviteMail =
@@ -309,7 +311,8 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
             previousStatus: "",
             newStatus: status.name,
             workspaceName: workspace.name,
-            unsubscribeUrl: unsubscribeUrl(workspace.id, token),
+            unsubscribeUrl: unsubscribePageUrl(workspace.id, token),
+            oneClickUnsubscribeUrl: unsubscribeUrl(workspace.id, token),
           }),
       };
     },
@@ -353,7 +356,8 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
             commentPreview: clip(comment.content, 150),
             isTeamMember: comment.authorKaneoUserId !== null,
             workspaceName: workspace.name,
-            unsubscribeUrl: unsubscribeUrl(workspace.id, token),
+            unsubscribeUrl: unsubscribePageUrl(workspace.id, token),
+            oneClickUnsubscribeUrl: unsubscribeUrl(workspace.id, token),
           }),
       };
     },
@@ -396,6 +400,7 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
   },
   ...supportSubscribers,
   ...statusSubscribers,
+  ...shippedSubscribers,
 };
 
 export async function loadEvent(db: Database, eventId: string) {
@@ -459,6 +464,15 @@ export async function fanOut(workspaceId: string, eventId: string) {
         "quills.webhook",
         { eventId },
         `${eventId}:github`,
+        5,
+      );
+    // RFC 0003 lane L6: a critical vote or a link to a CRM company becomes a CRM note.
+    if (await crmNoteDue(db, event))
+      await enqueueQuillsJob(
+        db,
+        "quills.webhook",
+        { eventId, crm: "note" },
+        `${eventId}:crm-note`,
         5,
       );
     await enqueueWorkflowRuns(db, event);

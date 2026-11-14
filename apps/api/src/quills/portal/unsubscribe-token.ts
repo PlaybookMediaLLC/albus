@@ -10,6 +10,7 @@ import { posts } from "../../database/quills/schema/posts";
 import { statusSubscriptions } from "../../database/quills/schema/status";
 import { hashToken } from "../framework/audience";
 import type { Database } from "../framework/define-route";
+import { portalPaths } from "./paths";
 
 // Route-module helper: emailed unsubscribe links. The `token` column holds the SHA-256 hash of
 // the token, never the token. A token expires after 30 days and works once.
@@ -19,9 +20,41 @@ export const UNSUBSCRIBE_ACTIONS = [
   "unsubscribe_all",
   "unsubscribe_changelog",
   "unsubscribe_status",
+  // RFC 0003: the shipped notice and the weekly digest.
+  "unsubscribe_shipped",
+  "unsubscribe_digest",
 ] as const;
 export type UnsubscribeAction = (typeof UNSUBSCRIBE_ACTIONS)[number];
 const TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+/** The notification matrix type whose mail each per-type unsubscribe link turns off. */
+export const MAIL_TYPES = {
+  unsubscribe_shipped: "post_shipped",
+  unsubscribe_digest: "weekly_digest",
+} as const;
+
+/** Sets the email channel of one matrix type. The other channels and types keep their values. */
+export async function setMailPreference(
+  db: Database,
+  principalId: PrincipalId,
+  type: (typeof MAIL_TYPES)[keyof typeof MAIL_TYPES],
+  email: boolean,
+) {
+  const cell = { [type]: { email } };
+  await db
+    .insert(notificationPreferences)
+    .values({ principalId, matrix: cell })
+    .onConflictDoUpdate({
+      target: [
+        notificationPreferences.workspaceId,
+        notificationPreferences.principalId,
+      ],
+      set: {
+        matrix: sql`coalesce(${notificationPreferences.matrix}, '{}'::jsonb) || jsonb_build_object(${type}::text, coalesce(${notificationPreferences.matrix} -> ${type}::text, '{}'::jsonb) || ${JSON.stringify({ email })}::jsonb)`,
+        updatedAt: new Date(),
+      },
+    });
+}
 
 export const apiBase = () => {
   const base = (process.env.KANEO_API_URL || "http://localhost:1337").replace(
@@ -37,6 +70,10 @@ export const apiBase = () => {
  */
 export const unsubscribeUrl = (workspaceId: string, token: string) =>
   `${apiBase()}/quills-public/${encodeURIComponent(workspaceId)}/unsubscribe?token=${token}`;
+
+/** The browser page used in the message body. The RFC 8058 header keeps `unsubscribeUrl`. */
+export const unsubscribePageUrl = (workspaceId: string, token: string) =>
+  portalPaths.unsubscribe(workspaceId, token);
 
 /**
  * Stores the hash of a new token for one recipient and action, and returns the token. The only
@@ -143,6 +180,8 @@ export async function spendToken(
           isNull(statusSubscriptions.unsubscribedAt),
         ),
       );
+  const type = MAIL_TYPES[row.action as keyof typeof MAIL_TYPES];
+  if (type) await setMailPreference(db, row.principalId, type, false);
   await db
     .update(unsubscribeTokens)
     .set({ usedAt: now })

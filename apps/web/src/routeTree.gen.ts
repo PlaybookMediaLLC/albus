@@ -24,21 +24,47 @@ import { Route as AuthVerifyOtpRouteImport } from './routes/auth/verify-otp'
 import { Route as DeviceIndexRouteImport } from './routes/device/index'
 import { Route as DeviceApproveRouteImport } from './routes/device/approve'
 import { Route as McpAuthorizeRouteImport } from './routes/mcp.authorize'
+import { Route as PortalWorkspaceIdRouteImport } from './routes/portal/$workspaceId'
 import { Route as PublicProjectProjectIdRouteImport } from './routes/public-project.$projectId'
+import { Route as QuillsKitRouteImport } from './routes/quills/kit'
 import { Route as LayoutAuthenticatedDashboardRouteImport } from './routes/_layout/_authenticated/dashboard'
 import { Route as LayoutAuthenticatedInvitationsRouteImport } from './routes/_layout/_authenticated/invitations'
 import { Route as LayoutAuthenticatedOnboardingRouteImport } from './routes/_layout/_authenticated/onboarding'
 import { Route as LayoutAuthenticatedProfileSetupRouteImport } from './routes/_layout/_authenticated/profile-setup'
 import { Route as InvitationAcceptInviteIdRouteImport } from './routes/invitation/accept.$inviteId'
+import { Route as PortalWorkspaceIdIndexRouteImport } from './routes/portal/$workspaceId/index'
+import { Route as PortalWorkspaceIdCsatRouteImport } from './routes/portal/$workspaceId/csat'
+import { Route as PortalWorkspaceIdMyFeedbackRouteImport } from './routes/portal/$workspaceId/my-feedback'
+import { Route as PortalWorkspaceIdPreferencesRouteImport } from './routes/portal/$workspaceId/preferences'
+import { Route as PortalWorkspaceIdProfileRouteImport } from './routes/portal/$workspaceId/profile'
+import { Route as PortalWorkspaceIdRoadmapRouteImport } from './routes/portal/$workspaceId/roadmap'
+import { Route as PortalWorkspaceIdUnsubscribeRouteImport } from './routes/portal/$workspaceId/unsubscribe'
+import { Route as QuillsOauthResultRouteImport } from './routes/quills/oauth/result'
 import { Route as LayoutAuthenticatedDashboardIndexRouteImport } from './routes/_layout/_authenticated/dashboard/index'
 import { Route as LayoutAuthenticatedDashboardInvitationsRouteImport } from './routes/_layout/_authenticated/dashboard/invitations'
 import { Route as LayoutAuthenticatedDashboardSettingsRouteImport } from './routes/_layout/_authenticated/dashboard/settings'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdRouteRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/route'
+import { Route as PortalWorkspaceIdBoardsBoardIdRouteImport } from './routes/portal/$workspaceId/boards/$boardId'
+import { Route as PortalWorkspaceIdChangelogIndexRouteImport } from './routes/portal/$workspaceId/changelog/index'
+import { Route as PortalWorkspaceIdChangelogEntryIdRouteImport } from './routes/portal/$workspaceId/changelog/$entryId'
+import { Route as PortalWorkspaceIdConversationsConversationIdRouteImport } from './routes/portal/$workspaceId/conversations/$conversationId'
+import { Route as PortalWorkspaceIdHcIndexRouteImport } from './routes/portal/$workspaceId/hc/index'
+import { Route as PortalWorkspaceIdHcSplatRouteImport } from './routes/portal/$workspaceId/hc/$'
+import { Route as PortalWorkspaceIdInviteInviteIdRouteImport } from './routes/portal/$workspaceId/invite/$inviteId'
+import { Route as PortalWorkspaceIdPostsPostIdRouteImport } from './routes/portal/$workspaceId/posts/$postId'
+import { Route as PortalWorkspaceIdStatusIndexRouteImport } from './routes/portal/$workspaceId/status/index'
+import { Route as PortalWorkspaceIdStatusIncidentIdRouteImport } from './routes/portal/$workspaceId/status/$incidentId'
+import { Route as PortalWorkspaceIdSupportIndexRouteImport } from './routes/portal/$workspaceId/support/index'
+import { Route as PortalWorkspaceIdSupportTicketsRouteImport } from './routes/portal/$workspaceId/support/tickets'
 import { Route as LayoutAuthenticatedDashboardSettingsAccountRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account'
 import { Route as LayoutAuthenticatedDashboardSettingsAdminRouteImport } from './routes/_layout/_authenticated/dashboard/settings/admin'
 import { Route as LayoutAuthenticatedDashboardSettingsProjectsRouteImport } from './routes/_layout/_authenticated/dashboard/settings/projects'
 import { Route as LayoutAuthenticatedDashboardSettingsWorkspaceRouteImport } from './routes/_layout/_authenticated/dashboard/settings/workspace'
 import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId'
 import { Route as LayoutAuthenticatedDashboardWorkspaceCreateRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/create'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/index'
+import { Route as PortalWorkspaceIdHcLocaleIndexRouteImport } from './routes/portal/$workspaceId/hc/$locale/index'
+import { Route as PortalWorkspaceIdStatusIncidentsIncidentIdRouteImport } from './routes/portal/$workspaceId/status/incidents/$incidentId'
 import { Route as LayoutAuthenticatedWorkspaceSlugTaskTicketIdChar123TitleChar125RouteImport } from './routes/_layout/_authenticated/$workspaceSlug/task.$ticketId.{-$title}'
 import { Route as LayoutAuthenticatedDashboardSettingsAccountDeveloperRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/developer'
 import { Route as LayoutAuthenticatedDashboardSettingsAccountInformationRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/information'
@@ -65,12 +91,34 @@ import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdMembersRouteIm
 import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdMyTasksRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId/my-tasks'
 import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectsRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId/projects'
 import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdSearchRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId/search'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdAutopilotIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/autopilot/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdBoardsIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/boards/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdChangelogIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/changelog/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdDuplicatesIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/duplicates/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdInsightsIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/insights/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/my-tickets/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/posts/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/surveys/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdTicketsIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/tickets/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdTriageIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/triage/index'
+import { Route as PortalWorkspaceIdHcLocaleArticlesIdSlugRouteImport } from './routes/portal/$workspaceId/hc/$locale/articles/$idSlug'
+import { Route as PortalWorkspaceIdHcLocaleCollectionsIdSlugRouteImport } from './routes/portal/$workspaceId/hc/$locale/collections/$idSlug'
 import { Route as LayoutAuthenticatedDashboardSettingsProjectsProjectIdCalendarRouteImport } from './routes/_layout/_authenticated/dashboard/settings/projects/$projectId/calendar'
 import { Route as LayoutAuthenticatedDashboardSettingsProjectsProjectIdCustomFieldsRouteImport } from './routes/_layout/_authenticated/dashboard/settings/projects/$projectId/custom-fields'
 import { Route as LayoutAuthenticatedDashboardSettingsProjectsProjectIdGeneralRouteImport } from './routes/_layout/_authenticated/dashboard/settings/projects/$projectId/general'
 import { Route as LayoutAuthenticatedDashboardSettingsProjectsProjectIdIntegrationsRouteImport } from './routes/_layout/_authenticated/dashboard/settings/projects/$projectId/integrations'
 import { Route as LayoutAuthenticatedDashboardSettingsProjectsProjectIdVisibilityRouteImport } from './routes/_layout/_authenticated/dashboard/settings/projects/$projectId/visibility'
 import { Route as LayoutAuthenticatedDashboardSettingsProjectsProjectIdWorkflowRouteImport } from './routes/_layout/_authenticated/dashboard/settings/projects/$projectId/workflow'
+import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdQuillsSplatRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId/quills/$'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdConversationsConversationIdIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/conversations/$conversationId/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdConversationsAllIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/conversations/all/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdConversationsMineIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/conversations/mine/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdConversationsOpenIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/conversations/open/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdConversationsQueueIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/conversations/queue/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdConversationsUnassignedIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/conversations/unassigned/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/posts/$postId/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/surveys/$surveyId/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdTicketsTicketIdIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/tickets/$ticketId/index'
 import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdIndexRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/index'
 import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBacklogRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/backlog'
 import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBoardRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/board'
@@ -151,9 +199,19 @@ const McpAuthorizeRoute = McpAuthorizeRouteImport.update({
   path: '/mcp/authorize',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortalWorkspaceIdRoute = PortalWorkspaceIdRouteImport.update({
+  id: '/portal/$workspaceId',
+  path: '/portal/$workspaceId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PublicProjectProjectIdRoute = PublicProjectProjectIdRouteImport.update({
   id: '/public-project/$projectId',
   path: '/public-project/$projectId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QuillsKitRoute = QuillsKitRouteImport.update({
+  id: '/quills/kit',
+  path: '/quills/kit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LayoutAuthenticatedDashboardRoute =
@@ -186,6 +244,51 @@ const InvitationAcceptInviteIdRoute =
     path: '/invitation/accept/$inviteId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const PortalWorkspaceIdIndexRoute = PortalWorkspaceIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PortalWorkspaceIdRoute,
+} as any)
+const PortalWorkspaceIdCsatRoute = PortalWorkspaceIdCsatRouteImport.update({
+  id: '/csat',
+  path: '/csat',
+  getParentRoute: () => PortalWorkspaceIdRoute,
+} as any)
+const PortalWorkspaceIdMyFeedbackRoute =
+  PortalWorkspaceIdMyFeedbackRouteImport.update({
+    id: '/my-feedback',
+    path: '/my-feedback',
+    getParentRoute: () => PortalWorkspaceIdRoute,
+  } as any)
+const PortalWorkspaceIdPreferencesRoute =
+  PortalWorkspaceIdPreferencesRouteImport.update({
+    id: '/preferences',
+    path: '/preferences',
+    getParentRoute: () => PortalWorkspaceIdRoute,
+  } as any)
+const PortalWorkspaceIdProfileRoute =
+  PortalWorkspaceIdProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => PortalWorkspaceIdRoute,
+  } as any)
+const PortalWorkspaceIdRoadmapRoute =
+  PortalWorkspaceIdRoadmapRouteImport.update({
+    id: '/roadmap',
+    path: '/roadmap',
+    getParentRoute: () => PortalWorkspaceIdRoute,
+  } as any)
+const PortalWorkspaceIdUnsubscribeRoute =
+  PortalWorkspaceIdUnsubscribeRouteImport.update({
+    id: '/unsubscribe',
+    path: '/unsubscribe',
+    getParentRoute: () => PortalWorkspaceIdRoute,
+  } as any)
+const QuillsOauthResultRoute = QuillsOauthResultRouteImport.update({
+  id: '/quills/oauth/result',
+  path: '/quills/oauth/result',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LayoutAuthenticatedDashboardIndexRoute =
   LayoutAuthenticatedDashboardIndexRouteImport.update({
     id: '/',
@@ -203,6 +306,84 @@ const LayoutAuthenticatedDashboardSettingsRoute =
     id: '/settings',
     path: '/settings',
     getParentRoute: () => LayoutAuthenticatedDashboardRoute,
+  } as any)
+const LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdRouteRouteImport.update({
+    id: '/feedback/$workspaceId',
+    path: '/feedback/$workspaceId',
+    getParentRoute: () => LayoutAuthenticatedRoute,
+  } as any)
+const PortalWorkspaceIdBoardsBoardIdRoute =
+  PortalWorkspaceIdBoardsBoardIdRouteImport.update({
+    id: '/boards/$boardId',
+    path: '/boards/$boardId',
+    getParentRoute: () => PortalWorkspaceIdRoute,
+  } as any)
+const PortalWorkspaceIdChangelogIndexRoute =
+  PortalWorkspaceIdChangelogIndexRouteImport.update({
+    id: '/changelog/',
+    path: '/changelog/',
+    getParentRoute: () => PortalWorkspaceIdRoute,
+  } as any)
+const PortalWorkspaceIdChangelogEntryIdRoute =
+  PortalWorkspaceIdChangelogEntryIdRouteImport.update({
+    id: '/changelog/$entryId',
+    path: '/changelog/$entryId',
+    getParentRoute: () => PortalWorkspaceIdRoute,
+  } as any)
+const PortalWorkspaceIdConversationsConversationIdRoute =
+  PortalWorkspaceIdConversationsConversationIdRouteImport.update({
+    id: '/conversations/$conversationId',
+    path: '/conversations/$conversationId',
+    getParentRoute: () => PortalWorkspaceIdRoute,
+  } as any)
+const PortalWorkspaceIdHcIndexRoute =
+  PortalWorkspaceIdHcIndexRouteImport.update({
+    id: '/hc/',
+    path: '/hc/',
+    getParentRoute: () => PortalWorkspaceIdRoute,
+  } as any)
+const PortalWorkspaceIdHcSplatRoute =
+  PortalWorkspaceIdHcSplatRouteImport.update({
+    id: '/hc/$',
+    path: '/hc/$',
+    getParentRoute: () => PortalWorkspaceIdRoute,
+  } as any)
+const PortalWorkspaceIdInviteInviteIdRoute =
+  PortalWorkspaceIdInviteInviteIdRouteImport.update({
+    id: '/invite/$inviteId',
+    path: '/invite/$inviteId',
+    getParentRoute: () => PortalWorkspaceIdRoute,
+  } as any)
+const PortalWorkspaceIdPostsPostIdRoute =
+  PortalWorkspaceIdPostsPostIdRouteImport.update({
+    id: '/posts/$postId',
+    path: '/posts/$postId',
+    getParentRoute: () => PortalWorkspaceIdRoute,
+  } as any)
+const PortalWorkspaceIdStatusIndexRoute =
+  PortalWorkspaceIdStatusIndexRouteImport.update({
+    id: '/status/',
+    path: '/status/',
+    getParentRoute: () => PortalWorkspaceIdRoute,
+  } as any)
+const PortalWorkspaceIdStatusIncidentIdRoute =
+  PortalWorkspaceIdStatusIncidentIdRouteImport.update({
+    id: '/status/$incidentId',
+    path: '/status/$incidentId',
+    getParentRoute: () => PortalWorkspaceIdRoute,
+  } as any)
+const PortalWorkspaceIdSupportIndexRoute =
+  PortalWorkspaceIdSupportIndexRouteImport.update({
+    id: '/support/',
+    path: '/support/',
+    getParentRoute: () => PortalWorkspaceIdRoute,
+  } as any)
+const PortalWorkspaceIdSupportTicketsRoute =
+  PortalWorkspaceIdSupportTicketsRouteImport.update({
+    id: '/support/tickets',
+    path: '/support/tickets',
+    getParentRoute: () => PortalWorkspaceIdRoute,
   } as any)
 const LayoutAuthenticatedDashboardSettingsAccountRoute =
   LayoutAuthenticatedDashboardSettingsAccountRouteImport.update({
@@ -239,6 +420,24 @@ const LayoutAuthenticatedDashboardWorkspaceCreateRoute =
     id: '/workspace/create',
     path: '/workspace/create',
     getParentRoute: () => LayoutAuthenticatedDashboardRoute,
+  } as any)
+const LayoutAuthenticatedFeedbackWorkspaceIdIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+  } as any)
+const PortalWorkspaceIdHcLocaleIndexRoute =
+  PortalWorkspaceIdHcLocaleIndexRouteImport.update({
+    id: '/hc/$locale/',
+    path: '/hc/$locale/',
+    getParentRoute: () => PortalWorkspaceIdRoute,
+  } as any)
+const PortalWorkspaceIdStatusIncidentsIncidentIdRoute =
+  PortalWorkspaceIdStatusIncidentsIncidentIdRouteImport.update({
+    id: '/status/incidents/$incidentId',
+    path: '/status/incidents/$incidentId',
+    getParentRoute: () => PortalWorkspaceIdRoute,
   } as any)
 const LayoutAuthenticatedWorkspaceSlugTaskTicketIdChar123TitleChar125Route =
   LayoutAuthenticatedWorkspaceSlugTaskTicketIdChar123TitleChar125RouteImport.update(
@@ -398,6 +597,78 @@ const LayoutAuthenticatedDashboardWorkspaceWorkspaceIdSearchRoute =
     path: '/search',
     getParentRoute: () => LayoutAuthenticatedDashboardWorkspaceWorkspaceIdRoute,
   } as any)
+const LayoutAuthenticatedFeedbackWorkspaceIdAutopilotIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdAutopilotIndexRouteImport.update({
+    id: '/autopilot/',
+    path: '/autopilot/',
+    getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+  } as any)
+const LayoutAuthenticatedFeedbackWorkspaceIdBoardsIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdBoardsIndexRouteImport.update({
+    id: '/boards/',
+    path: '/boards/',
+    getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+  } as any)
+const LayoutAuthenticatedFeedbackWorkspaceIdChangelogIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdChangelogIndexRouteImport.update({
+    id: '/changelog/',
+    path: '/changelog/',
+    getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+  } as any)
+const LayoutAuthenticatedFeedbackWorkspaceIdDuplicatesIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdDuplicatesIndexRouteImport.update({
+    id: '/duplicates/',
+    path: '/duplicates/',
+    getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+  } as any)
+const LayoutAuthenticatedFeedbackWorkspaceIdInsightsIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdInsightsIndexRouteImport.update({
+    id: '/insights/',
+    path: '/insights/',
+    getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+  } as any)
+const LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRouteImport.update({
+    id: '/my-tickets/',
+    path: '/my-tickets/',
+    getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+  } as any)
+const LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRouteImport.update({
+    id: '/posts/',
+    path: '/posts/',
+    getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+  } as any)
+const LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRouteImport.update({
+    id: '/surveys/',
+    path: '/surveys/',
+    getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+  } as any)
+const LayoutAuthenticatedFeedbackWorkspaceIdTicketsIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdTicketsIndexRouteImport.update({
+    id: '/tickets/',
+    path: '/tickets/',
+    getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+  } as any)
+const LayoutAuthenticatedFeedbackWorkspaceIdTriageIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdTriageIndexRouteImport.update({
+    id: '/triage/',
+    path: '/triage/',
+    getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+  } as any)
+const PortalWorkspaceIdHcLocaleArticlesIdSlugRoute =
+  PortalWorkspaceIdHcLocaleArticlesIdSlugRouteImport.update({
+    id: '/hc/$locale/articles/$idSlug',
+    path: '/hc/$locale/articles/$idSlug',
+    getParentRoute: () => PortalWorkspaceIdRoute,
+  } as any)
+const PortalWorkspaceIdHcLocaleCollectionsIdSlugRoute =
+  PortalWorkspaceIdHcLocaleCollectionsIdSlugRouteImport.update({
+    id: '/hc/$locale/collections/$idSlug',
+    path: '/hc/$locale/collections/$idSlug',
+    getParentRoute: () => PortalWorkspaceIdRoute,
+  } as any)
 const LayoutAuthenticatedDashboardSettingsProjectsProjectIdCalendarRoute =
   LayoutAuthenticatedDashboardSettingsProjectsProjectIdCalendarRouteImport.update(
     {
@@ -446,6 +717,81 @@ const LayoutAuthenticatedDashboardSettingsProjectsProjectIdWorkflowRoute =
       getParentRoute: () => LayoutAuthenticatedDashboardSettingsProjectsRoute,
     } as any,
   )
+const LayoutAuthenticatedDashboardWorkspaceWorkspaceIdQuillsSplatRoute =
+  LayoutAuthenticatedDashboardWorkspaceWorkspaceIdQuillsSplatRouteImport.update(
+    {
+      id: '/quills/$',
+      path: '/quills/$',
+      getParentRoute: () =>
+        LayoutAuthenticatedDashboardWorkspaceWorkspaceIdRoute,
+    } as any,
+  )
+const LayoutAuthenticatedFeedbackWorkspaceIdConversationsConversationIdIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdConversationsConversationIdIndexRouteImport.update(
+    {
+      id: '/conversations/$conversationId/',
+      path: '/conversations/$conversationId/',
+      getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+    } as any,
+  )
+const LayoutAuthenticatedFeedbackWorkspaceIdConversationsAllIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdConversationsAllIndexRouteImport.update(
+    {
+      id: '/conversations/all/',
+      path: '/conversations/all/',
+      getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+    } as any,
+  )
+const LayoutAuthenticatedFeedbackWorkspaceIdConversationsMineIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdConversationsMineIndexRouteImport.update(
+    {
+      id: '/conversations/mine/',
+      path: '/conversations/mine/',
+      getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+    } as any,
+  )
+const LayoutAuthenticatedFeedbackWorkspaceIdConversationsOpenIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdConversationsOpenIndexRouteImport.update(
+    {
+      id: '/conversations/open/',
+      path: '/conversations/open/',
+      getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+    } as any,
+  )
+const LayoutAuthenticatedFeedbackWorkspaceIdConversationsQueueIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdConversationsQueueIndexRouteImport.update(
+    {
+      id: '/conversations/queue/',
+      path: '/conversations/queue/',
+      getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+    } as any,
+  )
+const LayoutAuthenticatedFeedbackWorkspaceIdConversationsUnassignedIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdConversationsUnassignedIndexRouteImport.update(
+    {
+      id: '/conversations/unassigned/',
+      path: '/conversations/unassigned/',
+      getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+    } as any,
+  )
+const LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRouteImport.update({
+    id: '/posts/$postId/',
+    path: '/posts/$postId/',
+    getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+  } as any)
+const LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRouteImport.update({
+    id: '/surveys/$surveyId/',
+    path: '/surveys/$surveyId/',
+    getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+  } as any)
+const LayoutAuthenticatedFeedbackWorkspaceIdTicketsTicketIdIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdTicketsTicketIdIndexRouteImport.update({
+    id: '/tickets/$ticketId/',
+    path: '/tickets/$ticketId/',
+    getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+  } as any)
 const LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdIndexRoute =
   LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdIndexRouteImport.update(
     {
@@ -514,22 +860,48 @@ export interface FileRoutesByFullPath {
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/device/approve': typeof DeviceApproveRoute
   '/mcp/authorize': typeof McpAuthorizeRoute
+  '/portal/$workspaceId': typeof PortalWorkspaceIdRouteWithChildren
   '/public-project/$projectId': typeof PublicProjectProjectIdRoute
+  '/quills/kit': typeof QuillsKitRoute
   '/device/': typeof DeviceIndexRoute
   '/dashboard': typeof LayoutAuthenticatedDashboardRouteWithChildren
   '/invitations': typeof LayoutAuthenticatedInvitationsRoute
   '/onboarding': typeof LayoutAuthenticatedOnboardingRoute
   '/profile-setup': typeof LayoutAuthenticatedProfileSetupRoute
   '/invitation/accept/$inviteId': typeof InvitationAcceptInviteIdRoute
+  '/portal/$workspaceId/csat': typeof PortalWorkspaceIdCsatRoute
+  '/portal/$workspaceId/my-feedback': typeof PortalWorkspaceIdMyFeedbackRoute
+  '/portal/$workspaceId/preferences': typeof PortalWorkspaceIdPreferencesRoute
+  '/portal/$workspaceId/profile': typeof PortalWorkspaceIdProfileRoute
+  '/portal/$workspaceId/roadmap': typeof PortalWorkspaceIdRoadmapRoute
+  '/portal/$workspaceId/unsubscribe': typeof PortalWorkspaceIdUnsubscribeRoute
+  '/quills/oauth/result': typeof QuillsOauthResultRoute
+  '/portal/$workspaceId/': typeof PortalWorkspaceIdIndexRoute
+  '/feedback/$workspaceId': typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRouteWithChildren
   '/dashboard/invitations': typeof LayoutAuthenticatedDashboardInvitationsRoute
   '/dashboard/settings': typeof LayoutAuthenticatedDashboardSettingsRouteWithChildren
+  '/portal/$workspaceId/boards/$boardId': typeof PortalWorkspaceIdBoardsBoardIdRoute
+  '/portal/$workspaceId/changelog/$entryId': typeof PortalWorkspaceIdChangelogEntryIdRoute
+  '/portal/$workspaceId/conversations/$conversationId': typeof PortalWorkspaceIdConversationsConversationIdRoute
+  '/portal/$workspaceId/hc/$': typeof PortalWorkspaceIdHcSplatRoute
+  '/portal/$workspaceId/invite/$inviteId': typeof PortalWorkspaceIdInviteInviteIdRoute
+  '/portal/$workspaceId/posts/$postId': typeof PortalWorkspaceIdPostsPostIdRoute
+  '/portal/$workspaceId/status/$incidentId': typeof PortalWorkspaceIdStatusIncidentIdRoute
+  '/portal/$workspaceId/support/tickets': typeof PortalWorkspaceIdSupportTicketsRoute
   '/dashboard/': typeof LayoutAuthenticatedDashboardIndexRoute
+  '/portal/$workspaceId/changelog/': typeof PortalWorkspaceIdChangelogIndexRoute
+  '/portal/$workspaceId/hc/': typeof PortalWorkspaceIdHcIndexRoute
+  '/portal/$workspaceId/status/': typeof PortalWorkspaceIdStatusIndexRoute
+  '/portal/$workspaceId/support/': typeof PortalWorkspaceIdSupportIndexRoute
   '/dashboard/settings/account': typeof LayoutAuthenticatedDashboardSettingsAccountRouteWithChildren
   '/dashboard/settings/admin': typeof LayoutAuthenticatedDashboardSettingsAdminRouteWithChildren
   '/dashboard/settings/projects': typeof LayoutAuthenticatedDashboardSettingsProjectsRouteWithChildren
   '/dashboard/settings/workspace': typeof LayoutAuthenticatedDashboardSettingsWorkspaceRouteWithChildren
   '/dashboard/workspace/$workspaceId': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdRouteWithChildren
   '/dashboard/workspace/create': typeof LayoutAuthenticatedDashboardWorkspaceCreateRoute
+  '/portal/$workspaceId/status/incidents/$incidentId': typeof PortalWorkspaceIdStatusIncidentsIncidentIdRoute
+  '/feedback/$workspaceId/': typeof LayoutAuthenticatedFeedbackWorkspaceIdIndexRoute
+  '/portal/$workspaceId/hc/$locale/': typeof PortalWorkspaceIdHcLocaleIndexRoute
   '/$workspaceSlug/task/$ticketId/{-$title}': typeof LayoutAuthenticatedWorkspaceSlugTaskTicketIdChar123TitleChar125Route
   '/dashboard/settings/account/developer': typeof LayoutAuthenticatedDashboardSettingsAccountDeveloperRoute
   '/dashboard/settings/account/information': typeof LayoutAuthenticatedDashboardSettingsAccountInformationRoute
@@ -554,14 +926,36 @@ export interface FileRoutesByFullPath {
   '/dashboard/workspace/$workspaceId/my-tasks': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdMyTasksRoute
   '/dashboard/workspace/$workspaceId/projects': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectsRoute
   '/dashboard/workspace/$workspaceId/search': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdSearchRoute
+  '/portal/$workspaceId/hc/$locale/articles/$idSlug': typeof PortalWorkspaceIdHcLocaleArticlesIdSlugRoute
+  '/portal/$workspaceId/hc/$locale/collections/$idSlug': typeof PortalWorkspaceIdHcLocaleCollectionsIdSlugRoute
   '/dashboard/settings/admin/': typeof LayoutAuthenticatedDashboardSettingsAdminIndexRoute
   '/dashboard/workspace/$workspaceId/': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdIndexRoute
+  '/feedback/$workspaceId/autopilot/': typeof LayoutAuthenticatedFeedbackWorkspaceIdAutopilotIndexRoute
+  '/feedback/$workspaceId/boards/': typeof LayoutAuthenticatedFeedbackWorkspaceIdBoardsIndexRoute
+  '/feedback/$workspaceId/changelog/': typeof LayoutAuthenticatedFeedbackWorkspaceIdChangelogIndexRoute
+  '/feedback/$workspaceId/duplicates/': typeof LayoutAuthenticatedFeedbackWorkspaceIdDuplicatesIndexRoute
+  '/feedback/$workspaceId/insights/': typeof LayoutAuthenticatedFeedbackWorkspaceIdInsightsIndexRoute
+  '/feedback/$workspaceId/my-tickets/': typeof LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute
+  '/feedback/$workspaceId/posts/': typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute
+  '/feedback/$workspaceId/surveys/': typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute
+  '/feedback/$workspaceId/tickets/': typeof LayoutAuthenticatedFeedbackWorkspaceIdTicketsIndexRoute
+  '/feedback/$workspaceId/triage/': typeof LayoutAuthenticatedFeedbackWorkspaceIdTriageIndexRoute
   '/dashboard/settings/projects/$projectId/calendar': typeof LayoutAuthenticatedDashboardSettingsProjectsProjectIdCalendarRoute
   '/dashboard/settings/projects/$projectId/custom-fields': typeof LayoutAuthenticatedDashboardSettingsProjectsProjectIdCustomFieldsRoute
   '/dashboard/settings/projects/$projectId/general': typeof LayoutAuthenticatedDashboardSettingsProjectsProjectIdGeneralRoute
   '/dashboard/settings/projects/$projectId/integrations': typeof LayoutAuthenticatedDashboardSettingsProjectsProjectIdIntegrationsRoute
   '/dashboard/settings/projects/$projectId/visibility': typeof LayoutAuthenticatedDashboardSettingsProjectsProjectIdVisibilityRoute
   '/dashboard/settings/projects/$projectId/workflow': typeof LayoutAuthenticatedDashboardSettingsProjectsProjectIdWorkflowRoute
+  '/dashboard/workspace/$workspaceId/quills/$': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdQuillsSplatRoute
+  '/feedback/$workspaceId/conversations/$conversationId/': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsConversationIdIndexRoute
+  '/feedback/$workspaceId/conversations/all/': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsAllIndexRoute
+  '/feedback/$workspaceId/conversations/mine/': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsMineIndexRoute
+  '/feedback/$workspaceId/conversations/open/': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsOpenIndexRoute
+  '/feedback/$workspaceId/conversations/queue/': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsQueueIndexRoute
+  '/feedback/$workspaceId/conversations/unassigned/': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsUnassignedIndexRoute
+  '/feedback/$workspaceId/posts/$postId/': typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRoute
+  '/feedback/$workspaceId/surveys/$surveyId/': typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRoute
+  '/feedback/$workspaceId/tickets/$ticketId/': typeof LayoutAuthenticatedFeedbackWorkspaceIdTicketsTicketIdIndexRoute
   '/dashboard/workspace/$workspaceId/project/$projectId/backlog': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBacklogRoute
   '/dashboard/workspace/$workspaceId/project/$projectId/board': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBoardRoute
   '/dashboard/workspace/$workspaceId/project/$projectId/calendar': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdCalendarRoute
@@ -582,18 +976,42 @@ export interface FileRoutesByTo {
   '/device/approve': typeof DeviceApproveRoute
   '/mcp/authorize': typeof McpAuthorizeRoute
   '/public-project/$projectId': typeof PublicProjectProjectIdRoute
+  '/quills/kit': typeof QuillsKitRoute
   '/device': typeof DeviceIndexRoute
   '/invitations': typeof LayoutAuthenticatedInvitationsRoute
   '/onboarding': typeof LayoutAuthenticatedOnboardingRoute
   '/profile-setup': typeof LayoutAuthenticatedProfileSetupRoute
   '/invitation/accept/$inviteId': typeof InvitationAcceptInviteIdRoute
+  '/portal/$workspaceId/csat': typeof PortalWorkspaceIdCsatRoute
+  '/portal/$workspaceId/my-feedback': typeof PortalWorkspaceIdMyFeedbackRoute
+  '/portal/$workspaceId/preferences': typeof PortalWorkspaceIdPreferencesRoute
+  '/portal/$workspaceId/profile': typeof PortalWorkspaceIdProfileRoute
+  '/portal/$workspaceId/roadmap': typeof PortalWorkspaceIdRoadmapRoute
+  '/portal/$workspaceId/unsubscribe': typeof PortalWorkspaceIdUnsubscribeRoute
+  '/quills/oauth/result': typeof QuillsOauthResultRoute
+  '/portal/$workspaceId': typeof PortalWorkspaceIdIndexRoute
   '/dashboard/invitations': typeof LayoutAuthenticatedDashboardInvitationsRoute
   '/dashboard/settings': typeof LayoutAuthenticatedDashboardSettingsRouteWithChildren
+  '/portal/$workspaceId/boards/$boardId': typeof PortalWorkspaceIdBoardsBoardIdRoute
+  '/portal/$workspaceId/changelog/$entryId': typeof PortalWorkspaceIdChangelogEntryIdRoute
+  '/portal/$workspaceId/conversations/$conversationId': typeof PortalWorkspaceIdConversationsConversationIdRoute
+  '/portal/$workspaceId/hc/$': typeof PortalWorkspaceIdHcSplatRoute
+  '/portal/$workspaceId/invite/$inviteId': typeof PortalWorkspaceIdInviteInviteIdRoute
+  '/portal/$workspaceId/posts/$postId': typeof PortalWorkspaceIdPostsPostIdRoute
+  '/portal/$workspaceId/status/$incidentId': typeof PortalWorkspaceIdStatusIncidentIdRoute
+  '/portal/$workspaceId/support/tickets': typeof PortalWorkspaceIdSupportTicketsRoute
   '/dashboard': typeof LayoutAuthenticatedDashboardIndexRoute
+  '/portal/$workspaceId/changelog': typeof PortalWorkspaceIdChangelogIndexRoute
+  '/portal/$workspaceId/hc': typeof PortalWorkspaceIdHcIndexRoute
+  '/portal/$workspaceId/status': typeof PortalWorkspaceIdStatusIndexRoute
+  '/portal/$workspaceId/support': typeof PortalWorkspaceIdSupportIndexRoute
   '/dashboard/settings/account': typeof LayoutAuthenticatedDashboardSettingsAccountRouteWithChildren
   '/dashboard/settings/projects': typeof LayoutAuthenticatedDashboardSettingsProjectsRouteWithChildren
   '/dashboard/settings/workspace': typeof LayoutAuthenticatedDashboardSettingsWorkspaceRouteWithChildren
   '/dashboard/workspace/create': typeof LayoutAuthenticatedDashboardWorkspaceCreateRoute
+  '/portal/$workspaceId/status/incidents/$incidentId': typeof PortalWorkspaceIdStatusIncidentsIncidentIdRoute
+  '/feedback/$workspaceId': typeof LayoutAuthenticatedFeedbackWorkspaceIdIndexRoute
+  '/portal/$workspaceId/hc/$locale': typeof PortalWorkspaceIdHcLocaleIndexRoute
   '/$workspaceSlug/task/$ticketId/{-$title}': typeof LayoutAuthenticatedWorkspaceSlugTaskTicketIdChar123TitleChar125Route
   '/dashboard/settings/account/developer': typeof LayoutAuthenticatedDashboardSettingsAccountDeveloperRoute
   '/dashboard/settings/account/information': typeof LayoutAuthenticatedDashboardSettingsAccountInformationRoute
@@ -618,14 +1036,36 @@ export interface FileRoutesByTo {
   '/dashboard/workspace/$workspaceId/my-tasks': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdMyTasksRoute
   '/dashboard/workspace/$workspaceId/projects': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectsRoute
   '/dashboard/workspace/$workspaceId/search': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdSearchRoute
+  '/portal/$workspaceId/hc/$locale/articles/$idSlug': typeof PortalWorkspaceIdHcLocaleArticlesIdSlugRoute
+  '/portal/$workspaceId/hc/$locale/collections/$idSlug': typeof PortalWorkspaceIdHcLocaleCollectionsIdSlugRoute
   '/dashboard/settings/admin': typeof LayoutAuthenticatedDashboardSettingsAdminIndexRoute
   '/dashboard/workspace/$workspaceId': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdIndexRoute
+  '/feedback/$workspaceId/autopilot': typeof LayoutAuthenticatedFeedbackWorkspaceIdAutopilotIndexRoute
+  '/feedback/$workspaceId/boards': typeof LayoutAuthenticatedFeedbackWorkspaceIdBoardsIndexRoute
+  '/feedback/$workspaceId/changelog': typeof LayoutAuthenticatedFeedbackWorkspaceIdChangelogIndexRoute
+  '/feedback/$workspaceId/duplicates': typeof LayoutAuthenticatedFeedbackWorkspaceIdDuplicatesIndexRoute
+  '/feedback/$workspaceId/insights': typeof LayoutAuthenticatedFeedbackWorkspaceIdInsightsIndexRoute
+  '/feedback/$workspaceId/my-tickets': typeof LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute
+  '/feedback/$workspaceId/posts': typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute
+  '/feedback/$workspaceId/surveys': typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute
+  '/feedback/$workspaceId/tickets': typeof LayoutAuthenticatedFeedbackWorkspaceIdTicketsIndexRoute
+  '/feedback/$workspaceId/triage': typeof LayoutAuthenticatedFeedbackWorkspaceIdTriageIndexRoute
   '/dashboard/settings/projects/$projectId/calendar': typeof LayoutAuthenticatedDashboardSettingsProjectsProjectIdCalendarRoute
   '/dashboard/settings/projects/$projectId/custom-fields': typeof LayoutAuthenticatedDashboardSettingsProjectsProjectIdCustomFieldsRoute
   '/dashboard/settings/projects/$projectId/general': typeof LayoutAuthenticatedDashboardSettingsProjectsProjectIdGeneralRoute
   '/dashboard/settings/projects/$projectId/integrations': typeof LayoutAuthenticatedDashboardSettingsProjectsProjectIdIntegrationsRoute
   '/dashboard/settings/projects/$projectId/visibility': typeof LayoutAuthenticatedDashboardSettingsProjectsProjectIdVisibilityRoute
   '/dashboard/settings/projects/$projectId/workflow': typeof LayoutAuthenticatedDashboardSettingsProjectsProjectIdWorkflowRoute
+  '/dashboard/workspace/$workspaceId/quills/$': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdQuillsSplatRoute
+  '/feedback/$workspaceId/conversations/$conversationId': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsConversationIdIndexRoute
+  '/feedback/$workspaceId/conversations/all': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsAllIndexRoute
+  '/feedback/$workspaceId/conversations/mine': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsMineIndexRoute
+  '/feedback/$workspaceId/conversations/open': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsOpenIndexRoute
+  '/feedback/$workspaceId/conversations/queue': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsQueueIndexRoute
+  '/feedback/$workspaceId/conversations/unassigned': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsUnassignedIndexRoute
+  '/feedback/$workspaceId/posts/$postId': typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRoute
+  '/feedback/$workspaceId/surveys/$surveyId': typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRoute
+  '/feedback/$workspaceId/tickets/$ticketId': typeof LayoutAuthenticatedFeedbackWorkspaceIdTicketsTicketIdIndexRoute
   '/dashboard/workspace/$workspaceId/project/$projectId/backlog': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBacklogRoute
   '/dashboard/workspace/$workspaceId/project/$projectId/board': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBoardRoute
   '/dashboard/workspace/$workspaceId/project/$projectId/calendar': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdCalendarRoute
@@ -649,22 +1089,48 @@ export interface FileRoutesById {
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/device/approve': typeof DeviceApproveRoute
   '/mcp/authorize': typeof McpAuthorizeRoute
+  '/portal/$workspaceId': typeof PortalWorkspaceIdRouteWithChildren
   '/public-project/$projectId': typeof PublicProjectProjectIdRoute
+  '/quills/kit': typeof QuillsKitRoute
   '/device/': typeof DeviceIndexRoute
   '/_layout/_authenticated/dashboard': typeof LayoutAuthenticatedDashboardRouteWithChildren
   '/_layout/_authenticated/invitations': typeof LayoutAuthenticatedInvitationsRoute
   '/_layout/_authenticated/onboarding': typeof LayoutAuthenticatedOnboardingRoute
   '/_layout/_authenticated/profile-setup': typeof LayoutAuthenticatedProfileSetupRoute
   '/invitation/accept/$inviteId': typeof InvitationAcceptInviteIdRoute
+  '/portal/$workspaceId/csat': typeof PortalWorkspaceIdCsatRoute
+  '/portal/$workspaceId/my-feedback': typeof PortalWorkspaceIdMyFeedbackRoute
+  '/portal/$workspaceId/preferences': typeof PortalWorkspaceIdPreferencesRoute
+  '/portal/$workspaceId/profile': typeof PortalWorkspaceIdProfileRoute
+  '/portal/$workspaceId/roadmap': typeof PortalWorkspaceIdRoadmapRoute
+  '/portal/$workspaceId/unsubscribe': typeof PortalWorkspaceIdUnsubscribeRoute
+  '/quills/oauth/result': typeof QuillsOauthResultRoute
+  '/portal/$workspaceId/': typeof PortalWorkspaceIdIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId': typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRouteWithChildren
   '/_layout/_authenticated/dashboard/invitations': typeof LayoutAuthenticatedDashboardInvitationsRoute
   '/_layout/_authenticated/dashboard/settings': typeof LayoutAuthenticatedDashboardSettingsRouteWithChildren
+  '/portal/$workspaceId/boards/$boardId': typeof PortalWorkspaceIdBoardsBoardIdRoute
+  '/portal/$workspaceId/changelog/$entryId': typeof PortalWorkspaceIdChangelogEntryIdRoute
+  '/portal/$workspaceId/conversations/$conversationId': typeof PortalWorkspaceIdConversationsConversationIdRoute
+  '/portal/$workspaceId/hc/$': typeof PortalWorkspaceIdHcSplatRoute
+  '/portal/$workspaceId/invite/$inviteId': typeof PortalWorkspaceIdInviteInviteIdRoute
+  '/portal/$workspaceId/posts/$postId': typeof PortalWorkspaceIdPostsPostIdRoute
+  '/portal/$workspaceId/status/$incidentId': typeof PortalWorkspaceIdStatusIncidentIdRoute
+  '/portal/$workspaceId/support/tickets': typeof PortalWorkspaceIdSupportTicketsRoute
   '/_layout/_authenticated/dashboard/': typeof LayoutAuthenticatedDashboardIndexRoute
+  '/portal/$workspaceId/changelog/': typeof PortalWorkspaceIdChangelogIndexRoute
+  '/portal/$workspaceId/hc/': typeof PortalWorkspaceIdHcIndexRoute
+  '/portal/$workspaceId/status/': typeof PortalWorkspaceIdStatusIndexRoute
+  '/portal/$workspaceId/support/': typeof PortalWorkspaceIdSupportIndexRoute
   '/_layout/_authenticated/dashboard/settings/account': typeof LayoutAuthenticatedDashboardSettingsAccountRouteWithChildren
   '/_layout/_authenticated/dashboard/settings/admin': typeof LayoutAuthenticatedDashboardSettingsAdminRouteWithChildren
   '/_layout/_authenticated/dashboard/settings/projects': typeof LayoutAuthenticatedDashboardSettingsProjectsRouteWithChildren
   '/_layout/_authenticated/dashboard/settings/workspace': typeof LayoutAuthenticatedDashboardSettingsWorkspaceRouteWithChildren
   '/_layout/_authenticated/dashboard/workspace/$workspaceId': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdRouteWithChildren
   '/_layout/_authenticated/dashboard/workspace/create': typeof LayoutAuthenticatedDashboardWorkspaceCreateRoute
+  '/portal/$workspaceId/status/incidents/$incidentId': typeof PortalWorkspaceIdStatusIncidentsIncidentIdRoute
+  '/_layout/_authenticated/feedback/$workspaceId/': typeof LayoutAuthenticatedFeedbackWorkspaceIdIndexRoute
+  '/portal/$workspaceId/hc/$locale/': typeof PortalWorkspaceIdHcLocaleIndexRoute
   '/_layout/_authenticated/$workspaceSlug/task/$ticketId/{-$title}': typeof LayoutAuthenticatedWorkspaceSlugTaskTicketIdChar123TitleChar125Route
   '/_layout/_authenticated/dashboard/settings/account/developer': typeof LayoutAuthenticatedDashboardSettingsAccountDeveloperRoute
   '/_layout/_authenticated/dashboard/settings/account/information': typeof LayoutAuthenticatedDashboardSettingsAccountInformationRoute
@@ -689,14 +1155,36 @@ export interface FileRoutesById {
   '/_layout/_authenticated/dashboard/workspace/$workspaceId/my-tasks': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdMyTasksRoute
   '/_layout/_authenticated/dashboard/workspace/$workspaceId/projects': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectsRoute
   '/_layout/_authenticated/dashboard/workspace/$workspaceId/search': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdSearchRoute
+  '/portal/$workspaceId/hc/$locale/articles/$idSlug': typeof PortalWorkspaceIdHcLocaleArticlesIdSlugRoute
+  '/portal/$workspaceId/hc/$locale/collections/$idSlug': typeof PortalWorkspaceIdHcLocaleCollectionsIdSlugRoute
   '/_layout/_authenticated/dashboard/settings/admin/': typeof LayoutAuthenticatedDashboardSettingsAdminIndexRoute
   '/_layout/_authenticated/dashboard/workspace/$workspaceId/': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/autopilot/': typeof LayoutAuthenticatedFeedbackWorkspaceIdAutopilotIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/boards/': typeof LayoutAuthenticatedFeedbackWorkspaceIdBoardsIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/changelog/': typeof LayoutAuthenticatedFeedbackWorkspaceIdChangelogIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/duplicates/': typeof LayoutAuthenticatedFeedbackWorkspaceIdDuplicatesIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/insights/': typeof LayoutAuthenticatedFeedbackWorkspaceIdInsightsIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/my-tickets/': typeof LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/posts/': typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/surveys/': typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/tickets/': typeof LayoutAuthenticatedFeedbackWorkspaceIdTicketsIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/triage/': typeof LayoutAuthenticatedFeedbackWorkspaceIdTriageIndexRoute
   '/_layout/_authenticated/dashboard/settings/projects/$projectId/calendar': typeof LayoutAuthenticatedDashboardSettingsProjectsProjectIdCalendarRoute
   '/_layout/_authenticated/dashboard/settings/projects/$projectId/custom-fields': typeof LayoutAuthenticatedDashboardSettingsProjectsProjectIdCustomFieldsRoute
   '/_layout/_authenticated/dashboard/settings/projects/$projectId/general': typeof LayoutAuthenticatedDashboardSettingsProjectsProjectIdGeneralRoute
   '/_layout/_authenticated/dashboard/settings/projects/$projectId/integrations': typeof LayoutAuthenticatedDashboardSettingsProjectsProjectIdIntegrationsRoute
   '/_layout/_authenticated/dashboard/settings/projects/$projectId/visibility': typeof LayoutAuthenticatedDashboardSettingsProjectsProjectIdVisibilityRoute
   '/_layout/_authenticated/dashboard/settings/projects/$projectId/workflow': typeof LayoutAuthenticatedDashboardSettingsProjectsProjectIdWorkflowRoute
+  '/_layout/_authenticated/dashboard/workspace/$workspaceId/quills/$': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdQuillsSplatRoute
+  '/_layout/_authenticated/feedback/$workspaceId/conversations/$conversationId/': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsConversationIdIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/conversations/all/': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsAllIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/conversations/mine/': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsMineIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/conversations/open/': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsOpenIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/conversations/queue/': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsQueueIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/conversations/unassigned/': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsUnassignedIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/posts/$postId/': typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/surveys/$surveyId/': typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/tickets/$ticketId/': typeof LayoutAuthenticatedFeedbackWorkspaceIdTicketsTicketIdIndexRoute
   '/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/backlog': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBacklogRoute
   '/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/board': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBoardRoute
   '/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/calendar': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdCalendarRoute
@@ -719,22 +1207,48 @@ export interface FileRouteTypes {
     | '/auth/verify-otp'
     | '/device/approve'
     | '/mcp/authorize'
+    | '/portal/$workspaceId'
     | '/public-project/$projectId'
+    | '/quills/kit'
     | '/device/'
     | '/dashboard'
     | '/invitations'
     | '/onboarding'
     | '/profile-setup'
     | '/invitation/accept/$inviteId'
+    | '/portal/$workspaceId/csat'
+    | '/portal/$workspaceId/my-feedback'
+    | '/portal/$workspaceId/preferences'
+    | '/portal/$workspaceId/profile'
+    | '/portal/$workspaceId/roadmap'
+    | '/portal/$workspaceId/unsubscribe'
+    | '/quills/oauth/result'
+    | '/portal/$workspaceId/'
+    | '/feedback/$workspaceId'
     | '/dashboard/invitations'
     | '/dashboard/settings'
+    | '/portal/$workspaceId/boards/$boardId'
+    | '/portal/$workspaceId/changelog/$entryId'
+    | '/portal/$workspaceId/conversations/$conversationId'
+    | '/portal/$workspaceId/hc/$'
+    | '/portal/$workspaceId/invite/$inviteId'
+    | '/portal/$workspaceId/posts/$postId'
+    | '/portal/$workspaceId/status/$incidentId'
+    | '/portal/$workspaceId/support/tickets'
     | '/dashboard/'
+    | '/portal/$workspaceId/changelog/'
+    | '/portal/$workspaceId/hc/'
+    | '/portal/$workspaceId/status/'
+    | '/portal/$workspaceId/support/'
     | '/dashboard/settings/account'
     | '/dashboard/settings/admin'
     | '/dashboard/settings/projects'
     | '/dashboard/settings/workspace'
     | '/dashboard/workspace/$workspaceId'
     | '/dashboard/workspace/create'
+    | '/portal/$workspaceId/status/incidents/$incidentId'
+    | '/feedback/$workspaceId/'
+    | '/portal/$workspaceId/hc/$locale/'
     | '/$workspaceSlug/task/$ticketId/{-$title}'
     | '/dashboard/settings/account/developer'
     | '/dashboard/settings/account/information'
@@ -759,14 +1273,36 @@ export interface FileRouteTypes {
     | '/dashboard/workspace/$workspaceId/my-tasks'
     | '/dashboard/workspace/$workspaceId/projects'
     | '/dashboard/workspace/$workspaceId/search'
+    | '/portal/$workspaceId/hc/$locale/articles/$idSlug'
+    | '/portal/$workspaceId/hc/$locale/collections/$idSlug'
     | '/dashboard/settings/admin/'
     | '/dashboard/workspace/$workspaceId/'
+    | '/feedback/$workspaceId/autopilot/'
+    | '/feedback/$workspaceId/boards/'
+    | '/feedback/$workspaceId/changelog/'
+    | '/feedback/$workspaceId/duplicates/'
+    | '/feedback/$workspaceId/insights/'
+    | '/feedback/$workspaceId/my-tickets/'
+    | '/feedback/$workspaceId/posts/'
+    | '/feedback/$workspaceId/surveys/'
+    | '/feedback/$workspaceId/tickets/'
+    | '/feedback/$workspaceId/triage/'
     | '/dashboard/settings/projects/$projectId/calendar'
     | '/dashboard/settings/projects/$projectId/custom-fields'
     | '/dashboard/settings/projects/$projectId/general'
     | '/dashboard/settings/projects/$projectId/integrations'
     | '/dashboard/settings/projects/$projectId/visibility'
     | '/dashboard/settings/projects/$projectId/workflow'
+    | '/dashboard/workspace/$workspaceId/quills/$'
+    | '/feedback/$workspaceId/conversations/$conversationId/'
+    | '/feedback/$workspaceId/conversations/all/'
+    | '/feedback/$workspaceId/conversations/mine/'
+    | '/feedback/$workspaceId/conversations/open/'
+    | '/feedback/$workspaceId/conversations/queue/'
+    | '/feedback/$workspaceId/conversations/unassigned/'
+    | '/feedback/$workspaceId/posts/$postId/'
+    | '/feedback/$workspaceId/surveys/$surveyId/'
+    | '/feedback/$workspaceId/tickets/$ticketId/'
     | '/dashboard/workspace/$workspaceId/project/$projectId/backlog'
     | '/dashboard/workspace/$workspaceId/project/$projectId/board'
     | '/dashboard/workspace/$workspaceId/project/$projectId/calendar'
@@ -787,18 +1323,42 @@ export interface FileRouteTypes {
     | '/device/approve'
     | '/mcp/authorize'
     | '/public-project/$projectId'
+    | '/quills/kit'
     | '/device'
     | '/invitations'
     | '/onboarding'
     | '/profile-setup'
     | '/invitation/accept/$inviteId'
+    | '/portal/$workspaceId/csat'
+    | '/portal/$workspaceId/my-feedback'
+    | '/portal/$workspaceId/preferences'
+    | '/portal/$workspaceId/profile'
+    | '/portal/$workspaceId/roadmap'
+    | '/portal/$workspaceId/unsubscribe'
+    | '/quills/oauth/result'
+    | '/portal/$workspaceId'
     | '/dashboard/invitations'
     | '/dashboard/settings'
+    | '/portal/$workspaceId/boards/$boardId'
+    | '/portal/$workspaceId/changelog/$entryId'
+    | '/portal/$workspaceId/conversations/$conversationId'
+    | '/portal/$workspaceId/hc/$'
+    | '/portal/$workspaceId/invite/$inviteId'
+    | '/portal/$workspaceId/posts/$postId'
+    | '/portal/$workspaceId/status/$incidentId'
+    | '/portal/$workspaceId/support/tickets'
     | '/dashboard'
+    | '/portal/$workspaceId/changelog'
+    | '/portal/$workspaceId/hc'
+    | '/portal/$workspaceId/status'
+    | '/portal/$workspaceId/support'
     | '/dashboard/settings/account'
     | '/dashboard/settings/projects'
     | '/dashboard/settings/workspace'
     | '/dashboard/workspace/create'
+    | '/portal/$workspaceId/status/incidents/$incidentId'
+    | '/feedback/$workspaceId'
+    | '/portal/$workspaceId/hc/$locale'
     | '/$workspaceSlug/task/$ticketId/{-$title}'
     | '/dashboard/settings/account/developer'
     | '/dashboard/settings/account/information'
@@ -823,14 +1383,36 @@ export interface FileRouteTypes {
     | '/dashboard/workspace/$workspaceId/my-tasks'
     | '/dashboard/workspace/$workspaceId/projects'
     | '/dashboard/workspace/$workspaceId/search'
+    | '/portal/$workspaceId/hc/$locale/articles/$idSlug'
+    | '/portal/$workspaceId/hc/$locale/collections/$idSlug'
     | '/dashboard/settings/admin'
     | '/dashboard/workspace/$workspaceId'
+    | '/feedback/$workspaceId/autopilot'
+    | '/feedback/$workspaceId/boards'
+    | '/feedback/$workspaceId/changelog'
+    | '/feedback/$workspaceId/duplicates'
+    | '/feedback/$workspaceId/insights'
+    | '/feedback/$workspaceId/my-tickets'
+    | '/feedback/$workspaceId/posts'
+    | '/feedback/$workspaceId/surveys'
+    | '/feedback/$workspaceId/tickets'
+    | '/feedback/$workspaceId/triage'
     | '/dashboard/settings/projects/$projectId/calendar'
     | '/dashboard/settings/projects/$projectId/custom-fields'
     | '/dashboard/settings/projects/$projectId/general'
     | '/dashboard/settings/projects/$projectId/integrations'
     | '/dashboard/settings/projects/$projectId/visibility'
     | '/dashboard/settings/projects/$projectId/workflow'
+    | '/dashboard/workspace/$workspaceId/quills/$'
+    | '/feedback/$workspaceId/conversations/$conversationId'
+    | '/feedback/$workspaceId/conversations/all'
+    | '/feedback/$workspaceId/conversations/mine'
+    | '/feedback/$workspaceId/conversations/open'
+    | '/feedback/$workspaceId/conversations/queue'
+    | '/feedback/$workspaceId/conversations/unassigned'
+    | '/feedback/$workspaceId/posts/$postId'
+    | '/feedback/$workspaceId/surveys/$surveyId'
+    | '/feedback/$workspaceId/tickets/$ticketId'
     | '/dashboard/workspace/$workspaceId/project/$projectId/backlog'
     | '/dashboard/workspace/$workspaceId/project/$projectId/board'
     | '/dashboard/workspace/$workspaceId/project/$projectId/calendar'
@@ -853,22 +1435,48 @@ export interface FileRouteTypes {
     | '/auth/verify-otp'
     | '/device/approve'
     | '/mcp/authorize'
+    | '/portal/$workspaceId'
     | '/public-project/$projectId'
+    | '/quills/kit'
     | '/device/'
     | '/_layout/_authenticated/dashboard'
     | '/_layout/_authenticated/invitations'
     | '/_layout/_authenticated/onboarding'
     | '/_layout/_authenticated/profile-setup'
     | '/invitation/accept/$inviteId'
+    | '/portal/$workspaceId/csat'
+    | '/portal/$workspaceId/my-feedback'
+    | '/portal/$workspaceId/preferences'
+    | '/portal/$workspaceId/profile'
+    | '/portal/$workspaceId/roadmap'
+    | '/portal/$workspaceId/unsubscribe'
+    | '/quills/oauth/result'
+    | '/portal/$workspaceId/'
+    | '/_layout/_authenticated/feedback/$workspaceId'
     | '/_layout/_authenticated/dashboard/invitations'
     | '/_layout/_authenticated/dashboard/settings'
+    | '/portal/$workspaceId/boards/$boardId'
+    | '/portal/$workspaceId/changelog/$entryId'
+    | '/portal/$workspaceId/conversations/$conversationId'
+    | '/portal/$workspaceId/hc/$'
+    | '/portal/$workspaceId/invite/$inviteId'
+    | '/portal/$workspaceId/posts/$postId'
+    | '/portal/$workspaceId/status/$incidentId'
+    | '/portal/$workspaceId/support/tickets'
     | '/_layout/_authenticated/dashboard/'
+    | '/portal/$workspaceId/changelog/'
+    | '/portal/$workspaceId/hc/'
+    | '/portal/$workspaceId/status/'
+    | '/portal/$workspaceId/support/'
     | '/_layout/_authenticated/dashboard/settings/account'
     | '/_layout/_authenticated/dashboard/settings/admin'
     | '/_layout/_authenticated/dashboard/settings/projects'
     | '/_layout/_authenticated/dashboard/settings/workspace'
     | '/_layout/_authenticated/dashboard/workspace/$workspaceId'
     | '/_layout/_authenticated/dashboard/workspace/create'
+    | '/portal/$workspaceId/status/incidents/$incidentId'
+    | '/_layout/_authenticated/feedback/$workspaceId/'
+    | '/portal/$workspaceId/hc/$locale/'
     | '/_layout/_authenticated/$workspaceSlug/task/$ticketId/{-$title}'
     | '/_layout/_authenticated/dashboard/settings/account/developer'
     | '/_layout/_authenticated/dashboard/settings/account/information'
@@ -893,14 +1501,36 @@ export interface FileRouteTypes {
     | '/_layout/_authenticated/dashboard/workspace/$workspaceId/my-tasks'
     | '/_layout/_authenticated/dashboard/workspace/$workspaceId/projects'
     | '/_layout/_authenticated/dashboard/workspace/$workspaceId/search'
+    | '/portal/$workspaceId/hc/$locale/articles/$idSlug'
+    | '/portal/$workspaceId/hc/$locale/collections/$idSlug'
     | '/_layout/_authenticated/dashboard/settings/admin/'
     | '/_layout/_authenticated/dashboard/workspace/$workspaceId/'
+    | '/_layout/_authenticated/feedback/$workspaceId/autopilot/'
+    | '/_layout/_authenticated/feedback/$workspaceId/boards/'
+    | '/_layout/_authenticated/feedback/$workspaceId/changelog/'
+    | '/_layout/_authenticated/feedback/$workspaceId/duplicates/'
+    | '/_layout/_authenticated/feedback/$workspaceId/insights/'
+    | '/_layout/_authenticated/feedback/$workspaceId/my-tickets/'
+    | '/_layout/_authenticated/feedback/$workspaceId/posts/'
+    | '/_layout/_authenticated/feedback/$workspaceId/surveys/'
+    | '/_layout/_authenticated/feedback/$workspaceId/tickets/'
+    | '/_layout/_authenticated/feedback/$workspaceId/triage/'
     | '/_layout/_authenticated/dashboard/settings/projects/$projectId/calendar'
     | '/_layout/_authenticated/dashboard/settings/projects/$projectId/custom-fields'
     | '/_layout/_authenticated/dashboard/settings/projects/$projectId/general'
     | '/_layout/_authenticated/dashboard/settings/projects/$projectId/integrations'
     | '/_layout/_authenticated/dashboard/settings/projects/$projectId/visibility'
     | '/_layout/_authenticated/dashboard/settings/projects/$projectId/workflow'
+    | '/_layout/_authenticated/dashboard/workspace/$workspaceId/quills/$'
+    | '/_layout/_authenticated/feedback/$workspaceId/conversations/$conversationId/'
+    | '/_layout/_authenticated/feedback/$workspaceId/conversations/all/'
+    | '/_layout/_authenticated/feedback/$workspaceId/conversations/mine/'
+    | '/_layout/_authenticated/feedback/$workspaceId/conversations/open/'
+    | '/_layout/_authenticated/feedback/$workspaceId/conversations/queue/'
+    | '/_layout/_authenticated/feedback/$workspaceId/conversations/unassigned/'
+    | '/_layout/_authenticated/feedback/$workspaceId/posts/$postId/'
+    | '/_layout/_authenticated/feedback/$workspaceId/surveys/$surveyId/'
+    | '/_layout/_authenticated/feedback/$workspaceId/tickets/$ticketId/'
     | '/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/backlog'
     | '/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/board'
     | '/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/calendar'
@@ -916,8 +1546,11 @@ export interface RootRouteChildren {
   DeviceRoute: typeof DeviceRouteWithChildren
   TestErrorRoute: typeof TestErrorRoute
   McpAuthorizeRoute: typeof McpAuthorizeRoute
+  PortalWorkspaceIdRoute: typeof PortalWorkspaceIdRouteWithChildren
   PublicProjectProjectIdRoute: typeof PublicProjectProjectIdRoute
+  QuillsKitRoute: typeof QuillsKitRoute
   InvitationAcceptInviteIdRoute: typeof InvitationAcceptInviteIdRoute
+  QuillsOauthResultRoute: typeof QuillsOauthResultRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1027,11 +1660,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof McpAuthorizeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portal/$workspaceId': {
+      id: '/portal/$workspaceId'
+      path: '/portal/$workspaceId'
+      fullPath: '/portal/$workspaceId'
+      preLoaderRoute: typeof PortalWorkspaceIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/public-project/$projectId': {
       id: '/public-project/$projectId'
       path: '/public-project/$projectId'
       fullPath: '/public-project/$projectId'
       preLoaderRoute: typeof PublicProjectProjectIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quills/kit': {
+      id: '/quills/kit'
+      path: '/quills/kit'
+      fullPath: '/quills/kit'
+      preLoaderRoute: typeof QuillsKitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_layout/_authenticated/dashboard': {
@@ -1069,6 +1716,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InvitationAcceptInviteIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portal/$workspaceId/': {
+      id: '/portal/$workspaceId/'
+      path: '/'
+      fullPath: '/portal/$workspaceId/'
+      preLoaderRoute: typeof PortalWorkspaceIdIndexRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/portal/$workspaceId/csat': {
+      id: '/portal/$workspaceId/csat'
+      path: '/csat'
+      fullPath: '/portal/$workspaceId/csat'
+      preLoaderRoute: typeof PortalWorkspaceIdCsatRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/portal/$workspaceId/my-feedback': {
+      id: '/portal/$workspaceId/my-feedback'
+      path: '/my-feedback'
+      fullPath: '/portal/$workspaceId/my-feedback'
+      preLoaderRoute: typeof PortalWorkspaceIdMyFeedbackRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/portal/$workspaceId/preferences': {
+      id: '/portal/$workspaceId/preferences'
+      path: '/preferences'
+      fullPath: '/portal/$workspaceId/preferences'
+      preLoaderRoute: typeof PortalWorkspaceIdPreferencesRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/portal/$workspaceId/profile': {
+      id: '/portal/$workspaceId/profile'
+      path: '/profile'
+      fullPath: '/portal/$workspaceId/profile'
+      preLoaderRoute: typeof PortalWorkspaceIdProfileRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/portal/$workspaceId/roadmap': {
+      id: '/portal/$workspaceId/roadmap'
+      path: '/roadmap'
+      fullPath: '/portal/$workspaceId/roadmap'
+      preLoaderRoute: typeof PortalWorkspaceIdRoadmapRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/portal/$workspaceId/unsubscribe': {
+      id: '/portal/$workspaceId/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/portal/$workspaceId/unsubscribe'
+      preLoaderRoute: typeof PortalWorkspaceIdUnsubscribeRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/quills/oauth/result': {
+      id: '/quills/oauth/result'
+      path: '/quills/oauth/result'
+      fullPath: '/quills/oauth/result'
+      preLoaderRoute: typeof QuillsOauthResultRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_layout/_authenticated/dashboard/': {
       id: '/_layout/_authenticated/dashboard/'
       path: '/'
@@ -1089,6 +1792,97 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/settings'
       preLoaderRoute: typeof LayoutAuthenticatedDashboardSettingsRouteImport
       parentRoute: typeof LayoutAuthenticatedDashboardRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId': {
+      id: '/_layout/_authenticated/feedback/$workspaceId'
+      path: '/feedback/$workspaceId'
+      fullPath: '/feedback/$workspaceId'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRouteImport
+      parentRoute: typeof LayoutAuthenticatedRoute
+    }
+    '/portal/$workspaceId/boards/$boardId': {
+      id: '/portal/$workspaceId/boards/$boardId'
+      path: '/boards/$boardId'
+      fullPath: '/portal/$workspaceId/boards/$boardId'
+      preLoaderRoute: typeof PortalWorkspaceIdBoardsBoardIdRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/portal/$workspaceId/changelog/': {
+      id: '/portal/$workspaceId/changelog/'
+      path: '/changelog'
+      fullPath: '/portal/$workspaceId/changelog/'
+      preLoaderRoute: typeof PortalWorkspaceIdChangelogIndexRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/portal/$workspaceId/changelog/$entryId': {
+      id: '/portal/$workspaceId/changelog/$entryId'
+      path: '/changelog/$entryId'
+      fullPath: '/portal/$workspaceId/changelog/$entryId'
+      preLoaderRoute: typeof PortalWorkspaceIdChangelogEntryIdRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/portal/$workspaceId/conversations/$conversationId': {
+      id: '/portal/$workspaceId/conversations/$conversationId'
+      path: '/conversations/$conversationId'
+      fullPath: '/portal/$workspaceId/conversations/$conversationId'
+      preLoaderRoute: typeof PortalWorkspaceIdConversationsConversationIdRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/portal/$workspaceId/hc/': {
+      id: '/portal/$workspaceId/hc/'
+      path: '/hc'
+      fullPath: '/portal/$workspaceId/hc/'
+      preLoaderRoute: typeof PortalWorkspaceIdHcIndexRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/portal/$workspaceId/hc/$': {
+      id: '/portal/$workspaceId/hc/$'
+      path: '/hc/$'
+      fullPath: '/portal/$workspaceId/hc/$'
+      preLoaderRoute: typeof PortalWorkspaceIdHcSplatRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/portal/$workspaceId/invite/$inviteId': {
+      id: '/portal/$workspaceId/invite/$inviteId'
+      path: '/invite/$inviteId'
+      fullPath: '/portal/$workspaceId/invite/$inviteId'
+      preLoaderRoute: typeof PortalWorkspaceIdInviteInviteIdRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/portal/$workspaceId/posts/$postId': {
+      id: '/portal/$workspaceId/posts/$postId'
+      path: '/posts/$postId'
+      fullPath: '/portal/$workspaceId/posts/$postId'
+      preLoaderRoute: typeof PortalWorkspaceIdPostsPostIdRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/portal/$workspaceId/status/': {
+      id: '/portal/$workspaceId/status/'
+      path: '/status'
+      fullPath: '/portal/$workspaceId/status/'
+      preLoaderRoute: typeof PortalWorkspaceIdStatusIndexRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/portal/$workspaceId/status/$incidentId': {
+      id: '/portal/$workspaceId/status/$incidentId'
+      path: '/status/$incidentId'
+      fullPath: '/portal/$workspaceId/status/$incidentId'
+      preLoaderRoute: typeof PortalWorkspaceIdStatusIncidentIdRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/portal/$workspaceId/support/': {
+      id: '/portal/$workspaceId/support/'
+      path: '/support'
+      fullPath: '/portal/$workspaceId/support/'
+      preLoaderRoute: typeof PortalWorkspaceIdSupportIndexRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/portal/$workspaceId/support/tickets': {
+      id: '/portal/$workspaceId/support/tickets'
+      path: '/support/tickets'
+      fullPath: '/portal/$workspaceId/support/tickets'
+      preLoaderRoute: typeof PortalWorkspaceIdSupportTicketsRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
     }
     '/_layout/_authenticated/dashboard/settings/account': {
       id: '/_layout/_authenticated/dashboard/settings/account'
@@ -1131,6 +1925,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/workspace/create'
       preLoaderRoute: typeof LayoutAuthenticatedDashboardWorkspaceCreateRouteImport
       parentRoute: typeof LayoutAuthenticatedDashboardRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/'
+      path: '/'
+      fullPath: '/feedback/$workspaceId/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/portal/$workspaceId/hc/$locale/': {
+      id: '/portal/$workspaceId/hc/$locale/'
+      path: '/hc/$locale'
+      fullPath: '/portal/$workspaceId/hc/$locale/'
+      preLoaderRoute: typeof PortalWorkspaceIdHcLocaleIndexRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/portal/$workspaceId/status/incidents/$incidentId': {
+      id: '/portal/$workspaceId/status/incidents/$incidentId'
+      path: '/status/incidents/$incidentId'
+      fullPath: '/portal/$workspaceId/status/incidents/$incidentId'
+      preLoaderRoute: typeof PortalWorkspaceIdStatusIncidentsIncidentIdRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
     }
     '/_layout/_authenticated/$workspaceSlug/task/$ticketId/{-$title}': {
       id: '/_layout/_authenticated/$workspaceSlug/task/$ticketId/{-$title}'
@@ -1314,6 +2129,90 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdSearchRouteImport
       parentRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdRoute
     }
+    '/_layout/_authenticated/feedback/$workspaceId/autopilot/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/autopilot/'
+      path: '/autopilot'
+      fullPath: '/feedback/$workspaceId/autopilot/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdAutopilotIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/boards/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/boards/'
+      path: '/boards'
+      fullPath: '/feedback/$workspaceId/boards/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdBoardsIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/changelog/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/changelog/'
+      path: '/changelog'
+      fullPath: '/feedback/$workspaceId/changelog/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdChangelogIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/duplicates/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/duplicates/'
+      path: '/duplicates'
+      fullPath: '/feedback/$workspaceId/duplicates/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdDuplicatesIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/insights/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/insights/'
+      path: '/insights'
+      fullPath: '/feedback/$workspaceId/insights/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdInsightsIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/my-tickets/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/my-tickets/'
+      path: '/my-tickets'
+      fullPath: '/feedback/$workspaceId/my-tickets/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/posts/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/posts/'
+      path: '/posts'
+      fullPath: '/feedback/$workspaceId/posts/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/surveys/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/surveys/'
+      path: '/surveys'
+      fullPath: '/feedback/$workspaceId/surveys/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/tickets/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/tickets/'
+      path: '/tickets'
+      fullPath: '/feedback/$workspaceId/tickets/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdTicketsIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/triage/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/triage/'
+      path: '/triage'
+      fullPath: '/feedback/$workspaceId/triage/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdTriageIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/portal/$workspaceId/hc/$locale/articles/$idSlug': {
+      id: '/portal/$workspaceId/hc/$locale/articles/$idSlug'
+      path: '/hc/$locale/articles/$idSlug'
+      fullPath: '/portal/$workspaceId/hc/$locale/articles/$idSlug'
+      preLoaderRoute: typeof PortalWorkspaceIdHcLocaleArticlesIdSlugRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
+    '/portal/$workspaceId/hc/$locale/collections/$idSlug': {
+      id: '/portal/$workspaceId/hc/$locale/collections/$idSlug'
+      path: '/hc/$locale/collections/$idSlug'
+      fullPath: '/portal/$workspaceId/hc/$locale/collections/$idSlug'
+      preLoaderRoute: typeof PortalWorkspaceIdHcLocaleCollectionsIdSlugRouteImport
+      parentRoute: typeof PortalWorkspaceIdRoute
+    }
     '/_layout/_authenticated/dashboard/settings/projects/$projectId/calendar': {
       id: '/_layout/_authenticated/dashboard/settings/projects/$projectId/calendar'
       path: '/$projectId/calendar'
@@ -1355,6 +2254,76 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/settings/projects/$projectId/workflow'
       preLoaderRoute: typeof LayoutAuthenticatedDashboardSettingsProjectsProjectIdWorkflowRouteImport
       parentRoute: typeof LayoutAuthenticatedDashboardSettingsProjectsRoute
+    }
+    '/_layout/_authenticated/dashboard/workspace/$workspaceId/quills/$': {
+      id: '/_layout/_authenticated/dashboard/workspace/$workspaceId/quills/$'
+      path: '/quills/$'
+      fullPath: '/dashboard/workspace/$workspaceId/quills/$'
+      preLoaderRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdQuillsSplatRouteImport
+      parentRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/conversations/$conversationId/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/conversations/$conversationId/'
+      path: '/conversations/$conversationId'
+      fullPath: '/feedback/$workspaceId/conversations/$conversationId/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsConversationIdIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/conversations/all/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/conversations/all/'
+      path: '/conversations/all'
+      fullPath: '/feedback/$workspaceId/conversations/all/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsAllIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/conversations/mine/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/conversations/mine/'
+      path: '/conversations/mine'
+      fullPath: '/feedback/$workspaceId/conversations/mine/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsMineIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/conversations/open/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/conversations/open/'
+      path: '/conversations/open'
+      fullPath: '/feedback/$workspaceId/conversations/open/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsOpenIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/conversations/queue/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/conversations/queue/'
+      path: '/conversations/queue'
+      fullPath: '/feedback/$workspaceId/conversations/queue/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsQueueIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/conversations/unassigned/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/conversations/unassigned/'
+      path: '/conversations/unassigned'
+      fullPath: '/feedback/$workspaceId/conversations/unassigned/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsUnassignedIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/posts/$postId/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/posts/$postId/'
+      path: '/posts/$postId'
+      fullPath: '/feedback/$workspaceId/posts/$postId/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/surveys/$surveyId/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/surveys/$surveyId/'
+      path: '/surveys/$surveyId'
+      fullPath: '/feedback/$workspaceId/surveys/$surveyId/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/tickets/$ticketId/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/tickets/$ticketId/'
+      path: '/tickets/$ticketId'
+      fullPath: '/feedback/$workspaceId/tickets/$ticketId/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdTicketsTicketIdIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
     }
     '/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/': {
       id: '/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/'
@@ -1555,6 +2524,7 @@ interface LayoutAuthenticatedDashboardWorkspaceWorkspaceIdRouteChildren {
   LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectsRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectsRoute
   LayoutAuthenticatedDashboardWorkspaceWorkspaceIdSearchRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdSearchRoute
   LayoutAuthenticatedDashboardWorkspaceWorkspaceIdIndexRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdIndexRoute
+  LayoutAuthenticatedDashboardWorkspaceWorkspaceIdQuillsSplatRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdQuillsSplatRoute
   LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBacklogRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBacklogRoute
   LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBoardRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBoardRoute
   LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdCalendarRoute: typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdCalendarRoute
@@ -1577,6 +2547,8 @@ const LayoutAuthenticatedDashboardWorkspaceWorkspaceIdRouteChildren: LayoutAuthe
       LayoutAuthenticatedDashboardWorkspaceWorkspaceIdSearchRoute,
     LayoutAuthenticatedDashboardWorkspaceWorkspaceIdIndexRoute:
       LayoutAuthenticatedDashboardWorkspaceWorkspaceIdIndexRoute,
+    LayoutAuthenticatedDashboardWorkspaceWorkspaceIdQuillsSplatRoute:
+      LayoutAuthenticatedDashboardWorkspaceWorkspaceIdQuillsSplatRoute,
     LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBacklogRoute:
       LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBacklogRoute,
     LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBoardRoute:
@@ -1623,11 +2595,84 @@ const LayoutAuthenticatedDashboardRouteWithChildren =
     LayoutAuthenticatedDashboardRouteChildren,
   )
 
+interface LayoutAuthenticatedFeedbackWorkspaceIdRouteRouteChildren {
+  LayoutAuthenticatedFeedbackWorkspaceIdIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdAutopilotIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdAutopilotIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdBoardsIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdBoardsIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdChangelogIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdChangelogIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdDuplicatesIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdDuplicatesIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdInsightsIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdInsightsIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdTicketsIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdTicketsIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdTriageIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdTriageIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdConversationsConversationIdIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsConversationIdIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdConversationsAllIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsAllIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdConversationsMineIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsMineIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdConversationsOpenIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsOpenIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdConversationsQueueIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsQueueIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdConversationsUnassignedIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsUnassignedIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdTicketsTicketIdIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdTicketsTicketIdIndexRoute
+}
+
+const LayoutAuthenticatedFeedbackWorkspaceIdRouteRouteChildren: LayoutAuthenticatedFeedbackWorkspaceIdRouteRouteChildren =
+  {
+    LayoutAuthenticatedFeedbackWorkspaceIdIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdAutopilotIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdAutopilotIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdBoardsIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdBoardsIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdChangelogIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdChangelogIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdDuplicatesIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdDuplicatesIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdInsightsIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdInsightsIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdTicketsIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdTicketsIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdTriageIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdTriageIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdConversationsConversationIdIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdConversationsConversationIdIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdConversationsAllIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdConversationsAllIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdConversationsMineIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdConversationsMineIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdConversationsOpenIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdConversationsOpenIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdConversationsQueueIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdConversationsQueueIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdConversationsUnassignedIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdConversationsUnassignedIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdTicketsTicketIdIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdTicketsTicketIdIndexRoute,
+  }
+
+const LayoutAuthenticatedFeedbackWorkspaceIdRouteRouteWithChildren =
+  LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute._addFileChildren(
+    LayoutAuthenticatedFeedbackWorkspaceIdRouteRouteChildren,
+  )
+
 interface LayoutAuthenticatedRouteChildren {
   LayoutAuthenticatedDashboardRoute: typeof LayoutAuthenticatedDashboardRouteWithChildren
   LayoutAuthenticatedInvitationsRoute: typeof LayoutAuthenticatedInvitationsRoute
   LayoutAuthenticatedOnboardingRoute: typeof LayoutAuthenticatedOnboardingRoute
   LayoutAuthenticatedProfileSetupRoute: typeof LayoutAuthenticatedProfileSetupRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRouteWithChildren
   LayoutAuthenticatedWorkspaceSlugTaskTicketIdChar123TitleChar125Route: typeof LayoutAuthenticatedWorkspaceSlugTaskTicketIdChar123TitleChar125Route
 }
 
@@ -1637,6 +2682,8 @@ const LayoutAuthenticatedRouteChildren: LayoutAuthenticatedRouteChildren = {
   LayoutAuthenticatedInvitationsRoute: LayoutAuthenticatedInvitationsRoute,
   LayoutAuthenticatedOnboardingRoute: LayoutAuthenticatedOnboardingRoute,
   LayoutAuthenticatedProfileSetupRoute: LayoutAuthenticatedProfileSetupRoute,
+  LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute:
+    LayoutAuthenticatedFeedbackWorkspaceIdRouteRouteWithChildren,
   LayoutAuthenticatedWorkspaceSlugTaskTicketIdChar123TitleChar125Route:
     LayoutAuthenticatedWorkspaceSlugTaskTicketIdChar123TitleChar125Route,
 }
@@ -1688,6 +2735,67 @@ const DeviceRouteChildren: DeviceRouteChildren = {
 const DeviceRouteWithChildren =
   DeviceRoute._addFileChildren(DeviceRouteChildren)
 
+interface PortalWorkspaceIdRouteChildren {
+  PortalWorkspaceIdCsatRoute: typeof PortalWorkspaceIdCsatRoute
+  PortalWorkspaceIdMyFeedbackRoute: typeof PortalWorkspaceIdMyFeedbackRoute
+  PortalWorkspaceIdPreferencesRoute: typeof PortalWorkspaceIdPreferencesRoute
+  PortalWorkspaceIdProfileRoute: typeof PortalWorkspaceIdProfileRoute
+  PortalWorkspaceIdRoadmapRoute: typeof PortalWorkspaceIdRoadmapRoute
+  PortalWorkspaceIdUnsubscribeRoute: typeof PortalWorkspaceIdUnsubscribeRoute
+  PortalWorkspaceIdIndexRoute: typeof PortalWorkspaceIdIndexRoute
+  PortalWorkspaceIdBoardsBoardIdRoute: typeof PortalWorkspaceIdBoardsBoardIdRoute
+  PortalWorkspaceIdChangelogEntryIdRoute: typeof PortalWorkspaceIdChangelogEntryIdRoute
+  PortalWorkspaceIdConversationsConversationIdRoute: typeof PortalWorkspaceIdConversationsConversationIdRoute
+  PortalWorkspaceIdHcSplatRoute: typeof PortalWorkspaceIdHcSplatRoute
+  PortalWorkspaceIdInviteInviteIdRoute: typeof PortalWorkspaceIdInviteInviteIdRoute
+  PortalWorkspaceIdPostsPostIdRoute: typeof PortalWorkspaceIdPostsPostIdRoute
+  PortalWorkspaceIdStatusIncidentIdRoute: typeof PortalWorkspaceIdStatusIncidentIdRoute
+  PortalWorkspaceIdSupportTicketsRoute: typeof PortalWorkspaceIdSupportTicketsRoute
+  PortalWorkspaceIdChangelogIndexRoute: typeof PortalWorkspaceIdChangelogIndexRoute
+  PortalWorkspaceIdHcIndexRoute: typeof PortalWorkspaceIdHcIndexRoute
+  PortalWorkspaceIdStatusIndexRoute: typeof PortalWorkspaceIdStatusIndexRoute
+  PortalWorkspaceIdSupportIndexRoute: typeof PortalWorkspaceIdSupportIndexRoute
+  PortalWorkspaceIdStatusIncidentsIncidentIdRoute: typeof PortalWorkspaceIdStatusIncidentsIncidentIdRoute
+  PortalWorkspaceIdHcLocaleIndexRoute: typeof PortalWorkspaceIdHcLocaleIndexRoute
+  PortalWorkspaceIdHcLocaleArticlesIdSlugRoute: typeof PortalWorkspaceIdHcLocaleArticlesIdSlugRoute
+  PortalWorkspaceIdHcLocaleCollectionsIdSlugRoute: typeof PortalWorkspaceIdHcLocaleCollectionsIdSlugRoute
+}
+
+const PortalWorkspaceIdRouteChildren: PortalWorkspaceIdRouteChildren = {
+  PortalWorkspaceIdCsatRoute: PortalWorkspaceIdCsatRoute,
+  PortalWorkspaceIdMyFeedbackRoute: PortalWorkspaceIdMyFeedbackRoute,
+  PortalWorkspaceIdPreferencesRoute: PortalWorkspaceIdPreferencesRoute,
+  PortalWorkspaceIdProfileRoute: PortalWorkspaceIdProfileRoute,
+  PortalWorkspaceIdRoadmapRoute: PortalWorkspaceIdRoadmapRoute,
+  PortalWorkspaceIdUnsubscribeRoute: PortalWorkspaceIdUnsubscribeRoute,
+  PortalWorkspaceIdIndexRoute: PortalWorkspaceIdIndexRoute,
+  PortalWorkspaceIdBoardsBoardIdRoute: PortalWorkspaceIdBoardsBoardIdRoute,
+  PortalWorkspaceIdChangelogEntryIdRoute:
+    PortalWorkspaceIdChangelogEntryIdRoute,
+  PortalWorkspaceIdConversationsConversationIdRoute:
+    PortalWorkspaceIdConversationsConversationIdRoute,
+  PortalWorkspaceIdHcSplatRoute: PortalWorkspaceIdHcSplatRoute,
+  PortalWorkspaceIdInviteInviteIdRoute: PortalWorkspaceIdInviteInviteIdRoute,
+  PortalWorkspaceIdPostsPostIdRoute: PortalWorkspaceIdPostsPostIdRoute,
+  PortalWorkspaceIdStatusIncidentIdRoute:
+    PortalWorkspaceIdStatusIncidentIdRoute,
+  PortalWorkspaceIdSupportTicketsRoute: PortalWorkspaceIdSupportTicketsRoute,
+  PortalWorkspaceIdChangelogIndexRoute: PortalWorkspaceIdChangelogIndexRoute,
+  PortalWorkspaceIdHcIndexRoute: PortalWorkspaceIdHcIndexRoute,
+  PortalWorkspaceIdStatusIndexRoute: PortalWorkspaceIdStatusIndexRoute,
+  PortalWorkspaceIdSupportIndexRoute: PortalWorkspaceIdSupportIndexRoute,
+  PortalWorkspaceIdStatusIncidentsIncidentIdRoute:
+    PortalWorkspaceIdStatusIncidentsIncidentIdRoute,
+  PortalWorkspaceIdHcLocaleIndexRoute: PortalWorkspaceIdHcLocaleIndexRoute,
+  PortalWorkspaceIdHcLocaleArticlesIdSlugRoute:
+    PortalWorkspaceIdHcLocaleArticlesIdSlugRoute,
+  PortalWorkspaceIdHcLocaleCollectionsIdSlugRoute:
+    PortalWorkspaceIdHcLocaleCollectionsIdSlugRoute,
+}
+
+const PortalWorkspaceIdRouteWithChildren =
+  PortalWorkspaceIdRoute._addFileChildren(PortalWorkspaceIdRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LayoutRoute: LayoutRouteWithChildren,
@@ -1695,8 +2803,11 @@ const rootRouteChildren: RootRouteChildren = {
   DeviceRoute: DeviceRouteWithChildren,
   TestErrorRoute: TestErrorRoute,
   McpAuthorizeRoute: McpAuthorizeRoute,
+  PortalWorkspaceIdRoute: PortalWorkspaceIdRouteWithChildren,
   PublicProjectProjectIdRoute: PublicProjectProjectIdRoute,
+  QuillsKitRoute: QuillsKitRoute,
   InvitationAcceptInviteIdRoute: InvitationAcceptInviteIdRoute,
+  QuillsOauthResultRoute: QuillsOauthResultRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

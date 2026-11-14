@@ -18,8 +18,11 @@ import {
   toConversation,
   toMessage,
   toPost,
+  toReactions,
   VOTE_EMOJI,
 } from "./map.js";
+import { postMetadata } from "./post-context.js";
+import { uploadImage } from "./uploads.js";
 import { writes, type Sent } from "./writes.js";
 import type { EventMap } from "../core/protocol.js";
 import type {
@@ -50,6 +53,8 @@ interface Options {
   board?: string;
   host: HostEvents;
   pollIntervalMs: number;
+  /** The host app's metadata and the page URL from the SDK, sent with a new post. */
+  context?: Record<string, string>;
 }
 
 /** Replaces the item with the same ID, or adds it at `where`. */
@@ -77,6 +82,7 @@ export function useWidgetData({
   board,
   host,
   pollIntervalMs,
+  context = {},
 }: Options): Partial<WidgetViewProps> {
   const [state, setState] = useState({
     session,
@@ -94,7 +100,15 @@ export function useWidgetData({
   data.current = current ? state.data : emptySnapshot;
   const events = useRef(host);
   events.current = host;
+  const page = useRef(context);
+  page.current = context;
+  /** A retry sends the files that an earlier attempt uploaded, so its idempotency key still fits. */
+  const uploaded = useRef(new WeakMap<File, string>());
   const unread = useRef(-1);
+  /** Unread changelog updates; the launcher badge shows them with the unread replies. */
+  const updatesUnread = useRef(0);
+  const badge = () =>
+    events.current.unread(Math.max(0, unread.current) + updatesUnread.current);
   /** The threads are loaded; until then a poll only reports the unread count. */
   const loaded = useRef(false);
   /** The unread count changed since the threads were last read. */
@@ -130,9 +144,17 @@ export function useWidgetData({
     const { unreadCount } = await send.unread(signal);
     if (!signal.aborted && unreadCount !== unread.current) {
       unread.current = unreadCount;
-      events.current.unread(unreadCount);
+      badge();
     }
     return unreadCount;
+  };
+  // ponytail: read once per session and after a mark, not polled; updates ship rarely.
+  const reportUpdatesUnread = async (signal: AbortSignal) => {
+    const { count } = await send.updatesUnread(signal);
+    if (!signal.aborted) {
+      updatesUnread.current = count;
+      badge();
+    }
   };
   const load = (signal: AbortSignal) =>
     run(async () => {
@@ -187,12 +209,15 @@ export function useWidgetData({
     const controller = new AbortController();
     abort.current = controller;
     unread.current = -1;
+    updatesUnread.current = 0;
     loaded.current = false;
     stale.current = false;
     if (active) {
       setState({ session, data: emptySnapshot, loadState: "loading" });
       void load(controller.signal).catch(() => {});
     }
+    if (surfaces.changelog)
+      void reportUpdatesUnread(controller.signal).catch(() => {});
     if (!surfaces.messenger) return () => controller.abort();
     if (!active) void reportUnread(controller.signal).catch(() => {});
     // No push channel for widget visitors: poll the unread count, then read only what changed.
@@ -294,11 +319,25 @@ export function useWidgetData({
     ...(available.feedback && {
       onSubmitFeedback: (body: string, options: SubmissionOptions) =>
         run(async (signal) => {
+          const attachmentIds: string[] = [];
+          for (const file of options.attachments ?? []) {
+            let id = uploaded.current.get(file);
+            if (!id) {
+              id = await uploadImage(api, file, signal);
+              uploaded.current.set(file, id);
+            }
+            attachmentIds.push(id);
+          }
           const created = await send.createPost(
-            body,
+            // A post needs a title: a screenshot alone gets a plain one.
+            body || (attachmentIds.length ? "Screenshot" : body),
             options.idempotencyKey,
             boardId.current || undefined,
             signal,
+            {
+              attachmentIds,
+              metadata: postMetadata(page.current, navigator.userAgent),
+            },
           );
           const post = toPost(created);
           if (post)
@@ -378,6 +417,38 @@ export function useWidgetData({
                 : comment,
             ),
           }));
+        }),
+    }),
+    ...(available.changelog && {
+      onReactToUpdate: (entryId: string, emoji: string) =>
+        run(async (signal) => {
+          const reacted = !data.current.updates
+            .find((item) => item.id === entryId)
+            ?.reactions?.find((reaction) => reaction.emoji === emoji)?.reacted;
+          const result = await send.reactToUpdate(
+            entryId,
+            emoji,
+            reacted,
+            signal,
+          );
+          patch(signal, (value) => ({
+            ...value,
+            updates: value.updates.map((item) =>
+              item.id === entryId
+                ? { ...item, reactions: toReactions(result.reactions) }
+                : item,
+            ),
+          }));
+        }),
+      // The read mark covers every update, so one read clears them all.
+      onReadUpdate: () =>
+        run(async (signal) => {
+          await send.readUpdates(signal);
+          patch(signal, (value) => ({
+            ...value,
+            updates: value.updates.map((item) => ({ ...item, unread: false })),
+          }));
+          await reportUpdatesUnread(signal);
         }),
     }),
     ...(available.help && {

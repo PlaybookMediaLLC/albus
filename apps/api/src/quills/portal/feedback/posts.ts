@@ -1,4 +1,11 @@
 import {
+  attachment,
+  attachmentIds,
+  attachmentFields,
+  readAttachments,
+  saveAttachments,
+} from "./attachments";
+import {
   and,
   asc,
   desc,
@@ -11,7 +18,7 @@ import {
   sql,
   type SQL,
 } from "drizzle-orm";
-import type { PostId } from "@kaneo/ids";
+import type { PostId, PrincipalId } from "@kaneo/ids";
 import { flexibleToTypeIdSchema } from "@kaneo/ids/zod";
 import {
   apiRouter,
@@ -31,7 +38,7 @@ import {
 } from "../../../database/quills/schema/posts";
 import { postStatuses } from "../../../database/quills/schema/statuses";
 import { defineQuillsRoute, type Database } from "../../framework/define-route";
-import { afterCursor, sorts } from "../../feedback/post-filters";
+import { afterCursor, randomSort, sorts } from "../../feedback/post-filters";
 import { notFound, notTest, relatedPosts } from "../../feedback/visibility";
 import { claimReceipt } from "./receipts";
 import {
@@ -44,6 +51,7 @@ import {
   httpUrl,
   postVisible,
   principalOf,
+  shownVotes,
   STAGES,
   stageOf,
   title,
@@ -64,6 +72,18 @@ const errors = {
   404: "Post or board not found",
 };
 const writeErrors = { ...errors, 409: "Idempotency key reused" };
+const importance = z.enum(postVotes.importance.enumValues);
+const voteCount = z.number().optional().openapi({
+  description: "Left out when the post's board hides vote counts",
+});
+/** Host-page context from the widget (RFC 0003 feature 6), kept with the post for the team. */
+const widgetMetadata = z
+  .record(z.string().trim().min(1).max(64), z.string().max(500))
+  .refine((map) => Object.keys(map).length <= 20, "At most 20 metadata keys")
+  .optional()
+  .describe(
+    "Context from the host page, such as pageUrl and browser, and keys that the host app set with Quackback.metadata. Teammates read it; customers never do.",
+  );
 
 export const postItem = z.object({
   id: z.string(),
@@ -79,7 +99,7 @@ export const postItem = z.object({
     avatarUrl: z.string().nullable(),
     isTeamMember: z.boolean(),
   }),
-  voteCount: z.number(),
+  voteCount,
   commentCount: z.number(),
   pending: z
     .boolean()
@@ -93,6 +113,7 @@ export const postItem = z.object({
   createdAt: responseTimestamp,
 });
 const postDetail = postItem.extend({
+  attachments: z.array(attachment),
   canVote: z.boolean(),
   canComment: z.boolean(),
   canEdit: z.boolean(),
@@ -100,6 +121,10 @@ const postDetail = postItem.extend({
   isCommentsLocked: z.boolean(),
   authorOnlyReplies: z.boolean(),
   mergedInto: z.object({ id: z.string(), title: z.string() }).nullable(),
+  importance: importance.nullable().openapi({
+    description:
+      "How much the caller needs the post, when the caller voted and said so",
+  }),
 });
 
 const fields = {
@@ -215,7 +240,7 @@ async function present(
         avatarUrl: anonymous ? null : httpUrl(row.authorAvatar),
         isTeamMember: !!row.authorTeammate,
       },
-      voteCount: row.voteCount,
+      ...shownVotes(board, row.voteCount),
       commentCount: row.commentCount,
       pending: row.moderationState === "pending",
       isAuthor: !!viewer.principalId && row.principalId === viewer.principalId,
@@ -305,7 +330,10 @@ export const listPosts = (audience: Customer) =>
       boardId: flexibleToTypeIdSchema("board").optional(),
       stage: z.enum(STAGES).optional(),
       search: z.string().trim().min(1).max(200).optional(),
-      sort: z.enum(["newest", "oldest", "votes"]).default("newest"),
+      sort: z.enum(["newest", "oldest", "votes", "random"]).optional().openapi({
+        description:
+          "Without sort: the default sort of the board that boardId names, else newest. random is the same order for one caller for one UTC day.",
+      }),
       cursor: flexibleToTypeIdSchema("post").optional(),
       limit: pagingNumber(1, 50, 20),
     }),
@@ -319,10 +347,19 @@ export const listPosts = (audience: Customer) =>
     handler: async ({ db, caller, query }) => {
       const viewer = await viewerFor(db, audience, caller);
       const boardList = await visibleBoards(db, viewer);
-      if (query.boardId && !boardList.some((b) => b.id === query.boardId))
-        throw notFound("Board");
+      const board = query.boardId
+        ? boardList.find((b) => b.id === query.boardId)
+        : undefined;
+      if (query.boardId && !board) throw notFound("Board");
       // A cursor is a post the caller can see; a hidden one is 404, not a probe.
       if (query.cursor) await findPost(db, viewer, boardList, query.cursor);
+      const name = query.sort ?? board?.voting.defaultSort ?? "newest";
+      const sort =
+        name === "random"
+          ? randomSort(
+              `${viewer.principalId ?? "anonymous"}:${new Date().toISOString().slice(0, 10)}`,
+            )
+          : sorts[name];
       const rows = await selectPosts(
         db,
         and(
@@ -336,10 +373,10 @@ export const listPosts = (audience: Customer) =>
           query.search
             ? sql`${posts.searchVector} @@ websearch_to_tsquery('english', ${query.search})`
             : undefined,
-          query.cursor && afterCursor(query.cursor, query.sort),
+          query.cursor && afterCursor(query.cursor, sort),
         ),
       )
-        .orderBy(...sorts[query.sort].order)
+        .orderBy(...sort.order)
         .limit(query.limit + 1);
       const items = await present(
         db,
@@ -374,7 +411,7 @@ export const similarPosts = (audience: Customer) =>
         z.object({
           id: z.string(),
           title: z.string(),
-          voteCount: z.number(),
+          voteCount,
           stage: z.enum(STAGES).nullable(),
           board: z.object({ id: z.string(), slug: z.string() }),
         }),
@@ -414,18 +451,18 @@ export const similarPosts = (audience: Customer) =>
         )
         .limit(query.limit);
       return {
-        items: rows.map((row) => ({
-          id: row.id,
-          title: row.title,
-          voteCount: row.voteCount,
-          stage: stageOf(
-            row.slug ? { slug: row.slug, category: row.category! } : null,
-          ),
-          board: {
-            id: row.boardId,
-            slug: boardList.find((b) => b.id === row.boardId)!.slug,
-          },
-        })),
+        items: rows.map((row) => {
+          const board = boardList.find((b) => b.id === row.boardId)!;
+          return {
+            id: row.id,
+            title: row.title,
+            ...shownVotes(board, row.voteCount),
+            stage: stageOf(
+              row.slug ? { slug: row.slug, category: row.category! } : null,
+            ),
+            board: { id: board.id, slug: board.slug },
+          };
+        }),
       };
     },
   });
@@ -466,8 +503,26 @@ export const getPost = (audience: Customer) =>
       const can = capabilities(viewer, post.board.access);
       const owner = await ownership(db, viewer, post);
       const isAuthor = owner.reason === "engagement";
+      const [mine] = viewer.principalId
+        ? await db
+            .select({ importance: postVotes.importance })
+            .from(postVotes)
+            .where(
+              and(
+                eq(postVotes.principalId, viewer.principalId),
+                inArray(
+                  postVotes.postId,
+                  relatedPosts(db, post.canonicalPostId ?? post.id),
+                ),
+              ),
+            )
+            .limit(1)
+        : [];
       return {
         ...(await presentOne(db, viewer, boardList, post.id)),
+        attachments: (await readAttachments(db, { postIds: [post.id] })).map(
+          attachmentFields,
+        ),
         canVote: can.canVote,
         canComment:
           can.canComment &&
@@ -479,6 +534,7 @@ export const getPost = (audience: Customer) =>
         isCommentsLocked: post.isCommentsLocked,
         authorOnlyReplies: post.board.access.authorOnly,
         mergedInto: merged ?? null,
+        importance: mine?.importance ?? null,
       };
     },
   });
@@ -500,7 +556,9 @@ export const createPost = (audience: Customer) =>
         boardId: flexibleToTypeIdSchema("board").optional(),
         title: z.string().trim().min(1).max(200).optional(),
         content: z.string().trim().max(10000),
+        attachmentIds,
         idempotencyKey: z.string().min(1).max(128).optional(),
+        ...(audience === "widget" && { metadata: widgetMetadata }),
       })
       .refine((body) => body.title || body.content, {
         message: "Provide a title or content",
@@ -527,11 +585,16 @@ export const createPost = (audience: Customer) =>
         throw forbidden("Submissions are not open to you on this board");
       const postTitle =
         body.title ?? body.content.split("\n")[0]!.trim().slice(0, 200);
+      const sent = (body as { metadata?: Record<string, string> }).metadata;
+      const metadata = sent && Object.keys(sent).length ? sent : undefined;
       const receipt = body.idempotencyKey
         ? await claimReceipt(db, "post", me, body.idempotencyKey, {
             boardId: board.id,
             title: postTitle,
             content: body.content,
+            ...(body.attachmentIds?.length
+              ? { attachmentIds: JSON.stringify(body.attachmentIds) }
+              : {}),
           })
         : null;
       if (receipt?.replayOf) {
@@ -564,9 +627,11 @@ export const createPost = (audience: Customer) =>
           // A test customer's vote is kept but not counted, as on the teammate path.
           voteCount: viewer.isTest ? 0 : 1,
           moderationState: pending ? "pending" : "published",
+          widgetMetadata: metadata,
         })
         .returning({ id: posts.id });
       const postId = post!.id;
+      await saveAttachments(db, me, { postId }, body.attachmentIds);
       await db.insert(postVotes).values({ postId, principalId: me });
       await db
         .insert(postSubscriptions)
@@ -595,6 +660,7 @@ const editPost = defineQuillsRoute({
   body: z.object({
     title: z.string().trim().min(1).max(200),
     content: z.string().trim().max(10000),
+    attachmentIds,
   }),
   response: postItem,
   responseDescription: "The edited post",
@@ -644,6 +710,7 @@ const editPost = defineQuillsRoute({
         updatedAt: new Date(),
       })
       .where(eq(posts.id, post.id));
+    await saveAttachments(db, me, { postId: post.id }, body.attachmentIds);
     return presentOne(db, viewer, boardList, post.id);
   },
 });
@@ -703,25 +770,52 @@ export const setVote = (audience: Customer) =>
     operationId: `setQuills${title(audience)}Vote`,
     summary: "Set the caller's vote on a post",
     description:
-      "Desired state, not a toggle: a retry changes nothing. A vote on a merged post counts on the post it was merged into. changed is false when the state was already set.",
+      "Desired state, not a toggle: a retry changes nothing. A vote on a merged post counts on the post it was merged into. changed is false when the vote was already in that state. importance (only with voted: true) says how much the caller needs the post; without it, a stored importance stays. Removing the vote removes its importance.",
     action: "update",
     rateLimit: { limit: 120, windowSeconds: 600 },
     params: postParams,
-    body: z.object({ voted: z.boolean() }),
+    body: z
+      .object({ voted: z.boolean(), importance: importance.optional() })
+      .refine((body) => body.voted || body.importance === undefined, {
+        message: "importance needs voted: true",
+        path: ["importance"],
+      }),
     response: z.object({
       postId: z.string(),
       voted: z.boolean(),
-      voteCount: z.number(),
+      voteCount,
       changed: z.boolean(),
+      importance: importance.nullable(),
     }),
     responseDescription: "The vote state",
     errors,
-    event: (_input, result) =>
-      result.changed && {
-        type: result.voted ? "post.voted" : "post.unvoted",
-        entityType: "post",
-        entityId: result.postId,
-      },
+    event: (_input, result, raw) => [
+      ...(result.changed
+        ? [
+            {
+              type: result.voted
+                ? ("post.voted" as const)
+                : ("post.unvoted" as const),
+              entityType: "post" as const,
+              entityId: result.postId,
+            },
+          ]
+        : []),
+      ...((raw as { importanceSet?: PrincipalId }).importanceSet
+        ? [
+            {
+              type: "post.vote_importance_set" as const,
+              entityType: "post" as const,
+              entityId: result.postId,
+              payload: {
+                importance: result.importance!,
+                principalId: (raw as { importanceSet: PrincipalId })
+                  .importanceSet,
+              },
+            },
+          ]
+        : []),
+    ],
     handler: async ({ db, caller, params, body }) => {
       const viewer = await viewerFor(db, audience, caller);
       const me = principalOf(viewer);
@@ -736,6 +830,7 @@ export const setVote = (audience: Customer) =>
         inArray(postVotes.postId, relatedPosts(db, post.id)),
       );
       let changed: boolean;
+      let importanceSet = false;
       if (body.voted) {
         const [existing] = await db
           .select({ id: postVotes.id })
@@ -748,10 +843,32 @@ export const setVote = (audience: Customer) =>
           (
             await db
               .insert(postVotes)
-              .values({ postId: post.id, principalId: me })
+              .values({
+                postId: post.id,
+                principalId: me,
+                importance: body.importance,
+              })
               .onConflictDoNothing()
               .returning({ id: postVotes.id })
           ).length > 0;
+        if (changed) importanceSet = body.importance !== undefined;
+        else if (body.importance)
+          importanceSet =
+            (
+              await db
+                .update(postVotes)
+                .set({ importance: body.importance, updatedAt: new Date() })
+                .where(
+                  and(
+                    mine,
+                    or(
+                      isNull(postVotes.importance),
+                      ne(postVotes.importance, body.importance),
+                    ),
+                  ),
+                )
+                .returning({ id: postVotes.id })
+            ).length > 0;
       } else
         changed =
           (
@@ -775,11 +892,22 @@ export const setVote = (audience: Customer) =>
             .select({ voteCount: posts.voteCount })
             .from(posts)
             .where(eq(posts.id, post.id));
+      // Read after the writes: a parallel request may have set the importance.
+      const [stored] = body.voted
+        ? await db
+            .select({ importance: postVotes.importance })
+            .from(postVotes)
+            .where(mine)
+            .limit(1)
+        : [];
       return {
         postId: post.id,
         voted: body.voted,
-        voteCount: current!.voteCount,
+        ...shownVotes(post.board, current!.voteCount),
         changed,
+        importance: stored?.importance ?? null,
+        // For the event only; the response schema leaves it out.
+        ...(importanceSet && { importanceSet: me }),
       };
     },
   });

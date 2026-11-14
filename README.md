@@ -63,11 +63,11 @@ Kaneo is open source. If you find it useful, consider [sponsoring the project](h
   <img src="apps/site/public/images/blacksmith-powered.png" alt="CI powered by Blacksmith" width="368" />
 </p>
 
-This project is tested with BrowserStack.
+Browser flows are tested with Stagehand Chromium. See [browser testing](tests/e2e/README.md).
 
 ### Community sponsors
 
-<!-- sponsors --><a href="https://github.com/danielsada"><img src="https:&#x2F;&#x2F;github.com&#x2F;danielsada.png" width="60px" alt="User avatar: Daniel Sada" /></a><a href="https://github.com/randoneering"><img src="https:&#x2F;&#x2F;github.com&#x2F;randoneering.png" width="60px" alt="User avatar: (justin)randoneering" /></a><a href="https://github.com/ryanilano"><img src="https:&#x2F;&#x2F;github.com&#x2F;ryanilano.png" width="60px" alt="User avatar: Ryan Ilano" /></a><a href="https://github.com/blendbyte"><img src="https:&#x2F;&#x2F;github.com&#x2F;blendbyte.png" width="60px" alt="User avatar: Blendbyte" /></a><!-- sponsors -->
+<!-- sponsors --><a href="https://github.com/danielsada"><img src="https:&#x2F;&#x2F;github.com&#x2F;danielsada.png" width="60px" alt="User avatar: Daniel Sada" /></a><a href="https://github.com/randoneering"><img src="https:&#x2F;&#x2F;github.com&#x2F;randoneering.png" width="60px" alt="User avatar: (justin)randoneering" /></a><a href="https://github.com/ryanilano"><img src="https:&#x2F;&#x2F;github.com&#x2F;ryanilano.png" width="60px" alt="User avatar: Ryan Ilano" /></a><a href="https://github.com/blendbyte"><img src="https:&#x2F;&#x2F;github.com&#x2F;blendbyte.png" width="60px" alt="User avatar: Blendbyte" /></a><a href="https://github.com/mortenbirkelund"><img src="https:&#x2F;&#x2F;github.com&#x2F;mortenbirkelund.png" width="60px" alt="User avatar: Morten Birkelund" /></a><!-- sponsors -->
 
 ## License
 

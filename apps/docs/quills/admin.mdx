@@ -1,0 +1,134 @@
+---
+title: "Set up a customer portal"
+description: "Enable feedback, publish customer content, and invite customers to a private portal."
+---
+
+The portal gives customers access to feedback and support without making them workspace members.
+Each workspace has its own portal. A customer signs in with a Kaneo account.
+
+## Enable the portal
+
+Portals start disabled. Use the API with a workspace member who has `quills:manage_settings`.
+API keys also need the corresponding scope. See [API authentication](/api-reference/authentication).
+The teammate settings pages are planned separately; these instructions use the current API.
+
+1. Read `GET /quills/{workspaceId}/settings/portal`.
+2. Send `PUT /quills/{workspaceId}/settings/portal` with `{"enabled": true}`.
+3. Open `/portal/{workspaceId}` on your web app's public origin.
+
+The paths above are relative to the API base URL. For a bundled installation, that base ends in
+`/api`. Set the client URL to the web app's public URL so mail links reach the portal using the [environment configuration](/core/installation/environment-variables).
+
+To turn the portal off, send the same update with `{"enabled": false}`. Disabling access does not
+delete the workspace's feedback or support history.
+
+## Choose who can enter
+
+Use `PUT /quills/{workspaceId}/settings/portal/access` to set `visibility` to `public` or `private`.
+The same operation accepts `allowedDomains` and `allowedSegmentIds` for access policies.
+A private portal asks visitors to sign in and checks their access before showing protected content.
+Published status and help-center content have their own visibility rules; do not use the portal
+setting as a substitute for reviewing what you publish.
+
+Anonymous interaction is off unless you enable `allowAnonymous` in the portal settings.
+Review this setting before sharing a public link.
+
+## Invite a customer
+
+Send `POST /quills/{workspaceId}/portal/invites` with the customer's `email` and, optionally,
+a `message` of up to 500 characters. The server queues the invitation email after the change commits.
+Your instance must have working mail delivery.
+
+The recipient must sign in with an account whose verified email matches the invitation. Accepting
+the invitation grants portal access only. It does not grant access to projects or workspace settings.
+
+Use `GET /quills/{workspaceId}/portal/invites` to view invitations. For a pending invitation:
+
+- `POST /quills/{workspaceId}/portal/invites/{inviteId}/resend` sends it again and extends its expiry.
+- `POST /quills/{workspaceId}/portal/invites/{inviteId}/link` creates a link to share privately.
+- `DELETE /quills/{workspaceId}/portal/invites/{inviteId}` cancels it and invalidates its links.
+
+An accepted invitation cannot be canceled through this endpoint. To remove that customer's access,
+block the customer. Treat invitation links as private and never paste them into public logs or tickets.
+
+## Ask customers a survey
+
+Open **Feedback > Surveys** in the workspace to create and run in-app surveys. You need
+`quills:create` to create a draft, `quills:update` to activate or close a survey, and
+`quills:delete` to delete a draft. `quills:read` shows the results.
+
+1. Select **New survey**. Choose a type and write the question:
+   - Net Promoter Score: a score from 0 to 10. The score is % promoters (9-10) minus % detractors (0-6).
+   - Satisfaction (CSAT): a score from 1 to 5. The score is the % of 4 and 5.
+   - Customer effort (CES): a score from 1 to 7. The score is the average.
+   - Product-market fit: three fixed answers. The score is the % of "Very disappointed".
+   - Poll: 2 to 20 answers that you write, one on each line.
+   - Open question: a text answer.
+2. Open the draft and select **Activate survey**.
+3. Select **Close survey** to stop new answers. A closed survey keeps its results.
+
+Signed-in customers see the latest active survey that they did not answer, above the posts on the
+feedback page. Identified widget visitors see it on the widget home tab. Each person answers a survey once.
+A customer can also add a comment of up to 2,000 characters. The results page shows the latest
+20 comments with the name of each person.
+
+To show a survey only to some customers, send `targetSegmentIds` with
+`POST /quills/{workspaceId}/surveys` or `PATCH /quills/{workspaceId}/surveys/{surveyId}`. Only
+members of those segments then see the survey. The Surveys page does not select segments yet.
+
+## Branding and supported URLs
+
+The portal uses the public logo, supported theme colors, and header display name from workspace
+branding. Check text contrast when choosing colors. The portal does not apply `customCss`.
+
+Use URLs on the configured web app origin. Custom portal and help-center domains are not supported
+by these pages yet. Portal interface text is currently English. Help-center and changelog pages
+render in the browser; search engines that do not run JavaScript may not index their full content.
+
+Before sharing the portal, follow [deployment checks](/quills/deployment) and test a customer account
+that is not a workspace member.
+
+## Review duplicate posts
+
+Open **Feedback > Duplicates** in the workspace (`/dashboard/workspace/{workspaceId}/quills/duplicates`).
+The queue shows pairs of posts that the assistant found similar, strongest match first.
+You need `quills:read` to see the queue and `quills:update` to decide.
+
+- **Merge** merges the duplicate into the post to keep. Votes on the duplicate then count on the kept post.
+- **Dismiss** removes the pair from the pending queue. **Restore** puts a dismissed pair back.
+
+The queue shows only pairs whose two posts are on boards that you can see.
+The API is `GET /quills/{workspaceId}/merge-suggestions?status=pending` (or `dismissed`).
+
+In the portal, a signed-in customer who types a title that strongly matches a post sees
+**Vote for this instead** next to that post, if the customer can vote on its board.
+
+## Read feedback insights
+
+Open **Feedback > Insights** (`/dashboard/workspace/{workspaceId}/quills/insights`) and select a range
+of 7, 30, 90 or 180 days. The page shows the most used tags on new posts, the sentiment of new posts,
+new posts and votes for each week, and the posts with the most new votes.
+It counts only the boards that you can see. Sentiment counts only the posts that the assistant analyzed.
+
+The API is `GET /quills/{workspaceId}/feedback/insights`. `from` and `to` are UTC days, at most
+180 days apart. The default is the last 30 days.
+
+## Review the feedback autopilot
+
+When a conversation closes or a ticket is resolved, the assistant reads the customer's messages and
+finds feature requests and bug reports. Each one becomes a pending signal with a short excerpt,
+a suggested title and, when the instance has an embedding model, the most similar post.
+The assistant reads only what the customer wrote: never team notes or replies.
+Without an AI provider, the autopilot does nothing.
+
+Open **Feedback > Autopilot** (`/dashboard/workspace/{workspaceId}/quills/autopilot`).
+You need `quills:read` to see the queue, `quills:create` to accept and `quills:update` to dismiss or restore.
+
+- **Accept as new post** creates a post on a board that you choose, with the title that you can edit.
+  The customer is the author and the first voter.
+- **Add vote** adds the customer's vote to the matched post.
+- **Dismiss** removes the signal from the pending queue. **Restore** puts a dismissed signal back.
+
+The queue leaves out signals of deleted tickets and test customers. A matched post shows only when its
+board is visible to you. The API is `GET /quills/{workspaceId}/feedback-signals?status=pending`
+(or `accepted`, `dismissed`), with an optional `source` of `conversation` or `ticket`.

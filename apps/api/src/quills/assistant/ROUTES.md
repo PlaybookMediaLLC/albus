@@ -144,6 +144,10 @@ Secrets:                   the bearer token, the OAuth client registration, the 
 | `startQuillsConnectorOAuth` | `POST /assistant/connectors/{connectorId}/oauth` (returns the authorization URL) | manage_settings | `connectors` | `assistant_connector.updated` |
 | `completeQuillsConnectorOAuth` | `GET /quills-public/signed/oauth/connectors/{connectorId}/callback?state&code` (signed) | manage_settings (session) | `connectors`, `principal`, `kv_store` | `assistant_connector.connected` |
 
+The completion route keeps JSON for API clients. A browser navigation gets a 303 to the web OAuth
+result page with only a fixed outcome and the connector name (or the generic `Connector` label when
+the callback cannot safely read the record).
+
 Tests: the contract suite (a local MCP and OAuth server in `connector-edge.fixture.ts`) and
 `connectors.test.ts` (the OAuth flow, token refresh, private addresses, the URL change, bounds).
 
@@ -334,15 +338,18 @@ job was lost or ran out of attempts). The copilot is not streamed.
 | operationId | Route | Action | Event |
 |---|---|---|---|
 | `getQuillsMergeSuggestionsForPost` | `GET /posts/{postId}/merge-suggestions` | read | - |
+| `listQuillsMergeSuggestions` | `GET /merge-suggestions?status=pending\|dismissed` (offset paging, ≤ 100) | read | - |
 | `fetchQuillsMergeSuggestionSummary` | `GET /merge-suggestions/summary` | read | - |
 | `fetchQuillsMergeSuggestionCountsForPosts` | `GET /merge-suggestions/counts?postIds=` (≤ 100) | read | - |
 | `acceptQuillsSuggestion` | `POST /suggestions/{suggestionId}/accept` (`mergePosts`, shared with `mergeQuillsPost`) | update | `post.merged` |
 | `dismissQuillsSuggestion` | `POST /suggestions/{suggestionId}/dismiss` | update | `merge_suggestion.dismissed` |
 | `restoreQuillsSuggestion` | `POST /suggestions/{suggestionId}/restore` | update | `merge_suggestion.restored` |
+| `draftQuillsChangelogFromPosts` | `POST /changelog/drafts` (1-25 visible posts; read in `prepare`, provider call in `call`, 1,500 output tokens at most; RFC 0003, `../feedback/changelog-ai.ts`) | create | none: usage row only, nothing saved or published |
 | `retryQuillsPostMergeCheck` | `POST /posts/{postId}/merge-check` (409 without an embedding model) | update | `post.merge_check_requested` |
 | `listQuillsSimilarPosts` | `GET /posts/{postId}/similar` (stored embeddings; no provider call) | read | - |
 | `getQuillsPostSentiment` | `GET /posts/{postId}/sentiment` | read | - |
 | `requestQuillsPostSentiment` | `POST /posts/{postId}/sentiment` | update | `post.sentiment_requested` |
+| `summarizeQuillsPost` | `POST /posts/{postId}/summary` (the post and its newest 30 live comments; read in `prepare`, provider call in `call`, 600 output tokens at most; RFC 0004, `../feedback/post-summary.ts`) | read | none: usage row only, nothing saved |
 | `requestQuillsPostTagBackfill` | `POST /posts/ai-tags/backfill` (≤ 30 posts) | update | `post.tags_backfill_requested` |
 | `requestQuillsEmbeddingBackfill` | `POST /assistant/embeddings/backfill` | manage_settings | `assistant.embeddings_requested` |
 
@@ -398,6 +405,7 @@ pass that the scheduler awaits never claims it, so a slow provider does not dela
 | `conversation.summary_requested`, `ticket.summary_requested` | Writes the summary; records `conversation.summarized` / `ticket.summarized`. |
 | `help_center.article_translation_requested` | Writes a draft translation. A published translation is never replaced; protected terms stay as they are. |
 | `help_center.article_published` | Embeds the article; translates into every enabled locale when the publish recorded `autoTranslate: requested`. A failed locale is skipped and the others are kept. |
+| `conversation.status_changed`, `ticket.status_changed` | Feedback autopilot (`jobs/handlers/signals.ts`, RFC 0003). Only for a closed conversation (not ended as spam) or a resolved, live ticket. Reads the last 50 customer messages (1,000 characters each; never a team note, an agent reply, a teammate or a test customer), asks for feature requests and bug reports, matches each one to the most similar live post (similarity ≥ 0.8, embeddings only) and stores at most 10 pending `feedback_signals` with `signal.created`. The ledger key `signals:<newest customer message>` makes a retry or a second close call the provider once; the unique source message keeps one signal for each message. Without a provider it does nothing. |
 
 The write and the job's completion share one transaction. A background provider failure
 retries (three attempts); a run's failure is stored on the run. Each job starts no provider

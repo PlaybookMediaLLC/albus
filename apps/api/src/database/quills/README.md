@@ -5,7 +5,7 @@ Imported from `quackback/packages/db/src` at source commit `42ef2e01b2b48db87f1a
 ## Ownership and identity
 
 Kaneo owns authentication, user accounts, workspaces, membership and workspace
-access. All 149 feature tables live in PostgreSQL schema `quills`.
+access. All 155 feature tables live in PostgreSQL schema `quills`.
 Every table has a text `workspace_id` referencing Kaneo's workspace. Domain IDs
 retain their UUID-backed TypeID representation. Keys, unique constraints and
 feature foreign keys include workspace ownership. Nullable composite foreign
@@ -135,6 +135,18 @@ assistant documents and exports. Removing or replacing a reference queues cleanu
 in the same transaction. Workspace deletion also collects these keys through the
 existing deletion flow. The cleanup worker retains any object still referenced by
 either Kaneo or Quills, including another workspace.
+
+Portal feedback attachments reuse `files.storage_key`. A file can belong to at
+most one conversation message, feedback post or feedback comment; composite
+workspace foreign keys enforce each parent relationship. Portal claims require
+the uploader's principal, lock selected rows, and run in the authorized parent
+mutation transaction. Download authorization follows the persisted parent,
+including board visibility, moderation and deleted comments. Draft downloads are
+uploader-only. Removing a file reference and hard-deleting its parent use the
+existing cleanup trigger; soft-deleted feedback is inaccessible but retains its
+references until deletion. Hourly retention removes registered unattached portal
+files older than one day. Uploads abandoned before registration are outside this
+reference retention path.
 
 A restricted security-definer function exposes storage references to the platform
 credential only. Its owner has a SELECT policy on the seven storage-bearing tables;
@@ -295,6 +307,16 @@ the outbox, the delivery ledger and audit history; it deletes all other Quills d
 configuration included. Storage triggers queue the removed object keys. A large wipe runs
 inline in the drain loop and delays this instance's other Quills jobs until it ends.
 
+RFC 0003 adds two kinds of feedback mail. `changelog.published` fans out a shipped notice to
+the voters and status followers of the entry's linked posts (`jobs/handlers/shipped-mail.ts`),
+one job per person. The sweeps queue the weekly digest (`jobs/handlers/digest.ts`): on the first
+sweep of an ISO week (UTC), one `quills.mail` job per customer whose voted or followed posts
+changed status in the week before. The status changes come from the audit history. A cursor in
+`kv_store` (`digest:<week>`, expires after two weeks) keeps the place; the job key and the
+delivery ledger key (`digest:<principal>:<week>`) stop a second mail. Migration
+`0027_weekly_digest_sweep` makes `quills.runnable_workspaces` list a workspace with status
+changes in the last week until its digest cursor is done.
+
 `GET /quills/{workspaceId}/jobs` is paginated and omits payloads. The
 `POST /quills/{workspaceId}/jobs/{jobId}/retry` endpoint requeues a failed registered
 job and audits the operator. Both require `quills:manage_settings`. Link and team
@@ -308,7 +330,8 @@ current-month billing logs. Expired export keys enter the existing storage-clean
 flow. Archived workspaces receive retention but do not execute feature jobs.
 With the log retention (90 days by default) it also removes help-center search
 queries, finished integration sync attempts, and portal invites that are not
-accepted and expired before that time. The sync operation row, its operation key and
+accepted and expired before that time, and cached post and comment translations
+(`content_translations`, RFC 0003). The sync operation row, its operation key and
 its result stay: the key stops a second external create. Unsubscribe tokens go 30
 days after they expired or were used. Anonymous widget visitors (a principal and its
 customer profile) go eight days after creation when no widget session is live, they
@@ -358,7 +381,10 @@ staff actors. Imports hold an exclusive workspace lock, defer foreign keys until
 all rows are present, and commit atomically. Dry runs execute the complete import
 then roll back. Canonical profiles, workspace metadata and shared rosters are
 reapplied. Runtime jobs, sessions, API keys, outbox history and other ephemeral
-tables listed in `omittedTables` are excluded. Restore settlement suppresses
+tables listed in `omittedTables` are excluded. The translation cache
+`content_translations` is excluded too: the target translates again on request.
+Feedback signals, surveys and their responses, changelog reactions and changelog
+read times transfer. Their foreign keys are deferrable, like the older tables'. Restore settlement suppresses
 pending external effects and records an audit entry. Unfinished integration operations
 are cancelled or marked uncertain, workflows are interrupted, and pending approvals
 expire. Historical page views within the 90-day retention window receive UTC daily
@@ -418,6 +444,8 @@ All entries are workspace-owned, including per-workspace reference catalogues.
 | `changelog_subscriptions` | `changelog-subscriptions.ts` |
 | `changelog_entries` | `changelog.ts` |
 | `changelog_entry_posts` | `changelog.ts` |
+| `changelog_reactions` | `changelog-engagement.ts` |
+| `changelog_reads` | `changelog-engagement.ts` |
 | `email_sending_domains` | `channel-accounts.ts` |
 | `channel_accounts` | `channel-accounts.ts` |
 | `channel_identities` | `channel-identities.ts` |
@@ -440,10 +468,12 @@ All entries are workspace-owned, including per-workspace reference catalogues.
 | `conversation_message_mentions` | `conversation.ts` |
 | `conversation_message_reactions` | `conversation.ts` |
 | `conversation_message_flags` | `conversation.ts` |
+| `content_translations` | `content-translations.ts` |
 | `email_log` | `email-log.ts` |
 | `email_ses_tenants` | `email-ses-tenant.ts` |
 | `events` | `events.ts` |
 | `export_runs` | `export-runs.ts` |
+| `feedback_signals` | `feedback-signals.ts` |
 | `post_external_links` | `external-links.ts` |
 | `ticket_external_links` | `external-links.ts` |
 | `files` | `files.ts` |
@@ -510,6 +540,8 @@ All entries are workspace-owned, including per-workspace reference catalogues.
 | `status_incident_components` | `status.ts` |
 | `status_subscriptions` | `status.ts` |
 | `post_statuses` | `statuses.ts` |
+| `surveys` | `surveys.ts` |
+| `survey_responses` | `surveys.ts` |
 | `teams` | `teams.ts` |
 | `team_members` | `teams.ts` |
 | `ticket_activity` | `ticket-activity.ts` |
