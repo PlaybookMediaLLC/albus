@@ -27,6 +27,23 @@ describe("PostAi", () => {
     );
   });
 
+  it("asks the provider once when the chip opens again", async () => {
+    const api = mockApi();
+    api.reply(summarizePostFixture.ok({ summary: "Once." }));
+    const view = render();
+    press("Summarize");
+    expect(await view.findByText("Once.")).toBeVisible();
+    fireEvent.keyDown(document.activeElement ?? document.body, {
+      key: "Escape",
+    });
+    await waitFor(() =>
+      expect(view.queryByRole("dialog", { name: "AI summary" })).toBeNull(),
+    );
+    press("Summarize");
+    expect(await view.findByText("Once.")).toBeVisible();
+    expect(api.calls("summarizeQuillsPost")).toHaveLength(1);
+  });
+
   it("says that AI is not set up on a 409", async () => {
     const api = mockApi();
     const off = summarizePostFixture.problem(409);

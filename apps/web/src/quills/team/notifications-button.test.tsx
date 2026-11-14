@@ -109,17 +109,33 @@ describe("NotificationsButton", () => {
     );
     window.localStorage.setItem("quills.desktop-notifications", "on");
     vi.spyOn(document, "hidden", "get").mockReturnValue(true);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const start = Date.parse("2026-11-14T10:00:30.000Z");
+    vi.setSystemTime(start);
     const api = mockApi();
-    api.reply(getNotificationUnreadCountFixture.ok({ count: 1 }));
-    api.reply(getNotificationUnreadCountFixture.ok({ count: 3 }));
+    for (const count of [1, 3, 1, 3])
+      api.reply(getNotificationUnreadCountFixture.ok({ count }));
     const view = render();
+    const refresh = async (count: number) => {
+      void view.queryClient.invalidateQueries();
+      await view.findByRole("button", { name: new RegExp(`${count} unread`) });
+    };
     await view.findByRole("button", { name: /1 unread/ });
-    void view.queryClient.invalidateQueries();
-    await view.findByRole("button", { name: /3 unread/ });
+    await refresh(3);
     // The tag makes several hidden tabs show this notification once.
-    expect(shown).toHaveBeenCalledWith("2 new notifications", {
-      tag: expect.stringMatching(/^quills-notifications:workspace_1:3:\d+$/),
+    const minute = Math.floor(start / 60_000);
+    expect(shown).toHaveBeenLastCalledWith("2 new notifications", {
+      tag: `quills-notifications:workspace_1:3:${minute}`,
     });
+    // The same count later has a new tag, so it does not replace the old one in silence.
+    vi.setSystemTime(start + 120_000);
+    await refresh(1);
+    await refresh(3);
+    expect(shown).toHaveBeenCalledTimes(2);
+    expect(shown).toHaveBeenLastCalledWith("2 new notifications", {
+      tag: `quills-notifications:workspace_1:3:${minute + 2}`,
+    });
+    vi.useRealTimers();
     window.localStorage.clear();
   });
 });

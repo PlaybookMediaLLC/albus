@@ -16,6 +16,7 @@ import {
 } from "../../database/quills/schema/posts";
 import { postStatuses } from "../../database/quills/schema/statuses";
 import * as kaneo from "../../database/schema";
+import { provider } from "../assistant/provider-edge.fixture";
 import { startFeature } from "./harness.fixture";
 
 let pool: Pool;
@@ -302,6 +303,16 @@ describe.skipIf(!url)("Feedback visibility", () => {
         `${method} ${path}`,
       ).toBe(404);
     expect(await hiddenRows()).toBe(before);
+  });
+
+  it("keeps a hidden post out of the AI summary, before any provider call", async () => {
+    const { owner, member } = world.users;
+    provider.requests.length = 0;
+    const path = `/posts/${ids.hiddenPost}/summary`;
+    expect((await world.request(member, "POST", path)).status).toBe(404);
+    expect(provider.requests).toEqual([]);
+    expect((await world.request(owner, "POST", path)).status).toBe(200);
+    expect(provider.requests).toHaveLength(1);
   });
 
   it("lets a restricted member write on a board of a project they can open", async () => {

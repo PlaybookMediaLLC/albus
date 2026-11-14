@@ -82,7 +82,10 @@ describe("CommandPalette", () => {
       problem: { kind: "failed" },
       onRetry,
     });
-    expect(await view.findByRole("alert")).toHaveTextContent(/went wrong/i);
+    const alert = await view.findByRole("alert");
+    expect(alert).toHaveTextContent(/went wrong/i);
+    // The empty slot is a polite live region; the alert must not sit inside it.
+    expect(alert.closest('[role="status"]')).toBeNull();
     expect(view.queryByText("No results")).toBeNull();
     fireEvent.click(view.getByRole("button", { name: /Try again/ }));
     expect(onRetry).toHaveBeenCalledTimes(1);

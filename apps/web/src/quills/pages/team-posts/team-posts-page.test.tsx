@@ -1,5 +1,5 @@
 import { fireEvent, waitFor, within } from "@testing-library/react";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 import { createPostFixture } from "../../api/team/create-post.fixture";
 import type { ListPostsResponse } from "../../api/team/list-posts";
 import { listPostsFixture } from "../../api/team/list-posts.fixture";
@@ -9,6 +9,7 @@ import { choose, fill, press } from "../../test/actions";
 import { describePageContract } from "../../test/contracts";
 import { mockApi } from "../../test/mock-api";
 import { renderPage } from "../../test/render";
+import { ShortcutListener } from "../../ui/upstream";
 import {
   inboxBoards,
   inboxCustomer,
@@ -17,7 +18,7 @@ import {
   inboxTags,
 } from "./inbox.fixture";
 import { meta } from "./meta";
-import { TeamPostsPage } from "./team-posts-page";
+import { TeamPostsPage, type TeamPostsPageProps } from "./team-posts-page";
 
 // The statuses and boards load first; the posts wait for the statuses.
 const prepare = (posts: ListPostsResponse = inboxPosts) => {
@@ -181,6 +182,27 @@ describe("TeamPostsPage", () => {
       "/api/quills/workspace_test_1/posts/post_export/restore",
     );
     expect(await view.findByText("Nothing is here yet.")).toBeVisible();
+  });
+
+  it("does not open a deleted request by key", async () => {
+    prepare(deletedPosts);
+    // The keys need the shortcut listener of the app shell.
+    function WithKeys(props: TeamPostsPageProps) {
+      return (
+        <>
+          <ShortcutListener />
+          <TeamPostsPage {...props} />
+        </>
+      );
+    }
+    const view = renderPage(WithKeys, meta, {
+      search: { status: "deleted" },
+    });
+    await view.findByRole("button", { name: "Restore Export to CSV" });
+    const navigate = vi.spyOn(view.router, "navigate");
+    fireEvent.keyDown(document.body, { key: "j" });
+    fireEvent.keyDown(document.body, { key: "Enter" });
+    expect(navigate).not.toHaveBeenCalled();
   });
 
   it("offers Restore only with the delete permission", async () => {
