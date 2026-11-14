@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import type { PortalProblem } from "../../core/types";
+import { TeamStateView } from "../../team/team-state-view";
 import {
   Command,
   CommandDialog,
@@ -28,7 +30,11 @@ export interface CommandPaletteProps<Item> {
   renderItem: (item: Item) => ReactNode;
   /** Runs on a click or on Enter. The caller closes the palette. */
   onSelect: (item: Item) => void;
+  /** True while a search runs or waits for its debounce. "No results" then stays hidden. */
   loading?: boolean;
+  /** A failed search: an error with a retry instead of "No results". */
+  problem?: PortalProblem | null;
+  onRetry?: () => void;
 }
 
 /** A centered search over a blurred page. The arrow keys move through the results. */
@@ -59,7 +65,13 @@ export function CommandPalette<Item>(props: CommandPaletteProps<Item>) {
             {props.loading ? <Spinner className="size-4" /> : null}
           </div>
           <CommandEmpty>
-            {props.query.trim() && !props.loading ? t("inbox.noResults") : null}
+            {props.problem && !props.loading ? (
+              <TeamStateView problem={props.problem} onRetry={props.onRetry}>
+                {null}
+              </TeamStateView>
+            ) : props.query.trim() && !props.loading ? (
+              t("inbox.noResults")
+            ) : null}
           </CommandEmpty>
           <CommandList>
             {(item: Item) => (

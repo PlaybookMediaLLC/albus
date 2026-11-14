@@ -1,14 +1,18 @@
 import { fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vite-plus/test";
 import { renderComponent } from "../../test/render";
-import { CommandPalette } from "./command-palette";
+import { CommandPalette, type CommandPaletteProps } from "./command-palette";
 
 const posts = [
   { id: "post_1", title: "Dark mode" },
   { id: "post_2", title: "Dark theme" },
 ];
 
-function renderPalette(items = posts, query = "dark") {
+function renderPalette(
+  items = posts,
+  query = "dark",
+  extra: Partial<CommandPaletteProps<(typeof posts)[number]>> = {},
+) {
   const onSelect = vi.fn();
   const onQueryChange = vi.fn();
   const onOpenChange = vi.fn();
@@ -25,6 +29,7 @@ function renderPalette(items = posts, query = "dark") {
       getKey={(post) => post.id}
       renderItem={(post) => post.title}
       onSelect={onSelect}
+      {...extra}
     />,
   );
   return { view, onSelect, onQueryChange, onOpenChange };
@@ -69,5 +74,23 @@ describe("CommandPalette", () => {
   it("says when the search has no results", async () => {
     const { view } = renderPalette([], "zzz");
     expect(await view.findByRole("status")).toHaveTextContent("No results");
+  });
+
+  it("shows a failed search with a retry instead of No results", async () => {
+    const onRetry = vi.fn();
+    const { view } = renderPalette([], "zzz", {
+      problem: { kind: "failed" },
+      onRetry,
+    });
+    expect(await view.findByRole("alert")).toHaveTextContent(/went wrong/i);
+    expect(view.queryByText("No results")).toBeNull();
+    fireEvent.click(view.getByRole("button", { name: /Try again/ }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it("says nothing while the search waits or runs", async () => {
+    const { view } = renderPalette([], "zzz", { loading: true });
+    await view.findByRole("dialog", { name: "Merge into" });
+    expect(view.queryByText("No results")).toBeNull();
   });
 });
