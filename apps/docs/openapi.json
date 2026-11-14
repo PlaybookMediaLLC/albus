@@ -56412,6 +56412,151 @@
         }
       }
     },
+    "/quills/{workspaceId}/users/{principalId}/comments": {
+      "get": {
+        "operationId": "listQuillsUserComments",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "List the comments of a customer, newest first",
+        "description": "Customers only. Leaves out deleted comments and comments on posts that the caller cannot see: deleted posts, test-customer posts and posts on hidden boards. `reactionCount` leaves out test customers.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "principalId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of comments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "postId": {
+                            "type": "string"
+                          },
+                          "postTitle": {
+                            "type": "string"
+                          },
+                          "content": {
+                            "type": "string"
+                          },
+                          "reactionCount": {
+                            "type": "number"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "postId",
+                          "postTitle",
+                          "content",
+                          "reactionCount",
+                          "createdAt"
+                        ]
+                      }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "hasMore": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor",
+                    "hasMore"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Person or comment not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
     "/quills/{workspaceId}/users/{principalId}/merge": {
       "post": {
         "operationId": "mergeQuillsLeadIntoUser",
@@ -67356,7 +67501,7 @@
           "Quills"
         ],
         "summary": "List the visible feedback posts",
-        "description": "Leaves out merged posts, test-customer posts and posts on boards hidden by their project links. showDeleted=true lists posts deleted in the last 30 days. Each post has its demand, as getQuillsPostDemand counts it, without segments.",
+        "description": "Leaves out merged posts, test-customer posts and posts on boards hidden by their project links. showDeleted=true lists posts deleted in the last 30 days. Each post has its demand, as getQuillsPostDemand counts it, without segments. authorPrincipalId keeps only the posts that one person wrote.",
         "parameters": [
           {
             "schema": {
@@ -67510,6 +67655,14 @@
             },
             "required": false,
             "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "authorPrincipalId",
             "in": "query"
           }
         ],
