@@ -142,6 +142,24 @@ describe("ConversationHeader", () => {
     expect(api.calls("setQuillsConversationStatus")).toHaveLength(0);
   });
 
+  it("reopens a snoozed conversation from the menu", async () => {
+    const api = answer({
+      getQuillsUser: user(),
+      setQuillsConversationStatus: {
+        body: setConversationStatusFixture.ok({ status: "open" }),
+      },
+    });
+    const view = render(header({ ...conversation, status: "snoozed" }));
+    press("More actions");
+    fireEvent.click(await view.findByRole("menuitem", { name: "Unsnooze" }));
+    await waitFor(() =>
+      expect(api.calls("setQuillsConversationStatus")).toHaveLength(1),
+    );
+    expect(await api.calls("setQuillsConversationStatus")[0]!.json()).toEqual({
+      status: "open",
+    });
+  });
+
   it("marks spam and blocks the sender from the menu", async () => {
     const api = answer({
       getQuillsUser: user(),

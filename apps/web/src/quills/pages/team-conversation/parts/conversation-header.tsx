@@ -106,6 +106,10 @@ export function ConversationHeader({
                   reset();
                   status.mutate({ param, json: { status: "snoozed" } });
                 }}
+                onUnsnooze={() => {
+                  reset();
+                  status.mutate({ param, json: { status: "open" } });
+                }}
                 onSpam={() => {
                   reset();
                   end.mutate({ param, json: { reason: "spam" } });

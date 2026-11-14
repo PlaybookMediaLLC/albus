@@ -1,5 +1,6 @@
 import {
   AlarmClock,
+  AlarmClockOff,
   Ban,
   CircleSlash,
   EllipsisVertical,
@@ -25,6 +26,8 @@ export interface ConversationMenuProps {
   blocked: boolean | null;
   disabled?: boolean;
   onSnooze: () => void;
+  /** Reopens a snoozed conversation. */
+  onUnsnooze: () => void;
   onSpam: () => void;
   onNotSpam: () => void;
   onBlock: () => void;
@@ -32,7 +35,7 @@ export interface ConversationMenuProps {
 }
 
 /**
- * The kebab menu of the conversation header: snooze, spam and blocking. The API has no
+ * The kebab menu of the conversation header: snooze or unsnooze, spam and blocking. The API has no
  * conversation archive, so the menu has no Archive item.
  */
 export function ConversationMenu(props: ConversationMenuProps) {
@@ -54,6 +57,12 @@ export function ConversationMenu(props: ConversationMenuProps) {
           <MenuItem onClick={props.onSnooze}>
             <AlarmClock aria-hidden="true" />
             {t("team-conversations.snooze")}
+          </MenuItem>
+        ) : null}
+        {props.status === "snoozed" ? (
+          <MenuItem onClick={props.onUnsnooze}>
+            <AlarmClockOff aria-hidden="true" />
+            {t("team-conversations.unsnooze")}
           </MenuItem>
         ) : null}
         {props.spam ? (
