@@ -63,6 +63,8 @@ import { RowBadge } from "../ui/inbox/row-badge";
 import { SearchField } from "../ui/inbox/search-field";
 import { StatusTabs } from "../ui/inbox/status-tabs";
 import { SystemEvent } from "../ui/inbox/system-event";
+import { CopyField } from "../ui/copy-field";
+import { SettingSwitchRow } from "../ui/setting-switch-row";
 import {
   Dialog,
   DialogTitle,
@@ -84,6 +86,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SettingsCard,
 } from "../ui/upstream";
 
 const problems: PortalProblemKind[] = [
@@ -108,6 +111,7 @@ export function KitGallery() {
   const [empty, setEmpty] = useState(false);
   const [pending, setPending] = useState(false);
   const [voted, setVoted] = useState(false);
+  const [enabled, setEnabled] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [outcome, setOutcome] = useState<keyof typeof outcomes>("success");
   const [text, setText] = useState("");
@@ -203,6 +207,22 @@ export function KitGallery() {
               labelKey="core.gallery.confirm"
               onConfirm={async () => {}}
             />
+            <SettingsCard>
+              <SettingSwitchRow
+                title={demo}
+                description={demo}
+                checked={enabled}
+                onCheckedChange={async (next) => setEnabled(next)}
+              />
+              <SettingSwitchRow
+                title={demo}
+                checked={false}
+                locked={demo}
+                onCheckedChange={async () => {}}
+              />
+            </SettingsCard>
+            <CopyField label={demo} value="workspace_gallery_1" />
+            <CopyField label={demo} value="wsec_gallery_secret_value" masked />
             {confirmed ? <ResultCard titleKey="core.gallery.result" /> : null}
             <ResultCard titleKey="core.gallery.result">
               <p>{demo}</p>

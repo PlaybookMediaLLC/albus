@@ -1,0 +1,6 @@
+{
+	"copied": "Copied",
+	"copy": "Copy {{label}}",
+	"copyFailed": "The value could not be copied.",
+	"saveDenied": "You do not have permission to change this setting."
+}

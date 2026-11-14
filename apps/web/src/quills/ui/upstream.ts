@@ -134,3 +134,36 @@ export {
 } from "@/components/ui/popover";
 export { getInitials } from "@/lib/get-initials";
 export { default as useGetWorkspaces } from "@/hooks/queries/workspace/use-get-workspaces";
+
+// Teammate settings (lane S): the Kaneo settings frame, the coss parts of the
+// settings pages and the Kaneo instance config (the Billing item and Login).
+export { SettingsPage } from "@/components/settings/settings-page";
+export { SettingsSection } from "@/components/settings/settings-section";
+export { SettingsCard } from "@/components/settings/settings-card";
+export { SettingsRow } from "@/components/settings/settings-row";
+export { SettingsNote } from "@/components/settings/settings-note";
+export { SettingsEmpty } from "@/components/settings/settings-empty";
+export {
+  RowActionsMenu,
+  type RowAction,
+} from "@/components/settings/row-actions-menu";
+export { ConfirmDialog } from "@/components/settings/confirm-dialog";
+export {
+  StatusBadge,
+  type StatusTone,
+} from "@/components/settings/status-badge";
+export { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+export {
+  Accordion,
+  AccordionItem,
+  AccordionPanel,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+export {
+  DialogClose,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPanel,
+} from "@/components/ui/dialog";
+export { default as useGetConfig } from "@/hooks/queries/config/use-get-config";
