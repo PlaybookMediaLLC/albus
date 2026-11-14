@@ -167,3 +167,6 @@ export {
   DialogPanel,
 } from "@/components/ui/dialog";
 export { default as useGetConfig } from "@/hooks/queries/config/use-get-config";
+
+// Teammate settings, Connections (lane S): Kaneo's own API keys of the signed-in user.
+export { ApiKeysSettings } from "@/components/settings/api-keys/api-keys-settings";
