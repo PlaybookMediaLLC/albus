@@ -98,6 +98,7 @@ import { Route as LayoutAuthenticatedFeedbackWorkspaceIdDuplicatesIndexRouteImpo
 import { Route as LayoutAuthenticatedFeedbackWorkspaceIdInsightsIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/insights/index'
 import { Route as LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/my-tickets/index'
 import { Route as LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/posts/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/settings/index'
 import { Route as LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/surveys/index'
 import { Route as LayoutAuthenticatedFeedbackWorkspaceIdTicketsIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/tickets/index'
 import { Route as LayoutAuthenticatedFeedbackWorkspaceIdTriageIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/triage/index'
@@ -117,6 +118,7 @@ import { Route as LayoutAuthenticatedFeedbackWorkspaceIdConversationsOpenIndexRo
 import { Route as LayoutAuthenticatedFeedbackWorkspaceIdConversationsQueueIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/conversations/queue/index'
 import { Route as LayoutAuthenticatedFeedbackWorkspaceIdConversationsUnassignedIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/conversations/unassigned/index'
 import { Route as LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/posts/$postId/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdSettingsBoardsIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/settings/boards/index'
 import { Route as LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/surveys/$surveyId/index'
 import { Route as LayoutAuthenticatedFeedbackWorkspaceIdTicketsTicketIdIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/tickets/$ticketId/index'
 import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdIndexRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/index'
@@ -639,6 +641,12 @@ const LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute =
     path: '/posts/',
     getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
   } as any)
+const LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRouteImport.update({
+    id: '/settings/',
+    path: '/settings/',
+    getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+  } as any)
 const LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute =
   LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRouteImport.update({
     id: '/surveys/',
@@ -778,6 +786,12 @@ const LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRoute =
   LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRouteImport.update({
     id: '/posts/$postId/',
     path: '/posts/$postId/',
+    getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+  } as any)
+const LayoutAuthenticatedFeedbackWorkspaceIdSettingsBoardsIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdSettingsBoardsIndexRouteImport.update({
+    id: '/settings/boards/',
+    path: '/settings/boards/',
     getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
   } as any)
 const LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRoute =
@@ -937,6 +951,7 @@ export interface FileRoutesByFullPath {
   '/feedback/$workspaceId/insights/': typeof LayoutAuthenticatedFeedbackWorkspaceIdInsightsIndexRoute
   '/feedback/$workspaceId/my-tickets/': typeof LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute
   '/feedback/$workspaceId/posts/': typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute
+  '/feedback/$workspaceId/settings/': typeof LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRoute
   '/feedback/$workspaceId/surveys/': typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute
   '/feedback/$workspaceId/tickets/': typeof LayoutAuthenticatedFeedbackWorkspaceIdTicketsIndexRoute
   '/feedback/$workspaceId/triage/': typeof LayoutAuthenticatedFeedbackWorkspaceIdTriageIndexRoute
@@ -954,6 +969,7 @@ export interface FileRoutesByFullPath {
   '/feedback/$workspaceId/conversations/queue/': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsQueueIndexRoute
   '/feedback/$workspaceId/conversations/unassigned/': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsUnassignedIndexRoute
   '/feedback/$workspaceId/posts/$postId/': typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRoute
+  '/feedback/$workspaceId/settings/boards/': typeof LayoutAuthenticatedFeedbackWorkspaceIdSettingsBoardsIndexRoute
   '/feedback/$workspaceId/surveys/$surveyId/': typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRoute
   '/feedback/$workspaceId/tickets/$ticketId/': typeof LayoutAuthenticatedFeedbackWorkspaceIdTicketsTicketIdIndexRoute
   '/dashboard/workspace/$workspaceId/project/$projectId/backlog': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBacklogRoute
@@ -1047,6 +1063,7 @@ export interface FileRoutesByTo {
   '/feedback/$workspaceId/insights': typeof LayoutAuthenticatedFeedbackWorkspaceIdInsightsIndexRoute
   '/feedback/$workspaceId/my-tickets': typeof LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute
   '/feedback/$workspaceId/posts': typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute
+  '/feedback/$workspaceId/settings': typeof LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRoute
   '/feedback/$workspaceId/surveys': typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute
   '/feedback/$workspaceId/tickets': typeof LayoutAuthenticatedFeedbackWorkspaceIdTicketsIndexRoute
   '/feedback/$workspaceId/triage': typeof LayoutAuthenticatedFeedbackWorkspaceIdTriageIndexRoute
@@ -1064,6 +1081,7 @@ export interface FileRoutesByTo {
   '/feedback/$workspaceId/conversations/queue': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsQueueIndexRoute
   '/feedback/$workspaceId/conversations/unassigned': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsUnassignedIndexRoute
   '/feedback/$workspaceId/posts/$postId': typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRoute
+  '/feedback/$workspaceId/settings/boards': typeof LayoutAuthenticatedFeedbackWorkspaceIdSettingsBoardsIndexRoute
   '/feedback/$workspaceId/surveys/$surveyId': typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRoute
   '/feedback/$workspaceId/tickets/$ticketId': typeof LayoutAuthenticatedFeedbackWorkspaceIdTicketsTicketIdIndexRoute
   '/dashboard/workspace/$workspaceId/project/$projectId/backlog': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBacklogRoute
@@ -1166,6 +1184,7 @@ export interface FileRoutesById {
   '/_layout/_authenticated/feedback/$workspaceId/insights/': typeof LayoutAuthenticatedFeedbackWorkspaceIdInsightsIndexRoute
   '/_layout/_authenticated/feedback/$workspaceId/my-tickets/': typeof LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute
   '/_layout/_authenticated/feedback/$workspaceId/posts/': typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/settings/': typeof LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRoute
   '/_layout/_authenticated/feedback/$workspaceId/surveys/': typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute
   '/_layout/_authenticated/feedback/$workspaceId/tickets/': typeof LayoutAuthenticatedFeedbackWorkspaceIdTicketsIndexRoute
   '/_layout/_authenticated/feedback/$workspaceId/triage/': typeof LayoutAuthenticatedFeedbackWorkspaceIdTriageIndexRoute
@@ -1183,6 +1202,7 @@ export interface FileRoutesById {
   '/_layout/_authenticated/feedback/$workspaceId/conversations/queue/': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsQueueIndexRoute
   '/_layout/_authenticated/feedback/$workspaceId/conversations/unassigned/': typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsUnassignedIndexRoute
   '/_layout/_authenticated/feedback/$workspaceId/posts/$postId/': typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/settings/boards/': typeof LayoutAuthenticatedFeedbackWorkspaceIdSettingsBoardsIndexRoute
   '/_layout/_authenticated/feedback/$workspaceId/surveys/$surveyId/': typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRoute
   '/_layout/_authenticated/feedback/$workspaceId/tickets/$ticketId/': typeof LayoutAuthenticatedFeedbackWorkspaceIdTicketsTicketIdIndexRoute
   '/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/backlog': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdBacklogRoute
@@ -1284,6 +1304,7 @@ export interface FileRouteTypes {
     | '/feedback/$workspaceId/insights/'
     | '/feedback/$workspaceId/my-tickets/'
     | '/feedback/$workspaceId/posts/'
+    | '/feedback/$workspaceId/settings/'
     | '/feedback/$workspaceId/surveys/'
     | '/feedback/$workspaceId/tickets/'
     | '/feedback/$workspaceId/triage/'
@@ -1301,6 +1322,7 @@ export interface FileRouteTypes {
     | '/feedback/$workspaceId/conversations/queue/'
     | '/feedback/$workspaceId/conversations/unassigned/'
     | '/feedback/$workspaceId/posts/$postId/'
+    | '/feedback/$workspaceId/settings/boards/'
     | '/feedback/$workspaceId/surveys/$surveyId/'
     | '/feedback/$workspaceId/tickets/$ticketId/'
     | '/dashboard/workspace/$workspaceId/project/$projectId/backlog'
@@ -1394,6 +1416,7 @@ export interface FileRouteTypes {
     | '/feedback/$workspaceId/insights'
     | '/feedback/$workspaceId/my-tickets'
     | '/feedback/$workspaceId/posts'
+    | '/feedback/$workspaceId/settings'
     | '/feedback/$workspaceId/surveys'
     | '/feedback/$workspaceId/tickets'
     | '/feedback/$workspaceId/triage'
@@ -1411,6 +1434,7 @@ export interface FileRouteTypes {
     | '/feedback/$workspaceId/conversations/queue'
     | '/feedback/$workspaceId/conversations/unassigned'
     | '/feedback/$workspaceId/posts/$postId'
+    | '/feedback/$workspaceId/settings/boards'
     | '/feedback/$workspaceId/surveys/$surveyId'
     | '/feedback/$workspaceId/tickets/$ticketId'
     | '/dashboard/workspace/$workspaceId/project/$projectId/backlog'
@@ -1512,6 +1536,7 @@ export interface FileRouteTypes {
     | '/_layout/_authenticated/feedback/$workspaceId/insights/'
     | '/_layout/_authenticated/feedback/$workspaceId/my-tickets/'
     | '/_layout/_authenticated/feedback/$workspaceId/posts/'
+    | '/_layout/_authenticated/feedback/$workspaceId/settings/'
     | '/_layout/_authenticated/feedback/$workspaceId/surveys/'
     | '/_layout/_authenticated/feedback/$workspaceId/tickets/'
     | '/_layout/_authenticated/feedback/$workspaceId/triage/'
@@ -1529,6 +1554,7 @@ export interface FileRouteTypes {
     | '/_layout/_authenticated/feedback/$workspaceId/conversations/queue/'
     | '/_layout/_authenticated/feedback/$workspaceId/conversations/unassigned/'
     | '/_layout/_authenticated/feedback/$workspaceId/posts/$postId/'
+    | '/_layout/_authenticated/feedback/$workspaceId/settings/boards/'
     | '/_layout/_authenticated/feedback/$workspaceId/surveys/$surveyId/'
     | '/_layout/_authenticated/feedback/$workspaceId/tickets/$ticketId/'
     | '/_layout/_authenticated/dashboard/workspace/$workspaceId/project/$projectId/backlog'
@@ -2178,6 +2204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRouteImport
       parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
     }
+    '/_layout/_authenticated/feedback/$workspaceId/settings/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/settings/'
+      path: '/settings'
+      fullPath: '/feedback/$workspaceId/settings/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
     '/_layout/_authenticated/feedback/$workspaceId/surveys/': {
       id: '/_layout/_authenticated/feedback/$workspaceId/surveys/'
       path: '/surveys'
@@ -2309,6 +2342,13 @@ declare module '@tanstack/react-router' {
       path: '/posts/$postId'
       fullPath: '/feedback/$workspaceId/posts/$postId/'
       preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
+    '/_layout/_authenticated/feedback/$workspaceId/settings/boards/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/settings/boards/'
+      path: '/settings/boards'
+      fullPath: '/feedback/$workspaceId/settings/boards/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdSettingsBoardsIndexRouteImport
       parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
     }
     '/_layout/_authenticated/feedback/$workspaceId/surveys/$surveyId/': {
@@ -2604,6 +2644,7 @@ interface LayoutAuthenticatedFeedbackWorkspaceIdRouteRouteChildren {
   LayoutAuthenticatedFeedbackWorkspaceIdInsightsIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdInsightsIndexRoute
   LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute
   LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRoute
   LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute
   LayoutAuthenticatedFeedbackWorkspaceIdTicketsIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdTicketsIndexRoute
   LayoutAuthenticatedFeedbackWorkspaceIdTriageIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdTriageIndexRoute
@@ -2614,6 +2655,7 @@ interface LayoutAuthenticatedFeedbackWorkspaceIdRouteRouteChildren {
   LayoutAuthenticatedFeedbackWorkspaceIdConversationsQueueIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsQueueIndexRoute
   LayoutAuthenticatedFeedbackWorkspaceIdConversationsUnassignedIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdConversationsUnassignedIndexRoute
   LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdSettingsBoardsIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdSettingsBoardsIndexRoute
   LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRoute
   LayoutAuthenticatedFeedbackWorkspaceIdTicketsTicketIdIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdTicketsTicketIdIndexRoute
 }
@@ -2636,6 +2678,8 @@ const LayoutAuthenticatedFeedbackWorkspaceIdRouteRouteChildren: LayoutAuthentica
       LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute,
     LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute:
       LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRoute,
     LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute:
       LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute,
     LayoutAuthenticatedFeedbackWorkspaceIdTicketsIndexRoute:
@@ -2656,6 +2700,8 @@ const LayoutAuthenticatedFeedbackWorkspaceIdRouteRouteChildren: LayoutAuthentica
       LayoutAuthenticatedFeedbackWorkspaceIdConversationsUnassignedIndexRoute,
     LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRoute:
       LayoutAuthenticatedFeedbackWorkspaceIdPostsPostIdIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdSettingsBoardsIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdSettingsBoardsIndexRoute,
     LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRoute:
       LayoutAuthenticatedFeedbackWorkspaceIdSurveysSurveyIdIndexRoute,
     LayoutAuthenticatedFeedbackWorkspaceIdTicketsTicketIdIndexRoute:
