@@ -36,6 +36,8 @@ import changelogEngagement from "./feedback/changelog-engagement";
 import boardSettings from "./feedback/board-settings";
 import demand from "./feedback/demand";
 import scores from "./feedback/scores";
+// RFC 0004: the AI chip of the request detail.
+import postSummary from "./feedback/post-summary";
 import { brandText } from "@kaneo/branding";
 import { apiRouter, z, type BaseVariables } from "../openapi";
 import { settings } from "../database/quills/schema/auth";
@@ -118,4 +120,6 @@ export default apiRouter<BaseVariables & { workspaceId: string }>()
   .route("/", boardSettings)
   .route("/", demand)
   .route("/", scores)
+  // RFC 0004: the AI chip of the request detail.
+  .route("/", postSummary)
   .openapi(...context);
