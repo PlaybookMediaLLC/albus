@@ -11,12 +11,14 @@ import {
 } from "../../../ui/upstream";
 import { PropertySelect } from "./property-select";
 
-const schema = z.object({
-  boardId: z.string().min(1),
-  title: z.string().trim().min(1).max(200),
-  content: z.string().trim().max(10000),
-});
-export type CreatePostValues = z.infer<typeof schema>;
+// The bounds of createQuillsPostFromConversation. The component gives the translated messages.
+const postSchema = (messages: { board: string; details: string }) =>
+  z.object({
+    boardId: z.string().min(1, messages.board),
+    title: z.string().trim().min(1).max(200),
+    content: z.string().trim().max(10000, messages.details),
+  });
+export type CreatePostValues = z.infer<ReturnType<typeof postSchema>>;
 
 export interface CreatePostFormProps {
   boards: readonly { id: string; name: string }[];
@@ -31,9 +33,18 @@ export function CreatePostForm({
   onCancel,
 }: CreatePostFormProps) {
   const { t } = useTranslation("quills");
+  const error = (message: unknown) =>
+    message ? (
+      <p role="alert" className="text-sm text-destructive-foreground">
+        {String(message)}
+      </p>
+    ) : null;
   return (
     <PortalForm
-      schema={schema}
+      schema={postSchema({
+        board: t("team-conversations.links.noBoards"),
+        details: t("team-conversations.links.detailsTooLong"),
+      })}
       defaultValues={{ boardId: boards[0]?.id ?? "", title: "", content: "" }}
       submitKey="team-conversations.links.create"
       onSubmit={onSubmit}
@@ -55,6 +66,7 @@ export function CreatePostForm({
             }))}
             onChange={(value) => form.setValue("boardId", value)}
           />
+          {error(form.formState.errors.boardId?.message)}
           <Field invalid={Boolean(form.formState.errors.title)}>
             <FieldLabel htmlFor="conversation-post-title">
               {t("team-conversations.links.postTitle")}
@@ -65,21 +77,20 @@ export function CreatePostForm({
               aria-invalid={Boolean(form.formState.errors.title)}
               {...form.register("title")}
             />
-            {form.formState.errors.title?.message ? (
-              <p role="alert" className="text-sm text-destructive">
-                {String(form.formState.errors.title.message)}
-              </p>
-            ) : null}
+            {error(form.formState.errors.title?.message)}
           </Field>
-          <Field>
+          <Field invalid={Boolean(form.formState.errors.content)}>
             <FieldLabel htmlFor="conversation-post-content">
               {t("team-conversations.links.postContent")}
             </FieldLabel>
             <Textarea
               id="conversation-post-content"
               rows={3}
+              maxLength={10000}
+              aria-invalid={Boolean(form.formState.errors.content)}
               {...form.register("content")}
             />
+            {error(form.formState.errors.content?.message)}
           </Field>
         </>
       )}
