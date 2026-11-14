@@ -72,8 +72,9 @@ export function TeamConversationPage(props: TeamConversationPageProps) {
   const data = conversation.data;
 
   // An open conversation is read: one request each time it gets unread messages.
+  // The read route needs the update permission.
   const marked = useRef("");
-  const unread = (data?.unreadCount ?? 0) > 0;
+  const unread = team.permissions.update && (data?.unreadCount ?? 0) > 0;
   useEffect(() => {
     if (!unread) marked.current = "";
     if (!unread || marked.current === conversationId) return;

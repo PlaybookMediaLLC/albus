@@ -6,7 +6,7 @@ import type { RequestFilterKey } from "../../ui/inbox/request-filters";
 /** The inbox filters in the address. The post view keeps them, so Back and J/K use the same list. */
 export const postSearch = z.object({
   status: z
-    .enum(["active", "complete", "closed", "all"])
+    .enum(["active", "complete", "closed", "all", "deleted"])
     .optional()
     .catch(undefined),
   board: z.string().max(100).optional().catch(undefined),
@@ -21,6 +21,17 @@ export type PostSearch = z.infer<typeof postSearch>;
 export type PostTab = NonNullable<PostSearch["status"]>;
 
 type Status = ListStatusesResponse["statuses"][number];
+
+/**
+ * The list filters that the request view keeps. It drops the New request flag, and the Deleted
+ * filter, because a deleted request does not open.
+ */
+export function detailSearch(raw: Record<string, unknown>) {
+  const { new: _new, ...search } = postSearch.parse(raw);
+  return search.status === "deleted"
+    ? { ...search, status: undefined }
+    : search;
+}
 
 /** The address change of a filter menu choice. A status group replaces a sidebar status. */
 export function filterPatch(
@@ -43,7 +54,8 @@ export const postFilterQuery = (search: PostSearch) => ({
 /**
  * The listQuillsPosts input of the inbox. A status ID filters one status. A status tab is a status category, so the
  * request waits for the statuses. `none` is true when the tab has no status: the list is
- * then empty, because an empty statusIds filter matches every post.
+ * then empty, because an empty statusIds filter matches every post. "deleted" lists the posts
+ * of every status that were deleted in the last 30 days, which a teammate can restore.
  */
 export function postListInput(
   workspaceId: string,
@@ -53,18 +65,20 @@ export function postListInput(
   const tab = search.status ?? "active";
   const ids = search.statusId
     ? [search.statusId]
-    : tab === "all"
+    : tab === "all" || tab === "deleted"
       ? []
       : (statuses ?? [])
           .filter((status) => status.category === tab)
           .map((status) => status.id);
-  const none = Boolean(statuses) && tab !== "all" && ids.length === 0;
+  const none =
+    Boolean(statuses) && ids.length === 0 && tab !== "all" && tab !== "deleted";
   const input: ListPostsRequest = {
     param: { workspaceId: statuses && !none ? workspaceId : "" },
     query: {
       sort: search.sort ?? "newest",
       limit: "50",
       ...(ids.length ? { statusIds: ids.join(",") } : {}),
+      ...(tab === "deleted" ? { showDeleted: "true" as const } : {}),
       ...postFilterQuery(search),
     },
   };

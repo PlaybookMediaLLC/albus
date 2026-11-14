@@ -8,8 +8,8 @@ export const meta = {
   token: "none",
   // The request order: the page queries (the posts wait for the statuses), then the voters of
   // the chip row and the properties panel from top to bottom. The tags load when the tag menu
-  // opens, listQuillsUsers waits for a typed proxy-vote search, and the merge palette's
-  // listQuillsPosts search waits for a typed query.
+  // opens, listQuillsUsers waits for a typed proxy-vote search, the merge palette's
+  // listQuillsPosts search waits for a typed query, and the AI chip summarizes when it opens.
   operations: [
     "getQuillsPost",
     "listQuillsPostComments",
@@ -33,6 +33,7 @@ export const meta = {
     "mergeQuillsPost",
     "unmergeQuillsPost",
     "deleteQuillsPost",
+    "summarizeQuillsPost",
   ],
   states: ["loading", "failed", "ready", "done"],
 } satisfies PageMeta;

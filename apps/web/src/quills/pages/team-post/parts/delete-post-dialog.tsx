@@ -11,7 +11,7 @@ export interface DeletePostDialogProps {
   onDeleted: () => void;
 }
 
-/** Asks before a request is deleted. A teammate with the delete action can restore it for 30 days. */
+/** Asks before a request is deleted. For 30 days, the Deleted filter of the requests list restores it. */
 export function DeletePostDialog(props: DeletePostDialogProps) {
   const { t } = useTranslation("quills");
   const team = useTeamRuntime();

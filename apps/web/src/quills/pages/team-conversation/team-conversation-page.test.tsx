@@ -156,6 +156,24 @@ describe("TeamConversationPage", () => {
       expect(messages.get("includeInternal")).toBe("true");
     });
 
+    it("does not mark the conversation read without the update permission", async () => {
+      const api = mockApi();
+      answer(
+        api,
+        reads({ getQuillsConversation: { ...conversation, unreadCount: 2 } }),
+      );
+      const view = renderPage(TeamConversationPage, meta, {
+        ...options,
+        permissions: { update: false },
+      });
+      await view.findByRole("heading", { level: 1, name: "Grace" });
+      await view.findByRole("complementary", { name: "Customer and details" });
+      await waitFor(() =>
+        expect(api.calls("listQuillsConversationMessages")).toHaveLength(1),
+      );
+      expect(api.calls("markQuillsConversationRead")).toHaveLength(0);
+    });
+
     it("moves through the list it came from and goes back to it", async () => {
       answer(mockApi());
       const view = renderPage(WithKeys, meta, options);

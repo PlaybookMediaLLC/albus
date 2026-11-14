@@ -1,12 +1,16 @@
 import { useTranslation } from "react-i18next";
 import type { ListBoardsResponse } from "../../../api/team/list-boards";
 import type { ListStatusesResponse } from "../../../api/team/list-statuses";
+import type { PortalProblem } from "../../../core/types";
+import type { useListPosts } from "../../../hooks/team/use-list-posts";
 import { ListPane } from "../../../ui/inbox/list-pane";
 import { PostStatusIcon } from "../../../ui/inbox/post-status-icon";
 import { RequestFilters } from "../../../ui/inbox/request-filters";
 import { RequestRow } from "../../../ui/inbox/request-row";
+import { Button } from "../../../ui/upstream";
 import {
   postRow,
+  rowContext,
   statusIcon,
   type ListedPost,
 } from "../../team-posts/post-list";
@@ -26,9 +30,17 @@ export interface PostListPaneProps {
   href: (postId: string) => string;
   onOpen: (postId: string) => void;
   loading: boolean;
+  /** A list failure. It shows in this pane; the open request stays. */
+  problem?: PortalProblem | null;
+  onRetry?: () => void;
+  /** The posts query, for Load more. */
+  more?: Pick<
+    ReturnType<typeof useListPosts>,
+    "hasNextPage" | "isFetchingNextPage" | "fetchNextPage"
+  >;
 }
 
-/** The list pane beside an open request: filters, search and compact request cards. The main pane shows a failure. */
+/** The list pane beside an open request: filters, search, compact request cards and Load more. */
 export function PostListPane({
   search,
   onSearch,
@@ -36,12 +48,7 @@ export function PostListPane({
 }: PostListPaneProps) {
   const { t } = useTranslation("quills");
   const [query, setQuery] = useRequestQuery(search.q, (q) => onSearch({ q }));
-  const context = {
-    statuses: props.statuses,
-    boardName: new Map(props.boards.map((board) => [board.id, board.name])),
-    anonymous: t("team-posts.anonymous"),
-    stale: (months: number) => t("team-posts.stale", { months }),
-  };
+  const context = rowContext(props.statuses, props.boards, t);
   return (
     <ListPane
       title={t("team-posts.title")}
@@ -61,6 +68,8 @@ export function PostListPane({
         onChange: setQuery,
       }}
       loading={props.loading}
+      problem={props.problem}
+      onRetry={props.onRetry}
       empty={!props.posts.length}
     >
       <ul className="grid grid-cols-1 gap-0.5">
@@ -77,6 +86,18 @@ export function PostListPane({
           </li>
         ))}
       </ul>
+      {props.more?.hasNextPage ? (
+        <div className="p-2">
+          <Button
+            variant="outline"
+            className="w-full"
+            loading={props.more.isFetchingNextPage}
+            onClick={() => void props.more?.fetchNextPage()}
+          >
+            {t("team-posts.loadMore")}
+          </Button>
+        </div>
+      ) : null}
     </ListPane>
   );
 }

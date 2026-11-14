@@ -56,7 +56,10 @@ export function MergePalette(props: MergePaletteProps) {
       onQueryChange={setQuery}
       items={search ? items : []}
       getKey={(item) => item.id}
-      loading={Boolean(search) && found.isFetching}
+      // The debounce counts as loading, so "No results" waits for the first search.
+      loading={query.trim() !== search || (Boolean(search) && found.isFetching)}
+      problem={search ? found.error : null}
+      onRetry={() => void found.refetch()}
       renderItem={(item) => (
         <span className="flex items-center gap-2">
           <PostStatusIcon {...statusIcon(item, props.statuses)} />

@@ -149057,6 +149057,114 @@
         }
       }
     },
+    "/quills/{workspaceId}/posts/{postId}/summary": {
+      "post": {
+        "operationId": "summarizeQuillsPost",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Summarize a feedback post and its comments with AI",
+        "description": "Returns a short summary for the teammate: what is asked, why, and what is still open. It reads the post and its newest 30 comments, private notes included, as the teammate can. Saves nothing; the usage log row is its record. 409 when AI is not configured, 502 when the provider fails.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The summary for review",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "postId": {
+                      "type": "string"
+                    },
+                    "summary": {
+                      "type": "string",
+                      "description": "Plain text"
+                    }
+                  },
+                  "required": [
+                    "postId",
+                    "summary"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Post not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "AI is not configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          },
+          "502": {
+            "description": "The AI provider failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/quills/{workspaceId}/context": {
       "get": {
         "operationId": "getQuillsWorkspaceContext",

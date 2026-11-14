@@ -349,6 +349,7 @@ job was lost or ran out of attempts). The copilot is not streamed.
 | `listQuillsSimilarPosts` | `GET /posts/{postId}/similar` (stored embeddings; no provider call) | read | - |
 | `getQuillsPostSentiment` | `GET /posts/{postId}/sentiment` | read | - |
 | `requestQuillsPostSentiment` | `POST /posts/{postId}/sentiment` | update | `post.sentiment_requested` |
+| `summarizeQuillsPost` | `POST /posts/{postId}/summary` (the post and its newest 30 live comments; read in `prepare`, provider call in `call`, 600 output tokens at most; RFC 0004, `../feedback/post-summary.ts`) | read | none: usage row only, nothing saved |
 | `requestQuillsPostTagBackfill` | `POST /posts/ai-tags/backfill` (≤ 30 posts) | update | `post.tags_backfill_requested` |
 | `requestQuillsEmbeddingBackfill` | `POST /assistant/embeddings/backfill` | manage_settings | `assistant.embeddings_requested` |
 

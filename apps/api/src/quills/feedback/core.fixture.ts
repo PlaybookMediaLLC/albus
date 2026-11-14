@@ -8,3 +8,5 @@ export * from "./votes.fixture";
 export * from "./board-settings.fixture";
 export * from "./demand.fixture";
 export * from "./scores.fixture";
+// RFC 0004: the AI chip of the request detail.
+export * from "./post-summary.fixture";

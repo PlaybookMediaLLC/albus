@@ -25,6 +25,10 @@ describe("DeletePostDialog", () => {
     api.reply(deletePostFixture.ok());
     const onDeleted = vi.fn();
     const view = render(onDeleted);
+    // The requests list restores it: Deleted in its filter menu.
+    expect(
+      await view.findByText(/restore it from the Deleted filter/),
+    ).toBeVisible();
     fireEvent.click(await view.findByRole("button", { name: "Delete" }));
     await waitFor(() => expect(onDeleted).toHaveBeenCalled());
     expect(new URL(api.calls("deleteQuillsPost")[0]!.url).pathname).toBe(

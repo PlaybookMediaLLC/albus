@@ -233,6 +233,8 @@ export function describeHookContract(input: {
     expect(api.calls(input.operationId)).toHaveLength(1);
     for (const queryKey of input.invalidates ?? [])
       expect(invalidate).toHaveBeenCalledWith({ queryKey });
+    // Only the declared ones: a mutation that declares none refetches nothing.
+    expect(invalidate).toHaveBeenCalledTimes(input.invalidates?.length ?? 0);
   });
   it("returns the problem and invalidates nothing after mutation failure", async () => {
     const api = mockApi();
@@ -354,7 +356,9 @@ export function describePageContract(
       for (const _operation of meta.operations)
         api.reply({ message: "Forbidden" }, 403);
       const view = renderPage(Page, meta);
-      expect(await view.findByRole("alert")).toHaveTextContent(/permission/i);
+      // A page can show the denied state in more than one pane; every alert must be that state.
+      for (const alert of await view.findAllByRole("alert"))
+        expect(alert).toHaveTextContent(/permission/i);
     });
   else if (meta.audience !== "public" && meta.audience !== "development")
     it("does not expose page data without audience access", () => {

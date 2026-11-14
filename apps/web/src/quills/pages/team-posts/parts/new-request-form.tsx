@@ -18,21 +18,22 @@ import {
   Textarea,
 } from "../../../ui/upstream";
 
-// The bounds of createQuillsPost.
-const schema = z.object({
-  boardId: z.string().min(1),
-  title: z.string().trim().min(1).max(200),
-  content: z.string().trim().max(10000),
-  statusId: z.string(),
-  tagIds: z.array(z.string()).max(50),
-});
-export type NewRequestValues = z.infer<typeof schema>;
+// The bounds of createQuillsPost. The component gives the translated board message.
+const requestSchema = (board: string) =>
+  z.object({
+    boardId: z.string().min(1, board),
+    title: z.string().trim().min(1).max(200),
+    content: z.string().trim().max(10000),
+    statusId: z.string(),
+    tagIds: z.array(z.string()).max(50),
+  });
+export type NewRequestValues = z.infer<ReturnType<typeof requestSchema>>;
 
 export interface NewRequestFormProps {
   boards: ListBoardsResponse["items"];
   statuses: ListStatusesResponse["statuses"];
   tags: ListTagsResponse["tags"];
-  /** The board of the list filter, or the first board. */
+  /** The board of the list filter. Without it, the first board. */
   boardId?: string;
   /** The author control at the start of the header row. */
   author: ReactNode;
@@ -42,11 +43,21 @@ export interface NewRequestFormProps {
 /** The New request card: author and board, the title and details, then status, tags and Create. */
 export function NewRequestForm(props: NewRequestFormProps) {
   const { t } = useTranslation("quills");
+  // A filter board that no longer exists leaves the board empty: the teammate chooses one.
+  const boardId = props.boardId ?? props.boards[0]?.id;
   return (
     <PortalForm<NewRequestValues>
-      schema={schema}
+      schema={requestSchema(
+        t(
+          props.boards.length
+            ? "team-posts.chooseBoard"
+            : "team-posts.noBoards",
+        ),
+      )}
       defaultValues={{
-        boardId: props.boardId ?? props.boards[0]?.id ?? "",
+        boardId: props.boards.some((board) => board.id === boardId)
+          ? boardId
+          : "",
         title: "",
         content: "",
         statusId: props.statuses.find((status) => status.isDefault)?.id ?? "",
@@ -143,11 +154,20 @@ export function NewRequestForm(props: NewRequestFormProps) {
           ) : null}
           <Textarea
             unstyled
+            maxLength={10000}
             aria-label={t("team-posts.details")}
             placeholder={t("team-posts.details")}
+            aria-invalid={Boolean(form.formState.errors.content)}
             className="flex w-full rounded-md text-sm focus-within:ring-2 focus-within:ring-ring [&_textarea]:min-h-28"
             {...form.register("content")}
           />
+          {/* maxLength stops the text at the limit, for example a long paste, so the limit shows there. */}
+          {form.formState.errors.content ||
+          form.watch("content").length >= 10000 ? (
+            <p role="alert" className="text-sm text-destructive-foreground">
+              {t("team-posts.detailsLimit")}
+            </p>
+          ) : null}
         </>
       )}
     </PortalForm>

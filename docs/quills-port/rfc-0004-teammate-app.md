@@ -96,16 +96,21 @@ pass, and the review team finds no blocking issue.
 | S2, C2, P2, T2, R2 | 2 (UserJot layout) | merged |
 
 The review of 2026-11-14 found two blocking issues, both fixed: a detail pane carried a draft or
-an open form to the next item, and a reopened view showed stale cached data. Open items:
+an open form to the next item, and a reopened view showed stale cached data.
 
-1. A failed or slow request list hides the open request (`team-post-page.tsx`). The page tests
-   answer requests in a fixed order, so the fix needs those tests reworked.
-2. The list pane beside an open request has no "Load more".
-3. A deleted request cannot be restored from the app (`restoreQuillsPost` has no client).
-4. A snoozed conversation has no "Unsnooze"; only Resolve, then Reopen.
-5. A ticket read refetches the sidebar counts; the generator needs an invalidation target.
-6. The New request and "Track as post" forms show no error for an empty board list or details
-   over 10,000 characters.
-7. Smaller items: the merge palette shows "No results" on a failed search; each hidden tab shows
-   its own desktop notification; some controls show without their permission (the API refuses
-   the action); the AI chip of the request detail is not built.
+Lane FIX closed the open items of that review, each with a test that fails without the fix:
+
+1. The open request no longer waits for, or fails with, the list pane. A list error shows in the
+   list pane with a retry.
+2. The list pane beside an open request has "Load more".
+3. The requests filter menu shows Deleted (`showDeleted`). A teammate with the delete permission
+   restores a request there (`restoreQuillsPost`).
+4. A snoozed conversation offers "Unsnooze" in its header menu (`setQuillsConversationStatus`).
+5. A ticket read refetches nothing. The generator takes `--invalidates none`.
+6. The New request and "Track as post" forms show an announced error for no board or a missing
+   board, and cap the details at 10,000 characters.
+7. The merge palette shows a failed search with a retry. Each desktop notification has a `tag`.
+   New request, "Save as view" and the conversation read follow their permission. The request
+   detail has the AI chip, which calls the new teammate route `summarizeQuillsPost`.
+
+Open items: none.

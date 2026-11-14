@@ -3,6 +3,13 @@
 	"actions": "Request actions",
 	"addVote": "Add a vote for a customer",
 	"addVoteFor": "Add a vote for {{name}}",
+	"ai": {
+		"chip": "Summarize",
+		"failed": "AI could not summarize this request.",
+		"off": "AI is not set up for this workspace.",
+		"title": "AI summary",
+		"working": "Summarizing…"
+	},
 	"anonymous": "Anonymous",
 	"boardIs": "Board: {{board}}",
 	"cancel": "Cancel",
@@ -13,7 +20,7 @@
 	"copyLink": "Copy link",
 	"critical": "Blocker",
 	"delete": "Delete",
-	"deleteText": "Customers no longer see it. A teammate with the delete permission can restore it for 30 days.",
+	"deleteText": "Customers no longer see it. For 30 days, a teammate with the delete permission can restore it from the Deleted filter of the requests.",
 	"deleteTitle": "Delete this request?",
 	"demand": "Demand",
 	"duplicates_one": "{{count}} merged request",

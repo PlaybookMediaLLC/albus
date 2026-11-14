@@ -66,7 +66,7 @@ export function TeamTicketsPage({
     { param: { workspaceId: ticketId ? workspaceId : "" }, query: {} },
     team.viewer,
   );
-  const { mutate: markRead } = useMarkTicketRead(team.viewer);
+  const { mutate: markRead } = useMarkTicketRead();
   useEffect(() => {
     if (workspaceId && ticketId) markRead({ param: { workspaceId, ticketId } });
   }, [markRead, workspaceId, ticketId]);

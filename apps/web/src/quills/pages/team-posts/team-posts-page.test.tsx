@@ -1,13 +1,15 @@
 import { fireEvent, waitFor, within } from "@testing-library/react";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 import { createPostFixture } from "../../api/team/create-post.fixture";
 import type { ListPostsResponse } from "../../api/team/list-posts";
 import { listPostsFixture } from "../../api/team/list-posts.fixture";
 import { listUsersFixture } from "../../api/team/list-users.fixture";
+import { restorePostFixture } from "../../api/team/restore-post.fixture";
 import { choose, fill, press } from "../../test/actions";
 import { describePageContract } from "../../test/contracts";
 import { mockApi } from "../../test/mock-api";
 import { renderPage } from "../../test/render";
+import { ShortcutListener } from "../../ui/upstream";
 import {
   inboxBoards,
   inboxCustomer,
@@ -16,7 +18,7 @@ import {
   inboxTags,
 } from "./inbox.fixture";
 import { meta } from "./meta";
-import { TeamPostsPage } from "./team-posts-page";
+import { TeamPostsPage, type TeamPostsPageProps } from "./team-posts-page";
 
 // The statuses and boards load first; the posts wait for the statuses.
 const prepare = (posts: ListPostsResponse = inboxPosts) => {
@@ -135,6 +137,82 @@ describe("TeamPostsPage", () => {
     await waitFor(() =>
       expect(view.router.state.location.search).toEqual({ status: "closed" }),
     );
+  });
+
+  const deletedPosts = {
+    ...inboxPosts,
+    items: [{ ...inboxPosts.items[0]!, deletedAt: "2026-11-01T00:00:00.000Z" }],
+  };
+
+  it("offers the deleted requests in the filter menu", async () => {
+    prepare();
+    const view = renderPage(TeamPostsPage, meta);
+    await view.findByRole("link", { name: /Export to CSV/ });
+    press("Filters");
+    fireEvent.click(
+      await view.findByRole("menuitemradio", { name: "Deleted" }),
+    );
+    await waitFor(() =>
+      expect(view.router.state.location.search).toEqual({ status: "deleted" }),
+    );
+  });
+
+  it("lists the deleted requests and restores one", async () => {
+    const api = prepare(deletedPosts);
+    api.reply(restorePostFixture.ok({ id: "post_export" }));
+    // The restore refreshes the list, which no longer has the request.
+    api.reply(listPostsFixture.ok());
+    const view = renderPage(TeamPostsPage, meta, {
+      search: { status: "deleted" },
+    });
+    expect(
+      await view.findByRole("heading", { level: 1, name: "Deleted" }),
+    ).toBeVisible();
+    const restore = await view.findByRole("button", {
+      name: "Restore Export to CSV",
+    });
+    const query = new URL(api.calls("listQuillsPosts")[0]!.url).searchParams;
+    expect(query.get("showDeleted")).toBe("true");
+    expect(query.get("statusIds")).toBeNull();
+    // A deleted request does not open.
+    expect(view.queryByRole("link", { name: /Export to CSV/ })).toBeNull();
+    fireEvent.click(restore);
+    await waitFor(() => expect(api.calls("restoreQuillsPost")).toHaveLength(1));
+    expect(new URL(api.calls("restoreQuillsPost")[0]!.url).pathname).toBe(
+      "/api/quills/workspace_test_1/posts/post_export/restore",
+    );
+    expect(await view.findByText("Nothing is here yet.")).toBeVisible();
+  });
+
+  it("does not open a deleted request by key", async () => {
+    prepare(deletedPosts);
+    // The keys need the shortcut listener of the app shell.
+    function WithKeys(props: TeamPostsPageProps) {
+      return (
+        <>
+          <ShortcutListener />
+          <TeamPostsPage {...props} />
+        </>
+      );
+    }
+    const view = renderPage(WithKeys, meta, {
+      search: { status: "deleted" },
+    });
+    await view.findByRole("button", { name: "Restore Export to CSV" });
+    const navigate = vi.spyOn(view.router, "navigate");
+    fireEvent.keyDown(document.body, { key: "j" });
+    fireEvent.keyDown(document.body, { key: "Enter" });
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it("offers Restore only with the delete permission", async () => {
+    prepare(deletedPosts);
+    const view = renderPage(TeamPostsPage, meta, {
+      search: { status: "deleted" },
+      permissions: { delete: false },
+    });
+    expect(await view.findByText("Export to CSV")).toBeVisible();
+    expect(view.queryByRole("button", { name: /^Restore/ })).toBeNull();
   });
 
   it("puts the typed search in the address", async () => {

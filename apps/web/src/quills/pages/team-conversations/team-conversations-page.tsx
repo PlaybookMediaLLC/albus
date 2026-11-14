@@ -99,7 +99,9 @@ export function TeamConversationsPage(props: TeamConversationsPageProps) {
             views={views.data?.items ?? []}
             headingLevel={1}
             onSearch={(q) => remember({ q })}
-            onSaveView={() => setSaving(true)}
+            onSaveView={
+              team.permissions.create ? () => setSaving(true) : undefined
+            }
           >
             <TeamStateView
               loading={waiting || list.isLoading}

@@ -10,6 +10,7 @@ import {
 function renderMenu(props: Partial<ConversationMenuProps>) {
   const handlers = {
     onSnooze: vi.fn(),
+    onUnsnooze: vi.fn(),
     onSpam: vi.fn(),
     onNotSpam: vi.fn(),
     onBlock: vi.fn(),
@@ -57,6 +58,15 @@ describe("ConversationMenu", () => {
     expect(view.queryByRole("menuitem", { name: "Snooze" })).toBeNull();
     fireEvent.click(view.getByRole("menuitem", { name: "Unblock sender" }));
     expect(handlers.onUnblock).toHaveBeenCalledTimes(1);
+  });
+
+  it("unsnoozes a snoozed conversation", async () => {
+    const { view, handlers } = renderMenu({ status: "snoozed" });
+    fireEvent.click(await view.findByRole("menuitem", { name: "Unsnooze" }));
+    expect(handlers.onUnsnooze).toHaveBeenCalledTimes(1);
+    press("More actions");
+    await view.findByRole("menuitem", { name: "Unsnooze" });
+    expect(view.queryByRole("menuitem", { name: "Snooze" })).toBeNull();
   });
 
   it("offers no blocking for a visitor without a profile", async () => {

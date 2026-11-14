@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
 import { listPostsFixture } from "../../api/team/list-posts.fixture";
 import { setPostScoreFixture } from "../../api/team/set-post-score.fixture";
-import { groupPosts, postRow, staleMonths, statusIcon } from "./post-list";
+import {
+  groupPosts,
+  postRow,
+  rowContext,
+  staleMonths,
+  statusIcon,
+} from "./post-list";
 
 const status = (
   id: string,
@@ -124,5 +130,18 @@ describe("statusIcon", () => {
       color: null,
       progress: 0,
     });
+  });
+});
+
+describe("rowContext", () => {
+  it("names the boards and translates the anonymous and stale labels", () => {
+    const context = rowContext(
+      statuses,
+      [{ id: "b1", name: "Ideas" }],
+      (key, options) => (options ? `${key}:${options.months}` : key),
+    );
+    expect(context.boardName.get("b1")).toBe("Ideas");
+    expect(context.anonymous).toBe("team-posts.anonymous");
+    expect(context.stale(7)).toBe("team-posts.stale:7");
   });
 });

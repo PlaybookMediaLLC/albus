@@ -9,8 +9,10 @@ import {
 } from "../upstream";
 
 export interface RequestFiltersProps {
-  /** The status group: active, complete, closed or all. Empty while one status is shown. */
+  /** The status group: active, complete, closed, all or deleted. Empty while one status is shown. */
   status: string;
+  /** Offers the deleted requests, which only the requests list can show. */
+  withDeleted?: boolean;
   /** The board ID, or "" for every board. */
   board: string;
   /** newest, votes or rice. */
@@ -24,6 +26,7 @@ const statuses = [
   { value: "complete", labelKey: "team-posts.complete" },
   { value: "closed", labelKey: "team-posts.closed" },
   { value: "all", labelKey: "team-posts.all" },
+  { value: "deleted", labelKey: "team-posts.deleted" },
 ] as const;
 const sorts = [
   { value: "newest", labelKey: "team-posts.sortNewest" },
@@ -39,10 +42,9 @@ export function RequestFilters(props: RequestFiltersProps) {
       key: "status",
       labelKey: "team-posts.show",
       value: props.status,
-      options: statuses.map((item) => ({
-        value: item.value,
-        label: t(item.labelKey),
-      })),
+      options: statuses
+        .filter((item) => props.withDeleted || item.value !== "deleted")
+        .map((item) => ({ value: item.value, label: t(item.labelKey) })),
     },
     {
       key: "board",

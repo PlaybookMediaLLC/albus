@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
 import { listStatusesFixture } from "../../api/team/list-statuses.fixture";
-import { filterPatch, postListInput, postSearch } from "./post-search";
+import {
+  detailSearch,
+  filterPatch,
+  postListInput,
+  postSearch,
+} from "./post-search";
 
 const status = (id: string, category: "active" | "complete" | "closed") => ({
   id,
@@ -70,6 +75,20 @@ describe("postListInput", () => {
     expect(input.query).toEqual({ sort: "newest", limit: "50" });
   });
 
+  it("lists the deleted posts of every status", () => {
+    const { input, none } = postListInput(
+      "ws",
+      { status: "deleted" },
+      statuses,
+    );
+    expect(none).toBe(false);
+    expect(input.query).toEqual({
+      sort: "newest",
+      limit: "50",
+      showDeleted: "true",
+    });
+  });
+
   it("asks for nothing when the tab has no status", () => {
     const { input, none } = postListInput("ws", { status: "closed" }, statuses);
     expect(none).toBe(true);
@@ -90,5 +109,17 @@ describe("filterPatch", () => {
     expect(filterPatch("sort", "rice")).toEqual({ sort: "rice" });
     // A value that the address does not accept removes the key.
     expect(filterPatch("sort", "loudest")).toEqual({ sort: undefined });
+  });
+});
+
+describe("detailSearch", () => {
+  it("drops the New request flag and the Deleted filter", () => {
+    expect(detailSearch({ new: true, board: "b1", status: "deleted" })).toEqual(
+      { board: "b1", status: undefined },
+    );
+    expect(detailSearch({ status: "closed", q: "x" })).toEqual({
+      status: "closed",
+      q: "x",
+    });
   });
 });

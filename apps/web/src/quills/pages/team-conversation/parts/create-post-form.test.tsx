@@ -51,4 +51,36 @@ describe("CreatePostForm", () => {
       }),
     );
   });
+
+  it("explains that no board exists", async () => {
+    const onSubmit = vi.fn(async () => undefined);
+    const view = renderComponent(
+      <CreatePostForm boards={[]} onSubmit={onSubmit} onCancel={vi.fn()} />,
+    );
+    fill("Request title", "Faster export");
+    press("Create request");
+    expect(await view.findByRole("alert")).toHaveTextContent(
+      "No board exists. Add a board in Settings first.",
+    );
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("caps the details at 10,000 characters and says so at the limit", async () => {
+    const onSubmit = vi.fn(async () => undefined);
+    const view = renderComponent(
+      <CreatePostForm boards={boards} onSubmit={onSubmit} onCancel={vi.fn()} />,
+    );
+    expect(view.getByLabelText("Details (optional)")).toHaveAttribute(
+      "maxlength",
+      "10000",
+    );
+    fill("Request title", "Faster export");
+    // A long paste stops at the limit; the limit then shows before a submit.
+    fill("Details (optional)", "a".repeat(10000));
+    expect(await view.findByRole("alert")).toHaveTextContent(
+      "Details can have at most 10,000 characters.",
+    );
+    press("Create request");
+    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+  });
 });

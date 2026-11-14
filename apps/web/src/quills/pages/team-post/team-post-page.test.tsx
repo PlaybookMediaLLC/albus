@@ -25,29 +25,61 @@ import {
 } from "./post.fixture";
 import { TeamPostPage } from "./team-post-page";
 
+type Api = ReturnType<typeof mockApi>;
+/** An answer that never comes, so its request stays in flight. */
+const never = Symbol("never");
+/** A body, or a function of the number of earlier calls of the operation. */
+type Answer = unknown | ((calls: number) => unknown);
+
 const options = {
   params: { postId: "post_export" },
   search: { board: "board_ideas" },
 };
-// The page requests, then the voters of the chip row and the panel from top to bottom (meta.ts).
-const prepare = () => {
-  const api = mockApi();
-  api.reply(postDetail);
-  api.reply(postComments);
-  api.reply(inboxStatuses);
-  api.reply(inboxBoards);
-  api.reply(inboxPosts);
-  api.reply(postVoters);
-  api.reply(postDemand);
-  api.reply(listLinksFixture.ok());
-  api.reply(getLinkedConversationsForPostFixture.ok());
-  api.reply(listMergedPostsFixture.ok());
+// The page requests, then the voters of the chip row and the panel (meta.ts).
+const reads = (overrides: Record<string, Answer> = {}) => ({
+  getQuillsPost: postDetail,
+  listQuillsPostComments: postComments,
+  listQuillsStatuses: inboxStatuses,
+  listQuillsBoards: inboxBoards,
+  listQuillsPosts: inboxPosts,
+  listQuillsPostVoters: postVoters,
+  getQuillsPostDemand: postDemand,
+  listQuillsLinks: listLinksFixture.ok(),
+  getQuillsLinkedConversationsForPost:
+    getLinkedConversationsForPostFixture.ok(),
+  listQuillsMergedPosts: listMergedPostsFixture.ok(),
+  ...overrides,
+});
+
+/**
+ * Answers each request by its operation. The request and the list pane load in parallel, so
+ * the order is not fixed. An operation without an answer fails with 500.
+ */
+function answer(api: Api, answers: Record<string, Answer> = reads()) {
+  for (let index = 0; index < 40; index += 1)
+    api.defer(({ resolve }) => {
+      const request = api.calls().at(-1)!;
+      const id = Object.keys(answers).find((operation) =>
+        api.calls(operation).includes(request),
+      );
+      const value = id ? answers[id] : undefined;
+      const body =
+        typeof value === "function"
+          ? value(api.calls(id!).indexOf(request))
+          : value;
+      if (body === never) return;
+      resolve(body ?? { message: "Failed" }, body === undefined ? 500 : 200);
+    });
   return api;
-};
+}
+const prepare = (answers?: Record<string, Answer>) =>
+  answer(mockApi(), answers);
 const render = () => renderPage(TeamPostPage, meta, options);
-// The request shows once every page request has an answer.
+// The request shows once its page requests have an answer.
 const loaded = (view: ReturnType<typeof render>) =>
   view.findByRole("group", { name: "Request actions" });
+const listPane = (view: ReturnType<typeof render>) =>
+  view.getByRole("region", { name: "Requests" });
 const comment = (view: ReturnType<typeof render>, text: string) => {
   const box = view.getByRole("textbox", { name: "Write a comment…" });
   fireEvent.change(box, { target: { value: text } });
@@ -65,12 +97,7 @@ describe("TeamPostPage", () => {
     },
     failed: {
       prepare: () => {
-        const api = mockApi();
-        api.fail();
-        api.reply(postComments);
-        api.reply(inboxStatuses);
-        api.reply(inboxBoards);
-        api.reply(inboxPosts);
+        prepare(reads({ getQuillsPost: undefined }));
         return options;
       },
     },
@@ -88,12 +115,7 @@ describe("TeamPostPage", () => {
     },
     done: {
       prepare: () => {
-        const api = prepare();
-        api.reply(createCommentFixture.ok());
-        // The comment refreshes the list, the post and the comments.
-        api.reply(inboxPosts);
-        api.reply(postDetail);
-        api.reply(postComments);
+        prepare(reads({ createQuillsComment: createCommentFixture.ok() }));
         return options;
       },
       act: async (view) => {
@@ -132,15 +154,94 @@ describe("TeamPostPage", () => {
       await within(panel).findByText("Enterprise (2 voters)"),
     ).toBeVisible();
     expect(within(panel).getByText("40")).toBeVisible();
-    const list = view.getByRole("region", { name: "Requests" });
     expect(
-      within(list).getByRole("link", { name: /Export to CSV/ }),
+      await within(listPane(view)).findByRole("link", {
+        name: /Export to CSV/,
+      }),
     ).toHaveAttribute("aria-current", "true");
   });
 
-  it("sends a private note from the composer", async () => {
+  it("shows the request while the list still loads", async () => {
+    prepare(reads({ listQuillsPosts: never }));
+    const view = render();
+    await loaded(view);
+    expect(view.getByText(postDetail.content)).toBeVisible();
+    expect(within(listPane(view)).getByText("Loading…")).toBeVisible();
+  });
+
+  it("shows a list failure in the list pane, keeps the request and retries the list", async () => {
+    const answers = reads({ listQuillsPosts: undefined });
+    prepare(answers);
+    const view = render();
+    await loaded(view);
+    expect(view.getByText(postDetail.content)).toBeVisible();
+    const list = listPane(view);
+    expect(await within(list).findByRole("alert")).toHaveTextContent(
+      /went wrong/i,
+    );
+    answers.listQuillsPosts = inboxPosts;
+    fireEvent.click(within(list).getByRole("button", { name: "Try again" }));
+    expect(
+      await within(list).findByRole("link", { name: /Single sign-on/ }),
+    ).toBeVisible();
+    expect(view.queryAllByRole("alert")).toHaveLength(0);
+  });
+
+  it("loads more requests into the list pane", async () => {
+    const api = prepare(
+      reads({
+        listQuillsPosts: (calls: number) =>
+          calls === 0
+            ? { ...inboxPosts, nextCursor: "post_sso", hasMore: true }
+            : {
+                ...inboxPosts,
+                items: [
+                  {
+                    ...inboxPosts.items[1],
+                    id: "post_dark",
+                    title: "Dark mode",
+                  },
+                ],
+              },
+      }),
+    );
+    const view = render();
+    await loaded(view);
+    const list = listPane(view);
+    fireEvent.click(
+      await within(list).findByRole("button", { name: "Load more requests" }),
+    );
+    expect(
+      await within(list).findByRole("link", { name: /Dark mode/ }),
+    ).toBeVisible();
+    expect(
+      new URL(api.calls("listQuillsPosts")[1]!.url).searchParams.get("cursor"),
+    ).toBe("post_sso");
+    expect(
+      within(list).queryByRole("button", { name: "Load more requests" }),
+    ).toBeNull();
+  });
+
+  it("lists the open requests beside a request opened from the Deleted filter", async () => {
     const api = prepare();
-    api.reply(createCommentFixture.ok({ isPrivate: true }));
+    const view = renderPage(TeamPostPage, meta, {
+      ...options,
+      search: { status: "deleted" },
+    });
+    await loaded(view);
+    await within(listPane(view)).findByRole("link", { name: /Single sign-on/ });
+    const query = new URL(api.calls("listQuillsPosts")[0]!.url).searchParams;
+    // A deleted request does not open, so the pane lists the open requests.
+    expect(query.get("showDeleted")).toBeNull();
+    expect(query.get("statusIds")).toBe("status_open,status_planned");
+  });
+
+  it("sends a private note from the composer", async () => {
+    const api = prepare(
+      reads({
+        createQuillsComment: createCommentFixture.ok({ isPrivate: true }),
+      }),
+    );
     const view = render();
     await loaded(view);
     press("Mode: Public");
@@ -157,10 +258,15 @@ describe("TeamPostPage", () => {
   });
 
   it("accepts a pending request into the next status", async () => {
-    const api = prepare();
-    api.reply(setPostStatusFixture.ok({ id: "post_export" }));
-    api.reply(inboxPosts);
-    api.reply({ ...postDetail, statusId: "status_planned" });
+    const api = prepare(
+      reads({
+        setQuillsPostStatus: setPostStatusFixture.ok({ id: "post_export" }),
+        getQuillsPost: (calls: number) =>
+          calls === 0
+            ? postDetail
+            : { ...postDetail, statusId: "status_planned" },
+      }),
+    );
     const view = render();
     await loaded(view);
     // The test workspace has no closed status.
@@ -181,9 +287,7 @@ describe("TeamPostPage", () => {
   });
 
   it("merges this request into another one from the palette", async () => {
-    const api = prepare();
-    api.reply(inboxPosts);
-    api.reply(mergePostFixture.ok());
+    const api = prepare(reads({ mergeQuillsPost: mergePostFixture.ok() }));
     const view = render();
     await loaded(view);
     press("Merge");
@@ -193,9 +297,14 @@ describe("TeamPostPage", () => {
       }),
       { target: { value: "sign" } },
     );
-    const option = await view.findByRole("option", { name: /Single sign-on/ });
+    const palette = await view.findByRole("dialog", { name: "Merge into" });
+    const option = await within(palette).findByRole("option", {
+      name: /Single sign-on/,
+    });
     // The search leaves out this request.
-    expect(view.queryByRole("option", { name: /Export to CSV/ })).toBeNull();
+    expect(
+      within(palette).queryByRole("option", { name: /Export to CSV/ }),
+    ).toBeNull();
     fireEvent.click(option);
     await waitFor(() => expect(api.calls("mergeQuillsPost")).toHaveLength(1));
     expect(new URL(api.calls("mergeQuillsPost")[0]!.url).pathname).toBe(
@@ -207,9 +316,7 @@ describe("TeamPostPage", () => {
   });
 
   it("deletes the request after a confirmation and goes back to the list", async () => {
-    const api = prepare();
-    api.reply(deletePostFixture.ok());
-    api.reply(inboxPosts);
+    const api = prepare(reads({ deleteQuillsPost: deletePostFixture.ok() }));
     const view = render();
     await loaded(view);
     press("More actions");
@@ -231,6 +338,7 @@ describe("TeamPostPage", () => {
     prepare();
     const view = render();
     await loaded(view);
+    await within(listPane(view)).findByRole("link", { name: /Single sign-on/ });
     fireEvent.click(view.getAllByRole("button", { name: "Next" })[0]!);
     await waitFor(() =>
       expect(view.router.state.location.pathname).toBe(
