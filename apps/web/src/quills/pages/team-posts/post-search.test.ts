@@ -70,6 +70,20 @@ describe("postListInput", () => {
     expect(input.query).toEqual({ sort: "newest", limit: "50" });
   });
 
+  it("lists the deleted posts of every status", () => {
+    const { input, none } = postListInput(
+      "ws",
+      { status: "deleted" },
+      statuses,
+    );
+    expect(none).toBe(false);
+    expect(input.query).toEqual({
+      sort: "newest",
+      limit: "50",
+      showDeleted: "true",
+    });
+  });
+
   it("asks for nothing when the tab has no status", () => {
     const { input, none } = postListInput("ws", { status: "closed" }, statuses);
     expect(none).toBe(true);

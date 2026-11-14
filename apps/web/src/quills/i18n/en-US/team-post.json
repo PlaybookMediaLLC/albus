@@ -13,7 +13,7 @@
 	"copyLink": "Copy link",
 	"critical": "Blocker",
 	"delete": "Delete",
-	"deleteText": "Customers no longer see it. A teammate with the delete permission can restore it for 30 days.",
+	"deleteText": "Customers no longer see it. For 30 days, a teammate with the delete permission can restore it from the Deleted filter of the requests.",
 	"deleteTitle": "Delete this request?",
 	"demand": "Demand",
 	"duplicates_one": "{{count}} merged request",

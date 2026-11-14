@@ -15,6 +15,7 @@ export const meta = {
     "listQuillsTags",
     "listQuillsUsers",
     "createQuillsPost",
+    "restoreQuillsPost",
   ],
   states: ["loading", "failed", "empty", "ready", "done"],
 } satisfies PageMeta;

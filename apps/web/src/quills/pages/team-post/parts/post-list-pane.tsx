@@ -10,6 +10,7 @@ import { RequestRow } from "../../../ui/inbox/request-row";
 import { Button } from "../../../ui/upstream";
 import {
   postRow,
+  rowContext,
   statusIcon,
   type ListedPost,
 } from "../../team-posts/post-list";
@@ -47,12 +48,7 @@ export function PostListPane({
 }: PostListPaneProps) {
   const { t } = useTranslation("quills");
   const [query, setQuery] = useRequestQuery(search.q, (q) => onSearch({ q }));
-  const context = {
-    statuses: props.statuses,
-    boardName: new Map(props.boards.map((board) => [board.id, board.name])),
-    anonymous: t("team-posts.anonymous"),
-    stale: (months: number) => t("team-posts.stale", { months }),
-  };
+  const context = rowContext(props.statuses, props.boards, t);
   return (
     <ListPane
       title={t("team-posts.title")}

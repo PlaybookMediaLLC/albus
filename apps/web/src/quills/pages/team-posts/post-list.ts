@@ -62,6 +62,18 @@ export interface RowContext {
   stale: (months: number) => string;
 }
 
+/** The row context of a request list, from its statuses, its boards and the translation function. */
+export const rowContext = (
+  statuses: readonly Status[],
+  boards: readonly { id: string; name: string }[],
+  t: (key: string, options?: { months: number }) => string,
+): RowContext => ({
+  statuses,
+  boardName: new Map(boards.map((board) => [board.id, board.name])),
+  anonymous: t("team-posts.anonymous"),
+  stale: (months) => t("team-posts.stale", { months }),
+});
+
 /** The RequestRow content of a post: plain-text title, stale badge, counts, board, date and author. */
 export function postRow(post: ListedPost, context: RowContext, now?: number) {
   const months = staleMonths(post, context.statuses, now);

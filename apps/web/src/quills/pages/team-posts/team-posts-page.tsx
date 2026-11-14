@@ -17,8 +17,9 @@ import { SearchField } from "../../ui/inbox/search-field";
 import { useListNavigation } from "../../ui/inbox/use-list-navigation";
 import { PageFrame } from "../../ui/page-frame";
 import { Button } from "../../ui/upstream";
+import { DeletedRequest } from "./parts/deleted-request";
 import { NewRequestDialog } from "./parts/new-request-dialog";
-import { groupPosts, postRow, statusIcon } from "./post-list";
+import { groupPosts, postRow, rowContext, statusIcon } from "./post-list";
 import {
   filterPatch,
   postListInput,
@@ -38,6 +39,7 @@ const titles = {
   complete: "team-posts.complete",
   closed: "team-posts.closed",
   all: "team.nav.allRequests",
+  deleted: "team-posts.deleted",
 } as const;
 
 /** The Requests list: the posts of the visible boards by status, with filters, search and keyboard moves. */
@@ -66,20 +68,13 @@ export function TeamPostsPage({
   const items = list.none
     ? []
     : (posts.data?.pages.flatMap((page) => page.items) ?? []);
-  const groups = groupPosts(
-    items,
+  const context = rowContext(
     statuses.data?.statuses ?? [],
-    t("team-posts.noStatus"),
+    boards.data?.items ?? [],
+    t,
   );
+  const groups = groupPosts(items, context.statuses, t("team-posts.noStatus"));
   const ids = groups.flatMap((group) => group.items.map((post) => post.id));
-  const context = {
-    statuses: statuses.data?.statuses ?? [],
-    boardName: new Map(
-      boards.data?.items.map((board) => [board.id, board.name]),
-    ),
-    anonymous: t("team-posts.anonymous"),
-    stale: (months: number) => t("team-posts.stale", { months }),
-  };
   const to = (postId: string) => teamHref(workspaceId, `/posts/${postId}`);
   const open = (postId: string) => void navigate({ to: to(postId), search });
   const setSearch = (patch: Partial<PostSearch>) =>
@@ -92,8 +87,11 @@ export function TeamPostsPage({
       replace: true,
     });
   const [query, setQuery] = useRequestQuery(search.q, (q) => setSearch({ q }));
-  useListNavigation({ ids, activeId: active, onMove: setActive, onOpen: open });
   const tab = search.status ?? "active";
+  // A deleted request does not open: its row offers Restore instead.
+  const deleted = tab === "deleted";
+  const onOpen = deleted ? undefined : open;
+  useListNavigation({ ids, activeId: active, onMove: setActive, onOpen });
 
   return (
     <PageFrame titleKey="team-posts.title" landmark={false} variant="app">
@@ -105,6 +103,7 @@ export function TeamPostsPage({
         filters={
           <RequestFilters
             status={search.statusId ? "" : tab}
+            withDeleted
             board={search.board ?? ""}
             sort={search.sort ?? "newest"}
             boards={boards.data?.items ?? []}
@@ -156,17 +155,21 @@ export function TeamPostsPage({
             label={t("team-posts.list")}
             groups={groups}
             getKey={(post) => post.id}
-            renderItem={(post) => (
-              <RequestRow
-                {...postRow(post, context)}
-                icon={
-                  <PostStatusIcon {...statusIcon(post, context.statuses)} />
-                }
-                href={router.buildLocation({ to: to(post.id), search }).href}
-                onOpen={() => open(post.id)}
-                selected={post.id === active}
-              />
-            )}
+            renderItem={(post) =>
+              deleted ? (
+                <DeletedRequest post={post} context={context} />
+              ) : (
+                <RequestRow
+                  {...postRow(post, context)}
+                  icon={
+                    <PostStatusIcon {...statusIcon(post, context.statuses)} />
+                  }
+                  href={router.buildLocation({ to: to(post.id), search }).href}
+                  onOpen={() => open(post.id)}
+                  selected={post.id === active}
+                />
+              )
+            }
           />
           {posts.hasNextPage ? (
             <Button

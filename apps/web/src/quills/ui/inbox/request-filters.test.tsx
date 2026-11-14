@@ -45,4 +45,33 @@ describe("RequestFilters", () => {
     );
     expect(onChange).toHaveBeenCalledWith("board", "");
   });
+
+  it("offers the deleted requests only when asked", async () => {
+    const view = render();
+    fireEvent.click(view.getByRole("button", { name: "Filters" }));
+    await view.findByRole("menuitemradio", { name: "Open" });
+    expect(view.queryByRole("menuitemradio", { name: "Deleted" })).toBeNull();
+    view.unmount();
+    const onChange = vi.fn();
+    const deleted = renderComponent(
+      <ListHeader
+        title="Requests"
+        filters={
+          <RequestFilters
+            status="active"
+            withDeleted
+            board=""
+            sort="newest"
+            boards={[]}
+            onChange={onChange}
+          />
+        }
+      />,
+    );
+    fireEvent.click(deleted.getByRole("button", { name: "Filters" }));
+    fireEvent.click(
+      await deleted.findByRole("menuitemradio", { name: "Deleted" }),
+    );
+    expect(onChange).toHaveBeenCalledWith("status", "deleted");
+  });
 });
