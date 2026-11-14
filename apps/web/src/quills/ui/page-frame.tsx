@@ -54,7 +54,10 @@ export function PageFrame({
   }, [title]);
 
   useEffect(() => {
-    (heading.current ?? root.current?.querySelector("h1"))?.focus();
+    const title = heading.current ?? root.current?.querySelector("h1");
+    // An embedded Kaneo page, such as a settings page, has an h1 that cannot take focus.
+    if (title && !title.hasAttribute("tabindex")) title.tabIndex = -1;
+    title?.focus();
   }, [titleKey]);
 
   useEffect(() => {
