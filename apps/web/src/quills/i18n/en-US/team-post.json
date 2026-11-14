@@ -3,6 +3,13 @@
 	"actions": "Request actions",
 	"addVote": "Add a vote for a customer",
 	"addVoteFor": "Add a vote for {{name}}",
+	"ai": {
+		"chip": "Summarize",
+		"failed": "AI could not summarize this request.",
+		"off": "AI is not set up for this workspace.",
+		"title": "AI summary",
+		"working": "Summarizing…"
+	},
 	"anonymous": "Anonymous",
 	"boardIs": "Board: {{board}}",
 	"cancel": "Cancel",

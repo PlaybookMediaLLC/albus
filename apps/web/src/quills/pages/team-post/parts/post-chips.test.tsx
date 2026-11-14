@@ -2,6 +2,7 @@ import { fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vite-plus/test";
 import { setPostBoardFixture } from "../../../api/team/set-post-board.fixture";
 import { setPostTagsFixture } from "../../../api/team/set-post-tags.fixture";
+import { summarizePostFixture } from "../../../api/team/summarize-post.fixture";
 import { TeamRuntimeProvider } from "../../../team/runtime";
 import { press } from "../../../test/actions";
 import { mockApi } from "../../../test/mock-api";
@@ -60,5 +61,36 @@ describe("PostChips", () => {
     expect(view.getByText("Not on board")).toBeVisible();
     expect(view.getByRole("button", { name: "Board: Ideas" })).toBeDisabled();
     expect(view.queryByRole("button", { name: "Edit tags" })).toBeNull();
+  });
+
+  it("does not carry an AI summary to the next request", async () => {
+    const api = mockApi();
+    api.reply(summarizePostFixture.ok({ summary: "About CSV export." }));
+    const view = render();
+    press("Summarize");
+    expect(await view.findByText("About CSV export.")).toBeVisible();
+    fireEvent.keyDown(document.activeElement ?? document.body, {
+      key: "Escape",
+    });
+    view.rerender(
+      <TeamRuntimeProvider value={postTeam}>
+        <PostChips
+          workspaceId="workspace_test_1"
+          post={{ ...postDetail, id: "post_sso" }}
+          boards={boards}
+        />
+      </TeamRuntimeProvider>,
+    );
+    await waitFor(() =>
+      expect(view.queryByText("About CSV export.")).toBeNull(),
+    );
+    // The next request gets its own summary.
+    api.reply(summarizePostFixture.ok({ summary: "About single sign-on." }));
+    press("Summarize");
+    expect(await view.findByText("About single sign-on.")).toBeVisible();
+    expect(view.queryByText("About CSV export.")).toBeNull();
+    expect(
+      new URL(api.calls("summarizeQuillsPost")[1]!.url).pathname,
+    ).toContain("/posts/post_sso/summary");
   });
 });

@@ -3481,6 +3481,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/tickets/{ticketId}/field-suggestions",
   },
   {
+    operationId: "summarizeQuillsPost",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/posts/{postId}/summary",
+  },
+  {
     operationId: "translateQuillsConversationMessages",
     method: "POST",
     path: "/api/quills/{workspaceId}/conversations/{conversationId}/messages/{messageId}/translate",

@@ -18,6 +18,7 @@ import {
   MenuTrigger,
   toast,
 } from "../../../ui/upstream";
+import { PostAi } from "./post-ai";
 
 export interface PostChipsProps {
   workspaceId: string;
@@ -28,7 +29,7 @@ export interface PostChipsProps {
 const chip =
   "h-7 gap-1.5 rounded-full px-2.5 text-[11px] font-medium uppercase tracking-wide";
 
-/** The chip row under a request: its board, its visibility on the board, and its tags. */
+/** The chip row under a request: its board, its visibility on the board, its tags and the AI chip. */
 export function PostChips({ workspaceId, post, boards }: PostChipsProps) {
   const { t } = useTranslation("quills");
   const team = useTeamRuntime();
@@ -149,6 +150,12 @@ export function PostChips({ workspaceId, post, boards }: PostChipsProps) {
           </MenuPopup>
         </Menu>
       )}
+      <PostAi
+        key={post.id}
+        workspaceId={workspaceId}
+        postId={post.id}
+        className={chip}
+      />
     </div>
   );
 }
