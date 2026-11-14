@@ -12,7 +12,7 @@ import type { Database } from "../framework/define-route";
 // `taskSync.statusOnTaskDone`. The board settings routes (feedback/board-settings.ts) read and write it.
 
 const description =
-  "The post status that a linked post gets when its Kaneo task moves to a done column. Null: no change.";
+  "The post status that a linked post gets when its linked task moves to a done column. Null: no change.";
 export const taskSyncInput = z.object({
   statusOnTaskDone: flexibleToTypeIdSchema("post_status")
     .nullable()

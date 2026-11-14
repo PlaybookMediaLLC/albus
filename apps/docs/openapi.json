@@ -148301,7 +148301,7 @@
                             "string",
                             "null"
                           ],
-                          "description": "The post status that a linked post gets when its Kaneo task moves to a done column. Null: no change."
+                          "description": "The post status that a linked post gets when its linked task moves to a done column. Null: no change."
                         }
                       },
                       "required": [
@@ -148416,7 +148416,7 @@
                           "string",
                           "null"
                         ],
-                        "description": "The post status that a linked post gets when its Kaneo task moves to a done column. Null: no change."
+                        "description": "The post status that a linked post gets when its linked task moves to a done column. Null: no change."
                       }
                     },
                     "required": [
@@ -148468,7 +148468,7 @@
                             "string",
                             "null"
                           ],
-                          "description": "The post status that a linked post gets when its Kaneo task moves to a done column. Null: no change."
+                          "description": "The post status that a linked post gets when its linked task moves to a done column. Null: no change."
                         }
                       },
                       "required": [
