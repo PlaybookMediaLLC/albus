@@ -65,7 +65,7 @@ describe("CreatePostForm", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("caps the details at 10,000 characters", async () => {
+  it("caps the details at 10,000 characters and says so at the limit", async () => {
     const onSubmit = vi.fn(async () => undefined);
     const view = renderComponent(
       <CreatePostForm boards={boards} onSubmit={onSubmit} onCancel={vi.fn()} />,
@@ -75,11 +75,12 @@ describe("CreatePostForm", () => {
       "10000",
     );
     fill("Request title", "Faster export");
-    fill("Details (optional)", "a".repeat(10001));
-    press("Create request");
+    // A long paste stops at the limit; the limit then shows before a submit.
+    fill("Details (optional)", "a".repeat(10000));
     expect(await view.findByRole("alert")).toHaveTextContent(
-      "Use 10,000 characters or fewer.",
+      "Details can have at most 10,000 characters.",
     );
-    expect(onSubmit).not.toHaveBeenCalled();
+    press("Create request");
+    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
   });
 });

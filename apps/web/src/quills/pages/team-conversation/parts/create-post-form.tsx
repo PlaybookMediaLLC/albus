@@ -11,12 +11,12 @@ import {
 } from "../../../ui/upstream";
 import { PropertySelect } from "./property-select";
 
-// The bounds of createQuillsPostFromConversation. The component gives the translated messages.
-const postSchema = (messages: { board: string; details: string }) =>
+// The bounds of createQuillsPostFromConversation. The component gives the translated board message.
+const postSchema = (board: string) =>
   z.object({
-    boardId: z.string().min(1, messages.board),
+    boardId: z.string().min(1, board),
     title: z.string().trim().min(1).max(200),
-    content: z.string().trim().max(10000, messages.details),
+    content: z.string().trim().max(10000),
   });
 export type CreatePostValues = z.infer<ReturnType<typeof postSchema>>;
 
@@ -41,10 +41,7 @@ export function CreatePostForm({
     ) : null;
   return (
     <PortalForm
-      schema={postSchema({
-        board: t("team-conversations.links.noBoards"),
-        details: t("team-conversations.links.detailsTooLong"),
-      })}
+      schema={postSchema(t("team-conversations.links.noBoards"))}
       defaultValues={{ boardId: boards[0]?.id ?? "", title: "", content: "" }}
       submitKey="team-conversations.links.create"
       onSubmit={onSubmit}
@@ -90,7 +87,12 @@ export function CreatePostForm({
               aria-invalid={Boolean(form.formState.errors.content)}
               {...form.register("content")}
             />
-            {error(form.formState.errors.content?.message)}
+            {/* maxLength stops the text at the limit, for example a long paste, so the limit shows there. */}
+            {error(
+              (form.formState.errors.content ||
+                form.watch("content").length >= 10000) &&
+                t("team-conversations.links.detailsLimit"),
+            )}
           </Field>
         </>
       )}

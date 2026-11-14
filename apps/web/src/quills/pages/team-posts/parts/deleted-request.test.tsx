@@ -1,8 +1,10 @@
-import { fireEvent } from "@testing-library/react";
-import { describe, expect, it } from "vite-plus/test";
+import { fireEvent, waitFor } from "@testing-library/react";
+import { describe, expect, it, vi } from "vite-plus/test";
+import { restorePostFixture } from "../../../api/team/restore-post.fixture";
 import { TeamRuntimeProvider } from "../../../team/runtime";
 import { mockApi } from "../../../test/mock-api";
 import { renderComponent } from "../../../test/render";
+import { toast } from "../../../ui/upstream";
 import { postTeam } from "../../team-post/post.fixture";
 import { inboxBoards, inboxPosts, inboxStatuses } from "../inbox.fixture";
 import { rowContext } from "../post-list";
@@ -31,6 +33,27 @@ describe("DeletedRequest", () => {
     expect(view.getByText("Ideas")).toBeVisible();
     expect(view.getByText(/^Deleted /)).toBeVisible();
     expect(view.queryByRole("link")).toBeNull();
+  });
+
+  it("confirms a restore after the row leaves the list", async () => {
+    const success = vi.spyOn(toast, "success");
+    const api = mockApi();
+    let finish!: (body: unknown) => void;
+    api.defer(({ resolve }) => {
+      finish = resolve;
+    });
+    const view = render();
+    fireEvent.click(
+      view.getByRole("button", { name: "Restore Export to CSV" }),
+    );
+    await waitFor(() => expect(api.calls("restoreQuillsPost")).toHaveLength(1));
+    // The refreshed list drops the row before the restore ends.
+    view.unmount();
+    finish(restorePostFixture.ok({ id: "post_export" }));
+    await waitFor(() =>
+      expect(success).toHaveBeenCalledWith("Restored “Export to CSV”."),
+    );
+    success.mockRestore();
   });
 
   it("explains a failed restore", async () => {

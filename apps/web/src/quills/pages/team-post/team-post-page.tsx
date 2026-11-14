@@ -14,8 +14,8 @@ import { useListNavigation } from "../../ui/inbox/use-list-navigation";
 import { PageFrame } from "../../ui/page-frame";
 import { groupPosts } from "../team-posts/post-list";
 import {
+  detailSearch,
   postListInput,
-  postSearch,
   type PostSearch,
 } from "../team-posts/post-search";
 import { CommentBox } from "./parts/comment-box";
@@ -43,8 +43,7 @@ export function TeamPostPage({
   const team = useTeamRuntime();
   const navigate = useNavigate();
   const router = useRouter();
-  // The New request flag stays on the list page.
-  const search = { ...postSearch.parse(raw), new: undefined };
+  const search = detailSearch(raw);
   const [merge, setMerge] = useState<MergeMode | null>(null);
   const postId = params.postId ?? "";
   const param = { workspaceId, postId };

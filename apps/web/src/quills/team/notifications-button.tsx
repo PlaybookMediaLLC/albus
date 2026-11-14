@@ -62,8 +62,11 @@ export function NotificationsButton({
       return;
     try {
       new Notification(t("team.notifications.new", { count: count - before }), {
-        // Each hidden tab sees the same new count, so one tag makes the browser show it once.
-        tag: `quills-notifications:${workspaceId}:${count}`,
+        // Each hidden tab refetches the count on the same change, so one tag shows it once. The
+        // minute keeps a later return to the same count from replacing an old one in silence.
+        // ponytail: tabs that refetch across a minute boundary each show it; a shared
+        // BroadcastChannel would dedupe them exactly.
+        tag: `quills-notifications:${workspaceId}:${count}:${Math.floor(Date.now() / 60_000)}`,
       });
     } catch {
       // ponytail: some mobile browsers allow notifications only from a service worker.

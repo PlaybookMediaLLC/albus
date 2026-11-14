@@ -18,12 +18,12 @@ import {
   Textarea,
 } from "../../../ui/upstream";
 
-// The bounds of createQuillsPost. The component gives the translated messages.
-const requestSchema = (messages: { board: string; details: string }) =>
+// The bounds of createQuillsPost. The component gives the translated board message.
+const requestSchema = (board: string) =>
   z.object({
-    boardId: z.string().min(1, messages.board),
+    boardId: z.string().min(1, board),
     title: z.string().trim().min(1).max(200),
-    content: z.string().trim().max(10000, messages.details),
+    content: z.string().trim().max(10000),
     statusId: z.string(),
     tagIds: z.array(z.string()).max(50),
   });
@@ -47,14 +47,13 @@ export function NewRequestForm(props: NewRequestFormProps) {
   const boardId = props.boardId ?? props.boards[0]?.id;
   return (
     <PortalForm<NewRequestValues>
-      schema={requestSchema({
-        board: t(
+      schema={requestSchema(
+        t(
           props.boards.length
             ? "team-posts.chooseBoard"
             : "team-posts.noBoards",
         ),
-        details: t("team-posts.detailsTooLong"),
-      })}
+      )}
       defaultValues={{
         boardId: props.boards.some((board) => board.id === boardId)
           ? boardId
@@ -162,9 +161,11 @@ export function NewRequestForm(props: NewRequestFormProps) {
             className="flex w-full rounded-md text-sm focus-within:ring-2 focus-within:ring-ring [&_textarea]:min-h-28"
             {...form.register("content")}
           />
-          {form.formState.errors.content?.message ? (
+          {/* maxLength stops the text at the limit, for example a long paste, so the limit shows there. */}
+          {form.formState.errors.content ||
+          form.watch("content").length >= 10000 ? (
             <p role="alert" className="text-sm text-destructive-foreground">
-              {form.formState.errors.content.message}
+              {t("team-posts.detailsLimit")}
             </p>
           ) : null}
         </>

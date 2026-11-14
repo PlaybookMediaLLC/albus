@@ -356,7 +356,7 @@ export function describePageContract(
       for (const _operation of meta.operations)
         api.reply({ message: "Forbidden" }, 403);
       const view = renderPage(Page, meta);
-      // Each pane that loads its own data shows the denied state.
+      // A page can show the denied state in more than one pane; every alert must be that state.
       for (const alert of await view.findAllByRole("alert"))
         expect(alert).toHaveTextContent(/permission/i);
     });

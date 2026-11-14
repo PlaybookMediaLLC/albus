@@ -118,7 +118,7 @@ describe("NotificationsButton", () => {
     await view.findByRole("button", { name: /3 unread/ });
     // The tag makes several hidden tabs show this notification once.
     expect(shown).toHaveBeenCalledWith("2 new notifications", {
-      tag: "quills-notifications:workspace_1:3",
+      tag: expect.stringMatching(/^quills-notifications:workspace_1:3:\d+$/),
     });
     window.localStorage.clear();
   });

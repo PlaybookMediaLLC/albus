@@ -222,6 +222,20 @@ describe("TeamPostPage", () => {
     ).toBeNull();
   });
 
+  it("lists the open requests beside a request opened from the Deleted filter", async () => {
+    const api = prepare();
+    const view = renderPage(TeamPostPage, meta, {
+      ...options,
+      search: { status: "deleted" },
+    });
+    await loaded(view);
+    await within(listPane(view)).findByRole("link", { name: /Single sign-on/ });
+    const query = new URL(api.calls("listQuillsPosts")[0]!.url).searchParams;
+    // A deleted request does not open, so the pane lists the open requests.
+    expect(query.get("showDeleted")).toBeNull();
+    expect(query.get("statusIds")).toBe("status_open,status_planned");
+  });
+
   it("sends a private note from the composer", async () => {
     const api = prepare(
       reads({

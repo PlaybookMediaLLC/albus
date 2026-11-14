@@ -64,15 +64,19 @@ export function CommandPalette<Item>(props: CommandPaletteProps<Item>) {
             </div>
             {props.loading ? <Spinner className="size-4" /> : null}
           </div>
+          {/* CommandEmpty is a polite live region, so the alert of a failed search sits beside it. */}
           <CommandEmpty>
-            {props.problem && !props.loading ? (
+            {props.query.trim() && !props.loading && !props.problem
+              ? t("inbox.noResults")
+              : null}
+          </CommandEmpty>
+          {props.problem && !props.loading ? (
+            <div className="p-2">
               <TeamStateView problem={props.problem} onRetry={props.onRetry}>
                 {null}
               </TeamStateView>
-            ) : props.query.trim() && !props.loading ? (
-              t("inbox.noResults")
-            ) : null}
-          </CommandEmpty>
+            </div>
+          ) : null}
           <CommandList>
             {(item: Item) => (
               <CommandItem

@@ -22,6 +22,17 @@ export type PostTab = NonNullable<PostSearch["status"]>;
 
 type Status = ListStatusesResponse["statuses"][number];
 
+/**
+ * The list filters that the request view keeps. It drops the New request flag, and the Deleted
+ * filter, because a deleted request does not open.
+ */
+export function detailSearch(raw: Record<string, unknown>) {
+  const { new: _new, ...search } = postSearch.parse(raw);
+  return search.status === "deleted"
+    ? { ...search, status: undefined }
+    : search;
+}
+
 /** The address change of a filter menu choice. A status group replaces a sidebar status. */
 export function filterPatch(
   key: RequestFilterKey,

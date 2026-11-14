@@ -57,14 +57,18 @@ export function DeletedRequest({ post, context }: DeletedRequestProps) {
           variant="outline"
           aria-label={t("team-posts.restoreTitle", { title: row.title })}
           loading={restore.isPending}
+          // The restored row leaves the list before the mutation ends, so the toast
+          // waits for the promise: a mutate callback would not run after the unmount.
           onClick={() =>
-            restore.mutate(
-              { param: { workspaceId: team.workspaceId, postId: post.id } },
-              {
-                onSuccess: () =>
+            restore
+              .mutateAsync({
+                param: { workspaceId: team.workspaceId, postId: post.id },
+              })
+              .then(
+                () =>
                   toast.success(t("team-posts.restored", { title: row.title })),
-              },
-            )
+                () => undefined,
+              )
           }
         >
           <RotateCcw aria-hidden="true" />

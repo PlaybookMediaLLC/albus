@@ -1,3 +1,4 @@
+import { waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vite-plus/test";
 import { fill, press } from "../../../test/actions";
 import { describeFormContract } from "../../../test/contracts";
@@ -56,21 +57,32 @@ describe("NewRequestForm", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("caps the details at 10,000 characters", async () => {
+  it("caps the details at 10,000 characters and says so at the limit", async () => {
     const { view, onSubmit } = render();
     expect(view.getByLabelText("Add details")).toHaveAttribute(
       "maxlength",
       "10000",
     );
     fill("Submission title", "Dark mode");
+    // A long paste stops at the limit; the limit then shows before a submit.
+    fill("Add details", "a".repeat(10000));
+    expect(await view.findByRole("alert")).toHaveTextContent(
+      "Details can have at most 10,000 characters.",
+    );
+    press("Create");
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+  });
+
+  it("refuses details over 10,000 characters", async () => {
+    const { view, onSubmit } = render();
+    fill("Submission title", "Dark mode");
     fill("Add details", "a".repeat(10001));
     press("Create");
-    expect(await view.findByRole("alert")).toHaveTextContent(
-      "Use 10,000 characters or fewer.",
-    );
-    expect(view.getByLabelText("Add details")).toHaveAttribute(
-      "aria-invalid",
-      "true",
+    await waitFor(() =>
+      expect(view.getByLabelText("Add details")).toHaveAttribute(
+        "aria-invalid",
+        "true",
+      ),
     );
     expect(onSubmit).not.toHaveBeenCalled();
   });
