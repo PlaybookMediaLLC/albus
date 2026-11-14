@@ -33,8 +33,6 @@ export interface TeamNavItem {
   exact?: boolean;
   /** Opens in a new tab, such as the public portal. */
   newTab?: boolean;
-  /** Copies the address as a full link instead of opening it. */
-  copy?: boolean;
   count?: number;
   /** Shows the count in the orange filled badge when it is above zero. */
   attention?: boolean;
@@ -111,14 +109,13 @@ export function teamSections(
           id: "members",
           labelKey: "team.nav.members",
           icon: Users,
-          to: `/dashboard/workspace/${encodeURIComponent(workspaceId)}/members`,
+          to: teamHref(workspaceId, "/members"),
         },
         {
           id: "share",
           labelKey: "team.nav.share",
           icon: Share2,
-          to: portalHref(workspaceId),
-          copy: true,
+          to: teamHref(workspaceId, "/share"),
         },
         ...extras,
       ],

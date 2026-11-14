@@ -65,13 +65,9 @@ describe("teamSections", () => {
       to: "/portal/workspace%201/roadmap",
       newTab: true,
     });
-    expect(byId.get("members")?.to).toBe(
-      "/dashboard/workspace/workspace%201/members",
-    );
-    expect(byId.get("share")).toMatchObject({
-      to: "/portal/workspace%201",
-      copy: true,
-    });
+    expect(byId.get("members")?.to).toBe("/feedback/workspace%201/members");
+    expect(byId.get("share")?.to).toBe("/feedback/workspace%201/share");
+    expect(byId.get("settings")?.to).toBe("/feedback/workspace%201/settings");
     expect(byId.get("duplicates")?.count).toBe(0);
   });
 

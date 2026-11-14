@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { PostStatusIcon } from "../ui/inbox/post-status-icon";
-import { cn, toast } from "../ui/upstream";
+import { cn } from "../ui/upstream";
 import type { TeamNavItem } from "./nav";
 
 export interface SidebarItemProps {
@@ -41,25 +41,6 @@ export function SidebarItem({ item, onNavigate }: SidebarItemProps) {
       )}
     </>
   );
-  if (item.copy)
-    return (
-      <button
-        type="button"
-        className={row}
-        onClick={() => {
-          const link = new URL(item.to, window.location.origin).href;
-          const copy = navigator.clipboard
-            ? navigator.clipboard.writeText(link)
-            : Promise.reject(new Error("No clipboard"));
-          void copy.then(
-            () => toast.success(t("team.shareCopied")),
-            () => toast.error(t("core.problem.failed")),
-          );
-        }}
-      >
-        {content}
-      </button>
-    );
   if (item.newTab)
     return (
       <a href={item.to} target="_blank" rel="noreferrer" className={row}>

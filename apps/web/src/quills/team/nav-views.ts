@@ -107,7 +107,7 @@ export const workspaceViews: readonly TeamView[] = [
   },
   {
     id: "settings",
-    path: "/boards",
+    path: "/settings",
     labelKey: "team.nav.settings",
     icon: Settings,
   },

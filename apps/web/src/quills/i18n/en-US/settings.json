@@ -1,6 +1,40 @@
 {
+	"back": "Back",
 	"copied": "Copied",
 	"copy": "Copy {{label}}",
 	"copyFailed": "The value could not be copied.",
-	"saveDenied": "You do not have permission to change this setting."
+	"docs": "Docs",
+	"nav": {
+		"account": "Account",
+		"ai": "AI",
+		"api": "API",
+		"billing": "Billing",
+		"branding": "Branding",
+		"changelog": "Changelog",
+		"data": "Data & Import",
+		"domain": "Domain",
+		"email": "Email",
+		"feedback": "Feedback",
+		"general": "General",
+		"integrations": "Integrations",
+		"languages": "Languages",
+		"login": "Login",
+		"moderation": "Moderation",
+		"operators": "Operators",
+		"privacy": "Privacy",
+		"team": "Team",
+		"topics": "Topics",
+		"widget": "Widget"
+	},
+	"navigation": "Settings",
+	"noMatch": "No settings found",
+	"saveDenied": "You do not have permission to change this setting.",
+	"search": "Search settings…",
+	"sections": {
+		"connections": "Connections",
+		"conversations": "Conversations",
+		"personal": "Personal",
+		"product": "Product",
+		"workspace": "Workspace"
+	}
 }

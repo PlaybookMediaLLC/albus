@@ -4,9 +4,9 @@ import {
   createRouter,
   RouterContextProvider,
 } from "@tanstack/react-router";
-import { fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent } from "@testing-library/react";
 import { Zap } from "lucide-react";
-import { afterEach, describe, expect, it, vi } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 import { renderComponent } from "../test/render";
 import type { TeamNavItem } from "./nav";
 import { SidebarItem } from "./sidebar-item";
@@ -24,8 +24,6 @@ const render = (item: TeamNavItem, onNavigate = () => undefined) =>
       <SidebarItem item={item} onNavigate={onNavigate} />
     </RouterContextProvider>,
   );
-
-afterEach(() => vi.unstubAllGlobals());
 
 describe("SidebarItem", () => {
   it("links a view with its count and marks the current one", () => {
@@ -58,23 +56,6 @@ describe("SidebarItem", () => {
     expect(view.getByRole("link", { name: "Roadmap" })).toHaveAttribute(
       "target",
       "_blank",
-    );
-  });
-
-  it("copies a full link for Share", async () => {
-    const writeText = vi.fn(() => Promise.resolve());
-    vi.stubGlobal("navigator", { clipboard: { writeText } });
-    const view = render({
-      id: "share",
-      labelKey: "team.nav.share",
-      to: "/portal/workspace_1",
-      copy: true,
-    });
-    fireEvent.click(view.getByRole("button", { name: "Share" }));
-    await waitFor(() =>
-      expect(writeText).toHaveBeenCalledWith(
-        `${window.location.origin}/portal/workspace_1`,
-      ),
     );
   });
 });

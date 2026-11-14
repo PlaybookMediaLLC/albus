@@ -43,4 +43,25 @@ describe("SearchField", () => {
       "aria-keyshortcuts",
     );
   });
+
+  it("passes the keys to the page before Escape leaves the field", () => {
+    const onKeyDown = vi.fn();
+    const view = renderComponent(
+      <SearchField
+        label="Search"
+        value="api"
+        onChange={() => undefined}
+        onKeyDown={onKeyDown}
+      />,
+    );
+    const field = view.getByRole("searchbox", { name: "Search" });
+    field.focus();
+    fireEvent.keyDown(field, { key: "Enter" });
+    fireEvent.keyDown(field, { key: "Escape" });
+    expect(onKeyDown.mock.calls.map(([event]) => event.key)).toEqual([
+      "Enter",
+      "Escape",
+    ]);
+    expect(field).not.toHaveFocus();
+  });
 });
