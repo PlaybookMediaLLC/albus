@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+import { findPortalSimilarPostsFixture } from "../../api/feedback/find-portal-similar-posts.fixture";
 import { getPortalPostFixture } from "../../api/feedback/get-portal-post.fixture";
 import { listPortalPostCommentsFixture } from "../../api/feedback/list-portal-post-comments.fixture";
 import { setPortalVoteFixture } from "../../api/feedback/set-portal-vote.fixture";
@@ -23,6 +24,7 @@ describe("PostPage", () => {
       }),
     );
     api.reply(listPortalPostCommentsFixture.ok());
+    api.reply(findPortalSimilarPostsFixture.ok());
     return api;
   };
   describePageContract(meta, PostPage, {
@@ -101,6 +103,7 @@ describe("PostPage", () => {
       });
       api.reply(post);
       api.reply(first);
+      api.reply(findPortalSimilarPostsFixture.ok());
       api.reply(listPortalPostCommentsFixture.ok({ items: [last] }));
       const view = renderPage(PostPage, meta, {
         ...options,
@@ -143,6 +146,7 @@ describe("PostPage", () => {
         }),
       );
       api.reply(listPortalPostCommentsFixture.ok());
+      api.reply(findPortalSimilarPostsFixture.ok());
       api.reply(
         setPortalVoteFixture.ok({
           postId: "post_test_1",
@@ -168,6 +172,77 @@ describe("PostPage", () => {
       press(/^vote$/i);
       expect(await view.findByText("2 votes")).toBeInTheDocument();
       expect(api.calls("setQuillsPortalVote")).toHaveLength(1);
+    });
+
+    it("asks how important the post is after a vote and sends the answer", async () => {
+      const api = mockApi();
+      const post = getPortalPostFixture.ok({
+        id: "post_test_1",
+        title: "Export history",
+        voted: true,
+        canVote: true,
+      });
+      api.reply(post);
+      api.reply(listPortalPostCommentsFixture.ok());
+      api.reply(findPortalSimilarPostsFixture.ok());
+      api.reply(
+        setPortalVoteFixture.ok({
+          postId: "post_test_1",
+          voted: true,
+          voteCount: 1,
+          importance: "critical",
+        }),
+      );
+      api.reply({ ...post, importance: "critical" });
+      const view = renderPage(PostPage, meta, options);
+      await view.findByRole("group", { name: /how important/i });
+      press("Blocker");
+      expect(
+        await view.findByRole("button", { name: "Blocker", pressed: true }),
+      ).toBeInTheDocument();
+      expect(await api.calls("setQuillsPortalVote")[0]!.json()).toEqual({
+        voted: true,
+        importance: "critical",
+      });
+    });
+
+    it("lists related requests without the post itself", async () => {
+      const api = mockApi();
+      api.reply(
+        getPortalPostFixture.ok({ id: "post_test_1", title: "Export history" }),
+      );
+      api.reply(listPortalPostCommentsFixture.ok());
+      api.reply(
+        findPortalSimilarPostsFixture.ok({
+          items: [
+            {
+              id: "post_test_1",
+              title: "Export history",
+              voteCount: 3,
+              stage: null,
+              board: { id: "board_test_1", slug: "ideas" },
+            },
+            {
+              id: "post_test_2",
+              title: "Export to CSV",
+              voteCount: 5,
+              stage: "planned",
+              board: { id: "board_test_1", slug: "ideas" },
+            },
+          ],
+        }),
+      );
+      const view = renderPage(PostPage, meta, options);
+      expect(
+        await view.findByRole("heading", { name: "Related requests" }),
+      ).toBeInTheDocument();
+      expect(view.getByRole("link", { name: /Export to CSV/ })).toHaveAttribute(
+        "href",
+        "/portal/workspace_test_1/posts/post_test_2",
+      );
+      expect(
+        view.queryByRole("link", { name: /^3 votes Export history/ }),
+      ).not.toBeInTheDocument();
     });
 
     it("does not fetch a record without portal access", async () => {

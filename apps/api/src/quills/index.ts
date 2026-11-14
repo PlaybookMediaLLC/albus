@@ -20,6 +20,7 @@ import reporting from "./reporting/index";
 import sharedTeams from "./teams";
 import taxonomy from "./feedback/taxonomy";
 import supportTickets from "./support/tickets-router";
+import surveys from "./feedback/surveys";
 import supportConversations from "./support/conversations-router";
 import supportAssistant from "./support/conversation-assistant";
 import workspaceSearch from "./assistant/search";
@@ -28,6 +29,15 @@ import supportPresence from "./support/presence";
 import supportLinkPreview from "./support/link-preview";
 import supportReadBatch from "./support/read-batch";
 import testConversations from "./support/test-conversations";
+// RFC 0003 lane L5.
+import changelogAi from "./feedback/changelog-ai";
+import changelogEngagement from "./feedback/changelog-engagement";
+// RFC 0003, lane L3.
+import boardSettings from "./feedback/board-settings";
+import demand from "./feedback/demand";
+import scores from "./feedback/scores";
+// RFC 0004: the AI chip of the request detail.
+import postSummary from "./feedback/post-summary";
 import { brandText } from "@kaneo/branding";
 import { apiRouter, z, type BaseVariables } from "../openapi";
 import { settings } from "../database/quills/schema/auth";
@@ -102,4 +112,14 @@ export default apiRouter<BaseVariables & { workspaceId: string }>()
   .route("/", assistant)
   .route("/", apps)
   .route("/", agentChannels)
+  .route("/", surveys)
+  // RFC 0003 lane L5.
+  .route("/", changelogAi)
+  .route("/", changelogEngagement)
+  // RFC 0003, lane L3.
+  .route("/", boardSettings)
+  .route("/", demand)
+  .route("/", scores)
+  // RFC 0004: the AI chip of the request detail.
+  .route("/", postSummary)
   .openapi(...context);

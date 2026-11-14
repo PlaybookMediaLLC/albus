@@ -1,5 +1,5 @@
 {
-	"apps/web/src/quills/api/portal/get-public-portal-config.fixture.ts": "85e961035eefd3470d05ae0253ecacde2b33d7a48035cdafe9b698eb52fd80ca",
+	"apps/web/src/quills/api/portal/get-public-portal-config.fixture.ts": "4f1c0262c42c3ac14b27ca77493c1d8d64b21e462408545fc704e2bc428c160a",
 	"apps/web/src/quills/api/portal/get-public-portal-config.test.ts": "3fab83698b0be7c6afc4810c153cd2ab97d44b94b81cef7c09c4bd7d8e27bf7a",
 	"apps/web/src/quills/api/portal/get-public-portal-config.ts": "e307ac7f56aaa0d69d6f8043afa362a8992cec8b50789e3ae185f53fc530e0bf",
 	"apps/web/src/quills/api/portal/portal-config.type.ts": "e42460dc18fe2229da4525f285c00abb521ed2f8b3068927c086427fd213577c",
@@ -10,7 +10,7 @@
 	"apps/web/src/quills/hooks/portal/use-get-public-portal-config.ts": "a9ec0dd4d7df6110913d64934f477aace35ab6dbf7f938829f0522b6bdc15d75",
 	"apps/web/src/quills/hooks/portal/use-record-portal-access-denied.test.tsx": "b3e039edf36fba8d2828a14274b7ad78e099755d4921dc19da604e0f1e242757",
 	"apps/web/src/quills/hooks/portal/use-record-portal-access-denied.ts": "ca1f816741773b3443067ad544b96a39ce4d2c235d49e1b0bea55a6669914a35",
-	"apps/web/src/quills/i18n/en-US/core.json": "35bd6ba94fbbee5779bd917e80019fcb1235f772e6e53006a9008558729a4c62",
+	"apps/web/src/quills/i18n/en-US/core.json": "c5a23c1cc6820e3c24a5286144ba594d0bbb1caf1cb9f4a922f3ccb5e47a7e74",
 	"apps/web/src/quills/i18n/en-US/sample.json": "a8e1e0b0edcf0803782fec62493d32fbb39dfc0b018d437aa040e6b03eaa6710",
 	"apps/web/src/quills/pages/sample/meta.ts": "960c964d10cd008b2c5c1c54760833d2e9167c50e29c2397401d5d0a42116277",
 	"apps/web/src/quills/pages/sample/parts/sample-detail.test.tsx": "81f5a6e15bc1f4cf443cc4c5368df05aec0a99d27b97393c7ae13306b5a68e3d",

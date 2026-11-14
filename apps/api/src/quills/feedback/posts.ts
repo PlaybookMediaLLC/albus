@@ -37,6 +37,7 @@ import {
 } from "../framework/define-route";
 import { memberUserIds } from "../framework/platform-reads";
 import { activityMetadata, recordActivity } from "./activity";
+import { demandOf, demandSchema, mrrSort } from "./demand";
 import {
   afterCursor,
   filterConditions,
@@ -48,6 +49,7 @@ import {
 } from "./post-filters";
 import { loadPost, postSchema, selectPosts, withTags } from "./post-view";
 import { lockMergeTarget, recount } from "./thread-counts";
+import { findVoter } from "./votes";
 import {
   findBoard,
   findPost,
@@ -112,7 +114,13 @@ const loadWithMembers = async (input: {
 });
 
 const filterQuery = filters.extend({
-  sort: z.enum(["newest", "oldest", "votes"]).default("newest"),
+  sort: z
+    .enum(["newest", "oldest", "votes", "rice", "mrr"])
+    .default("newest")
+    .openapi({
+      description:
+        "rice: the RICE score, posts without one last. mrr: the monthly revenue of the voters' companies.",
+    }),
   cursor: flexibleToTypeIdSchema("post").optional(),
   limit: pagingNumber(1, 100, 20),
 });
@@ -123,11 +131,11 @@ const listPosts = defineQuillsRoute({
   operationId: "listQuillsPosts",
   summary: "List the visible feedback posts",
   description:
-    "Leaves out merged posts, test-customer posts and posts on boards hidden by their project links. showDeleted=true lists posts deleted in the last 30 days.",
+    "Leaves out merged posts, test-customer posts and posts on boards hidden by their project links. showDeleted=true lists posts deleted in the last 30 days. Each post has its demand, as getQuillsPostDemand counts it, without segments.",
   action: "read",
   query: filterQuery,
   response: z.object({
-    items: z.array(postSchema),
+    items: z.array(postSchema.extend({ demand: demandSchema })),
     nextCursor: z.string().nullable(),
     hasMore: z.boolean(),
   }),
@@ -137,17 +145,25 @@ const listPosts = defineQuillsRoute({
   handler: async ({ db, query, loaded: projects }) => {
     // A cursor is a post the caller can see; a hidden or missing one is 404, not a probe.
     if (query.cursor) await findPost(db, query.cursor, projects, true);
+    const sort =
+      query.sort === "mrr" ? mrrSort(db, projects) : sorts[query.sort];
     const rows = await selectPosts(
       db,
       and(
         filterConditions(db, query, projects),
-        query.cursor && afterCursor(query.cursor, query.sort),
+        query.cursor && afterCursor(query.cursor, sort),
       ),
     )
-      .orderBy(...sorts[query.sort].order)
+      .orderBy(...sort.order)
       .limit(query.limit + 1);
     const hasMore = rows.length > query.limit;
-    const items = await withTags(db, rows.slice(0, query.limit));
+    const page = await withTags(db, rows.slice(0, query.limit));
+    const demand = await demandOf(
+      db,
+      page.map((post) => post.id),
+      projects,
+    );
+    const items = page.map((post) => ({ ...post, demand: demand(post.id) }));
     return { items, nextCursor: hasMore ? items.at(-1)!.id : null, hasMore };
   },
 });
@@ -261,7 +277,11 @@ const getPost = defineQuillsRoute({
   summary: "Get a feedback post",
   action: "read",
   params: postParams,
-  response: postSchema.extend({ hasVoted: z.boolean() }),
+  response: postSchema.extend({
+    hasVoted: z.boolean(),
+    /** Host-page context that the widget sent with the post, such as pageUrl and browser. */
+    widgetMetadata: z.record(z.string(), z.string()).nullable(),
+  }),
   responseDescription: "Post",
   errors,
   load: loadProjects,
@@ -281,9 +301,22 @@ const getPost = defineQuillsRoute({
         ),
       )
       .limit(1);
+    const [context] = await db
+      .select({ widgetMetadata: posts.widgetMetadata })
+      .from(posts)
+      .where(eq(posts.id, post.id));
     return {
       ...(await loadPost(db, params.postId)),
       hasVoted: voted.length > 0,
+      // An imported row may hold other JSON: only string values are returned.
+      widgetMetadata: context?.widgetMetadata
+        ? Object.fromEntries(
+            Object.entries(context.widgetMetadata).filter(
+              (entry): entry is [string, string] =>
+                typeof entry[1] === "string",
+            ),
+          )
+        : null,
     };
   },
 });
@@ -345,14 +378,16 @@ const createPost = defineQuillsRoute({
   operationId: "createQuillsPost",
   summary: "Create a feedback post",
   description:
-    "The caller is the author and its first voter. Without a status, the post gets the default status.",
+    "The author is the caller, or `authorPrincipalId` to post on behalf of a person of this workspace (that also needs the update action). The author is the first voter. Without a status, the post gets the default status.",
   action: "create",
+  callerActions: true,
   body: z.object({
     boardId: flexibleToTypeIdSchema("board"),
     title: z.string().trim().min(1).max(200),
     content: z.string().trim().max(10000).default(""),
     statusId: flexibleToTypeIdSchema("post_status").optional(),
     tagIds: z.array(flexibleToTypeIdSchema("post_tag")).max(50).default([]),
+    authorPrincipalId: flexibleToTypeIdSchema("principal").optional(),
   }),
   response: postSchema,
   responseDescription: "Created post",
@@ -364,8 +399,23 @@ const createPost = defineQuillsRoute({
     payload: { boardId: result.boardId },
   }),
   load: loadProjects,
-  handler: async ({ db, actor, body, loaded: projects }) =>
-    loadPost(db, await insertPost(db, actor, projects, body)),
+  handler: async ({ db, actor, body, loaded: projects, actions }) => {
+    const { authorPrincipalId, ...input } = body;
+    const behalf =
+      authorPrincipalId !== undefined &&
+      authorPrincipalId !== actor.principalId;
+    if (behalf && !actions.has("update"))
+      throw new HTTPException(403, {
+        message: "Posting on behalf of a person needs the update action",
+      });
+    const author = behalf
+      ? (await findVoter(db, authorPrincipalId)).id
+      : undefined;
+    return loadPost(
+      db,
+      await insertPost(db, actor, projects, { ...input, author }),
+    );
+  },
 });
 
 const updatePost = defineQuillsRoute({

@@ -11,7 +11,7 @@ import {
   type AnyColumn,
   type SQL,
 } from "drizzle-orm";
-import type { ChangelogId } from "@kaneo/ids";
+import type { ChangelogId, PrincipalId } from "@kaneo/ids";
 import { flexibleToTypeIdSchema } from "@kaneo/ids/zod";
 import {
   apiRouter,
@@ -20,6 +20,10 @@ import {
   z,
 } from "../../../openapi";
 import { principal } from "../../../database/quills/schema/auth";
+import {
+  changelogReactions,
+  changelogReads,
+} from "../../../database/quills/schema/changelog-engagement";
 import {
   changelogEntries,
   changelogEntryPosts,
@@ -35,6 +39,7 @@ import { notFound, notTest } from "../../feedback/visibility";
 import {
   httpUrl,
   postVisible,
+  shownVotes,
   STAGES,
   stageOf,
   title,
@@ -50,12 +55,13 @@ import {
 // every entry from a visitor without sign-in.
 
 /** Segment list gate: [] is everyone, otherwise a signed-in member of one listed segment. */
-const segmentGate = (viewer: Viewer, list: SQL | AnyColumn): SQL =>
+type Gate = Pick<Viewer, "changelogPublic" | "signedIn" | "segmentIds">;
+const segmentGate = (viewer: Gate, list: SQL | AnyColumn): SQL =>
   viewer.signedIn && viewer.segmentIds.length
     ? sql`(jsonb_array_length(${list}) = 0 or ${list} ?| ${sql.param(viewer.segmentIds)}::text[])`
     : sql`jsonb_array_length(${list}) = 0`;
 
-export function entryVisible(viewer: Viewer): SQL {
+export function entryVisible(viewer: Gate): SQL {
   if (!viewer.changelogPublic && !viewer.signedIn) return sql`false`;
   return and(
     isNull(changelogEntries.deletedAt),
@@ -88,15 +94,66 @@ const entry = z.object({
     z.object({
       id: z.string(),
       title: z.string(),
-      voteCount: z.number(),
+      voteCount: z.number().optional().openapi({
+        description: "Left out when the post's board hides vote counts",
+      }),
       stage: z.enum(STAGES).nullable(),
     }),
   ),
   requesterCount: z.number().openapi({
     description:
-      "Distinct people who voted on the linked posts that the caller may see",
+      "Distinct people who voted on the linked posts that the caller may see, on boards that show vote counts",
+  }),
+  reactions: z.array(
+    z.object({ emoji: z.string(), count: z.number(), reacted: z.boolean() }),
+  ),
+  unread: z.boolean().openapi({
+    description:
+      "Published after the caller last marked the changelog read. False without a profile.",
   }),
 });
+
+/**
+ * The caller's read mark: the last time it marked the changelog read, else the time its profile
+ * was created, so a new visitor does not see the whole history as new (RFC 0003, D9).
+ */
+export const readMark = (principalId: PrincipalId) =>
+  sql`coalesce((select ${changelogReads.lastReadAt} from ${changelogReads} where ${changelogReads.principalId} = ${sql.param(principalId, changelogReads.principalId)}), (select ${principal.createdAt} from ${principal} where ${principal.id} = ${sql.param(principalId, principal.id)}))`;
+
+/** Reaction counts per entry without test customers, and whether the caller reacted. */
+export async function reactionsFor(
+  db: Database,
+  viewer: Viewer,
+  ids: ChangelogId[],
+) {
+  if (!ids.length) return [];
+  return db
+    .select({
+      entryId: changelogReactions.changelogEntryId,
+      emoji: changelogReactions.emoji,
+      count: sql<number>`count(*)::int`,
+      reacted: viewer.principalId
+        ? sql<boolean>`bool_or(${changelogReactions.principalId} = ${sql.param(viewer.principalId, changelogReactions.principalId)})`
+        : sql<boolean>`false`,
+    })
+    .from(changelogReactions)
+    .where(
+      and(
+        inArray(changelogReactions.changelogEntryId, ids),
+        notTest(changelogReactions.principalId),
+      ),
+    )
+    .groupBy(changelogReactions.changelogEntryId, changelogReactions.emoji)
+    .orderBy(asc(changelogReactions.emoji));
+}
+
+export const reactionList = (
+  counts: Awaited<ReturnType<typeof reactionsFor>>,
+  id: string,
+) =>
+  counts
+    .filter((row) => row.entryId === id)
+    .map(({ emoji, count, reacted }) => ({ emoji, count, reacted }));
 
 async function present(
   db: Database,
@@ -112,6 +169,9 @@ async function present(
       publishedAt: shownAt,
       authorName: principal.displayName,
       authorAvatar: principal.avatarUrl,
+      unread: viewer.principalId
+        ? sql<boolean>`coalesce(${changelogEntries.publishedAt} > ${readMark(viewer.principalId)}, false)`
+        : sql<boolean>`false`,
     })
     .from(changelogEntries)
     .leftJoin(principal, eq(principal.id, changelogEntries.principalId))
@@ -122,7 +182,8 @@ async function present(
   const items = rows.slice(0, page.limit);
   const ids = items.map((row) => row.id);
   if (!ids.length) return { items: [], hasMore: false };
-  const boardIds = (await visibleBoards(db, viewer)).map((b) => b.id);
+  const boardList = await visibleBoards(db, viewer);
+  const boardIds = boardList.map((b) => b.id);
   const categories = await db
     .select({
       entryId: changelogEntryCategories.changelogEntryId,
@@ -142,6 +203,7 @@ async function present(
       entryId: changelogEntryPosts.changelogEntryId,
       id: posts.id,
       title: posts.title,
+      boardId: posts.boardId,
       voteCount: posts.voteCount,
       slug: postStatuses.slug,
       category: postStatuses.category,
@@ -156,6 +218,10 @@ async function present(
       ),
     )
     .orderBy(asc(changelogEntryPosts.createdAt), asc(posts.id));
+  // A board that hides its vote counts adds no requesters: the number would reveal its votes.
+  const counted = boardList
+    .filter((board) => board.voting.voteDisplay !== "hidden")
+    .map((board) => board.id);
   const requesters = await db
     .select({
       entryId: changelogEntryPosts.changelogEntryId,
@@ -167,11 +233,12 @@ async function present(
     .where(
       and(
         inArray(changelogEntryPosts.changelogEntryId, ids),
-        postVisible(viewer, boardIds),
+        postVisible(viewer, counted),
         notTest(postVotes.principalId),
       ),
     )
     .groupBy(changelogEntryPosts.changelogEntryId);
+  const reactions = await reactionsFor(db, viewer, ids);
   return {
     items: items.map(({ authorName, authorAvatar, ...row }) => ({
       ...row,
@@ -186,12 +253,16 @@ async function present(
         .map((p) => ({
           id: p.id,
           title: p.title,
-          voteCount: p.voteCount,
+          ...shownVotes(
+            boardList.find((b) => b.id === p.boardId),
+            p.voteCount,
+          ),
           stage: stageOf(
             p.slug ? { slug: p.slug, category: p.category! } : null,
           ),
         })),
       requesterCount: requesters.find((r) => r.entryId === row.id)?.n ?? 0,
+      reactions: reactionList(reactions, row.id),
     })),
     hasMore: rows.length > page.limit,
   };

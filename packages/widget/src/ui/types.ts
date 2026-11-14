@@ -46,7 +46,8 @@ export interface FeedbackPost {
   title: string;
   body: string;
   author: string;
-  votes: number;
+  /** Missing when the board hides vote counts. */
+  votes?: number;
   voted?: boolean;
   following?: boolean;
   status?: FeedbackStatus;
@@ -114,6 +115,23 @@ export interface Conversation {
   }>;
 }
 
+/** A survey that waits for the visitor (RFC 0003). `scale` is null for pmf, poll and open. */
+export interface WidgetSurvey {
+  id: string;
+  type: "nps" | "csat" | "ces" | "pmf" | "poll" | "open";
+  question: string;
+  options: readonly string[];
+  scale: { min: number; max: number } | null;
+  /** The visitor answered it in this session: the prompt shows its thanks state. */
+  answered?: boolean;
+}
+/** A score, a choice or only a comment, as the survey type asks. */
+export interface SurveyAnswer {
+  score?: number;
+  choice?: string;
+  comment?: string;
+}
+
 /** Data is supplied by the embedding application; this view performs no network requests. */
 export interface WidgetViewProps {
   brandName?: string;
@@ -143,8 +161,11 @@ export interface WidgetViewProps {
     detail?: string;
     composer?: "message" | "feedback";
   };
-  /** Opt in only when submission callbacks process SubmissionOptions.attachments. */
-  attachmentsEnabled?: boolean;
+  /**
+   * Opt in only when submission callbacks process SubmissionOptions.attachments. "feedback" turns
+   * attachments and the screenshot action on for the feedback composer only.
+   */
+  attachmentsEnabled?: boolean | "feedback";
   onCaptureScreenshot?: (signal: AbortSignal) => Promise<File | null>;
   onCommentFeedback?: (
     postId: string,
@@ -180,4 +201,10 @@ export interface WidgetViewProps {
   ) => Promise<unknown>;
   onReactToUpdate?: (entryId: string, emoji: string) => Promise<unknown>;
   onShareUpdate?: (entry: UpdateEntry) => Promise<unknown>;
+  /** The survey that waits for the visitor; the home tab shows it. */
+  survey?: WidgetSurvey | null;
+  /** Resolve only after the API saved the answer. */
+  onAnswerSurvey?: (surveyId: string, answer: SurveyAnswer) => Promise<unknown>;
+  /** Hides the survey for this session. */
+  onDismissSurvey?: (surveyId: string) => void;
 }

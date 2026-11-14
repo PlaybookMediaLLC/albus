@@ -1,6 +1,16 @@
 // Generated from apps/docs/openapi.json by scripts/quills-web/sync-operation-routes.mjs.
 export const quillsOperationRoutes = [
   {
+    operationId: "acceptQuillsFeedbackSignalAsPost",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/feedback-signals/{signalId}/post",
+  },
+  {
+    operationId: "acceptQuillsFeedbackSignalAsVote",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/feedback-signals/{signalId}/vote",
+  },
+  {
     operationId: "acceptQuillsPortalInvite",
     method: "POST",
     path: "/api/quills-public/{workspace}/portal/invites/{inviteId}/accept",
@@ -446,6 +456,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/status/templates",
   },
   {
+    operationId: "createQuillsSurvey",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/surveys",
+  },
+  {
     operationId: "createQuillsTag",
     method: "POST",
     path: "/api/quills/{workspaceId}/tags",
@@ -756,6 +771,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/status/templates/{templateId}",
   },
   {
+    operationId: "deleteQuillsSurvey",
+    method: "DELETE",
+    path: "/api/quills/{workspaceId}/surveys/{surveyId}",
+  },
+  {
     operationId: "deleteQuillsTag",
     method: "DELETE",
     path: "/api/quills/{workspaceId}/tags/{tagId}",
@@ -821,6 +841,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills-public/{workspace}/portal/files/{fileId}",
   },
   {
+    operationId: "dismissQuillsFeedbackSignal",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/feedback-signals/{signalId}/dismiss",
+  },
+  {
     operationId: "dismissQuillsInboxTranslationSuggestion",
     method: "POST",
     path: "/api/quills/{workspaceId}/conversations/{conversationId}/translation/dismiss",
@@ -834,6 +859,11 @@ export const quillsOperationRoutes = [
     operationId: "draftQuillsAttributeDescriptions",
     method: "POST",
     path: "/api/quills/{workspaceId}/conversation-attributes/description-draft",
+  },
+  {
+    operationId: "draftQuillsChangelogFromPosts",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/changelog/drafts",
   },
   {
     operationId: "editQuillsPortalOwnComment",
@@ -961,6 +991,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/boards/{boardId}",
   },
   {
+    operationId: "getQuillsBoardSettings",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/boards/{boardId}/settings",
+  },
+  {
     operationId: "getQuillsBrandingSettings",
     method: "GET",
     path: "/api/quills/{workspaceId}/settings/branding",
@@ -1024,6 +1059,11 @@ export const quillsOperationRoutes = [
     operationId: "getQuillsConversationRouting",
     method: "GET",
     path: "/api/quills/{workspaceId}/support/routing",
+  },
+  {
+    operationId: "getQuillsConversationTicketLink",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/conversations/{conversationId}/ticket",
   },
   {
     operationId: "getQuillsConversationTyping",
@@ -1094,6 +1134,11 @@ export const quillsOperationRoutes = [
     operationId: "getQuillsFeatureFlagSettings",
     method: "GET",
     path: "/api/quills/{workspaceId}/settings/labs",
+  },
+  {
+    operationId: "getQuillsFeedbackInsights",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/feedback/insights",
   },
   {
     operationId: "getQuillsFile",
@@ -1206,6 +1251,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills-public/{workspace}/support/unread",
   },
   {
+    operationId: "getQuillsMyWeeklyDigestPreference",
+    method: "GET",
+    path: "/api/quills-public/{workspace}/user/weekly-digest",
+  },
+  {
     operationId: "getQuillsNotificationPreferences",
     method: "GET",
     path: "/api/quills/{workspaceId}/notification-preferences",
@@ -1226,9 +1276,19 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/integration-platform-credentials",
   },
   {
+    operationId: "getQuillsPortalActiveSurvey",
+    method: "GET",
+    path: "/api/quills-public/{workspace}/portal/surveys/active",
+  },
+  {
     operationId: "getQuillsPortalChangelogEntry",
     method: "GET",
     path: "/api/quills-public/{workspace}/portal/changelog/{entryId}",
+  },
+  {
+    operationId: "getQuillsPortalChangelogUnread",
+    method: "GET",
+    path: "/api/quills-public/{workspace}/portal/changelog/unread",
   },
   {
     operationId: "getQuillsPortalFile",
@@ -1254,6 +1314,11 @@ export const quillsOperationRoutes = [
     operationId: "getQuillsPost",
     method: "GET",
     path: "/api/quills/{workspaceId}/posts/{postId}",
+  },
+  {
+    operationId: "getQuillsPostDemand",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/posts/{postId}/demand",
   },
   {
     operationId: "getQuillsPostFilterCounts",
@@ -1361,6 +1426,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/assistant/analytics/tools",
   },
   {
+    operationId: "getQuillsRevenueAtRisk",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/feedback/revenue-at-risk",
+  },
+  {
     operationId: "getQuillsRoadmap",
     method: "GET",
     path: "/api/quills/{workspaceId}/roadmaps/{roadmapId}",
@@ -1421,9 +1491,19 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/support/reporting",
   },
   {
+    operationId: "getQuillsSurveyResults",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/surveys/{surveyId}/results",
+  },
+  {
     operationId: "getQuillsTag",
     method: "GET",
     path: "/api/quills/{workspaceId}/tags/{tagId}",
+  },
+  {
+    operationId: "getQuillsTeamCounts",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/reporting/team-counts",
   },
   {
     operationId: "getQuillsTicket",
@@ -1481,6 +1561,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/webhooks/{webhookId}",
   },
   {
+    operationId: "getQuillsWidgetActiveSurvey",
+    method: "GET",
+    path: "/api/quills-public/{workspace}/widget/surveys/active",
+  },
+  {
     operationId: "getQuillsWidgetCapabilities",
     method: "GET",
     path: "/api/quills-public/{workspace}/widget/capabilities",
@@ -1489,6 +1574,11 @@ export const quillsOperationRoutes = [
     operationId: "getQuillsWidgetChangelogEntry",
     method: "GET",
     path: "/api/quills-public/{workspace}/widget/changelog/{entryId}",
+  },
+  {
+    operationId: "getQuillsWidgetChangelogUnread",
+    method: "GET",
+    path: "/api/quills-public/{workspace}/widget/changelog/unread",
   },
   {
     operationId: "getQuillsWidgetConfig",
@@ -1626,6 +1716,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/status/subscribers/import",
   },
   {
+    operationId: "improveQuillsPortalPostDraft",
+    method: "POST",
+    path: "/api/quills-public/{workspace}/portal/post-draft/improve",
+  },
+  {
     operationId: "inspectQuillsIntegrationSync",
     method: "GET",
     path: "/api/quills/{workspaceId}/integration-syncs/{syncId}",
@@ -1716,6 +1811,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/changelog/categories",
   },
   {
+    operationId: "listQuillsChangelogEngagement",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/changelog-engagement",
+  },
+  {
     operationId: "listQuillsCompanies",
     method: "GET",
     path: "/api/quills/{workspaceId}/companies",
@@ -1789,6 +1889,11 @@ export const quillsOperationRoutes = [
     operationId: "listQuillsExportRunsDownload",
     method: "GET",
     path: "/api/quills/{workspaceId}/transfer/export-runs/{runId}/download",
+  },
+  {
+    operationId: "listQuillsFeedbackSignals",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/feedback-signals",
   },
   {
     operationId: "listQuillsFlaggedMessages",
@@ -1896,6 +2001,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/posts/{postId}/merged",
   },
   {
+    operationId: "listQuillsMergeSuggestions",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/merge-suggestions",
+  },
+  {
     operationId: "listQuillsMyConversationMessages",
     method: "GET",
     path: "/api/quills-public/{workspace}/support/conversations/{conversationId}/messages",
@@ -1934,6 +2044,11 @@ export const quillsOperationRoutes = [
     operationId: "listQuillsPortalMentionSuggestions",
     method: "GET",
     path: "/api/quills-public/{workspace}/mentions/suggest",
+  },
+  {
+    operationId: "listQuillsPortalMyFeedback",
+    method: "GET",
+    path: "/api/quills-public/{workspace}/portal/my-feedback",
   },
   {
     operationId: "listQuillsPortalPostComments",
@@ -2126,6 +2241,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/status/templates",
   },
   {
+    operationId: "listQuillsSurveys",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/surveys",
+  },
+  {
     operationId: "listQuillsTags",
     method: "GET",
     path: "/api/quills/{workspaceId}/tags",
@@ -2311,6 +2431,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/notifications/{notificationId}/read",
   },
   {
+    operationId: "markQuillsPortalChangelogRead",
+    method: "PUT",
+    path: "/api/quills-public/{workspace}/portal/changelog/read",
+  },
+  {
     operationId: "markQuillsTicketRead",
     method: "POST",
     path: "/api/quills/{workspaceId}/tickets/{ticketId}/read",
@@ -2319,6 +2444,11 @@ export const quillsOperationRoutes = [
     operationId: "markQuillsTicketUnread",
     method: "POST",
     path: "/api/quills/{workspaceId}/tickets/{ticketId}/unread",
+  },
+  {
+    operationId: "markQuillsWidgetChangelogRead",
+    method: "PUT",
+    path: "/api/quills-public/{workspace}/widget/changelog/read",
   },
   {
     operationId: "markQuillsWidgetConversationRead",
@@ -2691,6 +2821,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/conversation-tags/{tagId}/restore",
   },
   {
+    operationId: "restoreQuillsFeedbackSignal",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/feedback-signals/{signalId}/restore",
+  },
+  {
     operationId: "restoreQuillsHelpCenterArticle",
     method: "POST",
     path: "/api/quills/{workspaceId}/help-center/articles/{articleId}/restore",
@@ -3031,9 +3166,19 @@ export const quillsOperationRoutes = [
     path: "/api/quills-public/{workspace}/posts/{postId}/subscription",
   },
   {
+    operationId: "setQuillsMyWeeklyDigestPreference",
+    method: "PUT",
+    path: "/api/quills-public/{workspace}/user/weekly-digest",
+  },
+  {
     operationId: "setQuillsOfficeHours",
     method: "PUT",
     path: "/api/quills/{workspaceId}/support/office-hours",
+  },
+  {
+    operationId: "setQuillsPortalChangelogReaction",
+    method: "PUT",
+    path: "/api/quills-public/{workspace}/portal/changelog/{entryId}/reactions",
   },
   {
     operationId: "setQuillsPortalCommentReaction",
@@ -3066,6 +3211,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/posts/{postId}/owner",
   },
   {
+    operationId: "setQuillsPostScore",
+    method: "PUT",
+    path: "/api/quills/{workspaceId}/posts/{postId}/score",
+  },
+  {
     operationId: "setQuillsPostStatus",
     method: "PUT",
     path: "/api/quills/{workspaceId}/posts/{postId}/status",
@@ -3096,6 +3246,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/assistant/slack",
   },
   {
+    operationId: "setQuillsSurveyStatus",
+    method: "PUT",
+    path: "/api/quills/{workspaceId}/surveys/{surveyId}/status",
+  },
+  {
     operationId: "setQuillsTicketPriority",
     method: "POST",
     path: "/api/quills/{workspaceId}/tickets/{ticketId}/priority",
@@ -3124,6 +3279,11 @@ export const quillsOperationRoutes = [
     operationId: "setQuillsWebSourceEnabled",
     method: "PATCH",
     path: "/api/quills/{workspaceId}/assistant/web-sources/{webSourceId}",
+  },
+  {
+    operationId: "setQuillsWidgetChangelogReaction",
+    method: "PUT",
+    path: "/api/quills-public/{workspace}/widget/changelog/{entryId}/reactions",
   },
   {
     operationId: "setQuillsWidgetCommentReaction",
@@ -3281,6 +3441,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills-public/{workspace}/support/conversations/{conversationId}/csat",
   },
   {
+    operationId: "submitQuillsPortalSurveyResponse",
+    method: "POST",
+    path: "/api/quills-public/{workspace}/portal/surveys/{surveyId}/responses",
+  },
+  {
     operationId: "submitQuillsPublicArticleFeedbackReason",
     method: "POST",
     path: "/api/quills-public/{workspace}/hc/feedback/{feedbackId}/reason",
@@ -3289,6 +3454,11 @@ export const quillsOperationRoutes = [
     operationId: "submitQuillsWidgetCsat",
     method: "POST",
     path: "/api/quills-public/{workspace}/widget/conversations/{conversationId}/csat",
+  },
+  {
+    operationId: "submitQuillsWidgetSurveyResponse",
+    method: "POST",
+    path: "/api/quills-public/{workspace}/widget/surveys/{surveyId}/responses",
   },
   {
     operationId: "subscribeQuillsMyChangelog",
@@ -3311,9 +3481,19 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/tickets/{ticketId}/field-suggestions",
   },
   {
+    operationId: "summarizeQuillsPost",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/posts/{postId}/summary",
+  },
+  {
     operationId: "translateQuillsConversationMessages",
     method: "POST",
     path: "/api/quills/{workspaceId}/conversations/{conversationId}/messages/{messageId}/translate",
+  },
+  {
+    operationId: "translateQuillsPortalContent",
+    method: "POST",
+    path: "/api/quills-public/{workspace}/portal/translations",
   },
   {
     operationId: "unblockQuillsUser",
@@ -3434,6 +3614,11 @@ export const quillsOperationRoutes = [
     operationId: "updateQuillsBoard",
     method: "PATCH",
     path: "/api/quills/{workspaceId}/boards/{boardId}",
+  },
+  {
+    operationId: "updateQuillsBoardSettings",
+    method: "PATCH",
+    path: "/api/quills/{workspaceId}/boards/{boardId}/settings",
   },
   {
     operationId: "updateQuillsBrandingSettings",
@@ -3639,6 +3824,11 @@ export const quillsOperationRoutes = [
     operationId: "updateQuillsStatusTemplate",
     method: "PATCH",
     path: "/api/quills/{workspaceId}/status/templates/{templateId}",
+  },
+  {
+    operationId: "updateQuillsSurvey",
+    method: "PATCH",
+    path: "/api/quills/{workspaceId}/surveys/{surveyId}",
   },
   {
     operationId: "updateQuillsTag",

@@ -1,5 +1,6 @@
-import { act, waitFor } from "@testing-library/react";
+import { waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vite-plus/test";
+import { getPortalUserStatsFixture } from "../../api/feedback/get-portal-user-stats.fixture";
 import { createPortalPostFixture } from "../../api/feedback/create-portal-post.fixture";
 import { listPortalBoardsFixture } from "../../api/feedback/list-portal-boards.fixture";
 import { listPortalPostsFixture } from "../../api/feedback/list-portal-posts.fixture";
@@ -23,11 +24,15 @@ describe("FeedbackBoardPage", () => {
     canSubmit: true,
     canVote: true,
     canComment: true,
+    voteDisplay: "count" as const,
+    defaultSort: null,
   };
-  const prepareBoard = () => {
+  const prepareBoard = (signedIn = false) => {
     const api = mockApi();
     api.reply(listPortalBoardsFixture.ok({ items: [board] }));
     api.reply(listPortalStatusesFixture.ok());
+    // A signed-in viewer also loads their activity.
+    if (signedIn) api.reply(getPortalUserStatsFixture.ok());
     api.reply(listPortalPostsFixture.ok());
     return api;
   };
@@ -55,26 +60,21 @@ describe("FeedbackBoardPage", () => {
     },
     done: {
       prepare: () => {
-        const api = prepareBoard();
+        const api = prepareBoard(true);
         api.reply(createPortalPostFixture.ok());
         api.reply(listPortalPostsFixture.ok());
         api.reply(listPortalBoardsFixture.ok({ items: [board] }));
+        api.reply(getPortalUserStatsFixture.ok());
         return {
           ...options,
           viewer: { kind: "user" as const, id: "account_test_1" },
         };
       },
       act: async (view) => {
-        (await view.findByRole("button", { name: "Submit feedback" })).click();
-        await view.findByLabelText("Details");
-        fill("Details", "Please add exports");
-        view
-          .getAllByRole("button", { name: "Submit feedback" })
-          .at(-1)
-          ?.click();
-        await waitFor(() =>
-          expect(view.queryByLabelText("Details")).not.toBeInTheDocument(),
-        );
+        await view.findByLabelText("Title");
+        fill("Title", "UX");
+        press("Submit feedback");
+        await view.findByText("Thanks! Your feedback was posted.");
       },
     },
   });
@@ -116,26 +116,61 @@ describe("FeedbackBoardPage", () => {
       expect(await requests[0]!.json()).toEqual({ voted: true });
       expect(await requests[1]!.json()).toEqual({ voted: false });
     });
-    it("keeps the focused search mounted through loading and failure", async () => {
-      const api = prepareBoard();
+    it("filters the board by status from the rail", async () => {
+      const api = mockApi();
+      api.reply(listPortalBoardsFixture.ok({ items: [board] }));
+      api.reply(
+        listPortalStatusesFixture.ok({
+          items: [
+            {
+              id: "post_status_test_1",
+              name: "Planned",
+              slug: "planned",
+              color: "blue",
+              category: "active",
+              showOnRoadmap: true,
+              stage: "planned",
+            },
+          ],
+        }),
+      );
+      api.reply(listPortalPostsFixture.ok());
+      api.reply(listPortalPostsFixture.ok());
       const view = renderPage(FeedbackBoardPage, meta, options);
-      await view.findByText("No posts match these filters.");
-      let reject!: (error: Error) => void;
-      api.defer((controls) => {
-        reject = controls.reject;
-      });
-      const input = view.getByRole("textbox", { name: "Search posts" });
-      input.focus();
-      fill("Search posts", "exports");
+      await view.findByRole("button", { name: /Planned/ });
+      press(/Planned/);
+      expect(
+        await view.findByRole("button", { name: /Planned/, pressed: true }),
+      ).toBeInTheDocument();
       await waitFor(() =>
         expect(api.calls("listQuillsPortalPosts")).toHaveLength(2),
       );
-      expect(view.getByRole("textbox", { name: "Search posts" })).toBe(input);
-      expect(input).toHaveFocus();
-      await act(async () => reject(new Error("Offline")));
-      await view.findByRole("alert");
-      expect(input).toHaveFocus();
-      expect(input).toHaveValue("exports");
+      const filtered = new URL(api.calls("listQuillsPortalPosts")[1]!.url);
+      expect(filtered.searchParams.get("stage")).toBe("planned");
+      expect(filtered.searchParams.get("boardId")).toBe("board_test_1");
+    });
+    it("uses the board's default sort and hides counts the board hides", async () => {
+      const api = mockApi();
+      const { voteCount: _count, ...hidden } = getPortalPostFixture.ok({
+        id: "post_test_1",
+        title: "Export history",
+      });
+      api.reply(
+        listPortalBoardsFixture.ok({
+          items: [{ ...board, voteDisplay: "hidden", defaultSort: "random" }],
+        }),
+      );
+      api.reply(listPortalStatusesFixture.ok());
+      api.reply(listPortalPostsFixture.ok({ items: [hidden] }));
+      const view = renderPage(FeedbackBoardPage, meta, options);
+      await view.findByText(hidden.title);
+      const listed = new URL(api.calls("listQuillsPortalPosts")[0]!.url);
+      expect(listed.searchParams.get("sort")).toBe("random");
+      expect(view.getByRole("combobox", { name: "Sort" })).toHaveTextContent(
+        "Shuffled",
+      );
+      expect(view.getByRole("button", { name: "Vote" })).toBeVisible();
+      expect(view.queryByText(/\d+ votes?/)).not.toBeInTheDocument();
     });
     it("does not fetch a board without portal access", async () => {
       const api = mockApi();

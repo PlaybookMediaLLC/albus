@@ -119,7 +119,8 @@ export async function addVote(
 }
 
 /** A principal of this workspace that is not a service account. 404 otherwise. */
-async function findVoter(db: Database, id: TypeId<"principal">) {
+/** A person who can vote or author a post: not a service principal. 404 when missing. */
+export async function findVoter(db: Database, id: TypeId<"principal">) {
   const [voter] = await db
     .select({ id: principal.id, name: principal.displayName })
     .from(principal)
@@ -148,7 +149,7 @@ const listVoters = defineQuillsRoute({
   operationId: "listQuillsPostVoters",
   summary: "List a post's voters, newest first",
   description:
-    "The votes the post's count is made of: for a merged post, those of the post it was merged into. Leaves out test customers and votes on posts the caller cannot see. Names come from the principal profile; emails are not returned.",
+    "The votes the post's count is made of: for a merged post, those of the post it was merged into. Leaves out test customers and votes on posts the caller cannot see. Names come from the principal profile; emails are not returned. importance is how much the voter needs the post, when the voter said so.",
   action: "read",
   params: postParams,
   query: z.object({
@@ -164,6 +165,7 @@ const listVoters = defineQuillsRoute({
         isAnonymous: z.boolean(),
         sourceType: z.string().nullable(),
         addedByPrincipalId: z.string().nullable(),
+        importance: z.enum(postVotes.importance.enumValues).nullable(),
         createdAt: responseTimestamp,
       }),
     ),
@@ -182,6 +184,7 @@ const listVoters = defineQuillsRoute({
         type: principal.type,
         sourceType: postVotes.sourceType,
         addedByPrincipalId: postVotes.addedByPrincipalId,
+        importance: postVotes.importance,
         createdAt: postVotes.createdAt,
       })
       .from(postVotes)

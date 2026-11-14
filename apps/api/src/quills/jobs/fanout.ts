@@ -44,7 +44,9 @@ import {
   unsubscribePageUrl,
   unsubscribeUrl,
 } from "../portal/unsubscribe-token";
+import { crmNoteDue } from "../integrations/crm-notes";
 import { githubCommentDue } from "./handlers/github-comment";
+import { shippedSubscribers } from "./handlers/shipped-mail";
 import { statusSubscribers } from "./handlers/status-mail";
 import { supportSubscribers } from "./handlers/support-mail";
 import { enqueueQuillsJob, type QuillsQueue } from "./queue";
@@ -398,6 +400,7 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
   },
   ...supportSubscribers,
   ...statusSubscribers,
+  ...shippedSubscribers,
 };
 
 export async function loadEvent(db: Database, eventId: string) {
@@ -461,6 +464,15 @@ export async function fanOut(workspaceId: string, eventId: string) {
         "quills.webhook",
         { eventId },
         `${eventId}:github`,
+        5,
+      );
+    // RFC 0003 lane L6: a critical vote or a link to a CRM company becomes a CRM note.
+    if (await crmNoteDue(db, event))
+      await enqueueQuillsJob(
+        db,
+        "quills.webhook",
+        { eventId, crm: "note" },
+        `${eventId}:crm-note`,
         5,
       );
     await enqueueWorkflowRuns(db, event);

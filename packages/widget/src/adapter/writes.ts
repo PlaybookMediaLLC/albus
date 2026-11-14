@@ -5,6 +5,7 @@ import {
   type ApiConversation,
   type ApiMessage,
   type ApiPost,
+  type ApiReaction,
 } from "./map.js";
 
 // The widget's writes, as the API takes them. Idempotency keys go in the body: the routes read
@@ -14,21 +15,34 @@ export type Sent = { conversation: ApiConversation; message: ApiMessage };
 const id = encodeURIComponent;
 
 export const writes = (api: Api) => ({
+  /** `context`: attached file IDs and the page metadata (RFC 0003 feature 6). */
   createPost: (
     content: string,
     idempotencyKey: string,
     boardId?: string,
     signal?: AbortSignal,
+    context: {
+      attachmentIds?: string[];
+      metadata?: Record<string, string>;
+    } = {},
   ) =>
     api.request<ApiPost>(
       "POST",
       "/widget/posts",
-      { content, idempotencyKey, ...(boardId && { boardId }) },
+      {
+        content,
+        idempotencyKey,
+        ...(boardId && { boardId }),
+        ...(context.attachmentIds?.length && {
+          attachmentIds: context.attachmentIds,
+        }),
+        ...(context.metadata && { metadata: context.metadata }),
+      },
       signal,
     ),
   /** Desired state, not a toggle: a retry changes nothing. */
   vote: (postId: string, voted: boolean, signal?: AbortSignal) =>
-    api.request<{ postId: string; voted: boolean; voteCount: number }>(
+    api.request<{ postId: string; voted: boolean; voteCount?: number }>(
       "PUT",
       `/widget/posts/${id(postId)}/vote`,
       { voted },
@@ -105,6 +119,34 @@ export const writes = (api: Api) => ({
       "PUT",
       `/widget/conversations/${id(conversationId)}/read`,
       { throughMessageId },
+      signal,
+    ),
+  /** Desired state: one reaction per visitor, update and emoji. */
+  reactToUpdate: (
+    entryId: string,
+    emoji: string,
+    reacted: boolean,
+    signal?: AbortSignal,
+  ) =>
+    api.request<{ reactions: ApiReaction[] }>(
+      "PUT",
+      `/widget/changelog/${id(entryId)}/reactions`,
+      { emoji, reacted },
+      signal,
+    ),
+  /** Moves the visitor's read mark to now: every update is read. */
+  readUpdates: (signal?: AbortSignal) =>
+    api.request<{ lastReadAt: string }>(
+      "PUT",
+      "/widget/changelog/read",
+      undefined,
+      signal,
+    ),
+  updatesUnread: (signal?: AbortSignal) =>
+    api.request<{ count: number }>(
+      "GET",
+      "/widget/changelog/unread",
+      undefined,
       signal,
     ),
   unread: (signal?: AbortSignal) =>

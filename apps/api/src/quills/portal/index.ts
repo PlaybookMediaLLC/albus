@@ -2,10 +2,12 @@ import { apiRouter } from "../../openapi";
 import access from "./access";
 import config from "./config";
 import inviteAccept from "./invite-accept";
+import myFeedback from "./my-feedback";
 import preferences from "./preferences";
 import profile from "./profile";
 import publicProfile from "./public-profile";
 import subscriptions from "./subscriptions";
+import translations from "./translations";
 import unsubscribe from "./unsubscribe";
 
 // Portal and public routes under /quills-public/{workspace}. Each module declares its routes
@@ -18,4 +20,6 @@ export default apiRouter()
   .route("/", inviteAccept)
   .route("/", subscriptions)
   .route("/", preferences)
-  .route("/", unsubscribe);
+  .route("/", unsubscribe)
+  .route("/", myFeedback)
+  .route("/", translations);

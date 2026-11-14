@@ -1,10 +1,11 @@
-import { waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vite-plus/test";
+import { getPortalActiveSurveyFixture } from "../../api/feedback/get-portal-active-survey.fixture";
+import { getPortalUserStatsFixture } from "../../api/feedback/get-portal-user-stats.fixture";
 import { createPortalPostFixture } from "../../api/feedback/create-portal-post.fixture";
 import { listPortalBoardsFixture } from "../../api/feedback/list-portal-boards.fixture";
 import { listPortalPostsFixture } from "../../api/feedback/list-portal-posts.fixture";
 import { listPortalStatusesFixture } from "../../api/feedback/list-portal-statuses.fixture";
-import { fill } from "../../test/actions";
+import { fill, press } from "../../test/actions";
 import { describePageContract } from "../../test/contracts";
 import { mockApi } from "../../test/mock-api";
 import { renderPage } from "../../test/render";
@@ -20,12 +21,18 @@ describe("FeedbackHomePage", () => {
     canSubmit: true,
     canVote: true,
     canComment: true,
+    voteDisplay: "count" as const,
+    defaultSort: null,
   };
-  const prepareHome = () => {
+  const prepareHome = (signedIn = false) => {
     const api = mockApi();
     api.reply(listPortalBoardsFixture.ok({ items: [board] }));
     api.reply(listPortalStatusesFixture.ok());
+    // A signed-in viewer also loads their activity.
+    if (signedIn) api.reply(getPortalUserStatsFixture.ok());
     api.reply(listPortalPostsFixture.ok());
+    // A signed-in viewer also asks for a waiting survey.
+    if (signedIn) api.reply(getPortalActiveSurveyFixture.ok());
     return api;
   };
   describePageContract(meta, FeedbackHomePage, {
@@ -39,23 +46,18 @@ describe("FeedbackHomePage", () => {
     },
     done: {
       prepare: () => {
-        const api = prepareHome();
+        const api = prepareHome(true);
         api.reply(createPortalPostFixture.ok());
         api.reply(listPortalPostsFixture.ok());
         api.reply(listPortalBoardsFixture.ok());
+        api.reply(getPortalUserStatsFixture.ok());
         return { viewer: { kind: "user", id: "account_test_1" } };
       },
       act: async (view) => {
-        (await view.findByRole("button", { name: "Submit feedback" })).click();
-        await view.findByLabelText("Details");
-        fill("Details", "Please add exports");
-        view
-          .getAllByRole("button", { name: "Submit feedback" })
-          .at(-1)
-          ?.click();
-        await waitFor(() =>
-          expect(view.queryByLabelText("Details")).not.toBeInTheDocument(),
-        );
+        await view.findByLabelText("Title");
+        fill("Title", "UX");
+        press("Submit feedback");
+        await view.findByText("Thanks! Your feedback was posted.");
       },
     },
   });

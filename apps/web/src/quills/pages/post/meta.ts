@@ -15,6 +15,7 @@ export const meta = {
     "createQuillsPortalFiles",
     "discardQuillsPortalFile",
     "getQuillsPortalPost",
+    "findQuillsPortalSimilarPosts",
     "listQuillsPortalPostComments",
     "setQuillsPortalVote",
     "createQuillsPortalComment",
@@ -22,6 +23,9 @@ export const meta = {
     "deleteQuillsPortalOwnPost",
     "editQuillsPortalOwnComment",
     "deleteQuillsPortalOwnComment",
+    "setQuillsPortalFollow",
+    "setQuillsPortalCommentReaction",
+    "translateQuillsPortalContent",
   ],
   states: ["loading", "failed", "ready", "done"],
 } satisfies PageMeta;

@@ -14,6 +14,7 @@ import type {
 } from "../core/types";
 import { renderPage, renderQuillsHook, type RenderPageOptions } from "./render";
 import { mockApi } from "./mock-api";
+import { choose } from "./actions";
 
 type RequestShape = {
   query?: Record<string, unknown>;
@@ -23,10 +24,13 @@ type RequestShape = {
 const problemForStatus = (
   operationId: string,
   status: number,
+  path: string,
 ): PortalProblemKind => {
   if (status === 400 || status === 422) return "invalid";
   if (status === 401) return "authRequired";
-  if (status === 403) return "notFound";
+  // Teammate routes live under /api/quills/; their 403 is a denied action.
+  if (status === 403)
+    return path.startsWith("/api/quills/") ? "noAccess" : "notFound";
   if (status === 404)
     return /Token|Csat/i.test(operationId) ? "gone" : "notFound";
   if (status === 409) return "conflict";
@@ -87,7 +91,7 @@ export function describeOperationContract(input: {
       ).rejects.toMatchObject({
         kind:
           input.statusProblems?.[status] ??
-          problemForStatus(input.operationId, status),
+          problemForStatus(input.operationId, status, input.path),
       });
     });
   it("maps a network failure", async () => {
@@ -229,6 +233,8 @@ export function describeHookContract(input: {
     expect(api.calls(input.operationId)).toHaveLength(1);
     for (const queryKey of input.invalidates ?? [])
       expect(invalidate).toHaveBeenCalledWith({ queryKey });
+    // Only the declared ones: a mutation that declares none refetches nothing.
+    expect(invalidate).toHaveBeenCalledTimes(input.invalidates?.length ?? 0);
   });
   it("returns the problem and invalidates nothing after mutation failure", async () => {
     const api = mockApi();
@@ -343,7 +349,18 @@ export function describePageContract(
     await waitFor(() => expect(document.querySelector("h1")).toHaveFocus());
     expect(document.title).not.toBe("");
   });
-  if (meta.audience !== "public" && meta.audience !== "development")
+  // The teammate API is the authority (RFC 0003 D2): its 403 shows the denied state.
+  if (meta.audience === "teammate" && meta.operations.length)
+    it("shows the denied state when the teammate API refuses access", async () => {
+      const api = mockApi();
+      for (const _operation of meta.operations)
+        api.reply({ message: "Forbidden" }, 403);
+      const view = renderPage(Page, meta);
+      // A page can show the denied state in more than one pane; every alert must be that state.
+      for (const alert of await view.findAllByRole("alert"))
+        expect(alert).toHaveTextContent(/permission/i);
+    });
+  else if (meta.audience !== "public" && meta.audience !== "development")
     it("does not expose page data without audience access", () => {
       const api = mockApi();
       renderPage(Page, meta, { accessGranted: false });
@@ -388,12 +405,24 @@ export function describeFormContract<TValues>(input: {
   validValue: string;
   expectedValues: NoInfer<TValues>;
   invalidValue?: string;
+  /** The field is a coss Select. Then validValue is the label of the option to choose. */
+  select?: boolean;
 }) {
-  const complete = (view: RenderResult) => {
-    fireEvent.change(view.getByLabelText(input.fieldName), {
-      target: { value: input.validValue },
-    });
+  const complete = async (view: RenderResult) => {
+    if (input.select) await choose(input.fieldName, input.validValue);
+    else
+      fireEvent.change(view.getByLabelText(input.fieldName), {
+        target: { value: input.validValue },
+      });
   };
+  const expectDraft = (view: RenderResult) =>
+    input.select
+      ? expect(
+          view.getByRole("combobox", { name: input.fieldName }),
+        ).toHaveTextContent(input.validValue)
+      : expect(view.getByLabelText(input.fieldName)).toHaveValue(
+          input.validValue,
+        );
   it("renders a labelled field and submits valid values only once", async () => {
     let finish!: () => void;
     const onSubmit = vi.fn(
@@ -403,7 +432,7 @@ export function describeFormContract<TValues>(input: {
         }),
     );
     const view = input.render(onSubmit);
-    complete(view);
+    await complete(view);
     const submit = view.getByRole("button", { name: input.submitName });
     const form = submit.closest("form")!;
     fireEvent.click(submit);
@@ -429,29 +458,29 @@ export function describeFormContract<TValues>(input: {
       issues: [{ path: input.issuePath, message: "Server field issue" }],
     }));
     const view = input.render(onSubmit);
-    complete(view);
+    await complete(view);
     fireEvent.click(view.getByRole("button", { name: input.submitName }));
     expect(await view.findByRole("alert")).toHaveTextContent(
       "Server field issue",
     );
-    expect(view.getByLabelText(input.fieldName)).toHaveValue(input.validValue);
+    expectDraft(view);
   });
   it("keeps the draft after a retryable failure and requires an explicit reset", async () => {
     const onSubmit = vi.fn(async () => ({ kind: "failed" as const }));
     const view = input.render(onSubmit);
-    complete(view);
+    await complete(view);
     fireEvent.click(view.getByRole("button", { name: input.submitName }));
     expect(await view.findByRole("alert")).toBeInTheDocument();
-    expect(view.getByLabelText(input.fieldName)).toHaveValue(input.validValue);
+    expectDraft(view);
     fireEvent.click(view.getByRole("button", { name: /try again/i }));
-    expect(view.getByLabelText(input.fieldName)).toHaveValue(input.validValue);
+    expectDraft(view);
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
   it("refuses submission inside a frame", async () => {
     vi.stubGlobal("top", {});
     const onSubmit = vi.fn(async () => undefined);
     const view = input.render(onSubmit);
-    complete(view);
+    await complete(view);
     fireEvent.click(view.getByRole("button", { name: input.submitName }));
     expect(await view.findByRole("alert")).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();

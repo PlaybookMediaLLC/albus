@@ -9,6 +9,11 @@ export {
 } from "@/components/ui/card";
 export { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 export { Input } from "@/components/ui/input";
+export {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 export { Label } from "@/components/ui/label";
 export { Textarea } from "@/components/ui/textarea";
 export {
@@ -20,7 +25,7 @@ export {
   SheetPanel,
 } from "@/components/ui/sheet";
 export { toast } from "@/lib/toast";
-export { HttpError } from "@/lib/http-error";
+export { HttpError, handleUnauthorized } from "@/lib/http-error";
 export { authClient } from "@/lib/auth-client";
 export { i18n } from "@/lib/i18n";
 export { getSafeRedirectPath } from "@/components/auth/auth-methods";
@@ -48,6 +53,84 @@ export { cn } from "@/lib/cn";
 export { Empty, EmptyHeader, EmptyDescription } from "@/components/ui/empty";
 export { Spinner } from "@/components/ui/spinner";
 
-export { ArrowUp } from "lucide-react";
+export { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+export {
+  Dialog,
+  DialogPopup,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+export { Kbd } from "@/components/ui/kbd";
 
 export { useDebouncedValue } from "@/hooks/use-debounced-value";
+
+export {
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+} from "@/components/ui/sidebar";
+export { default as useActiveWorkspace } from "@/hooks/queries/workspace/use-active-workspace";
+export { useWorkspacePermission } from "@/hooks/use-workspace-permission";
+
+// RFC 0004: the teammate app shell and its inbox primitives. Do not export the
+// app layout here: the app sidebar imports the Quills entry, so that forms a cycle.
+export { Tabs, TabsList, TabsTab } from "@/components/ui/tabs";
+export {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+export { UserAvatar } from "@/components/user-avatar";
+export { default as WorkspaceArchived } from "@/components/common/workspace-archived";
+export { default as useWorkspaceArchived } from "@/hooks/queries/workspace/use-workspace-archived";
+export { shortcutRegistry } from "@/lib/shortcuts/registry";
+export { parseBinding } from "@/lib/shortcuts/key-combo";
+export { ShortcutListener } from "@/lib/shortcuts/shortcut-listener";
+
+// RFC 0004 lane P: the title and project of a task that a post links to.
+export { default as useGetTask } from "@/hooks/queries/task/use-get-task";
+
+// RFC 0004 revision 2: the sidebar shell and the shared thread parts.
+export {
+  Menu,
+  MenuCheckboxItem,
+  MenuGroup,
+  MenuGroupLabel,
+  MenuItem,
+  MenuPopup,
+  MenuRadioGroup,
+  MenuRadioItem,
+  MenuSeparator,
+  MenuTrigger,
+} from "@/components/ui/menu";
+export {
+  Combobox,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxPopup,
+  ComboboxTrigger,
+} from "@/components/ui/combobox";
+export {
+  Command,
+  CommandDialog,
+  CommandDialogPopup,
+  CommandEmpty,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+export { Badge } from "@/components/ui/badge";
+export {
+  Popover,
+  PopoverPopup,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+export { getInitials } from "@/lib/get-initials";
+export { default as useGetWorkspaces } from "@/hooks/queries/workspace/use-get-workspaces";

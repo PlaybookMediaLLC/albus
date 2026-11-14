@@ -242,3 +242,126 @@ test("generates each framework kind without overwriting", async () => {
     /Refusing to overwrite/,
   );
 });
+
+test("generates a teammate page in the teammate app folder with teammate problem mapping", async () => {
+  const root = await fixtureRoot();
+  const team =
+    "apps/web/src/routes/_layout/_authenticated/feedback/$workspaceId";
+  await generateFeature(root, "team-sample");
+  await generateOperation(root, "query", "fetchQuillsAdminOverview", {
+    area: "team",
+  });
+  const operation = await readFile(
+    `${root}/apps/web/src/quills/api/team/fetch-admin-overview.ts`,
+    "utf8",
+  );
+  assert.match(operation, /toPortalProblem\(response, "teammate", false\)/);
+  assert.match(operation, /client\["quills"\]\[":workspaceId"\]/);
+  await assert.rejects(
+    () =>
+      generatePage(root, "team-wrong", {
+        route: "/portal/$workspaceId/team-wrong",
+        audience: "teammate",
+        feature: "team-sample",
+      }),
+    /teammate page route must stay under/,
+  );
+  // The old folder (RFC 0002 D24) keeps only the redirect to the teammate app.
+  await assert.rejects(
+    () =>
+      generatePage(root, "team-old", {
+        route: "/dashboard/workspace/$workspaceId/quills/old",
+        audience: "teammate",
+        feature: "team-sample",
+      }),
+    /teammate page route must stay under \/feedback\/\$workspaceId/,
+  );
+  await assert.rejects(
+    () =>
+      generatePage(root, "team-token", {
+        route: "/feedback/$workspaceId/token",
+        audience: "teammate",
+        feature: "team-sample",
+        token: "query",
+      }),
+    /cannot take a mail token/,
+  );
+  await generatePage(root, "team-sample", {
+    route: "/feedback/$workspaceId/sample",
+    audience: "teammate",
+    feature: "team-sample",
+    operations: "fetchQuillsAdminOverview",
+  });
+  const route = await readFile(`${root}/${team}/sample/index.tsx`, "utf8");
+  assert.match(
+    route,
+    /createFileRoute\(\s*"\/_layout\/_authenticated\/feedback\/\$workspaceId\/sample\/",?\s*\)/,
+  );
+  assert.doesNotMatch(route, /beforeLoad|quillsPortal/);
+  assert.match(
+    await readFile(`${root}/${team}/sample/index.test.tsx`, "utf8"),
+    /from "\.\/index"/,
+  );
+  const page = await readFile(
+    `${root}/apps/web/src/quills/pages/team-sample/team-sample-page.tsx`,
+    "utf8",
+  );
+  assert.match(page, /useTeamRuntime\(\)/);
+  assert.match(page, /<TeamStateView/);
+  assert.match(page, /landmark=\{false\}/);
+  assert.doesNotMatch(page, /usePortalRuntime|PortalGate/);
+  const test = await readFile(
+    `${root}/apps/web/src/quills/pages/team-sample/team-sample-page.test.tsx`,
+    "utf8",
+  );
+  assert.match(test, /api\.reply\(fetchAdminOverviewFixture\.ok\(\)\)/);
+  assert.match(test, /api\.defer\(/);
+  assert.match(test, /api\.fail\(\)/);
+  assert.match(
+    await readFile(
+      `${root}/apps/web/src/quills/pages/team-sample/meta.ts`,
+      "utf8",
+    ),
+    /audience: "teammate"[\s\S]*states: \["loading", "failed", "ready"\]/,
+  );
+  for (const file of await generatedSources(`${root}/apps/web/src`))
+    await transform(await readFile(file, "utf8"), {
+      loader: file.endsWith(".tsx") ? "tsx" : "ts",
+    });
+});
+
+test("generates a mutation that invalidates none when asked", async () => {
+  const root = await fixtureRoot();
+  await assert.rejects(
+    () =>
+      generateOperation(root, "mutation", "markQuillsTicketRead", {
+        area: "team",
+        invalidates: "none",
+        optimistic: "getQuillsTicket",
+      }),
+    /--optimistic cannot be used with --invalidates none/,
+  );
+  await generateOperation(root, "mutation", "markQuillsTicketRead", {
+    area: "team",
+    invalidates: "none",
+  });
+  const hook = await readFile(
+    `${root}/apps/web/src/quills/hooks/team/use-mark-ticket-read.ts`,
+    "utf8",
+  );
+  assert.match(hook, /export function useMarkTicketRead\(\)/);
+  assert.doesNotMatch(
+    hook,
+    /useQueryClient|invalidateQueries|onSuccess|TODO\(quills-web\)/,
+  );
+  const hookTest = await readFile(
+    `${root}/apps/web/src/quills/hooks/team/use-mark-ticket-read.test.tsx`,
+    "utf8",
+  );
+  assert.match(hookTest, /takesViewer: false/);
+  assert.match(hookTest, /invalidates: \[\]/);
+  for (const file of await generatedSources(`${root}/apps/web/src`))
+    await transform(await readFile(file, "utf8"), {
+      loader: file.endsWith(".tsx") ? "tsx" : "ts",
+    });
+});

@@ -1,0 +1,57 @@
+{
+	"back": "Back to the workspace",
+	"denied": "You do not have permission to see this page. Ask a workspace admin for access.",
+	"desktop": {
+		"denied": "The browser blocks notifications for this site. Allow them in the site settings.",
+		"text": "For new posts and comments",
+		"title": "Desktop notifications"
+	},
+	"home": {
+		"announce_one": "{{count}} shipped idea is not in the changelog",
+		"announce_other": "{{count}} shipped ideas are not in the changelog",
+		"boards": "Boards",
+		"momentum": "Most votes in the last 7 days",
+		"none": "Nothing waits here.",
+		"place": "{{board}} · {{status}}",
+		"posts_one": "{{count}} post",
+		"posts_other": "{{count}} posts",
+		"review_one": "{{count}} new idea to review",
+		"review_other": "{{count}} new ideas to review",
+		"views": "Views",
+		"votes_one": "{{count}} vote",
+		"votes_other": "{{count}} votes"
+	},
+	"menu": "Menu",
+	"nav": {
+		"allRequests": "All",
+		"home": "Overview",
+		"members": "Members",
+		"roadmap": "Roadmap",
+		"settings": "Settings",
+		"share": "Share"
+	},
+	"navigation": "Teammate app",
+	"newRequest": "New request",
+	"notifications": {
+		"new_one": "{{count}} new notification",
+		"new_other": "{{count}} new notifications",
+		"readAll": "Mark all as read",
+		"title": "Notifications",
+		"unread_one": "Notifications, {{count}} unread",
+		"unread_other": "Notifications, {{count}} unread"
+	},
+	"roles": {
+		"admin": "Admin",
+		"member": "Member",
+		"owner": "Owner"
+	},
+	"sections": {
+		"conversations": "Conversations",
+		"requests": "Requests",
+		"workspace": "Workspace"
+	},
+	"shareCopied": "Link copied",
+	"support": "Support",
+	"switcher": "Workspaces",
+	"title": "Feedback"
+}

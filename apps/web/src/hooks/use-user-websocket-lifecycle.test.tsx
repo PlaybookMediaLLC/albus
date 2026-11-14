@@ -114,15 +114,22 @@ describe("user WebSocket lifecycle", () => {
   });
   it("invalidates Quills data only for the current user and changed workspace", () => {
     renderHook(useUserWebSocket);
-    act(() =>
-      TestSocket.instances[0].onmessage?.({
-        data: JSON.stringify({
-          type: "QUILLS_CHANGED",
-          workspaceId: "workspace",
-          eventId: "event",
+    const change = (eventId: string) =>
+      act(() =>
+        TestSocket.instances[0].onmessage?.({
+          data: JSON.stringify({
+            type: "QUILLS_CHANGED",
+            workspaceId: "workspace",
+            eventId,
+          }),
         }),
-      }),
-    );
+      );
+    // Two changes in one burst refetch once, after a short window.
+    change("event");
+    change("event-2");
+    expect(client.invalidateQueries).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(300));
+    expect(client.invalidateQueries).toHaveBeenCalledTimes(2);
     const predicate = client.invalidateQueries.mock.calls.at(-1)?.[0].predicate;
     expect(
       predicate({ queryKey: ["quills-context", "user-a", "workspace"] }),
@@ -139,6 +146,9 @@ describe("user WebSocket lifecycle", () => {
     expect(predicate({ queryKey: ["projects", "user-a", "workspace"] })).toBe(
       false,
     );
+    expect(client.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["quills", "workspace", "user-a"],
+    });
   });
   it("keeps an archived board open to show its archived state and refreshes on restore", () => {
     renderHook(useUserWebSocket);
@@ -186,6 +196,35 @@ describe("user WebSocket lifecycle", () => {
     );
     expect(navigate).toHaveBeenCalledWith({ to: "/dashboard" });
   });
+  it("redirects a revoked workspace from the Quills teammate app", () => {
+    auth.pathname = "/feedback/workspace/triage";
+    renderHook(useUserWebSocket);
+    act(() =>
+      TestSocket.instances[0].onmessage?.({
+        data: JSON.stringify({
+          type: "WORKSPACE_ACCESS_REVOKED",
+          workspaceId: "workspace",
+        }),
+      }),
+    );
+    expect(navigate).toHaveBeenCalledWith({ to: "/dashboard" });
+  });
+
+  it("keeps an archived workspace open in the teammate app to show its archived state", () => {
+    auth.pathname = "/feedback/workspace";
+    renderHook(useUserWebSocket);
+    act(() =>
+      TestSocket.instances[0].onmessage?.({
+        data: JSON.stringify({
+          type: "WORKSPACE_ACCESS_REVOKED",
+          workspaceId: "workspace",
+          reason: "archived",
+        }),
+      }),
+    );
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it("clears revoked workspace data from the global user connection", () => {
     renderHook(() => useUserWebSocket());
     act(() =>

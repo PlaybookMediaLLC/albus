@@ -1,0 +1,119 @@
+{
+	"addTag": "Add a tag",
+	"assign": "Assign",
+	"assignee": "Assignee: {{name}}",
+	"attachment": "Attachment: {{name}}",
+	"block": "Block sender",
+	"cancel": "Cancel",
+	"conversation": "Conversation",
+	"customer": {
+		"company": "Company",
+		"country": "Country",
+		"mrr": "MRR",
+		"plan": "Plan",
+		"segments": "Segments"
+	},
+	"empty": {
+		"text": "Pick a thread from the list to read it and reply.",
+		"title": "Select a conversation"
+	},
+	"filters": {
+		"resolved": "Resolved",
+		"snoozed": "Snoozed",
+		"spam": "Spam"
+	},
+	"links": {
+		"board": "Board",
+		"create": "Create request",
+		"created": "Created the request “{{title}}”.",
+		"detailsLimit": "Details can have at most 10,000 characters.",
+		"noBoards": "No board exists. Add a board in Settings first.",
+		"none": "None",
+		"postContent": "Details (optional)",
+		"postTitle": "Request title",
+		"posts": "Requests",
+		"ticket": "Linked ticket",
+		"ticketName": "{{reference}} {{title}} · {{status}}",
+		"title": "Links"
+	},
+	"loadMore": "Load more conversations",
+	"markSpam": "Mark as spam",
+	"more": "More actions",
+	"newMessage": {
+		"compose": "Write a message…",
+		"none": "No customer matches this search.",
+		"refused": "This customer cannot get mail. They can be a lead, have no email address or be blocked.",
+		"remove": "Remove {{name}}",
+		"results": "Customers",
+		"title": "New message",
+		"to": "To",
+		"toHint": "Name or email address"
+	},
+	"no": "No",
+	"noMessages": "No messages yet.",
+	"noTeam": "No team",
+	"notSpam": "Not spam",
+	"note": "Note",
+	"noteLabel": "Write a note for the team…",
+	"priority": {
+		"high": "High",
+		"low": "Low",
+		"medium": "Medium",
+		"none": "No priority",
+		"urgent": "Urgent"
+	},
+	"problem": {
+		"conflict": "The conversation is not ready for this change. Fill in the required fields and try again.",
+		"failed": "The change could not be saved. Try again.",
+		"noAccess": "You do not have permission to make this change.",
+		"rateLimited": "There were too many changes. Wait a moment and try again."
+	},
+	"properties": {
+		"panel": "Customer and details",
+		"priority": "Priority",
+		"tags": "Tags",
+		"team": "Team",
+		"title": "Details"
+	},
+	"removeTag": "Remove the tag {{name}}",
+	"reopenResolved": "Resolved, reopen",
+	"reply": "Reply",
+	"replyTo": "Reply to {{name}}…",
+	"resolve": "Resolve",
+	"saveView": {
+		"name": "View name",
+		"open": "Save as view…",
+		"submit": "Save view",
+		"title": "Save as view"
+	},
+	"search": "Search conversations…",
+	"snooze": "Snooze",
+	"status": {
+		"closed": "Resolved"
+	},
+	"summary": {
+		"create": "Summarize",
+		"off": "AI is off for this workspace.",
+		"refresh": "Summarize again",
+		"requested": "The summary is on its way. It shows here when it is ready.",
+		"title": "AI summary"
+	},
+	"teammate": "Teammate",
+	"thread": "Messages",
+	"title": "Conversations",
+	"typing": "{{name}} is typing…",
+	"unassigned": "Unassigned",
+	"unblock": "Unblock sender",
+	"unknown": "Unknown",
+	"unsnooze": "Unsnooze",
+	"views": {
+		"all": "All",
+		"mine": "Mine",
+		"open": "Open",
+		"queue": "Queue",
+		"unassigned": "Unassigned"
+	},
+	"yes": "Yes",
+	"you": "You",
+	"youName": "{{name}} (you)"
+}

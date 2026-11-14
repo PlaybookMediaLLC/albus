@@ -183,6 +183,27 @@
 			"when": 1794604390641,
 			"tag": "0025_defer_feedback_attachment_parents",
 			"breakpoints": true
+		},
+		{
+			"idx": 26,
+			"version": "7",
+			"when": 1794616015027,
+			"tag": "0026_feedback_value_seams",
+			"breakpoints": true
+		},
+		{
+			"idx": 27,
+			"version": "7",
+			"when": 1794627047798,
+			"tag": "0027_weekly_digest_sweep",
+			"breakpoints": true
+		},
+		{
+			"idx": 28,
+			"version": "7",
+			"when": 1794633840132,
+			"tag": "0028_digest_index",
+			"breakpoints": true
 		}
 	]
 }
