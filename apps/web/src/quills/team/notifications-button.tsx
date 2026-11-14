@@ -61,11 +61,14 @@ export function NotificationsButton({
     )
       return;
     try {
-      new Notification(t("team.notifications.new", { count: count - before }));
+      new Notification(t("team.notifications.new", { count: count - before }), {
+        // Each hidden tab sees the same new count, so one tag makes the browser show it once.
+        tag: `quills-notifications:${workspaceId}:${count}`,
+      });
     } catch {
       // ponytail: some mobile browsers allow notifications only from a service worker.
     }
-  }, [count, unread.data, t]);
+  }, [count, unread.data, t, workspaceId]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
