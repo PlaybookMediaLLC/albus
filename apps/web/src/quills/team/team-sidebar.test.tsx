@@ -15,40 +15,46 @@ import { TeamSidebar } from "./team-sidebar";
 
 vi.mock("@/components/user-avatar", () => ({ UserAvatar: () => null }));
 
+const permissions = {
+  read: true,
+  create: true,
+  update: true,
+  delete: true,
+  manageSettings: true,
+};
+
+function render(onNavigate = vi.fn(), create = true) {
+  mockApi().reply(getNotificationUnreadCountFixture.ok());
+  return renderComponent(
+    <RouterContextProvider
+      router={createRouter({
+        routeTree: createRootRoute(),
+        history: createMemoryHistory(),
+      })}
+    >
+      <TeamRuntimeProvider
+        value={{
+          workspaceId: "workspace_1",
+          viewer: { kind: "user", id: "user_1" },
+          permissions: { ...permissions, create },
+        }}
+      >
+        <TeamSidebar
+          workspaceId="workspace_1"
+          workspaceName="Acme"
+          counts={getTeamCountsFixture.ok()}
+          onNavigate={onNavigate}
+        />
+      </TeamRuntimeProvider>
+    </RouterContextProvider>,
+  );
+}
+
 describe("TeamSidebar", () => {
   it("has the top buttons, the sections, the desktop card and Support", () => {
-    mockApi().reply(getNotificationUnreadCountFixture.ok());
     vi.stubGlobal("Notification", { permission: "default" });
     const onNavigate = vi.fn();
-    const view = renderComponent(
-      <RouterContextProvider
-        router={createRouter({
-          routeTree: createRootRoute(),
-          history: createMemoryHistory(),
-        })}
-      >
-        <TeamRuntimeProvider
-          value={{
-            workspaceId: "workspace_1",
-            viewer: { kind: "user", id: "user_1" },
-            permissions: {
-              read: true,
-              create: true,
-              update: true,
-              delete: true,
-              manageSettings: true,
-            },
-          }}
-        >
-          <TeamSidebar
-            workspaceId="workspace_1"
-            workspaceName="Acme"
-            counts={getTeamCountsFixture.ok()}
-            onNavigate={onNavigate}
-          />
-        </TeamRuntimeProvider>
-      </RouterContextProvider>,
-    );
+    const view = render(onNavigate);
     const create = view.getByRole("link", { name: "New request" });
     expect(create).toHaveAttribute(
       "href",
@@ -68,6 +74,16 @@ describe("TeamSidebar", () => {
       "target",
       "_blank",
     );
+    vi.unstubAllGlobals();
+  });
+
+  it("leaves out New request without the create permission", async () => {
+    vi.stubGlobal("Notification", { permission: "default" });
+    const view = render(vi.fn(), false);
+    expect(
+      await view.findByRole("button", { name: "Notifications" }),
+    ).toBeVisible();
+    expect(view.queryByRole("link", { name: "New request" })).toBeNull();
     vi.unstubAllGlobals();
   });
 });

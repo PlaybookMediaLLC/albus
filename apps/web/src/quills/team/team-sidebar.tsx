@@ -9,6 +9,7 @@ import { UserAvatar } from "../ui/upstream";
 import { DesktopNotifications } from "./desktop-notifications";
 import { teamSections } from "./nav";
 import { NotificationsButton } from "./notifications-button";
+import { useTeamRuntime } from "./runtime";
 import { SidebarItem } from "./sidebar-item";
 import { teamHref } from "./team-href";
 import {
@@ -37,23 +38,26 @@ export function TeamSidebar({
   ...workspace
 }: TeamSidebarProps) {
   const { t } = useTranslation("quills");
+  const team = useTeamRuntime();
   const id = useId();
   return (
     <div className="flex h-full min-h-0 w-full flex-col gap-3 px-3 py-3">
       <div className="flex items-center gap-0.5">
         <WorkspaceSwitcher workspaceId={workspaceId} {...workspace} />
-        <IconButton
-          label={t("team.newRequest")}
-          render={
-            <Link
-              to={teamHref(workspaceId, "/posts")}
-              search={{ new: true }}
-              onClick={onNavigate}
-            />
-          }
-        >
-          <SquarePen aria-hidden="true" />
-        </IconButton>
+        {team.permissions.create ? (
+          <IconButton
+            label={t("team.newRequest")}
+            render={
+              <Link
+                to={teamHref(workspaceId, "/posts")}
+                search={{ new: true }}
+                onClick={onNavigate}
+              />
+            }
+          >
+            <SquarePen aria-hidden="true" />
+          </IconButton>
+        ) : null}
         <NotificationsButton
           workspaceId={workspaceId}
           onNavigate={onNavigate}

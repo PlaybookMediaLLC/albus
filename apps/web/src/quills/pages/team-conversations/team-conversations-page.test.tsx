@@ -4,6 +4,7 @@ import { getConversationFixture } from "../../api/team/get-conversation.fixture"
 import { listConversationViewsFixture } from "../../api/team/list-conversation-views.fixture";
 import { listConversationsFixture } from "../../api/team/list-conversations.fixture";
 import { listPrincipalsFixture } from "../../api/team/list-principals.fixture";
+import { press } from "../../test/actions";
 import { describePageContract } from "../../test/contracts";
 import { mockApi } from "../../test/mock-api";
 import { renderPage } from "../../test/render";
@@ -118,6 +119,23 @@ describe("TeamConversationsPage", () => {
           "/feedback/workspace_test_1/conversations/conversation_test_2?view=mine&status=open&q=export",
         ),
       );
+    });
+
+    it("offers Save as view only with the create permission", async () => {
+      for (const create of [true, false]) {
+        ready();
+        const view = renderPage(inView("mine"), meta, {
+          search: { status: "open" },
+          permissions: { create },
+        });
+        await view.findByRole("heading", { level: 1, name: "Mine" });
+        press("Filters");
+        await view.findByRole("menuitemradio", { name: "Open" });
+        expect(
+          view.queryByRole("menuitem", { name: "Save as view…" }) !== null,
+        ).toBe(create);
+        view.unmount();
+      }
     });
 
     it("waits for a saved view in the address before it loads the list", async () => {
