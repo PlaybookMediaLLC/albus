@@ -20,7 +20,10 @@ export interface SettingSwitchRowProps {
   disabled?: boolean;
   /** Why a plan or the instance locks the switch, such as "Needs an active plan". */
   locked?: string;
-  /** Saves the new value. A rejected promise moves the switch back and shows a toast. */
+  /**
+   * Saves the new value. Resolve after `checked` shows it: the generated mutation hooks
+   * wait for their refetch. A rejected promise moves the switch back and shows a toast.
+   */
   onCheckedChange: (next: boolean) => Promise<void>;
 }
 

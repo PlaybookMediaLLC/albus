@@ -34,7 +34,7 @@ Rules for every lane:
 - The "Settings" item in `apps/web/src/quills/team/nav-views.ts` changes its path from `/boards` to `/settings`.
 - `/feedback/{workspaceId}/settings` is a redirect-only route to `/feedback/{workspaceId}/settings/account`. Conformance rule C1 allows a redirect-only route.
 - "Back" goes to `/feedback/{workspaceId}` (the overview).
-- The old `/boards` page (`TeamBoardsPage`: board access, voting and task sync) stays. The board row menu on the Feedback settings page links to it.
+- The old `/boards` page (`TeamBoardsPage`: board access, voting and task sync) moved to `/feedback/{workspaceId}/settings/boards`, so it shows the settings sidebar. `/boards` redirects there. The board row menu on the Feedback settings page links to `/settings/boards`.
 
 ### 1.2 Shell modes
 
@@ -600,7 +600,7 @@ The benchmark shows three voter avatars on each request row. `listQuillsPostVote
   - `updateQuillsBoard` requires the full `access` object. Send the stored `access` with only `view` changed. Check with the board access tests that vote, comment and submit behave as expected.
 - **The kebab:**
   - "Rename board": a dialog with one name input (maximum 100 characters). It calls `updateQuillsBoard` `{ name }`. The API moves the slug when the new slug is free.
-  - "Voting and task sync": a link to the existing `/feedback/{id}/boards` page.
+  - "Voting and task sync": a link to the existing `/feedback/{id}/settings/boards` page.
   - "Delete board" (red): a `ConfirmDialog` that says, from the API description, that the posts of the board leave every list and that merged posts are unmerged. It calls `deleteQuillsBoard` (a soft delete).
 - **"New board" dialog** (image 37): a title, a description and a "Name" input (placeholder, maximum 100 characters). The footer has "Cancel" and "Create". It calls `createQuillsBoard` `{ name }`. Leave out the benchmark's color select (no API).
 - **Note:** replace the benchmark's plan usage line with one line that explains the visibility values. No plan limit API exists.
@@ -733,14 +733,14 @@ The benchmark shows three voter avatars on each request row. `listQuillsPostVote
     3. `createQuillsImport` `{ key, contentType, size, name, boardId }`.
 - **Under the rows:** "Recent imports" from `listQuillsImportRuns` (limit 5).
   - Each row has the file name, a status badge and the totals (created, updated, skipped, errors).
-  - Poll `getQuillsImportRuns` every 3 s while a run is `pending`, `dry_run` or `running`.
+  - Poll the run list every 10 s while a run is `pending` or `running`. The framework allows no poll interval below 10 s. `dry_run` is a final state.
   - Show the `errorReport` of a failed run.
   - The API checks every row first. One invalid row fails the run, and nothing is imported.
 
 **Section "Export":**
 
 - **"Export to CSV"** opens a dialog with a "Data" select: Posts, People, Companies or Conversations (`kind`). It calls `createQuillsExportWorkspace`.
-- Poll `getQuillsExportRuns` until the status is `completed` or `failed`.
+- Poll the export run list every 10 s until no run is `pending` or `running`.
 - "Download" calls `listQuillsExportRunsDownload` and opens `downloadUrl`.
 - "Recent exports" comes from `listQuillsExportRuns`.
 - The API runs only one export for each workspace at a time. Show its error on a conflict.

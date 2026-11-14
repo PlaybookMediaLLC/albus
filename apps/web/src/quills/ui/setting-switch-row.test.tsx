@@ -1,4 +1,5 @@
 import { fireEvent, waitFor } from "@testing-library/react";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vite-plus/test";
 import { renderComponent } from "../test/render";
 import { SettingSwitchRow } from "./setting-switch-row";
@@ -29,6 +30,24 @@ describe("SettingSwitchRow", () => {
     expect(control).toHaveAttribute("aria-disabled", "true");
     finish();
     await waitFor(() => expect(control).not.toHaveAttribute("aria-disabled"));
+  });
+
+  it("shows the saved value that the page reads back", async () => {
+    function Page() {
+      const [checked, setChecked] = useState(false);
+      return (
+        <SettingSwitchRow
+          title="Public roadmap"
+          checked={checked}
+          onCheckedChange={async (next) => setChecked(next)}
+        />
+      );
+    }
+    const view = renderComponent(<Page />);
+    const control = view.getByRole("switch", { name: "Public roadmap" });
+    fireEvent.click(control);
+    await waitFor(() => expect(control).not.toHaveAttribute("aria-disabled"));
+    expect(control).toBeChecked();
   });
 
   it("moves the switch back and shows the problem when the save fails", async () => {

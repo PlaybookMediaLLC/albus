@@ -143,8 +143,11 @@ export function settingsSections(
   modules?: Partial<Record<SettingsModule, boolean>>,
   billingEnabled?: boolean,
 ): readonly TeamNavSection[] {
-  return sections.flatMap(([id, labelKey, rows]) => {
-    const items = rows
+  return sections.map(([id, labelKey, rows]) => ({
+    id,
+    labelKey,
+    // Each section keeps at least one item that is always shown.
+    items: rows
       .filter(
         ([, , , , gate]) =>
           !gate ||
@@ -157,7 +160,6 @@ export function settingsSections(
         labelKey: itemLabel,
         icon,
         to: teamHref(workspaceId, `/settings${path}`),
-      }));
-    return items.length ? [{ id, labelKey, items }] : [];
-  });
+      })),
+  }));
 }
