@@ -27,172 +27,111 @@ import { teamHref } from "./team-href";
 
 type SettingsModule = keyof ListSettingsResponse["modules"];
 
-interface SettingsView {
-  id: string;
-  labelKey: string;
-  /** The path after /feedback/{id}/settings. */
-  path: string;
-  icon: LucideIcon;
-  /** Shown only when this Quills module is on. */
-  module?: SettingsModule;
-  /** Shown only when the instance bills workspaces. */
-  billing?: true;
-}
+/** An item: its ID, label, path after /settings and icon, and when it shows. */
+type Row = [
+  id: string,
+  labelKey: string,
+  path: string,
+  icon: LucideIcon,
+  gate?: SettingsModule | "billing",
+];
 
-const sections: readonly {
-  id: string;
-  labelKey: string;
-  items: readonly SettingsView[];
-}[] = [
-  {
-    id: "personal",
-    labelKey: "settings.sections.personal",
-    items: [
-      {
-        id: "account",
-        labelKey: "settings.nav.account",
-        path: "/account",
-        icon: CircleUserRound,
-      },
+const sections: readonly [id: string, labelKey: string, rows: Row[]][] = [
+  [
+    "personal",
+    "settings.sections.personal",
+    [["account", "settings.nav.account", "/account", CircleUserRound]],
+  ],
+  [
+    "workspace",
+    "settings.sections.workspace",
+    [
+      ["branding", "settings.nav.branding", "/branding", Palette],
+      [
+        "languages",
+        "settings.nav.languages",
+        "/languages",
+        Languages,
+        "helpCenter",
+      ],
+      ["domain", "settings.nav.domain", "/domain", Globe],
+      ["team", "settings.nav.team", "/team", Users],
+      ["billing", "settings.nav.billing", "/billing", CreditCard, "billing"],
     ],
-  },
-  {
-    id: "workspace",
-    labelKey: "settings.sections.workspace",
-    items: [
-      {
-        id: "branding",
-        labelKey: "settings.nav.branding",
-        path: "/branding",
-        icon: Palette,
-      },
-      {
-        id: "languages",
-        labelKey: "settings.nav.languages",
-        path: "/languages",
-        icon: Languages,
-        module: "helpCenter",
-      },
-      {
-        id: "domain",
-        labelKey: "settings.nav.domain",
-        path: "/domain",
-        icon: Globe,
-      },
-      { id: "team", labelKey: "settings.nav.team", path: "/team", icon: Users },
-      {
-        id: "billing",
-        labelKey: "settings.nav.billing",
-        path: "/billing",
-        icon: CreditCard,
-        billing: true,
-      },
+  ],
+  [
+    "product",
+    "settings.sections.product",
+    [
+      [
+        "feedback",
+        "settings.nav.feedback",
+        "/feedback",
+        MessageSquare,
+        "feedback",
+      ],
+      [
+        "changelog",
+        "settings.nav.changelog",
+        "/changelog",
+        Megaphone,
+        "changelog",
+      ],
+      ["privacy", "settings.nav.privacy", "/privacy", Shield],
+      ["login", "settings.nav.login", "/login", Lock],
     ],
-  },
-  {
-    id: "product",
-    labelKey: "settings.sections.product",
-    items: [
-      {
-        id: "feedback",
-        labelKey: "settings.nav.feedback",
-        path: "/feedback",
-        icon: MessageSquare,
-        module: "feedback",
-      },
-      {
-        id: "changelog",
-        labelKey: "settings.nav.changelog",
-        path: "/changelog",
-        icon: Megaphone,
-        module: "changelog",
-      },
-      {
-        id: "privacy",
-        labelKey: "settings.nav.privacy",
-        path: "/privacy",
-        icon: Shield,
-      },
-      {
-        id: "login",
-        labelKey: "settings.nav.login",
-        path: "/login",
-        icon: Lock,
-      },
+  ],
+  [
+    "conversations",
+    "settings.sections.conversations",
+    [
+      [
+        "general",
+        "settings.nav.general",
+        "/conversations/general",
+        MessagesSquare,
+        "supportInbox",
+      ],
+      [
+        "operators",
+        "settings.nav.operators",
+        "/conversations/operators",
+        Headset,
+        "supportInbox",
+      ],
+      [
+        "topics",
+        "settings.nav.topics",
+        "/conversations/topics",
+        Tag,
+        "supportInbox",
+      ],
+      [
+        "email",
+        "settings.nav.email",
+        "/conversations/email",
+        Mail,
+        "supportInbox",
+      ],
+      ["widget", "settings.nav.widget", "/conversations/widget", AppWindow],
+      ["ai", "settings.nav.ai", "/conversations/ai", Sparkles, "supportInbox"],
+      [
+        "moderation",
+        "settings.nav.moderation",
+        "/conversations/moderation",
+        ShieldCheck,
+      ],
     ],
-  },
-  {
-    id: "conversations",
-    labelKey: "settings.sections.conversations",
-    items: [
-      {
-        id: "general",
-        labelKey: "settings.nav.general",
-        path: "/conversations/general",
-        icon: MessagesSquare,
-        module: "supportInbox",
-      },
-      {
-        id: "operators",
-        labelKey: "settings.nav.operators",
-        path: "/conversations/operators",
-        icon: Headset,
-        module: "supportInbox",
-      },
-      {
-        id: "topics",
-        labelKey: "settings.nav.topics",
-        path: "/conversations/topics",
-        icon: Tag,
-        module: "supportInbox",
-      },
-      {
-        id: "email",
-        labelKey: "settings.nav.email",
-        path: "/conversations/email",
-        icon: Mail,
-        module: "supportInbox",
-      },
-      {
-        id: "widget",
-        labelKey: "settings.nav.widget",
-        path: "/conversations/widget",
-        icon: AppWindow,
-      },
-      {
-        id: "ai",
-        labelKey: "settings.nav.ai",
-        path: "/conversations/ai",
-        icon: Sparkles,
-        module: "supportInbox",
-      },
-      {
-        id: "moderation",
-        labelKey: "settings.nav.moderation",
-        path: "/conversations/moderation",
-        icon: ShieldCheck,
-      },
+  ],
+  [
+    "connections",
+    "settings.sections.connections",
+    [
+      ["integrations", "settings.nav.integrations", "/integrations", Puzzle],
+      ["api", "settings.nav.api", "/api", KeyRound],
+      ["data", "settings.nav.data", "/data", DatabaseBackup],
     ],
-  },
-  {
-    id: "connections",
-    labelKey: "settings.sections.connections",
-    items: [
-      {
-        id: "integrations",
-        labelKey: "settings.nav.integrations",
-        path: "/integrations",
-        icon: Puzzle,
-      },
-      { id: "api", labelKey: "settings.nav.api", path: "/api", icon: KeyRound },
-      {
-        id: "data",
-        labelKey: "settings.nav.data",
-        path: "/data",
-        icon: DatabaseBackup,
-      },
-    ],
-  },
+  ],
 ];
 
 /**
@@ -204,24 +143,21 @@ export function settingsSections(
   modules?: Partial<Record<SettingsModule, boolean>>,
   billingEnabled?: boolean,
 ): readonly TeamNavSection[] {
-  return sections.flatMap(({ items, ...section }) => {
-    const shown = items.filter(
-      (item) =>
-        (!item.module || modules?.[item.module] !== false) &&
-        (!item.billing || billingEnabled !== false),
-    );
-    return shown.length
-      ? [
-          {
-            ...section,
-            items: shown.map(({ id, labelKey, path, icon }) => ({
-              id,
-              labelKey,
-              icon,
-              to: teamHref(workspaceId, `/settings${path}`),
-            })),
-          },
-        ]
-      : [];
+  return sections.flatMap(([id, labelKey, rows]) => {
+    const items = rows
+      .filter(
+        ([, , , , gate]) =>
+          !gate ||
+          (gate === "billing"
+            ? billingEnabled !== false
+            : modules?.[gate] !== false),
+      )
+      .map(([item, itemLabel, path, icon]) => ({
+        id: item,
+        labelKey: itemLabel,
+        icon,
+        to: teamHref(workspaceId, `/settings${path}`),
+      }));
+    return items.length ? [{ id, labelKey, items }] : [];
   });
 }
