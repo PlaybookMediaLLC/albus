@@ -1,0 +1,35 @@
+import type { UpdatePortalSettingsResponse } from "./update-portal-settings";
+export const updatePortalSettingsFixture = {
+  ok: (overrides: Partial<UpdatePortalSettingsResponse> = {}) =>
+    ({
+      ...{
+        enabled: false,
+        features: {
+          allowAnonymous: false,
+          allowEditAfterEngagement: false,
+          allowDeleteAfterEngagement: false,
+          showPublicEditHistory: false,
+        },
+        openSignup: null,
+        moderationDefault: {
+          requireApproval: "value",
+          holdImages: false,
+          holdLinks: false,
+        },
+        access: {
+          visibility: "value",
+          allowedDomains: [],
+          widgetSignIn: false,
+          allowedSegmentIds: [],
+        },
+        nav: [],
+        supportEnabled: false,
+        receiptId: null,
+      },
+      ...overrides,
+    }) satisfies UpdatePortalSettingsResponse,
+  problem: (status: 401 | 403 | 429) => ({
+    status,
+    body: { message: "Request could not be completed" },
+  }),
+};
