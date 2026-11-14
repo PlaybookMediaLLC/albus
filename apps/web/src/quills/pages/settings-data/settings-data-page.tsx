@@ -6,6 +6,7 @@ import { useTeamRuntime } from "../../team/runtime";
 import { TeamStateView } from "../../team/team-state-view";
 import { PageFrame } from "../../ui/page-frame";
 import { SettingsCard, SettingsPage, SettingsSection } from "../../ui/upstream";
+import { DeleteWorkspaceRow } from "./parts/delete-workspace-row";
 import { DownloadButton } from "./parts/download-button";
 import { ExportDialog } from "./parts/export-dialog";
 import { ImportSheet } from "./parts/import-sheet";
@@ -88,6 +89,7 @@ export function SettingsDataPage({ workspaceId }: SettingsDataPageProps) {
                 workspaceId={workspaceId}
                 slug={settings.data?.slug ?? ""}
               />
+              <DeleteWorkspaceRow workspaceId={workspaceId} />
             </SettingsCard>
           </SettingsSection>
         </TeamStateView>

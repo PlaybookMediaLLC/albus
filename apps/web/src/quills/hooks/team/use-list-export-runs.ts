@@ -4,7 +4,8 @@ import {
   listExportRunsQuery,
   type ListExportRunsRequest,
 } from "../../api/team/list-export-runs";
-// Poll while a run waits or runs. The framework allows no poll interval below 10 seconds.
+// Poll while a run waits or runs, and stop after a failed request. The framework allows
+// no poll interval below 10 seconds.
 const active = new Set(["pending", "running"]);
 
 export function useListExportRuns(
@@ -15,6 +16,7 @@ export function useListExportRuns(
     ...listExportRunsQuery(input, viewer),
     enabled: Boolean(input.param.workspaceId),
     refetchInterval: (query) =>
+      !query.state.error &&
       query.state.data?.items.some((run) => active.has(run.status))
         ? 10_000
         : false,

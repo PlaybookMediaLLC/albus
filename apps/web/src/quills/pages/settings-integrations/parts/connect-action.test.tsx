@@ -56,4 +56,63 @@ describe("ConnectAction", () => {
     expect(success).toHaveBeenCalledWith("Stripe is connected.");
     await waitFor(() => expect(view.queryByRole("dialog")).toBeNull());
   });
+
+  it("says that the instance has no OAuth app when the start is refused", async () => {
+    const error = vi.spyOn(toast, "error");
+    const view = renderComponent(
+      <ConnectAction
+        workspaceId="workspace_1"
+        name="Slack"
+        connector={{
+          fields: [],
+          oauth: true,
+          connect: () => Promise.reject({ kind: "conflict" }),
+        }}
+        onConnected={() => undefined}
+      />,
+    );
+    fireEvent.click(view.getByRole("button", { name: "Connect Slack" }));
+    await waitFor(() =>
+      expect(error).toHaveBeenCalledWith(
+        "This instance has no OAuth app for this provider yet. Ask an administrator to add one.",
+      ),
+    );
+  });
+
+  it("keeps the key form usable after the provider refuses the key", async () => {
+    const error = vi.spyOn(toast, "error");
+    const connect = vi.fn(() => Promise.reject({ kind: "failed" }));
+    const view = renderComponent(
+      <ConnectAction
+        workspaceId="workspace_1"
+        name="Stripe"
+        connector={{
+          fields: [
+            {
+              name: "apiKey",
+              labelKey: "settings-connections.integrations.fields.apiKey",
+            },
+          ],
+          connect,
+        }}
+        onConnected={() => undefined}
+      />,
+    );
+    fireEvent.click(view.getByRole("button", { name: "Connect Stripe" }));
+    const dialog = await view.findByRole("dialog", { name: "Connect Stripe" });
+    fireEvent.change(within(dialog).getByLabelText("API key"), {
+      target: { value: "rk_wrong" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Connect" }));
+    await waitFor(() =>
+      expect(error).toHaveBeenCalledWith(
+        "The provider rejected the values, or it did not answer. Check the values and try again.",
+      ),
+    );
+    await waitFor(() =>
+      expect(
+        within(dialog).getByRole("button", { name: "Connect" }),
+      ).toBeEnabled(),
+    );
+  });
 });

@@ -48,8 +48,10 @@ export function ExportDialog({ workspaceId }: ExportDialogProps) {
               setOpen(false);
               toast.success(t("settings-connections.data.exportStarted"));
             } catch (error) {
-              // An export that already runs comes back as a conflict.
-              return error as PortalProblem;
+              const problem = error as PortalProblem;
+              if (problem.kind !== "conflict") return problem;
+              // The one conflict here: an export of this workspace still runs. Keep the form usable.
+              toast.error(t("settings-connections.data.exportRunning"));
             }
           }}
         />

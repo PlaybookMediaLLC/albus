@@ -36,5 +36,10 @@ describe("useListExportRuns", () => {
     expect(interval(runs("pending"))).toBe(10_000);
     expect(interval(runs("failed"))).toBe(false);
     expect(interval({ state: {} })).toBe(false);
+    expect(
+      interval({
+        state: { ...runs("running").state, error: { kind: "failed" } },
+      }),
+    ).toBe(false);
   });
 });

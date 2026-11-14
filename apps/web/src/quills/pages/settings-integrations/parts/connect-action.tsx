@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { PortalProblem } from "../../../core/types";
+import type { PortalProblem, PortalProblemKind } from "../../../core/types";
 import { ConfirmAction } from "../../../ui/confirm-action";
 import {
   Button,
@@ -28,6 +28,21 @@ const open = (address: string | null) => {
   if (address) window.location.assign(address);
 };
 
+// The problem keeps no API status, so one text covers a rejected key and a silent provider.
+const problems: Partial<Record<PortalProblemKind, string>> = {
+  failed: "settings-connections.integrations.rejected",
+  conflict: "settings-connections.integrations.notReady",
+  noAccess: "settings.saveDenied",
+  rateLimited: "core.problem.rateLimited",
+};
+const problemText = (error: unknown, oauth: boolean) => {
+  const kind = (error as Partial<PortalProblem> | null)?.kind;
+  // An OAuth start has one conflict: the instance has no OAuth app for the provider.
+  if (oauth && kind === "conflict")
+    return "settings-connections.integrations.noApp";
+  return (kind && problems[kind]) || "core.problem.failed";
+};
+
 /** Connect: an OAuth provider opens at once; a key or webhook provider asks for its values. */
 export function ConnectAction({
   workspaceId,
@@ -42,7 +57,13 @@ export function ConnectAction({
       <ConfirmAction
         labelKey="settings-connections.integrations.connectTo"
         labelValues={{ name }}
-        onConfirm={async () => open(await connector.connect(workspaceId, {}))}
+        onConfirm={async () => {
+          try {
+            open(await connector.connect(workspaceId, {}));
+          } catch (error) {
+            toast.error(t(problemText(error, true)));
+          }
+        }}
       >
         {t("settings-connections.integrations.connect")}
       </ConfirmAction>
@@ -79,7 +100,11 @@ export function ConnectAction({
                 t("settings-connections.integrations.saved", { name }),
               );
             } catch (error) {
-              return error as PortalProblem;
+              const problem = error as PortalProblem;
+              // Field problems show at the fields. A toast keeps the form usable for the rest.
+              if (problem.kind === "invalid" && problem.issues?.length)
+                return problem;
+              toast.error(t(problemText(problem, Boolean(connector.oauth))));
             }
           }}
         />

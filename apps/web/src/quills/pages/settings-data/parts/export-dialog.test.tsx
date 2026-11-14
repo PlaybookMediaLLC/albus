@@ -1,9 +1,10 @@
 import { fireEvent, waitFor, within } from "@testing-library/react";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 import { choose } from "../../../test/actions";
 import { mockApi } from "../../../test/mock-api";
 import { renderComponent } from "../../../test/render";
 import { TeamRuntimeProvider } from "../../../team/runtime";
+import { toast } from "../../../ui/upstream";
 import { ExportDialog } from "./export-dialog";
 
 const team = {
@@ -19,7 +20,8 @@ const team = {
 };
 
 describe("ExportDialog", () => {
-  it("queues the chosen data and shows a refused export in the dialog", async () => {
+  it("queues the chosen data and says when an export already runs", async () => {
+    const error = vi.spyOn(toast, "error");
     const api = mockApi();
     api.reply({ message: "An export already runs" }, 409);
     const view = renderComponent(
@@ -33,9 +35,14 @@ describe("ExportDialog", () => {
     fireEvent.click(
       within(dialog).getByRole("button", { name: "Start export" }),
     );
-    expect(await within(dialog).findByRole("alert")).toHaveTextContent(
-      "This changed before your request finished.",
+    await waitFor(() =>
+      expect(error).toHaveBeenCalledWith(
+        "An export already runs in this workspace. Try again when it finishes.",
+      ),
     );
+    expect(
+      within(dialog).getByRole("button", { name: "Start export" }),
+    ).toBeEnabled();
     await waitFor(() =>
       expect(api.calls("createQuillsExportWorkspace")).toHaveLength(1),
     );

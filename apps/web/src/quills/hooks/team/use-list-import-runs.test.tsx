@@ -36,5 +36,10 @@ describe("useListImportRuns", () => {
     expect(interval(runs("running"))).toBe(10_000);
     expect(interval(runs("completed"))).toBe(false);
     expect(interval({ state: {} })).toBe(false);
+    expect(
+      interval({
+        state: { ...runs("running").state, error: { kind: "failed" } },
+      }),
+    ).toBe(false);
   });
 });

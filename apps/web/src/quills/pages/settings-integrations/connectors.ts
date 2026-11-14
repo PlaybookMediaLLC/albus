@@ -35,6 +35,8 @@ export interface ConnectField {
 export interface Connector {
   /** Empty for an OAuth provider: Connect then opens the provider at once. */
   fields: readonly ConnectField[];
+  /** Connect opens the sign-in page of the provider. */
+  oauth?: boolean;
   /** Saves the connection, or returns the provider's sign-in address for OAuth. */
   connect: (
     workspaceId: string,
@@ -48,6 +50,7 @@ const oauth = (
   start: (input: Param) => Promise<{ authorizeUrl: string }>,
 ): Connector => ({
   fields: [],
+  oauth: true,
   connect: async (workspaceId) =>
     (await start({ param: { workspaceId } })).authorizeUrl,
 });
@@ -92,6 +95,7 @@ export const connectors: Readonly<Record<string, Connector>> = {
   teams: oauth(startTeamsOAuthConnect),
   trello: oauth(startTrelloOAuthConnect),
   zendesk: {
+    oauth: true,
     fields: [
       {
         name: "subdomain",
