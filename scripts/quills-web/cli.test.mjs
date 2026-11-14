@@ -329,3 +329,39 @@ test("generates a teammate page in the teammate app folder with teammate problem
       loader: file.endsWith(".tsx") ? "tsx" : "ts",
     });
 });
+
+test("generates a mutation that invalidates none when asked", async () => {
+  const root = await fixtureRoot();
+  await assert.rejects(
+    () =>
+      generateOperation(root, "mutation", "markQuillsTicketRead", {
+        area: "team",
+        invalidates: "none",
+        optimistic: "getQuillsTicket",
+      }),
+    /--optimistic cannot be used with --invalidates none/,
+  );
+  await generateOperation(root, "mutation", "markQuillsTicketRead", {
+    area: "team",
+    invalidates: "none",
+  });
+  const hook = await readFile(
+    `${root}/apps/web/src/quills/hooks/team/use-mark-ticket-read.ts`,
+    "utf8",
+  );
+  assert.match(hook, /export function useMarkTicketRead\(\)/);
+  assert.doesNotMatch(
+    hook,
+    /useQueryClient|invalidateQueries|onSuccess|TODO\(quills-web\)/,
+  );
+  const hookTest = await readFile(
+    `${root}/apps/web/src/quills/hooks/team/use-mark-ticket-read.test.tsx`,
+    "utf8",
+  );
+  assert.match(hookTest, /takesViewer: false/);
+  assert.match(hookTest, /invalidates: \[\]/);
+  for (const file of await generatedSources(`${root}/apps/web/src`))
+    await transform(await readFile(file, "utf8"), {
+      loader: file.endsWith(".tsx") ? "tsx" : "ts",
+    });
+});

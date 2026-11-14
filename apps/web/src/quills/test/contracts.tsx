@@ -233,6 +233,8 @@ export function describeHookContract(input: {
     expect(api.calls(input.operationId)).toHaveLength(1);
     for (const queryKey of input.invalidates ?? [])
       expect(invalidate).toHaveBeenCalledWith({ queryKey });
+    // Only the declared ones: a mutation that declares none refetches nothing.
+    expect(invalidate).toHaveBeenCalledTimes(input.invalidates?.length ?? 0);
   });
   it("returns the problem and invalidates nothing after mutation failure", async () => {
     const api = mockApi();

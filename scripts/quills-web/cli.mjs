@@ -87,7 +87,7 @@ const help = {
   feature: "feature <name>",
   query: "query <operationId> --area <area> [--paged] [--poll <seconds>]",
   mutation:
-    "mutation <operationId> --area <area> --invalidates <operationId,...> [--optimistic <operationId>]",
+    "mutation <operationId> --area <area> --invalidates <operationId,...|none> [--optimistic <operationId>]",
   type: "type <area>/<Name> --from <operationId> --at <path>",
   page: "page <name> --route <path> --audience <audience> --feature <feature> --operations <operationId,...>",
   component: "component [<group>/]<Name> [--variants <a,b>]",

@@ -66,12 +66,18 @@ export async function generateOperation(root, kind, operationId, options) {
     throw new Error("--optimistic applies only to a mutation");
   if (kind === "mutation" && !options.invalidates)
     throw new Error("--invalidates is required for a mutation");
+  // "none" is a declared choice: the mutation changes no query that the app caches.
+  const none = options.invalidates === "none";
+  if (none && options.optimistic)
+    throw new Error("--optimistic cannot be used with --invalidates none");
+  const targets = none
+    ? []
+    : (options.invalidates?.split(",").filter(Boolean) ?? []);
   const names = operationNames(operationId);
   const area = kebab(options.area);
   const document = await readOpenApi(root);
   const found = findOperation(document, operationId);
-  for (const target of options.invalidates?.split(",").filter(Boolean) ?? [])
-    findOperation(document, target);
+  for (const target of targets) findOperation(document, target);
   if (options.optimistic) findOperation(document, options.optimistic);
   const endpoint = endpointExpression(found.path, found.method);
   const pathParams = [...found.path.matchAll(/\{([^}]+)\}/g)].map(
@@ -208,8 +214,7 @@ export async function generateOperation(root, kind, operationId, options) {
     STATUSES: problemStatuses.length ? problemStatuses.join(" | ") : "never",
   });
   let hook;
-  const invalidated =
-    options.invalidates?.split(",").filter(Boolean).map(operationNames) ?? [];
+  const invalidated = targets.map(operationNames);
   const optimisticTarget = options.optimistic
     ? operationNames(options.optimistic)
     : null;
@@ -231,6 +236,13 @@ export async function generateOperation(root, kind, operationId, options) {
       POLL: options.poll
         ? `, refetchInterval: ${Number(options.poll) * 1000}, refetchIntervalInBackground: false`
         : "",
+    });
+  else if (none)
+    hook = await renderTemplate(root, "operation/mutation-hook-none.ts.tpl", {
+      NAME: names.name,
+      PASCAL: names.pascal,
+      AREA_RAW: area,
+      FILE: names.file,
     });
   else
     hook = await renderTemplate(root, "operation/mutation-hook.ts.tpl", {

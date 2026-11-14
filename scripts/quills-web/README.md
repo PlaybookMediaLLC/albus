@@ -113,7 +113,7 @@ it("refuses confirmation in a frame", async () => {
 
 - `feature <name>` creates the English feature resource.
 - `query <operationId> --area <area> [--paged] [--poll <seconds>]` creates the operation, fixture, hook and contract tests. Poll intervals below 10 seconds are invalid.
-- `mutation <operationId> --area <area> --invalidates <operationId,...> [--optimistic <operationId>]` creates the mutation and hook files and invalidates every declared operation prefix after success.
+- `mutation <operationId> --area <area> --invalidates <operationId,...> [--optimistic <operationId>]` creates the mutation and hook files and invalidates every declared operation prefix after success. Use `--invalidates none` for a mutation that changes no cached query, such as a read marker. Its hook takes no viewer and refetches nothing, and `--optimistic` does not apply.
 - `type <area>/<Name> --from <operationId> --at <response.path>` derives a view type from an operation response; an `items[]` segment selects the array item type.
 - `page <name> --route <route> --audience <audience> --feature <feature> [--token none|query|fragment] [--mail-linked] [--search key:type,...] [--operations id,...]` creates a declaration, page, contract test and thin route. A `teammate` page route must start with `/feedback/$workspaceId` and takes no token.
 - `component [group/]<Name>` creates a shared display component and test.
