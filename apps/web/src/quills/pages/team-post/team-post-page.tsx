@@ -82,13 +82,12 @@ export function TeamPostPage({
     onBack: back,
     enabled: !merge,
   });
-  const listLoading =
-    statuses.isLoading ||
-    (Boolean(statuses.data) && !list.none && posts.isPending);
-  const loading =
-    post.isLoading || comments.isLoading || boards.isLoading || listLoading;
+  // The request does not wait for the list. A list failure shows in the list pane.
+  const listLoading = statuses.isLoading || posts.isLoading;
+  const queries = [post, comments, statuses, boards] as const;
+  const loading = queries.some((query) => query.isLoading);
   const data = post.data;
-  const queries = [post, comments, statuses, boards, posts] as const;
+  const board = boards.data?.items.find((item) => item.id === data?.boardId);
   const ready = !loading && data && statuses.data && boards.data;
 
   return (
@@ -110,6 +109,11 @@ export function TeamPostPage({
             href={(id) => router.buildLocation({ to: to(id), search }).href}
             onOpen={open}
             loading={listLoading}
+            problem={statuses.error ?? posts.error}
+            onRetry={() =>
+              void (statuses.error ? statuses.refetch() : posts.refetch())
+            }
+            more={posts}
           />
         }
         listLabel={t("team-post.list")}
@@ -128,9 +132,7 @@ export function TeamPostPage({
         <PostHeader
           workspaceId={workspaceId}
           post={data}
-          boardName={
-            boards.data?.items.find((board) => board.id === data?.boardId)?.name
-          }
+          boardName={board?.name}
           onBack={back}
           onPrevious={nav.previous}
           onNext={nav.next}

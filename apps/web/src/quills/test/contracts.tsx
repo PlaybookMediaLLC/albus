@@ -354,7 +354,9 @@ export function describePageContract(
       for (const _operation of meta.operations)
         api.reply({ message: "Forbidden" }, 403);
       const view = renderPage(Page, meta);
-      expect(await view.findByRole("alert")).toHaveTextContent(/permission/i);
+      // Each pane that loads its own data shows the denied state.
+      for (const alert of await view.findAllByRole("alert"))
+        expect(alert).toHaveTextContent(/permission/i);
     });
   else if (meta.audience !== "public" && meta.audience !== "development")
     it("does not expose page data without audience access", () => {
