@@ -1,7 +1,7 @@
 import { Copy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { IconButton } from "./inbox/icon-button";
-import { toast } from "./upstream";
+import { copyToClipboard, toast } from "./upstream";
 
 export interface CopyFieldProps {
   value: string;
@@ -22,15 +22,11 @@ const shorten = (value: string, masked?: boolean) =>
 /** A gray monospace value with a copy button (settings spec 1.7). */
 export function CopyField({ value, label, masked }: CopyFieldProps) {
   const { t } = useTranslation("quills");
-  const copy = () => {
-    const write = navigator.clipboard
-      ? navigator.clipboard.writeText(value)
-      : Promise.reject(new Error("No clipboard"));
-    void write.then(
-      () => toast.success(t("settings.copied")),
-      () => toast.error(t("settings.copyFailed")),
-    );
-  };
+  // The helper also works on an instance that is reached over plain HTTP.
+  const copy = async () =>
+    (await copyToClipboard(value))
+      ? toast.success(t("settings.copied"))
+      : toast.error(t("settings.copyFailed"));
   return (
     <div
       role="group"
@@ -40,7 +36,10 @@ export function CopyField({ value, label, masked }: CopyFieldProps) {
       <code className="min-w-0 flex-1 truncate font-mono text-xs">
         {shorten(value, masked)}
       </code>
-      <IconButton label={t("settings.copy", { label })} onClick={copy}>
+      <IconButton
+        label={t("settings.copy", { label })}
+        onClick={() => void copy()}
+      >
         <Copy aria-hidden="true" />
       </IconButton>
     </div>
