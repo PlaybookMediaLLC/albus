@@ -87,7 +87,7 @@ export function DetailLayout({
         {properties && panelOpen ? (
           <aside
             aria-label={propertiesLabel}
-            className="hidden w-80 shrink-0 overflow-y-auto border-s border-border px-5 py-4 lg:block"
+            className="relative hidden w-80 shrink-0 overflow-y-auto border-s border-border px-5 py-4 lg:block"
           >
             {properties}
           </aside>

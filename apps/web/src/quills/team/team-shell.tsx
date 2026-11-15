@@ -80,7 +80,7 @@ export function TeamShell({ children, ...sidebar }: TeamShellProps) {
       )}
       <main
         className={cn(
-          "min-h-0 min-w-0 flex-1 overflow-auto bg-background",
+          "relative min-h-0 min-w-0 flex-1 overflow-auto bg-background",
           mode !== "focus" &&
             "md:my-2 md:me-2 md:rounded-xl md:border md:border-border md:shadow-xs",
         )}

@@ -83,7 +83,7 @@ export function RequestRow(props: RequestRowProps) {
     <RowBadge key={badge.id} badge={badge} />
   ));
   const className =
-    "min-w-0 rounded-lg px-3 py-2.5 text-sm outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring aria-[current]:bg-muted";
+    "relative min-w-0 rounded-lg px-3 py-2.5 text-sm outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring aria-[current]:bg-muted";
   if (props.compact)
     return (
       <a href={props.href} {...link} className={cn("block", className)}>
