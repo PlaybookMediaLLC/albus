@@ -5,6 +5,7 @@ import {
   filterPatch,
   postListInput,
   postSearch,
+  requestListTitle,
 } from "./post-search";
 
 const status = (id: string, category: "active" | "complete" | "closed") => ({
@@ -121,5 +122,20 @@ describe("detailSearch", () => {
       status: "closed",
       q: "x",
     });
+  });
+});
+
+describe("requestListTitle", () => {
+  it("names the chosen status, else the tab", () => {
+    const t = (key: string) => `t:${key}`;
+    const list = statuses;
+    expect(requestListTitle({ statusId: "planned" }, list, t)).toBe("planned");
+    expect(requestListTitle({ status: "closed" }, list, t)).toBe(
+      "t:team-posts.closed",
+    );
+    expect(requestListTitle({}, list, t)).toBe("t:team-posts.title");
+    expect(requestListTitle({ statusId: "gone", status: "all" }, list, t)).toBe(
+      "t:team.nav.allRequests",
+    );
   });
 });

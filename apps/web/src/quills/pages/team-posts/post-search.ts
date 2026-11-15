@@ -22,6 +22,26 @@ export type PostTab = NonNullable<PostSearch["status"]>;
 
 type Status = ListStatusesResponse["statuses"][number];
 
+const titles = {
+  active: "team-posts.title",
+  complete: "team-posts.complete",
+  closed: "team-posts.closed",
+  all: "team.nav.allRequests",
+  deleted: "team-posts.deleted",
+} as const;
+
+/** The title of a request list: the name of the chosen status, else the name of the tab. */
+export function requestListTitle(
+  search: PostSearch,
+  statuses: readonly Status[],
+  t: (key: string) => string,
+) {
+  return (
+    statuses.find((status) => status.id === search.statusId)?.name ??
+    t(titles[search.status ?? "active"])
+  );
+}
+
 /**
  * The list filters that the request view keeps. It drops the New request flag, and the Deleted
  * filter, because a deleted request does not open.
