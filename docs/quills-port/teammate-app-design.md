@@ -31,9 +31,9 @@ Sections, each with a small uppercase label and a gap above:
 Hovering an item shows a small bell on the right: subscribe to that view's notifications
 (keep it out if no API exists; do not fake it).
 
-Bottom: a card "Desktop notifications / For new posts and comments" with a toggle (it asks the
-browser for permission and stores the choice per device), and a "Support" link with a badge
-slot. Below `md`, the sidebar becomes a sheet behind a menu button.
+Bottom: a "Support" link with a badge slot. The "Browser notifications" switch is in the
+settings view of the bell popover (it asks the browser for permission and stores the choice per
+device). Below `md`, the sidebar becomes a sheet behind a menu button.
 
 The active item has a white rounded pill background and a light border. Counts are right-aligned.
 

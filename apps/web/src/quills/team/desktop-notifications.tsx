@@ -8,7 +8,7 @@ import {
 } from "./desktop-choice";
 
 /**
- * The sidebar row that turns desktop notifications on for this device. Turning it on asks
+ * The settings row that turns browser notifications on for this device. Turning it on asks
  * the browser for permission. The bell shows a notification while the app is in the background.
  */
 export function DesktopNotifications() {
@@ -31,13 +31,13 @@ export function DesktopNotifications() {
     setDenied(next && permission === "denied");
   };
   return (
-    <div className="shrink-0 border-t border-border px-2 pt-3">
-      <div className="flex items-center gap-2.5">
+    <div>
+      <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1">
-          <p id={id} className="truncate text-sm font-medium">
+          <p id={id} className="text-sm font-medium">
             {t("team.desktop.title")}
           </p>
-          <p className="truncate text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {t("team.desktop.text")}
           </p>
         </div>

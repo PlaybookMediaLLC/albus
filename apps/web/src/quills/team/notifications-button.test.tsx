@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { fireEvent, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
+import { getNotificationPreferencesFixture } from "../api/team/get-notification-preferences.fixture";
 import { getNotificationUnreadCountFixture } from "../api/team/get-notification-unread-count.fixture";
 import { listNotificationsFixture } from "../api/team/list-notifications.fixture";
 import { markAllNotificationsReadFixture } from "../api/team/mark-all-notifications-read.fixture";
@@ -99,6 +100,36 @@ describe("NotificationsButton", () => {
     await waitFor(() =>
       expect(api.calls("markQuillsAllNotificationsRead")).toHaveLength(1),
     );
+  });
+
+  it("says all caught up when there is no activity", async () => {
+    const api = mockApi();
+    api.reply(getNotificationUnreadCountFixture.ok({ count: 0 }));
+    api.reply(listNotificationsFixture.ok({ notifications: [] }));
+    const view = render();
+    fireEvent.click(await view.findByRole("button", { name: "Notifications" }));
+    expect(await view.findByRole("status")).toHaveTextContent("All caught up");
+    expect(view.getByText("Activity")).toBeVisible();
+  });
+
+  it("opens the settings from the gear and goes back to the list", async () => {
+    const api = mockApi();
+    api.reply(getNotificationUnreadCountFixture.ok({ count: 0 }));
+    api.reply(listNotificationsFixture.ok({ notifications: [notification] }));
+    api.reply(getNotificationPreferencesFixture.ok());
+    const view = render();
+    fireEvent.click(await view.findByRole("button", { name: "Notifications" }));
+    await view.findByRole("link", { name: /Dark mode/ });
+    press("Notification settings");
+    expect(
+      await view.findByRole("group", { name: "In app" }),
+    ).toBeInTheDocument();
+    expect(view.queryByRole("link", { name: /Dark mode/ })).toBeNull();
+    press("Back to activity");
+    expect(
+      view.getByRole("button", { name: "Notification settings" }),
+    ).toHaveFocus();
+    expect(view.getByRole("link", { name: /Dark mode/ })).toBeVisible();
   });
 
   it("shows a desktop notification for a new one while the app is in the background", async () => {

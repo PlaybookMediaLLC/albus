@@ -5,6 +5,7 @@
 	"author": "Author: {{name}}",
 	"board": "Board",
 	"chooseBoard": "Choose a board.",
+	"close": "Close",
 	"closed": "Closed",
 	"complete": "Complete",
 	"create": "Create",
@@ -36,7 +37,7 @@
 	"tagCount_other": "{{count}} tags",
 	"tags": "Tags",
 	"title": "Requests",
-	"titleLabel": "Submission title",
+	"titleLabel": "Request title",
 	"triage": "Triage",
 	"you": "You"
 }

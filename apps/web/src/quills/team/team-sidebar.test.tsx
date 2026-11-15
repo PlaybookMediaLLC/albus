@@ -50,7 +50,7 @@ function render(
 }
 
 describe("TeamSidebar", () => {
-  it("shows the section name, New request, the views of the section and the desktop switch", () => {
+  it("shows the section name, New request and the views of the section", () => {
     vi.stubGlobal("Notification", { permission: "default" });
     const onNavigate = vi.fn();
     const view = render("requests", { onNavigate });
@@ -71,9 +71,8 @@ describe("TeamSidebar", () => {
       within(nav).getByRole("link", { name: "Under review 0" }),
     ).toBeVisible();
     expect(within(nav).queryByRole("link", { name: "Queue" })).toBeNull();
-    expect(
-      view.getByRole("switch", { name: "Desktop notifications" }),
-    ).toBeVisible();
+    // The bell has the browser notification switch now.
+    expect(view.queryByRole("switch")).toBeNull();
     vi.unstubAllGlobals();
   });
 

@@ -6,7 +6,6 @@ import {
   Users,
 } from "lucide-react";
 import type { GetTeamCountsResponse } from "../api/team/get-team-counts";
-import { portalHref } from "../core/portal-href";
 import { statusProgress } from "../core/status-progress";
 import { conversationViews, workspaceViews, type TeamView } from "./nav-views";
 import { teamHref } from "./team-href";
@@ -101,8 +100,7 @@ export function teamSections(
           id: "roadmap",
           labelKey: "team.nav.roadmap",
           icon: MapIcon,
-          to: portalHref(workspaceId, "roadmap"),
-          newTab: true,
+          to: teamHref(workspaceId, "/roadmap"),
         },
         changelog!,
         {

@@ -3,7 +3,6 @@ import { SquarePen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { GetTeamCountsResponse } from "../api/team/get-team-counts";
 import { IconButton } from "../ui/inbox/icon-button";
-import { DesktopNotifications } from "./desktop-notifications";
 import { teamSections } from "./nav";
 import { useTeamRuntime } from "./runtime";
 import type { ShellSection } from "./shell-section";
@@ -20,8 +19,8 @@ export interface TeamSidebarProps {
 }
 
 /**
- * The sidebar beside the rail: the section name, New request, the views of the section and
- * desktop notifications. Settings is left out here because the rail has it.
+ * The sidebar beside the rail: the section name, New request and the views of the section.
+ * Settings is left out here because the rail has it. The bell has the notification settings.
  */
 export function TeamSidebar({
   workspaceId,
@@ -65,7 +64,6 @@ export function TeamSidebar({
         hideLabels
         onNavigate={onNavigate}
       />
-      <DesktopNotifications />
     </div>
   );
 }
