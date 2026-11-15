@@ -22,6 +22,8 @@ export interface PublishPopoverProps {
   workspaceId: string;
   /** Null until the first save creates the entry. */
   entry: GetChangelogEntryResponse | null;
+  /** Saves the text now. True when the text is stored. */
+  flush: () => Promise<boolean>;
   onDeleted: () => void;
 }
 
@@ -29,6 +31,7 @@ export interface PublishPopoverProps {
 export function PublishPopover({
   workspaceId,
   entry,
+  flush,
   onDeleted,
 }: PublishPopoverProps) {
   const { t } = useTranslation("quills");
@@ -49,14 +52,19 @@ export function PublishPopover({
         window.location.origin,
       ).href
     : "";
-  const send = (
+  const send = async (
     publishState:
       | { type: "draft" }
-      | { type: "published" }
+      | { type: "published"; publishAt?: string }
       | { type: "scheduled"; publishAt: string },
-  ) =>
-    entry &&
-    update
+  ) => {
+    if (!entry) return;
+    // Publish the text that the user sees, not an older save.
+    if (publishState.type !== "draft" && !(await flush())) {
+      toast.error(t("team-changelog.editor.publishUnsaved"));
+      return;
+    }
+    await update
       .mutateAsync({
         param: { workspaceId, entryId: entry.id },
         json: {
@@ -65,6 +73,7 @@ export function PublishPopover({
         },
       })
       .catch(() => toast.error(t("team-changelog.editor.failed")));
+  };
   const primary =
     when === "later"
       ? t("team-changelog.editor.schedule")
@@ -117,7 +126,10 @@ export function PublishPopover({
                   void send(
                     when === "later" && publishAt
                       ? { type: "scheduled", publishAt }
-                      : { type: "published" },
+                      : // "Update" keeps the original publish date.
+                        status === "published" && entry.publishedAt
+                        ? { type: "published", publishAt: entry.publishedAt }
+                        : { type: "published" },
                   )
                 }
               >

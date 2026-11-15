@@ -59,4 +59,45 @@ describe("PublishDetails", () => {
     fireEvent.click(view.getByRole("switch", { name: "Notify subscribers" }));
     expect(onNotifyChange).toHaveBeenCalledWith(false, expect.anything());
   });
+
+  it("waits for one tag change before the next one", async () => {
+    const api = mockApi();
+    api.reply(
+      listChangelogCategoriesFixture.ok({
+        categories: [
+          { ...category, id: "category_fix", name: "Fix" },
+          { ...category, id: "category_new", name: "New", position: 1 },
+        ],
+      }),
+    );
+    api.reply(searchShippedPostsFixture.ok());
+    let finish!: (body: unknown) => void;
+    api.defer(({ resolve }) => (finish = resolve));
+    const view = renderComponent(
+      inTeam(
+        <PublishDetails
+          workspaceId="workspace_test_1"
+          entry={entry}
+          notify
+          onNotifyChange={() => undefined}
+        />,
+      ),
+    );
+    fireEvent.click(view.getByRole("button", { name: /Fix/ }));
+    fireEvent.click(await view.findByRole("menuitemcheckbox", { name: "New" }));
+    await waitFor(() =>
+      expect(api.calls("updateQuillsChangelogEntry")).toHaveLength(1),
+    );
+    // A second click now would send a list without the first change.
+    expect(view.getByRole("menuitemcheckbox", { name: "Fix" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+    finish(entry);
+    await waitFor(() =>
+      expect(
+        view.getByRole("menuitemcheckbox", { name: "Fix" }),
+      ).not.toHaveAttribute("aria-disabled", "true"),
+    );
+  });
 });
