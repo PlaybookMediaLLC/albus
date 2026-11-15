@@ -67,6 +67,8 @@ export interface RenderPageOptions {
   retryAccess?: () => void;
   /** Teammate pages only: the Quills permissions of the signed-in user. */
   permissions?: Partial<TeamPermissions>;
+  /** Portal pages: the portal tabs to turn off or on. All are on by default. */
+  tabs?: Partial<PortalRuntimeValue["config"]["nav"]["tabs"]>;
 }
 
 export function renderPage(
@@ -95,6 +97,18 @@ export function renderPage(
         ai: true,
       },
       portalAccess: { isPrivate: false },
+      nav: {
+        tabs: {
+          feedback: true,
+          roadmap: true,
+          changelog: true,
+          help: true,
+          support: true,
+          status: true,
+          ...options.tabs,
+        },
+        links: [],
+      },
       branding: {
         logoUrl: null,
         theme: { themeMode: "user", light: {}, dark: {} },

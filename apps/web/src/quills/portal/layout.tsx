@@ -74,6 +74,7 @@ export function PortalRoute() {
               <PortalNavigation
                 workspaceId={workspaceId}
                 currentPath={currentPath.split(/[?#]/)[0]}
+                nav={config.data.nav}
               />
             }
             actions={

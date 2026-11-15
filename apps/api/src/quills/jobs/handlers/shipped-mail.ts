@@ -178,13 +178,20 @@ async function seesEntry(
       )
   ).map((row) => String(row.id));
   // A mail recipient is a known person: the "authenticated" changelog audience admits them.
+  // ponytail: the mail does not read the portal changelog tab, so it also goes while the tab is
+  // off; read the tab here when the product wants no mail then.
   const [shown] = await db
     .select({ id: changelogEntries.id })
     .from(changelogEntries)
     .where(
       and(
         eq(changelogEntries.id, entryId),
-        entryVisible({ signedIn: true, changelogPublic: true, segmentIds }),
+        entryVisible({
+          signedIn: true,
+          changelogPublic: true,
+          segmentIds,
+          tabs: { changelog: true },
+        }),
       ),
     );
   return Boolean(shown);

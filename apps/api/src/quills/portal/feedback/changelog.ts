@@ -52,17 +52,21 @@ import {
 // Published changelog entries for customers (audience: "portal" and audience: "widget"). Drafts,
 // scheduled and deleted entries never show. An entry or one of its categories limited to segments
 // shows only to a signed-in member of one of them; the "authenticated" changelog audience hides
-// every entry from a visitor without sign-in.
+// every entry from a visitor without sign-in. While the portal changelog tab is off, no entry shows
+// and the list is 404.
 
 /** Segment list gate: [] is everyone, otherwise a signed-in member of one listed segment. */
-type Gate = Pick<Viewer, "changelogPublic" | "signedIn" | "segmentIds">;
+type Gate = Pick<Viewer, "changelogPublic" | "signedIn" | "segmentIds"> & {
+  tabs: Pick<Viewer["tabs"], "changelog">;
+};
 const segmentGate = (viewer: Gate, list: SQL | AnyColumn): SQL =>
   viewer.signedIn && viewer.segmentIds.length
     ? sql`(jsonb_array_length(${list}) = 0 or ${list} ?| ${sql.param(viewer.segmentIds)}::text[])`
     : sql`jsonb_array_length(${list}) = 0`;
 
 export function entryVisible(viewer: Gate): SQL {
-  if (!viewer.changelogPublic && !viewer.signedIn) return sql`false`;
+  if (!viewer.tabs.changelog || (!viewer.changelogPublic && !viewer.signedIn))
+    return sql`false`;
   return and(
     isNull(changelogEntries.deletedAt),
     isNotNull(changelogEntries.publishedAt),
@@ -288,8 +292,10 @@ export const listChangelog = (audience: Customer) =>
       nextOffset: z.number().nullable(),
     }),
     responseDescription: "One page of entries",
+    errors: { 404: "The portal changelog tab is off" },
     handler: async ({ db, caller, query }) => {
       const viewer = await viewerFor(db, audience, caller);
+      if (!viewer.tabs.changelog) throw notFound("Changelog");
       const page = await present(db, viewer, sql`true`, query);
       return {
         entries: page.items,
@@ -312,7 +318,7 @@ export const getChangelogEntry = (audience: Customer) =>
     responseDescription: "The entry",
     errors: {
       403: "Blocked account or no portal access",
-      404: "Changelog entry not found",
+      404: "Changelog entry not found, or the portal changelog tab is off",
     },
     handler: async ({ db, caller, params }) => {
       const viewer = await viewerFor(db, audience, caller);

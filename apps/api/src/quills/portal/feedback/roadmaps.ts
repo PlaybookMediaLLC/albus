@@ -49,11 +49,12 @@ import {
 
 // Public roadmaps (audience: "portal"). A team roadmap never shows; a segment roadmap shows only
 // to a signed-in member of one of its segments. The admin filter and segment IDs stay server-side.
+// While the portal roadmap tab is off, both routes answer 404 as for a missing roadmap.
 
 type Roadmap = Awaited<ReturnType<typeof roadmapById>>;
 const errors = {
   403: "Blocked account or no portal access",
-  404: "Roadmap or status not found",
+  404: "Roadmap or status not found, or the portal roadmap tab is off",
 };
 
 const seesRoadmap = (
@@ -135,6 +136,7 @@ const listRoadmaps = defineQuillsRoute({
   errors,
   handler: async ({ db, caller }) => {
     const viewer = await viewerFor(db, "portal", caller);
+    if (!viewer.tabs.roadmap) throw roadmapNotFound();
     // ponytail: every live roadmap per request; a workspace keeps a handful.
     const rows = (
       await db
@@ -224,6 +226,7 @@ const listRoadmapPosts = defineQuillsRoute({
   errors,
   handler: async ({ db, caller, params, query }) => {
     const viewer = await viewerFor(db, "portal", caller);
+    if (!viewer.tabs.roadmap) throw roadmapNotFound();
     const roadmap = await roadmapById(db, params.roadmapId);
     if (!seesRoadmap(viewer, roadmap)) throw roadmapNotFound();
     const statuses = roadmap.columns.map((c) => c.statusId);

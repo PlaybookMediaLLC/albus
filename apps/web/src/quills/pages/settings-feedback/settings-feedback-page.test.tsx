@@ -67,6 +67,9 @@ describe("SettingsFeedbackPage", () => {
         expect(
           await view.findByRole("switch", { name: "Public roadmap" }),
         ).toBeChecked();
+        expect(
+          view.getByText("Show the roadmap tab and its pages on the portal."),
+        ).toBeVisible();
         expect(view.getByText("Ideas")).toBeVisible();
         expect(view.getByText("security")).toBeVisible();
       },

@@ -46,7 +46,7 @@
 	},
 	"changelog": {
 		"public": "Public changelog",
-		"publicText": "Show the changelog tab on the portal.",
+		"publicText": "Show the changelog on the portal, in the widget and in the RSS feed.",
 		"title": "Changelog"
 	},
 	"dialog": {
@@ -58,7 +58,7 @@
 	},
 	"feedback": {
 		"roadmap": "Public roadmap",
-		"roadmapText": "Show the roadmap tab on the portal.",
+		"roadmapText": "Show the roadmap tab and its pages on the portal.",
 		"title": "Feedback"
 	},
 	"login": {
