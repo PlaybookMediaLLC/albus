@@ -54,6 +54,7 @@ export function PublishDetails({
       (post) => !linkedIds.includes(post.id),
     ),
   ];
+  // Each change sends the whole list, so a second click waits for the first save.
   const disabled = !team.permissions.update || update.isPending;
   const picker = (label: string, chosen: string[], names: string[]) => (
     <MenuTrigger
@@ -97,6 +98,7 @@ export function PublishDetails({
               <MenuCheckboxItem
                 key={item.id}
                 checked={tagIds.includes(item.id)}
+                disabled={disabled}
                 onCheckedChange={(on) =>
                   void save({ categoryIds: toggle(tagIds, item.id, on) })
                 }
@@ -122,6 +124,7 @@ export function PublishDetails({
               <MenuCheckboxItem
                 key={post.id}
                 checked={linkedIds.includes(post.id)}
+                disabled={disabled}
                 onCheckedChange={(on) =>
                   void save({ linkedPostIds: toggle(linkedIds, post.id, on) })
                 }
