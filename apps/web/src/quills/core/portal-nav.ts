@@ -17,6 +17,12 @@ export type PortalNavType =
   | "status"
   | "link";
 
+/** The portal tabs that the public portal config turns on, and its custom link tabs. */
+export interface PortalNav {
+  tabs: Record<Exclude<PortalNavType, "link">, boolean>;
+  links: Array<{ label: string; url: string; newTab: boolean }>;
+}
+
 /** A tab that the stored list does not name shows on the portal. */
 export const navEnabled = (
   nav: readonly PortalNavItem[],

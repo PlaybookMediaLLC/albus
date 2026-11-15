@@ -83,4 +83,13 @@ describe("RoadmapPage", () => {
       view.getByRole("link", { name: "Suggest a feature" }),
     ).toHaveAttribute("href", "/portal/workspace_test_1?openFeedback=1");
   });
+  it("shows the not-found state while the roadmap tab is off", async () => {
+    const api = mockApi();
+    const view = renderPage(RoadmapPage, meta, { tabs: { roadmap: false } });
+    expect(await view.findByRole("alert")).toHaveTextContent(
+      "This item could not be found.",
+    );
+    expect(view.queryByRole("link", { name: "Suggest a feature" })).toBeNull();
+    expect(api.calls()).toHaveLength(0);
+  });
 });

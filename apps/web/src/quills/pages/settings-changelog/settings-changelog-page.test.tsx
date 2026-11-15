@@ -53,6 +53,12 @@ describe("SettingsChangelogPage", () => {
         expect(
           await view.findByRole("switch", { name: "Public changelog" }),
         ).toBeChecked();
+        // The switch reaches every customer surface of the changelog.
+        expect(
+          view.getByText(
+            "Show the changelog on the portal, in the widget and in the RSS feed.",
+          ),
+        ).toBeVisible();
         expect(view.getByText("Bug fix")).toBeVisible();
       },
     },

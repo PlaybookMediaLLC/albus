@@ -1,14 +1,18 @@
 import { useTranslation } from "react-i18next";
 import { portalHref } from "../core/portal-href";
+import type { PortalNav } from "../core/portal-nav";
 
 export interface PortalNavigationProps {
   workspaceId: string;
   currentPath: string;
+  /** The tabs that the public portal config turns on. */
+  nav: PortalNav;
 }
 
 export function PortalNavigation({
   workspaceId,
   currentPath,
+  nav,
 }: PortalNavigationProps) {
   const { t } = useTranslation("quills");
   const root = portalHref(workspaceId);
@@ -20,38 +24,59 @@ export function PortalNavigation({
     >
       {[
         {
+          tab: "feedback",
           path: "",
           label: "core.navFeedback",
           active: ["", "boards", "posts"].includes(section),
         },
         {
+          tab: "roadmap",
           path: "roadmap",
           label: "core.navRoadmap",
           active: section === "roadmap",
         },
         {
+          tab: "changelog",
           path: "changelog",
           label: "core.navUpdates",
           active: section === "changelog",
         },
-        { path: "hc", label: "core.navHelp", active: section === "hc" },
         {
+          tab: "help",
+          path: "hc",
+          label: "core.navHelp",
+          active: section === "hc",
+        },
+        {
+          tab: "status",
           path: "status",
           label: "core.navStatus",
           active: section === "status",
         },
         {
+          tab: "support",
           path: "support",
           label: "core.navSupport",
           active: ["support", "tickets", "conversations"].includes(section),
         },
-      ].map((item) => (
+      ]
+        .filter((item) => nav.tabs[item.tab as keyof typeof nav.tabs])
+        .map((item) => (
+          <a
+            key={item.path}
+            href={portalHref(workspaceId, item.path)}
+            aria-current={item.active ? "page" : undefined}
+          >
+            {t(item.label)}
+          </a>
+        ))}
+      {nav.links.map((link) => (
         <a
-          key={item.path}
-          href={portalHref(workspaceId, item.path)}
-          aria-current={item.active ? "page" : undefined}
+          key={`${link.label} ${link.url}`}
+          href={link.url}
+          {...(link.newTab && { target: "_blank", rel: "noopener noreferrer" })}
         >
-          {t(item.label)}
+          {link.label}
         </a>
       ))}
     </nav>

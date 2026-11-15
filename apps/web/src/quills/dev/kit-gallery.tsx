@@ -132,6 +132,17 @@ export function KitGallery() {
         <PortalNavigation
           workspaceId="gallery"
           currentPath={portalHref("gallery")}
+          nav={{
+            tabs: {
+              feedback: true,
+              roadmap: true,
+              changelog: true,
+              help: true,
+              support: true,
+              status: true,
+            },
+            links: [],
+          }}
         />
       }
       workspaceName={demo}
