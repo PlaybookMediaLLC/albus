@@ -174,3 +174,4 @@ export { ApiKeysSettings } from "@/components/settings/api-keys/api-keys-setting
 
 // Group A workspace pages (lane M): the member tabs and the changelog editor.
 export { TabsPanel } from "@/components/ui/tabs";
+export { Skeleton } from "@/components/ui/skeleton";

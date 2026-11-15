@@ -1,0 +1,79 @@
+{
+	"collect": {
+		"copy": "Copy link",
+		"help": "Share it with your users, add it to your docs or link it from your website.",
+		"live": "The {{name}} board is live",
+		"text": "Bring {{name}} to the people who use it.",
+		"title": "Collect feedback",
+		"visit": "Visit"
+	},
+	"copy": "Copy",
+	"copyNamed": "Copy {{label}}",
+	"messages": {
+		"announcement": "Customer announcement",
+		"announcementBody": "Hello,\n\nWe opened a feedback board for {{workspace}}. Tell us what to build next, vote on ideas from other customers and follow the progress:\n\n{{url}}\n\nThank you for your help.",
+		"announcementText": "Send this to all of your customers to start.",
+		"chat": "Team chat",
+		"chatBody": "We now collect feedback for {{workspace}} in one place. Post an idea or vote for one here: {{url}}",
+		"chatText": "For a team or community channel.",
+		"community": "Community post",
+		"communityBody": "Do you have an idea for {{workspace}}? Post it on our feedback board, or vote for the ideas that you want most: {{url}}",
+		"communityText": "For a forum, a group or another place where your users meet.",
+		"developer": "Note to your developer",
+		"developerBody": "Please add the {{workspace}} feedback widget to our app. The snippets are on the Share page of the teammate app, under \"Widget embed\". The public board is at {{url}}.",
+		"developerText": "Send this to the person who works on your code.",
+		"email": "Email to users",
+		"emailBody": "Hi,\n\nYour opinion helps us make {{workspace}} better. Share your ideas and vote on the ideas of others here:\n\n{{url}}",
+		"emailText": "Send this to the customers that you want to hear from.",
+		"support": "Support reply",
+		"supportBody": "Thank you for the suggestion. Please add it to our feedback board, so that other customers can vote for it and you get an update when it ships: {{url}}",
+		"supportText": "Paste this into a ticket reply or a saved reply.",
+		"text": "Pick a channel, copy the message and paste it.",
+		"title": "Ready-to-paste messages"
+	},
+	"signature": {
+		"copy": "Copy snippet",
+		"from": "{{name}} from {{workspace}}",
+		"link": "Share your feedback →",
+		"question": "Do you have feedback about {{workspace}}?",
+		"text": "Add this to your sign-off. Each email that you send asks for feedback.",
+		"title": "Email signature"
+	},
+	"site": {
+		"changelog": "Changelog",
+		"copy": "Copy all links",
+		"copyright": "© {{workspace}}",
+		"feedback": "Feedback",
+		"none": "No portal area is on.",
+		"roadmap": "Roadmap",
+		"text": "Put these links in your help menu, footer or docs.",
+		"title": "Add to your app or website"
+	},
+	"social": {
+		"facebook": "Facebook",
+		"facebookText": "Post to a page or a group.",
+		"linkedin": "LinkedIn",
+		"linkedinText": "Share with your network.",
+		"post": "Tell us what you want from {{name}}",
+		"reddit": "Reddit",
+		"redditText": "Share in a community.",
+		"text": "Announce your board where your users already are.",
+		"title": "Share on social",
+		"x": "X",
+		"xText": "Post to your followers."
+	},
+	"title": "Share",
+	"widget": {
+		"code": "Install code",
+		"copyAll": "Copy all",
+		"docs": "View docs →",
+		"expires": "It works twice and expires at {{time}}.",
+		"identify": "Optional: identify your users",
+		"identifyText": "Your server signs the token with the widget signing secret (Settings › Login). Without it, the widget works for anonymous visitors.",
+		"installCode": "Create install code",
+		"load": "1. Load the widget",
+		"start": "2. Start it",
+		"text": "One snippet collects feedback inside your app.",
+		"title": "Widget embed"
+	}
+}
