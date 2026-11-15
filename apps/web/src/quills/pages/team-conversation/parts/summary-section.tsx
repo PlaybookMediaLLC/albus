@@ -18,7 +18,10 @@ export function SummarySection(props: SummarySectionProps) {
   const kind = request.error?.kind;
   return (
     <section aria-labelledby="conversation-summary">
-      <h2 id="conversation-summary" className="mb-1 text-sm font-semibold">
+      <h2
+        id="conversation-summary"
+        className="mb-1 text-xs font-medium text-muted-foreground"
+      >
         {t("team-conversations.summary.title")}
       </h2>
       {props.summary ? (
