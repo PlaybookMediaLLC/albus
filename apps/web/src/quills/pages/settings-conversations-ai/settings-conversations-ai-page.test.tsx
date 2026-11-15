@@ -81,4 +81,52 @@ describe("SettingsConversationsAiPage", () => {
     );
     expect(api.calls("getQuillsAssistantSettings")).toHaveLength(2);
   });
+
+  it("keeps the unsaved text when a switch save changes the revision", async () => {
+    api = mockApi();
+    api.reply(settings);
+    api.reply(updateAssistantSettingsFixture.ok());
+    api.reply({ ...settings, revision: 5, copilot: { qa: true } });
+    const view = renderPage(SettingsConversationsAiPage, meta);
+    fireEvent.change(await view.findByLabelText("Name"), {
+      target: { value: "Bob" },
+    });
+    fireEvent.click(
+      view.getByRole("switch", { name: "Answer teammate questions" }),
+    );
+    await waitFor(() =>
+      expect(api.calls("getQuillsAssistantSettings")).toHaveLength(2),
+    );
+    await waitFor(() =>
+      expect(
+        view.getByRole("switch", { name: "Answer teammate questions" }),
+      ).toBeChecked(),
+    );
+    expect(view.getByLabelText("Name")).toHaveValue("Bob");
+  });
+
+  it("shows a voice conflict, keeps the text and saves with the new revision", async () => {
+    api = mockApi();
+    api.reply(settings);
+    api.reply({ message: "Changed" }, 409);
+    api.reply({ ...settings, revision: 5 });
+    api.reply(updateAssistantSettingsFixture.ok());
+    api.reply({ ...settings, revision: 6, identity: { name: "Bob" } });
+    const view = renderPage(SettingsConversationsAiPage, meta);
+    fireEvent.change(await view.findByLabelText("Name"), {
+      target: { value: "Bob" },
+    });
+    fireEvent.click(view.getByRole("button", { name: "Save" }));
+    expect(await view.findByRole("alert")).toHaveTextContent(
+      "This changed before your request finished.",
+    );
+    expect(view.getByLabelText("Name")).toHaveValue("Bob");
+    fireEvent.click(view.getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(api.calls("updateQuillsAssistantSettings")).toHaveLength(2),
+    );
+    expect(
+      await api.calls("updateQuillsAssistantSettings")[1]!.json(),
+    ).toMatchObject({ revision: 5, name: "Bob" });
+  });
 });
