@@ -423,7 +423,8 @@ describe.skipIf(!url)("Quills status page", () => {
     );
     expect(plan).toContain("status_subscriptions_workspace_created_idx");
     expect(plan).toMatch(/Index Cond: .*ROW\(created_at, id\) </);
-  });
+    // Three pages over the 5,001 rows take about 3 s on a CI runner, near the default 5 s budget.
+  }, 60000);
 
   it("starts the uptime window from the last status before it", async () => {
     const env = contractEnv();
