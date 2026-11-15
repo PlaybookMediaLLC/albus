@@ -20,6 +20,29 @@ describe("toPortalProblem", () => {
       toPortalProblem(new Response("Bad request", { status: 400 })),
     ).resolves.toEqual({ kind: "failed" });
   });
+  it("gives the form field of an issue without the request part", async () => {
+    await expect(
+      toPortalProblem(
+        new Response(
+          JSON.stringify({
+            code: "VALIDATION_ERROR",
+            message: "Invalid input",
+            issues: [
+              { path: "body.incomingSecret", message: "Too short" },
+              { path: "query.subdomain", message: "Invalid" },
+            ],
+          }),
+          { status: 400 },
+        ),
+      ),
+    ).resolves.toEqual({
+      kind: "invalid",
+      issues: [
+        { path: "incomingSecret", message: "Too short" },
+        { path: "subdomain", message: "Invalid" },
+      ],
+    });
+  });
   it("hides a denied record as not found", async () => {
     await expect(
       toPortalProblem(new Response("denied", { status: 403 })),

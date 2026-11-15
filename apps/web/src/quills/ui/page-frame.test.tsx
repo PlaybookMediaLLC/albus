@@ -73,3 +73,12 @@ it("fills the app panel and focuses the heading that the page renders", () => {
   ).toHaveFocus();
   expect(document.title).toBe("Feedback");
 });
+
+it("moves the focus to the h1 of an embedded page in the app variant", () => {
+  const view = renderComponent(
+    <PageFrame titleKey="core.gallery.title" variant="app" landmark={false}>
+      <h1>Embedded title</h1>
+    </PageFrame>,
+  );
+  expect(view.getByRole("heading", { level: 1 })).toHaveFocus();
+});

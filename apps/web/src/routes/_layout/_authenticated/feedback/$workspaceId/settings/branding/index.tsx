@@ -1,0 +1,17 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
+import { SettingsBrandingPage } from "@/quills/pages/settings-branding/settings-branding-page";
+const searchSchema = z.object({});
+export const Route = createFileRoute(
+  "/_layout/_authenticated/feedback/$workspaceId/settings/branding/",
+)({ validateSearch: searchSchema, component: RouteComponent });
+function RouteComponent() {
+  const params = Route.useParams();
+  return (
+    <SettingsBrandingPage
+      workspaceId={"workspaceId" in params ? String(params.workspaceId) : ""}
+      params={params}
+      search={Route.useSearch()}
+    />
+  );
+}

@@ -2301,6 +2301,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/user-attributes",
   },
   {
+    operationId: "listQuillsUserComments",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/users/{principalId}/comments",
+  },
+  {
     operationId: "listQuillsUserDuplicates",
     method: "GET",
     path: "/api/quills/{workspaceId}/users/{principalId}/duplicates",

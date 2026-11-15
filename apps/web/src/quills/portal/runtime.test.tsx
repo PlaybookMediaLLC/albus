@@ -5,6 +5,7 @@ import {
   usePortalRuntime,
   type PortalRuntimeValue,
 } from "./runtime";
+import { getPublicPortalConfigFixture } from "../api/portal/get-public-portal-config.fixture";
 
 const value: PortalRuntimeValue = {
   config: {
@@ -17,6 +18,7 @@ const value: PortalRuntimeValue = {
       ai: true,
     },
     portalAccess: { isPrivate: false },
+    nav: getPublicPortalConfigFixture.ok().nav,
     branding: {
       logoUrl: null,
       theme: { themeMode: "user", light: {}, dark: {} },

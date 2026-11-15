@@ -7,9 +7,11 @@ export const meta = {
   mailLinked: false,
   token: "none",
   operations: [
-    "listQuillsChangelogEngagement",
+    "listQuillsChangelog",
     "searchQuillsShippedPosts",
     "draftQuillsChangelogFromPosts",
+    "createQuillsChangelogEntry",
+    "listQuillsChangelogEngagement",
   ],
   states: ["loading", "failed", "ready", "done"],
 } satisfies PageMeta;

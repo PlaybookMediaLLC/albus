@@ -28,7 +28,8 @@ export async function toPortalProblem(
     return {
       kind: "invalid",
       issues: error.issues?.map((issue) => ({
-        path: issue.path,
+        // The API puts the request part first ("body.title"). A form field is "title".
+        path: issue.path.replace(/^(?:body|query|params)\./, ""),
         message: issue.message,
       })),
     };

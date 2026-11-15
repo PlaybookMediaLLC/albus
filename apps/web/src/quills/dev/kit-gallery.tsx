@@ -63,6 +63,11 @@ import { RowBadge } from "../ui/inbox/row-badge";
 import { SearchField } from "../ui/inbox/search-field";
 import { StatusTabs } from "../ui/inbox/status-tabs";
 import { SystemEvent } from "../ui/inbox/system-event";
+import { CopyField } from "../ui/copy-field";
+import { SettingSwitchRow } from "../ui/setting-switch-row";
+import { NameDialog } from "../ui/name-dialog";
+import { SettingSelect } from "../ui/setting-select";
+import { TagList } from "../ui/tag-list";
 import {
   Dialog,
   DialogTitle,
@@ -84,6 +89,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SettingsCard,
 } from "../ui/upstream";
 
 const problems: PortalProblemKind[] = [
@@ -108,11 +114,13 @@ export function KitGallery() {
   const [empty, setEmpty] = useState(false);
   const [pending, setPending] = useState(false);
   const [voted, setVoted] = useState(false);
+  const [enabled, setEnabled] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [outcome, setOutcome] = useState<keyof typeof outcomes>("success");
   const [text, setText] = useState("");
   const [palette, setPalette] = useState(false);
   const [mode, setMode] = useState("reply");
+  const [naming, setNaming] = useState(false);
   const demo = t("core.gallery.demo");
   const schema = z.object({
     message: z.string().min(1, t("core.gallery.required")),
@@ -124,6 +132,17 @@ export function KitGallery() {
         <PortalNavigation
           workspaceId="gallery"
           currentPath={portalHref("gallery")}
+          nav={{
+            tabs: {
+              feedback: true,
+              roadmap: true,
+              changelog: true,
+              help: true,
+              support: true,
+              status: true,
+            },
+            links: [],
+          }}
         />
       }
       workspaceName={demo}
@@ -202,6 +221,70 @@ export function KitGallery() {
               disabled
               labelKey="core.gallery.confirm"
               onConfirm={async () => {}}
+            />
+            <SettingsCard>
+              <SettingSwitchRow
+                title={demo}
+                description={demo}
+                checked={enabled}
+                onCheckedChange={async (next) => setEnabled(next)}
+              />
+              <SettingSwitchRow
+                title={demo}
+                checked={false}
+                locked={demo}
+                onCheckedChange={async () => {}}
+              />
+            </SettingsCard>
+            <CopyField label={demo} value="workspace_gallery_1" />
+            <CopyField label={demo} value="wsec_gallery_secret_value" masked />
+            <SettingSelect
+              label={demo}
+              value={mode === "note" ? "note" : "reply"}
+              options={[
+                { value: "reply", label: t("core.gallery.success") },
+                { value: "note", label: t("core.gallery.failed") },
+              ]}
+              onValueChange={async (next) => setMode(next)}
+            />
+            <TagList
+              items={[{ id: "gallery_tag", name: demo, color: "currentColor" }]}
+              copy={{
+                title: "settings-product.tags.title",
+                create: "settings-product.tags.new",
+                createTitle: "settings-product.tags.createTitle",
+                createText: "settings-product.tags.createText",
+                rename: "settings-product.tags.rename",
+                renameText: "settings-product.tags.renameText",
+                name: "settings-product.tags.name",
+                placeholder: "settings-product.tags.placeholder",
+                taken: "settings-product.tags.taken",
+                actions: "settings-product.tags.actions",
+                delete: "settings-product.tags.delete",
+                deleteTitle: "settings-product.tags.deleteTitle",
+                deleteText: "settings-product.tags.deleteText",
+                deleteFailed: "settings-product.tags.deleteFailed",
+                emptyTitle: "settings-product.tags.emptyTitle",
+                emptyText: "settings-product.tags.emptyText",
+              }}
+              maxLength={50}
+              canManage
+              onCreate={async () => undefined}
+              onRename={async () => undefined}
+              onDelete={async () => undefined}
+            />
+            <Button variant="outline" onClick={() => setNaming(true)}>
+              {demo}
+            </Button>
+            <NameDialog
+              open={naming}
+              onOpenChange={setNaming}
+              title={demo}
+              description={demo}
+              label={demo}
+              maxLength={50}
+              submitKey="settings-product.dialog.save"
+              onSubmit={async () => setNaming(false)}
             />
             {confirmed ? <ResultCard titleKey="core.gallery.result" /> : null}
             <ResultCard titleKey="core.gallery.result">

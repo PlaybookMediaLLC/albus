@@ -86,5 +86,16 @@ describe("ChangelogPage", () => {
       expect(await view.findByRole("status")).toHaveTextContent(/sign in/i);
       expect(api.calls()).toHaveLength(0);
     });
+    it("shows the not-found state while the changelog tab is off", async () => {
+      const api = mockApi();
+      const view = renderPage(ChangelogPage, meta, {
+        tabs: { changelog: false },
+      });
+      expect(await view.findByRole("alert")).toHaveTextContent(
+        "This item could not be found.",
+      );
+      expect(view.queryByRole("link", { name: "RSS feed" })).toBeNull();
+      expect(api.calls()).toHaveLength(0);
+    });
   });
 });

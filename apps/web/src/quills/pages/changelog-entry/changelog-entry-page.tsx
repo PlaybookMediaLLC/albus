@@ -24,7 +24,8 @@ export function ChangelogEntryPage(props: ChangelogEntryPageProps) {
   const portal = usePortalRuntime();
   const { viewer } = portal;
   const gated = (meta.audience as string) !== "public";
-  const canLoad = !gated || portal.access?.granted === true;
+  const shown = portal.config.nav.tabs.changelog;
+  const canLoad = shown && (!gated || portal.access?.granted === true);
   const entry = useGetPortalChangelogEntry(
     {
       param: {
@@ -49,6 +50,13 @@ export function ChangelogEntryPage(props: ChangelogEntryPageProps) {
         }
       : undefined;
 
+  // A tab that the portal settings turn off looks like a missing page.
+  if (!shown)
+    return (
+      <PageFrame titleKey="changelog.entryTitle" wide>
+        <StateView problem={{ kind: "notFound" }}>{null}</StateView>
+      </PageFrame>
+    );
   return (
     <PageFrame
       titleKey="changelog.entryTitle"

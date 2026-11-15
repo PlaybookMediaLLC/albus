@@ -123,6 +123,7 @@ const filterQuery = filters.extend({
     }),
   cursor: flexibleToTypeIdSchema("post").optional(),
   limit: pagingNumber(1, 100, 20),
+  authorPrincipalId: flexibleToTypeIdSchema("principal").optional(),
 });
 
 const listPosts = defineQuillsRoute({
@@ -131,7 +132,7 @@ const listPosts = defineQuillsRoute({
   operationId: "listQuillsPosts",
   summary: "List the visible feedback posts",
   description:
-    "Leaves out merged posts, test-customer posts and posts on boards hidden by their project links. showDeleted=true lists posts deleted in the last 30 days. Each post has its demand, as getQuillsPostDemand counts it, without segments.",
+    "Leaves out merged posts, test-customer posts and posts on boards hidden by their project links. showDeleted=true lists posts deleted in the last 30 days. Each post has its demand, as getQuillsPostDemand counts it, without segments. authorPrincipalId keeps only the posts that one person wrote.",
   action: "read",
   query: filterQuery,
   response: z.object({
@@ -151,6 +152,8 @@ const listPosts = defineQuillsRoute({
       db,
       and(
         filterConditions(db, query, projects),
+        query.authorPrincipalId &&
+          eq(posts.principalId, query.authorPrincipalId),
         query.cursor && afterCursor(query.cursor, sort),
       ),
     )

@@ -30,8 +30,9 @@ export function RoadmapPage(props: RoadmapPageProps) {
   const portal = usePortalRuntime();
   const { viewer } = portal;
   const navigate = useNavigate();
+  const shown = portal.config.nav.tabs.roadmap;
   const canLoad = !portal.accessLoading && portal.access?.granted === true;
-  const workspace = canLoad ? props.workspaceId : "";
+  const workspace = shown && canLoad ? props.workspaceId : "";
   const roadmaps = useListPortalRoadmaps({ param: { workspace } }, viewer);
   const statuses = useListPortalStatuses({ param: { workspace } }, viewer);
   const boards = useListPortalBoards(
@@ -69,6 +70,13 @@ export function RoadmapPage(props: RoadmapPageProps) {
       replace: true,
       resetScroll: false,
     });
+  // A tab that the portal settings turn off looks like a missing page.
+  if (!shown)
+    return (
+      <PageFrame titleKey="roadmap.title" wide>
+        <StateView problem={{ kind: "notFound" }}>{null}</StateView>
+      </PageFrame>
+    );
   return (
     <PageFrame
       titleKey="roadmap.title"

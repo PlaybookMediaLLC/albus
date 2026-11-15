@@ -137,7 +137,12 @@ export async function seedPortal(reset = false) {
           enabled: true,
           features: { allowAnonymous: true },
         }),
-        featureFlags: JSON.stringify({ helpCenter: true, statusPage: true }),
+        featureFlags: JSON.stringify({
+          helpCenter: true,
+          statusPage: true,
+          supportInbox: true,
+          supportTickets: true,
+        }),
         metadata: JSON.stringify({
           statusSettings: { enabled: true, audience: "public" },
         }),

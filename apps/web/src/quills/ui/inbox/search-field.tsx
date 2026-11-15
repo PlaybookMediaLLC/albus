@@ -1,5 +1,5 @@
 import { Search } from "lucide-react";
-import { useRef } from "react";
+import { type KeyboardEvent, useRef } from "react";
 import { InputGroup, InputGroupAddon, InputGroupInput, Kbd } from "../upstream";
 import { useKeyShortcuts } from "./use-key-shortcuts";
 
@@ -10,6 +10,8 @@ export interface SearchFieldProps {
   onChange: (value: string) => void;
   /** "/" focuses the field. Set false for a second field on the same page. */
   shortcut?: boolean;
+  /** Runs before Escape leaves the field, for example to clear it or open a match. */
+  onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
   className?: string;
 }
 
@@ -21,6 +23,7 @@ export function SearchField({
   value,
   onChange,
   shortcut = true,
+  onKeyDown,
   className,
 }: SearchFieldProps) {
   const input = useRef<HTMLInputElement>(null);
@@ -36,6 +39,7 @@ export function SearchField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={(event) => {
+          onKeyDown?.(event);
           if (event.key === "Escape") event.currentTarget.blur();
         }}
       />

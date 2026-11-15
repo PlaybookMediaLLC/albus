@@ -7,11 +7,13 @@ import leadMerge from "./lead-merge";
 import people from "./people";
 import principals from "./principals";
 import segments from "./segments";
+import userComments from "./user-comments";
 import userTags from "./user-tags";
 
 // The directory router. Each module declares its routes with ../framework/define-route.
 export default apiRouter<BaseVariables & { workspaceId: string }>()
   .route("/", people)
+  .route("/", userComments)
   .route("/", leadMerge)
   .route("/", userTags)
   .route("/", blocking)

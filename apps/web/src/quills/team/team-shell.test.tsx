@@ -8,6 +8,7 @@ import { waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vite-plus/test";
 import { getNotificationUnreadCountFixture } from "../api/team/get-notification-unread-count.fixture";
 import { getTeamCountsFixture } from "../api/team/get-team-counts.fixture";
+import { listSettingsFixture } from "../api/team/list-settings.fixture";
 import { press } from "../test/actions";
 import { mockApi } from "../test/mock-api";
 import { renderComponent } from "../test/render";
@@ -15,6 +16,9 @@ import { TeamRuntimeProvider } from "./runtime";
 import { TeamShell } from "./team-shell";
 
 vi.mock("@/components/user-avatar", () => ({ UserAvatar: () => null }));
+vi.mock("@/hooks/queries/config/use-get-config", () => ({
+  default: () => ({ data: { billingEnabled: false } }),
+}));
 
 const counts = getTeamCountsFixture.ok({
   queueConversations: 3,
@@ -121,5 +125,30 @@ describe("TeamShell", () => {
     expect(
       await within(sheet).findByRole("link", { name: "Insights" }),
     ).toBeVisible();
+  });
+
+  it("shows the settings sidebar under /settings and asks for no counts", async () => {
+    const api = mockApi();
+    api.reply(getNotificationUnreadCountFixture.ok());
+    api.reply(listSettingsFixture.ok());
+    const view = renderShell("/feedback/workspace_1/settings/integrations");
+    const nav = view.getByRole("navigation", { name: "Settings" });
+    expect(
+      within(nav).getByRole("link", { name: "Integrations" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      view.queryByRole("navigation", { name: "Teammate app" }),
+    ).not.toBeInTheDocument();
+    await waitFor(() => expect(api.calls()).toHaveLength(2));
+    expect(api.calls("getQuillsTeamCounts")).toHaveLength(0);
+    expect(view.getByRole("main")).toHaveTextContent("Page content");
+  });
+
+  it("shows no sidebar and no menu bar in the changelog editor", () => {
+    mockApi();
+    const view = renderShell("/feedback/workspace_1/changelog/new");
+    expect(view.queryByRole("navigation")).not.toBeInTheDocument();
+    expect(view.queryByRole("button", { name: "Menu" })).toBeNull();
+    expect(view.getByRole("main")).toHaveTextContent("Page content");
   });
 });

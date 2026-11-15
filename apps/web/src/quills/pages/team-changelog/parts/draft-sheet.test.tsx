@@ -18,6 +18,7 @@ describe("DraftSheet", () => {
         draft={null}
         problem={null}
         onDraft={onDraft}
+        onCreate={vi.fn()}
       />,
     );
     press("Draft from shipped requests");
@@ -42,6 +43,7 @@ describe("DraftSheet", () => {
         }}
         problem={null}
         onDraft={vi.fn()}
+        onCreate={vi.fn()}
       />,
     );
     press("Draft from shipped requests");
@@ -58,6 +60,7 @@ describe("DraftSheet", () => {
         draft={null}
         problem={{ kind: "conflict" }}
         onDraft={vi.fn()}
+        onCreate={vi.fn()}
       />,
     );
     press("Draft from shipped requests");
@@ -65,5 +68,31 @@ describe("DraftSheet", () => {
       await screen.findByText("No request has shipped yet."),
     ).toBeInTheDocument();
     expect(screen.getByRole("alert")).toBeInTheDocument();
+  });
+
+  it("creates a draft entry with the chosen posts", async () => {
+    const onCreate = vi.fn(async () => undefined);
+    renderComponent(
+      <DraftSheet
+        posts={posts}
+        draft={{
+          title: "Dark mode is here",
+          body: "- Dark mode",
+          requesterCount: 2,
+        }}
+        problem={null}
+        onDraft={vi.fn()}
+        onCreate={onCreate}
+      />,
+    );
+    press("Draft from shipped requests");
+    (await screen.findByRole("checkbox", { name: /Dark mode/ })).click();
+    await vi.waitFor(() =>
+      expect(screen.getByRole("checkbox", { name: /Dark mode/ })).toBeChecked(),
+    );
+    press("Create draft entry");
+    await vi.waitFor(() =>
+      expect(onCreate).toHaveBeenCalledWith(["post_test_1"]),
+    );
   });
 });

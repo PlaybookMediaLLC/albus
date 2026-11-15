@@ -5,6 +5,7 @@ import { mockApi } from "../test/mock-api";
 import { renderComponent } from "../test/render";
 import { HelpSidebar } from "./help-sidebar";
 import { PortalRuntimeProvider, type PortalRuntimeValue } from "./runtime";
+import { getPublicPortalConfigFixture } from "../api/portal/get-public-portal-config.fixture";
 
 const runtime: PortalRuntimeValue = {
   config: {
@@ -17,6 +18,7 @@ const runtime: PortalRuntimeValue = {
       ai: true,
     },
     portalAccess: { isPrivate: false },
+    nav: getPublicPortalConfigFixture.ok().nav,
     branding: {
       logoUrl: null,
       theme: { themeMode: "user", light: {}, dark: {} },

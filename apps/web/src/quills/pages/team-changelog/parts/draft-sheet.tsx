@@ -23,6 +23,8 @@ export interface DraftSheetProps {
   draft: { title: string; body: string; requesterCount: number } | null;
   problem: PortalProblem | null;
   onDraft: (postIds: string[]) => Promise<void>;
+  /** Saves the draft as a changelog entry with the chosen posts linked, then opens it. */
+  onCreate: (postIds: string[]) => Promise<void>;
 }
 
 /** Picks shipped requests and shows the AI draft for review. Nothing is saved. */
@@ -31,9 +33,11 @@ export function DraftSheet({
   draft,
   problem,
   onDraft,
+  onCreate,
 }: DraftSheetProps) {
   const { t } = useTranslation("quills");
   const [open, setOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [chosen, setChosen] = useState<string[]>([]);
   const toggle = (id: string, checked: boolean) =>
     setChosen((current) =>
@@ -97,6 +101,16 @@ export function DraftSheet({
                 </p>
                 <p className="mt-3 text-lg font-semibold">{draft.title}</p>
                 <MarkdownContent content={draft.body} />
+                <Button
+                  className="mt-4"
+                  loading={creating}
+                  onClick={() => {
+                    setCreating(true);
+                    void onCreate(chosen).finally(() => setCreating(false));
+                  }}
+                >
+                  {t("team-changelog.draft.create")}
+                </Button>
               </section>
             ) : null}
           </SheetPanel>

@@ -20,6 +20,7 @@ import {
   str,
   type SettingsRow,
 } from "./area";
+import { widgetTabs } from "./widget-tabs";
 
 // Widget configuration and its signing secret. The secret is returned only by the
 // secret routes below, never by the configuration read. Messenger settings and
@@ -108,9 +109,6 @@ const config = z.object({
 
 export function readConfig(row: SettingsRow) {
   const stored = parseJson(row.widgetConfig);
-  // An empty blob takes today's defaults; an older stored blob keeps the older tab defaults.
-  const fresh = Object.keys(stored).length === 0;
-  const storedTabs = record(stored.tabs);
   const storedHome = record(stored.home);
   const gradient = record(storedHome.gradient);
   return {
@@ -119,14 +117,7 @@ export function readConfig(row: SettingsRow) {
     position: str(stored.position) ?? "bottom-right",
     launcherGreeting: str(stored.launcherGreeting) ?? "",
     launcherLabel: str(stored.launcherLabel) ?? "",
-    tabs: {
-      feedback: bool(storedTabs.feedback, true),
-      changelog: bool(storedTabs.changelog, fresh),
-      help: bool(storedTabs.help, false),
-      messenger: bool(storedTabs.messenger, fresh),
-      tickets: bool(storedTabs.tickets, true),
-      home: bool(storedTabs.home, true),
-    },
+    tabs: widgetTabs(stored),
     visitorAnalytics: bool(stored.visitorAnalytics, true),
     visitorDeviceTracking: bool(stored.visitorDeviceTracking, true),
     home: {
@@ -211,7 +202,7 @@ const area = settingsArea({
           visitorDeviceTracking: patch.visitorDeviceTracking,
         }),
         ...(patch.tabs && {
-          tabs: { ...record(stored.tabs), ...defined(patch.tabs) },
+          tabs: { ...widgetTabs(stored), ...defined(patch.tabs) },
         }),
         ...(patch.home && {
           home: {

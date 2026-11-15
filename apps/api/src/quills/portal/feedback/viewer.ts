@@ -34,6 +34,7 @@ import type { Database } from "../../framework/define-route";
 import { votingOf } from "../../feedback/board-voting";
 import { notFound, notTest } from "../../feedback/visibility";
 import { bool, parseJson, record, str } from "../../settings/area";
+import { navTabs } from "../nav";
 
 export type Customer = "portal" | "widget";
 export const title = (audience: Customer) =>
@@ -125,6 +126,8 @@ export async function viewerFor(
     changelogPublic:
       record(parseJson(row?.metadata ?? null).changelogSettings).audience !==
       "authenticated",
+    /** The portal tabs that are on. The roadmap and changelog routes answer 404 while theirs is off. */
+    tabs: navTabs(config),
   };
 }
 
