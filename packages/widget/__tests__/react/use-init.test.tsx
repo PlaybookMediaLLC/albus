@@ -8,8 +8,8 @@ import {
   afterEach,
 } from "vite-plus/test";
 import { render, act, cleanup } from "@testing-library/react";
-import { useQuackbackInit } from "../../src/react/use-init";
-import Quackback from "../../src";
+import { useQuillsInit } from "../../src/react/use-init";
+import Quills from "../../src";
 
 const ORIGIN = "https://feedback.acme.com";
 
@@ -33,16 +33,16 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
-  Quackback.destroy();
+  Quills.destroy();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
-describe("useQuackbackInit", () => {
+describe("useQuillsInit", () => {
   it("inits the widget on mount and destroys on unmount", () => {
-    const destroy = vi.spyOn(Quackback, "destroy");
+    const destroy = vi.spyOn(Quills, "destroy");
     function C() {
-      useQuackbackInit({ instanceUrl: ORIGIN, workspace: "acme" });
+      useQuillsInit({ instanceUrl: ORIGIN, workspace: "acme" });
       return null;
     }
     const { unmount } = render(<C />);
@@ -54,9 +54,9 @@ describe("useQuackbackInit", () => {
   });
 
   it("re-calls identify when the identity option changes", () => {
-    const identify = vi.spyOn(Quackback, "identify");
+    const identify = vi.spyOn(Quills, "identify");
     function C({ user }: { user: { id: string; email: string } | null }) {
-      useQuackbackInit({
+      useQuillsInit({
         instanceUrl: ORIGIN,
         workspace: "acme",
         identity: user ? { id: user.id, email: user.email } : undefined,
@@ -74,7 +74,7 @@ describe("useQuackbackInit", () => {
 
   it("does not init when shouldInitialize is false", () => {
     function C() {
-      useQuackbackInit({
+      useQuillsInit({
         instanceUrl: ORIGIN,
         workspace: "acme",
         shouldInitialize: false,
@@ -87,7 +87,7 @@ describe("useQuackbackInit", () => {
 
   it("inits later when shouldInitialize flips to true", () => {
     function C({ enabled }: { enabled: boolean }) {
-      useQuackbackInit({
+      useQuillsInit({
         instanceUrl: ORIGIN,
         workspace: "acme",
         shouldInitialize: enabled,
@@ -115,7 +115,7 @@ describe("useQuackbackInit", () => {
       }),
     );
     function C() {
-      useQuackbackInit({
+      useQuillsInit({
         instanceUrl: ORIGIN,
         workspace: "acme",
         initializeDelay: 500,
@@ -136,9 +136,9 @@ describe("useQuackbackInit", () => {
 });
 
 it("changes user A to B to anonymous before readiness", () => {
-  const identify = vi.spyOn(Quackback, "identify");
+  const identify = vi.spyOn(Quills, "identify");
   function C({ id }: { id?: string }) {
-    useQuackbackInit({
+    useQuillsInit({
       instanceUrl: ORIGIN,
       workspace: "acme",
       identity: id ? { id, email: `${id}@test.example` } : undefined,
@@ -159,8 +159,8 @@ it("changes user A to B to anonymous before readiness", () => {
 it("delayed startup uses the latest identity and ignores changes until initialized", () => {
   vi.useFakeTimers();
   vi.stubGlobal("requestIdleCallback", undefined);
-  const init = vi.spyOn(Quackback, "init");
-  const identify = vi.spyOn(Quackback, "identify");
+  const init = vi.spyOn(Quills, "init");
+  const identify = vi.spyOn(Quills, "identify");
   function C({
     id,
     enabled = true,
@@ -170,7 +170,7 @@ it("delayed startup uses the latest identity and ignores changes until initializ
     enabled?: boolean;
     url?: string;
   }) {
-    useQuackbackInit({
+    useQuillsInit({
       instanceUrl: url,
       workspace: "acme",
       shouldInitialize: enabled,
@@ -209,9 +209,9 @@ it("delayed startup uses the latest identity and ignores changes until initializ
 it("Strict Mode leaves one instance and cancels a delayed unmount", () => {
   vi.useFakeTimers();
   vi.stubGlobal("requestIdleCallback", undefined);
-  const init = vi.spyOn(Quackback, "init");
+  const init = vi.spyOn(Quills, "init");
   function C({ delay = 0 }: { delay?: number }) {
-    useQuackbackInit({
+    useQuillsInit({
       instanceUrl: ORIGIN,
       workspace: "acme",
       initializeDelay: delay,

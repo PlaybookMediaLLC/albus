@@ -1,11 +1,7 @@
-import Quackback, { type EventMap, type WidgetUser } from "@quackback/widget";
-import {
-  useQuackback,
-  useQuackbackInit,
-  useQuackbackEvent,
-} from "@quackback/widget/react";
-import { SDK_VERSION } from "@quackback/widget/version";
-import { WidgetView, type WidgetViewProps } from "@quackback/widget/ui";
+import Quills, { type EventMap, type WidgetUser } from "@quills/widget";
+import { useQuills, useQuillsInit, useQuillsEvent } from "@quills/widget/react";
+import { SDK_VERSION } from "@quills/widget/version";
+import { WidgetView, type WidgetViewProps } from "@quills/widget/ui";
 
 const viewProps: WidgetViewProps = { onClose: () => {}, initialTab: "home" };
 const recordReturningAction: WidgetViewProps["onSubmitFeedback"] =
@@ -46,18 +42,18 @@ void viewProps;
 ({ initialTab: "home" }) satisfies WidgetViewProps;
 
 export function useConsumer() {
-  const sdk: typeof Quackback = useQuackback();
+  const sdk: typeof Quills = useQuills();
   sdk.init({
     instanceUrl: "https://feedback.example.com",
     workspace: "acme",
     identity: { id: "a", email: "a@example.com" },
   });
-  useQuackbackInit({
+  useQuillsInit({
     instanceUrl: "https://feedback.example.com",
     workspace: "acme",
     shouldInitialize: false,
   });
-  useQuackbackEvent("vote", (payload: EventMap["vote"]) => {
+  useQuillsEvent("vote", (payload: EventMap["vote"]) => {
     payload.voted satisfies boolean;
   });
   const user: WidgetUser | null = sdk.getUser();

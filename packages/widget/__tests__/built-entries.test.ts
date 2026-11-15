@@ -42,10 +42,10 @@ it("built IIFE replays its queue and preserves explicit init over baked defaults
       window.fetch=async()=>({ok:true,json:async()=>({})});
       window.__QUACKBACK_URL__='https://baked.example.com';
       window.__QUACKBACK_CONFIG__={};
-      window.Quackback=function(){(window.Quackback.q??=[]).push(arguments)};
-      Quackback('init',{instanceUrl:'https://explicit.example.com',workspace:'acme',launcher:false,placement:'left'});
-      Quackback('metadata',{page:'queue-replay'});
-      Quackback('open',{articleId:'article_saved'});
+      window.Quills=function(){(window.Quills.q??=[]).push(arguments)};
+      Quills('init',{instanceUrl:'https://explicit.example.com',workspace:'acme',launcher:false,placement:'left'});
+      Quills('metadata',{page:'queue-replay'});
+      Quills('open',{articleId:'article_saved'});
     `);
     browser.eval(
       readFileSync(new URL("../dist/browser.js", import.meta.url), "utf8"),
@@ -64,7 +64,7 @@ it("built IIFE replays its queue and preserves explicit init over baked defaults
     expect(
       browser.document.getElementById("quackback-widget-styles")?.textContent,
     ).toContain("left:16px");
-    browser.eval("Quackback('destroy')");
+    browser.eval("Quills('destroy')");
     expect(browser.document.querySelector("iframe")).toBeNull();
   } finally {
     await browser.happyDOM.close();
@@ -81,20 +81,20 @@ it("built ESM and CommonJS entries share their singleton with React", () => {
     import {createRequire} from 'node:module';
     import assert from 'node:assert/strict';
     const require=createRequire(import.meta.url);
-    const esm=await import('@quackback/widget');
-    const esmReact=await import('@quackback/widget/react');
-    const cjs=require('@quackback/widget');
-    const cjsReact=require('@quackback/widget/react');
-    assert.equal(esm.default,esm.Quackback);
-    assert.equal(cjs.default,cjs.Quackback);
-    assert.equal(esm.Quackback,esmReact.useQuackback());
-    assert.equal(cjs.Quackback,cjsReact.useQuackback());
-    assert.equal(cjs.Quackback,cjsReact.Quackback);
-    assert.equal(esm.Quackback,esmReact.Quackback);
-    assert.equal((await import('@quackback/widget/version')).SDK_VERSION,esm.SDK_VERSION);
-    assert.equal(require('@quackback/widget/version').SDK_VERSION,cjs.SDK_VERSION);
-    assert.equal(typeof (await import('@quackback/widget/ui')).WidgetView,'function');
-    assert.equal(typeof require('@quackback/widget/ui').WidgetView,'function');
+    const esm=await import('@quills/widget');
+    const esmReact=await import('@quills/widget/react');
+    const cjs=require('@quills/widget');
+    const cjsReact=require('@quills/widget/react');
+    assert.equal(esm.default,esm.Quills);
+    assert.equal(cjs.default,cjs.Quills);
+    assert.equal(esm.Quills,esmReact.useQuills());
+    assert.equal(cjs.Quills,cjsReact.useQuills());
+    assert.equal(cjs.Quills,cjsReact.Quills);
+    assert.equal(esm.Quills,esmReact.Quills);
+    assert.equal((await import('@quills/widget/version')).SDK_VERSION,esm.SDK_VERSION);
+    assert.equal(require('@quills/widget/version').SDK_VERSION,cjs.SDK_VERSION);
+    assert.equal(typeof (await import('@quills/widget/ui')).WidgetView,'function');
+    assert.equal(typeof require('@quills/widget/ui').WidgetView,'function');
     console.log('shared');
   `,
     ],
@@ -119,7 +119,7 @@ it("root and version entries import without React or browser globals", () => {
     const require=createRequire(import.meta.url);
     assert.equal(typeof window,'undefined');
     assert.equal(typeof document,'undefined');
-    for(const name of ['@quackback/widget','@quackback/widget/version']) {await import(name);require(name)}
+    for(const name of ['@quills/widget','@quills/widget/version']) {await import(name);require(name)}
   `,
     ],
     { cwd, stdio: "pipe" },
@@ -144,6 +144,6 @@ it("emits every declared runtime and declaration entry and a standalone IIFE", (
     new URL("../dist/browser.js", import.meta.url),
     "utf8",
   );
-  expect(browser).toContain("QuackbackBundle");
+  expect(browser).toContain("QuillsBundle");
   expect(browser).not.toMatch(/require\(['"](?:react|zod)/);
 });

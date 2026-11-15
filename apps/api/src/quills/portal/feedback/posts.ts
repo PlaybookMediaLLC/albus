@@ -82,7 +82,7 @@ const widgetMetadata = z
   .refine((map) => Object.keys(map).length <= 20, "At most 20 metadata keys")
   .optional()
   .describe(
-    "Context from the host page, such as pageUrl and browser, and keys that the host app set with Quackback.metadata. Teammates read it; customers never do.",
+    "Context from the host page, such as pageUrl and browser, and keys that the host app set with the widget's metadata command. Teammates read it; customers never do.",
   );
 
 export const postItem = z.object({

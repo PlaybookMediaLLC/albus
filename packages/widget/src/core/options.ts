@@ -28,14 +28,14 @@ export const initOptionsSchema = z.object({
   instanceUrl: z
     .string()
     .check(
-      z.refine(isSafeHttpUrl, "Quackback: instanceUrl must be an http(s) URL"),
+      z.refine(isSafeHttpUrl, "Quills: instanceUrl must be an http(s) URL"),
     ),
   workspace: z
     .string()
     .check(
       z.refine(
         isWorkspaceRef,
-        "Quackback: workspace must be a workspace ID or slug",
+        "Quills: workspace must be a workspace ID or slug",
       ),
     ),
   placement: z.optional(z.enum(["left", "right"])),

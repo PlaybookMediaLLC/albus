@@ -1,8 +1,8 @@
 {
-  "name": "@quackback/widget",
+  "name": "@quills/widget",
   "version": "0.1.6",
   "license": "MIT",
-  "description": "Official SDK for the Quackback feedback widget. Embed Quackback in your app.",
+  "description": "Official SDK for the Quills feedback widget of Kaneo. Embed Quills in your app.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -72,13 +72,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/QuackbackIO/quackback.git",
+    "url": "git+https://github.com/PlaybookMediaLLC/kaneo.git",
     "directory": "packages/widget"
   },
-  "homepage": "https://quackback.io/docs/widget",
-  "bugs": "https://github.com/QuackbackIO/quackback/issues",
+  "homepage": "https://github.com/PlaybookMediaLLC/kaneo/tree/main/packages/widget#readme",
+  "bugs": "https://github.com/PlaybookMediaLLC/kaneo/issues",
   "keywords": [
-    "quackback",
+    "quills",
+    "kaneo",
     "feedback",
     "widget",
     "customer-feedback",
