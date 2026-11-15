@@ -1,11 +1,18 @@
+import { X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { ListBoardsResponse } from "../../../api/team/list-boards";
-import type { ListStatusesResponse } from "../../../api/team/list-statuses";
-import { useCreatePost } from "../../../hooks/team/use-create-post";
-import { useListTags } from "../../../hooks/team/use-list-tags";
-import { useTeamRuntime } from "../../../team/runtime";
-import { Dialog, DialogPopup, DialogTitle } from "../../../ui/upstream";
+import type { ListBoardsResponse } from "../../api/team/list-boards";
+import type { ListStatusesResponse } from "../../api/team/list-statuses";
+import { useCreatePost } from "../../hooks/team/use-create-post";
+import { useListTags } from "../../hooks/team/use-list-tags";
+import { useTeamRuntime } from "../runtime";
+import { IconButton } from "../../ui/inbox/icon-button";
+import {
+  Dialog,
+  DialogClose,
+  DialogPopup,
+  DialogTitle,
+} from "../../ui/upstream";
 import { AuthorPicker, type RequestAuthor } from "./author-picker";
 import { NewRequestForm } from "./new-request-form";
 
@@ -15,12 +22,14 @@ export interface NewRequestDialogProps {
   statuses: ListStatusesResponse["statuses"];
   /** The board of the list filter. */
   boardId?: string;
+  /** The first status, such as the column of a roadmap. Without it, the default status. */
+  defaultStatusId?: string;
   onClose: () => void;
   /** Opens the new request. */
   onCreated: (postId: string) => void;
 }
 
-/** The New request modal. The page renders it while the address has `new=true`. */
+/** The New request modal of the Requests page (`new=true`) and of the roadmap columns. */
 export function NewRequestDialog(props: NewRequestDialogProps) {
   const { t } = useTranslation("quills");
   const team = useTeamRuntime();
@@ -38,7 +47,10 @@ export function NewRequestDialog(props: NewRequestDialogProps) {
         if (!open) props.onClose();
       }}
     >
-      <DialogPopup className="p-5 sm:max-w-2xl">
+      <DialogPopup
+        showCloseButton={false}
+        className="overflow-hidden sm:max-w-2xl"
+      >
         <DialogTitle className="sr-only">
           {t("team-posts.newRequest")}
         </DialogTitle>
@@ -47,6 +59,7 @@ export function NewRequestDialog(props: NewRequestDialogProps) {
           statuses={props.statuses}
           tags={tags.data?.tags ?? []}
           boardId={props.boardId}
+          defaultStatusId={props.defaultStatusId}
           author={
             <AuthorPicker
               workspaceId={props.workspaceId}
@@ -59,13 +72,26 @@ export function NewRequestDialog(props: NewRequestDialogProps) {
               param: { workspaceId: props.workspaceId },
               json: {
                 ...values,
-                ...(statusId ? { statusId } : {}),
+                // A status that a teammate deleted while the dialog was open gets the default.
+                ...(props.statuses.some((status) => status.id === statusId)
+                  ? { statusId }
+                  : {}),
                 ...(author ? { authorPrincipalId: author.principalId } : {}),
               },
             });
             props.onCreated(post.id);
           }}
         />
+        <DialogClose
+          render={
+            <IconButton
+              label={t("team-posts.close")}
+              className="absolute end-3 top-3 rounded-full before:rounded-full"
+            />
+          }
+        >
+          <X aria-hidden="true" />
+        </DialogClose>
       </DialogPopup>
     </Dialog>
   );

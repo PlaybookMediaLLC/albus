@@ -47,7 +47,7 @@ describe("widget host page and bundles", () => {
   const dist = mkdtempSync(join(tmpdir(), "widget-dist-"));
   writeFileSync(join(dist, "host.js"), "console.log('host')");
   writeFileSync(join(dist, "host.css"), "body{}");
-  writeFileSync(join(dist, "browser.js"), "window.QuackbackBundle=1");
+  writeFileSync(join(dist, "browser.js"), "window.QuillsBundle=1");
   const app = new Hono().route("/quills-public", widgetHost(dist));
   afterAll(() => rmSync(dist, { recursive: true, force: true }));
 
@@ -83,7 +83,7 @@ describe("widget host page and bundles", () => {
     expect(stale.headers.get("cache-control")).toBe("public, max-age=300");
     const sdk = await app.request("/quills-public/acme/widget/sdk.js");
     expect(sdk.headers.get("cache-control")).toBe("public, max-age=300");
-    expect(await sdk.text()).toBe("window.QuackbackBundle=1");
+    expect(await sdk.text()).toBe("window.QuillsBundle=1");
     expect(
       (await app.request("/quills-public/acme/widget/host.css")).headers.get(
         "content-type",

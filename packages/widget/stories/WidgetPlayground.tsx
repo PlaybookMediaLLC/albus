@@ -1,8 +1,8 @@
 import { useState } from "react";
 import {
-  useQuackback,
-  useQuackbackEvent,
-  useQuackbackInit,
+  useQuills,
+  useQuillsEvent,
+  useQuillsInit,
 } from "../src/react/index.js";
 
 export interface WidgetPlaygroundProps {
@@ -13,7 +13,7 @@ export interface WidgetPlaygroundProps {
 }
 
 export function WidgetPlayground(options: WidgetPlaygroundProps) {
-  const sdk = useQuackback();
+  const sdk = useQuills();
   const [identity, setIdentity] = useState<"anonymous" | "ada" | "grace">(
     "anonymous",
   );
@@ -21,18 +21,18 @@ export function WidgetPlayground(options: WidgetPlaygroundProps) {
   const [confirmedUser, setConfirmedUser] = useState("Waiting for iframe");
   const [lastEvent, setLastEvent] = useState("None");
 
-  useQuackbackEvent("ready", () => setReady(true));
-  useQuackbackEvent("identify", ({ user, success }) => {
+  useQuillsEvent("ready", () => setReady(true));
+  useQuillsEvent("identify", ({ user, success }) => {
     setConfirmedUser(
       success ? (user?.name ?? "Anonymous") : "Identification failed",
     );
   });
-  useQuackbackEvent("open", (payload) =>
+  useQuillsEvent("open", (payload) =>
     setLastEvent(`open: ${JSON.stringify(payload)}`),
   );
-  useQuackbackEvent("close", () => setLastEvent("close"));
-  useQuackbackEvent("unread", ({ count }) => setLastEvent(`unread: ${count}`));
-  useQuackbackInit({
+  useQuillsEvent("close", () => setLastEvent("close"));
+  useQuillsEvent("unread", ({ count }) => setLastEvent(`unread: ${count}`));
+  useQuillsInit({
     ...options,
     instanceUrl: new URL("./fixtures", window.location.href).href,
     workspace: "demo",

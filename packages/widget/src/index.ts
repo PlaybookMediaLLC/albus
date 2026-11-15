@@ -26,7 +26,7 @@ export type {
 
 const sdk = createSDK();
 
-export const Quackback = {
+export const Quills = {
   version: SDK_VERSION,
   init(options: InitOptions): void {
     sdk.dispatch("init", options);
@@ -77,4 +77,7 @@ export const Quackback = {
   },
 };
 
-export default Quackback;
+/** @deprecated Use `Quills`. The name of the SDK before the rename; it stays for existing imports. */
+export const Quackback = Quills;
+
+export default Quills;

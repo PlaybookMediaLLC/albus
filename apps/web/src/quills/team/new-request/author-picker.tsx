@@ -1,9 +1,9 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronsUpDown } from "lucide-react";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useListUsers } from "../../../hooks/team/use-list-users";
-import { useTeamRuntime } from "../../../team/runtime";
-import { PersonAvatar } from "../../../ui/person-avatar";
+import { useListUsers } from "../../hooks/team/use-list-users";
+import { useTeamRuntime } from "../runtime";
+import { PersonAvatar } from "../../ui/person-avatar";
 import {
   Button,
   Combobox,
@@ -13,7 +13,7 @@ import {
   ComboboxPopup,
   ComboboxTrigger,
   useDebouncedValue,
-} from "../../../ui/upstream";
+} from "../../ui/upstream";
 
 /** The person a new request is posted for. Null is the signed-in teammate. */
 export interface RequestAuthor {
@@ -94,11 +94,18 @@ export function AuthorPicker({
       }}
     >
       <ComboboxTrigger
-        render={<Button type="button" variant="ghost" size="sm" />}
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="rounded-full ps-1 before:rounded-full"
+          />
+        }
         aria-label={t("team-posts.author", { name })}
       >
         {chip}
-        <ChevronDown aria-hidden="true" />
+        <ChevronsUpDown aria-hidden="true" />
       </ComboboxTrigger>
       <ComboboxPopup aria-labelledby={titleId} className="w-72">
         <p id={titleId} className="px-3 pt-3 text-sm font-medium">

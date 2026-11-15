@@ -1,12 +1,12 @@
-import Widget = require("@quackback/widget");
-import ReactAdapter = require("@quackback/widget/react");
-import Version = require("@quackback/widget/version");
-import UI = require("@quackback/widget/ui");
+import Widget = require("@quills/widget");
+import ReactAdapter = require("@quills/widget/react");
+import Version = require("@quills/widget/version");
+import UI = require("@quills/widget/ui");
 
 UI.WidgetView satisfies (props: UI.WidgetViewProps) => unknown;
 
 export function useConsumer() {
-  const sdk: typeof Widget.Quackback = ReactAdapter.useQuackback();
+  const sdk: typeof Widget.Quills = ReactAdapter.useQuills();
   sdk.init({ instanceUrl: "https://feedback.example.com", workspace: "acme" });
   sdk.open({ view: "messages" });
   Version.SDK_VERSION satisfies string;

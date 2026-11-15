@@ -3,8 +3,8 @@
 	"denied": "You do not have permission to see this page. Ask a workspace admin for access.",
 	"desktop": {
 		"denied": "The browser blocks notifications for this site. Allow them in the site settings.",
-		"text": "For new posts and comments",
-		"title": "Desktop notifications"
+		"text": "Show new activity while this tab is in the background.",
+		"title": "Browser notifications"
 	},
 	"home": {
 		"announce_one": "{{count}} shipped idea is not in the changelog",
@@ -33,9 +33,20 @@
 	"navigation": "Teammate app",
 	"newRequest": "New request",
 	"notifications": {
+		"activity": "Activity",
+		"back": "Back to activity",
+		"comments": "Comments on requests you follow",
+		"email": "Email",
+		"empty": "All caught up",
+		"emptyText": "Status changes and comments on requests you follow show here.",
+		"inApp": "In app",
+		"muteEmail": "Mute all email",
 		"new_one": "{{count}} new notification",
 		"new_other": "{{count}} new notifications",
 		"readAll": "Mark all as read",
+		"saveFailed": "Quills could not save the change. Try again.",
+		"settings": "Notification settings",
+		"statusChanges": "Status changes on requests you follow",
 		"title": "Notifications",
 		"unread_one": "Notifications, {{count}} unread",
 		"unread_other": "Notifications, {{count}} unread"

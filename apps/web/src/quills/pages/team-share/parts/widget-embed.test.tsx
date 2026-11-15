@@ -28,7 +28,7 @@ describe("WidgetEmbed", () => {
     fireEvent.click(view.getByRole("button", { name: "Copy all" }));
     await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
     const [[all]] = writeText.mock.calls as unknown as [[string]];
-    expect(all).toContain('Quackback("init"');
+    expect(all).toContain('Quills("init"');
     expect(all).toContain("ssoToken");
   });
 });

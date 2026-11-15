@@ -18,7 +18,7 @@ import { useListNavigation } from "../../ui/inbox/use-list-navigation";
 import { PageFrame } from "../../ui/page-frame";
 import { Button } from "../../ui/upstream";
 import { DeletedRequest } from "./parts/deleted-request";
-import { NewRequestDialog } from "./parts/new-request-dialog";
+import { NewRequestDialog } from "../../team/new-request/new-request-dialog";
 import { groupPosts, postRow, rowContext, statusIcon } from "./post-list";
 import {
   filterPatch,

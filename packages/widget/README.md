@@ -1,44 +1,46 @@
-# @quackback/widget
+# @quills/widget
 
-The official SDK for embedding the [Quackback](https://quackback.io) feedback widget in your app. Ships with TypeScript types and a React adapter. Runtime boundary validation uses Zod (the browser bundle uses Zod Mini); this is not a zero-runtime-dependency package. React remains an optional peer dependency and is loaded only by the `/react` and `/ui` entries.
+The official SDK for embedding the Quills feedback widget of [Kaneo](https://github.com/PlaybookMediaLLC/kaneo) in your app. Ships with TypeScript types and a React adapter. Runtime boundary validation uses Zod (the browser bundle uses Zod Mini); this is not a zero-runtime-dependency package. React remains an optional peer dependency and is loaded only by the `/react` and `/ui` entries.
+
+> Renamed from `@quackback/widget`. The old names still work and are deprecated: the `Quackback` export, `useQuackbackInit`, `useQuackback`, `useQuackbackEvent`, and `window.Quackback` in script-tag snippets. The SDK is based on the MIT-licensed Quackback widget; see `LICENSE`.
 
 ## Install
 
 ```bash
-npm install @quackback/widget
-# or:  pnpm add @quackback/widget
-# or:  bun add @quackback/widget
+npm install @quills/widget
+# or:  pnpm add @quills/widget
+# or:  bun add @quills/widget
 ```
 
 ## Vanilla JS
 
 ```js
-import { Quackback } from '@quackback/widget'
+import { Quills } from '@quills/widget'
 
-Quackback.init({ instanceUrl: 'https://kaneo.yourcompany.com', workspace: 'acme' })
+Quills.init({ instanceUrl: 'https://kaneo.yourcompany.com', workspace: 'acme' })
 
 // When you know who the user is:
-Quackback.identify({ id: 'u_123', email: 'ada@example.com', name: 'Ada' })
+Quills.identify({ id: 'u_123', email: 'ada@example.com', name: 'Ada' })
 
 // Deep-link to a specific view:
-Quackback.open({ view: 'new-post', title: 'Bug:', board: 'bugs' })
+Quills.open({ view: 'new-post', title: 'Bug:', board: 'bugs' })
 ```
 
 ## React
 
 ```tsx
-import { useQuackbackInit, useQuackback, useQuackbackEvent } from '@quackback/widget/react'
+import { useQuillsInit, useQuills, useQuillsEvent } from '@quills/widget/react'
 
 function App() {
   const { user } = useAuth()
 
-  useQuackbackInit({
+  useQuillsInit({
     instanceUrl: 'https://kaneo.yourcompany.com',
     workspace: 'acme',
     identity: user ? { id: user.id, email: user.email, name: user.name } : undefined,
   })
 
-  useQuackbackEvent('post:created', (post) => {
+  useQuillsEvent('post:created', (post) => {
     analytics.track('feedback_submitted', { postId: post.id })
   })
 
@@ -46,18 +48,18 @@ function App() {
 }
 
 function FeedbackButton() {
-  const qb = useQuackback()
+  const qb = useQuills()
   return <button onClick={() => qb.open({ view: 'new-post' })}>Feedback</button>
 }
 ```
 
-No provider needed — Quackback is a singleton and the hooks wrap its lifecycle. The root entry and React adapter share one SDK within ESM and within CommonJS. Use one `useQuackbackInit` owner per page.
+No provider needed — Quills is a singleton and the hooks wrap its lifecycle. The root entry and React adapter share one SDK within ESM and within CommonJS. Use one `useQuillsInit` owner per page.
 
 Changing `identity` to `undefined` switches to anonymous mode. Delayed startup uses the latest options and does not send identity until initialization. Changing `instanceUrl`, `workspace`, `shouldInitialize`, or `initializeDelay` restarts that lifecycle; other options apply at the next initialization. Unmounting cancels pending startup and destroys the owned instance, including during React Strict Mode cleanup.
 
 ## Other frameworks
 
-Vue, Svelte, Angular, Solid: import `Quackback` from the main entry and call it directly. Framework adapters ship on request.
+Vue, Svelte, Angular, Solid: import `Quills` from the main entry and call it directly. Framework adapters ship on request.
 
 ## Prefer a script tag?
 
@@ -67,7 +69,7 @@ Drop this in your `<head>` and skip the install step entirely:
 <script src="https://kaneo.yourcompany.com/api/quills-public/acme/widget/sdk.js" defer></script>
 ```
 
-The script reads the instance URL and the workspace (ID or slug) from its own URL, so `Quackback("init")` needs neither. The unversioned URL caches for 5 minutes. A URL with `?v=` and the bundle's current content hash caches for one year.
+The script reads the instance URL and the workspace (ID or slug) from its own URL, so `Quills("init")` needs neither. Snippets pasted before the rename call `window.Quackback`; they keep working. The unversioned URL caches for 5 minutes. A URL with `?v=` and the bundle's current content hash caches for one year.
 
 ## API
 
@@ -75,25 +77,25 @@ The script reads the instance URL and the workspace (ID or slug) from its own UR
 
 | Method                                        | Description                                                                    |
 | --------------------------------------------- | ------------------------------------------------------------------------------ |
-| `Quackback.init(options)`                     | Create launcher + iframe. `options.instanceUrl` and `options.workspace` required. |
-| `Quackback.identify(identity?)`               | Attribute activity to a user. Omit for anonymous.                              |
-| `Quackback.logout()`                          | Clear identity and close the panel; keep the launcher available.                        |
-| `Quackback.open(options?)`                    | Open the panel; optional deep-link payload (see below).                        |
-| `Quackback.close()`                           | Close the panel.                                                               |
-| `Quackback.showLauncher()` / `hideLauncher()` | Toggle the floating button.                                                    |
-| `Quackback.metadata(patch)`                   | Attach session context to submitted feedback. Pass `null` to remove a key. The SDK adds `pageUrl` and the widget adds `browser`. |
-| `Quackback.tracking(enabled)`                 | Allow or stop host-page visitor analytics. `false` also removes the device id. |
-| `Quackback.on(event, handler)`                | Subscribe to a widget event. Returns an unsubscribe function.                  |
-| `Quackback.off(event, handler?)`              | Remove a specific handler, or all listeners for the event.                     |
-| `Quackback.destroy()`                         | Cancel owned work and remove widget DOM; preserve subscriptions and consent choice.                                            |
-| `Quackback.isOpen()`                          | Whether the panel is currently visible.                                        |
-| `Quackback.getUser()`                         | The current identified user, or `null`.                                        |
-| `Quackback.isIdentified()`                    | `true` when a user is identified (non-anonymous).                              |
+| `Quills.init(options)`                     | Create launcher + iframe. `options.instanceUrl` and `options.workspace` required. |
+| `Quills.identify(identity?)`               | Attribute activity to a user. Omit for anonymous.                              |
+| `Quills.logout()`                          | Clear identity and close the panel; keep the launcher available.                        |
+| `Quills.open(options?)`                    | Open the panel; optional deep-link payload (see below).                        |
+| `Quills.close()`                           | Close the panel.                                                               |
+| `Quills.showLauncher()` / `hideLauncher()` | Toggle the floating button.                                                    |
+| `Quills.metadata(patch)`                   | Attach session context to submitted feedback. Pass `null` to remove a key. The SDK adds `pageUrl` and the widget adds `browser`. |
+| `Quills.tracking(enabled)`                 | Allow or stop host-page visitor analytics. `false` also removes the device id. |
+| `Quills.on(event, handler)`                | Subscribe to a widget event. Returns an unsubscribe function.                  |
+| `Quills.off(event, handler?)`              | Remove a specific handler, or all listeners for the event.                     |
+| `Quills.destroy()`                         | Cancel owned work and remove widget DOM; preserve subscriptions and consent choice.                                            |
+| `Quills.isOpen()`                          | Whether the panel is currently visible.                                        |
+| `Quills.getUser()`                         | The current identified user, or `null`.                                        |
+| `Quills.isIdentified()`                    | `true` when a user is identified (non-anonymous).                              |
 
 ### `init` options
 
 ```ts
-Quackback.init({
+Quills.init({
   instanceUrl: 'https://kaneo.yourcompany.com', // required
   workspace: 'acme', // required: the Kaneo workspace ID or slug
   placement: 'right' | 'left', // default 'right'
@@ -118,15 +120,15 @@ Quackback.init({
 })
 ```
 
-Theme colors and tab visibility come from your Quackback admin (Admin → Settings → Widget).
+Theme colors and tab visibility come from Kaneo feedback settings (Settings → Conversations → Widget).
 
 ### Visitor analytics and consent
 
 When the instance has visitor analytics on, the widget reports host-page views and may keep a device id in the host page's `localStorage`. If your site asks visitors for analytics consent, start with `tracking: false` and switch it on once they accept:
 
 ```ts
-Quackback.init({ instanceUrl, tracking: false })
-onAnalyticsConsent((granted) => Quackback.tracking(granted))
+Quills.init({ instanceUrl, tracking: false })
+onAnalyticsConsent((granted) => Quills.tracking(granted))
 ```
 
 DNT (`doNotTrack === "1"`) and Global Privacy Control block device-ID access, creation, storage, and sending as well as pageview tracking. Browser signals are checked again when sending analytics. A host withdrawal survives destroy/re-init unless the host explicitly opts in again.
@@ -136,26 +138,26 @@ The launcher and panel work either way; only pageview tracking waits for consent
 ### `identify` shapes
 
 ```ts
-Quackback.identify() // anonymous
-Quackback.identify({ id: 'u_123', email: 'ada@x.com', name: 'Ada' }) // unverified
-Quackback.identify({ ssoToken: 'eyJ...' }) // verified
+Quills.identify() // anonymous
+Quills.identify({ id: 'u_123', email: 'ada@x.com', name: 'Ada' }) // unverified
+Quills.identify({ ssoToken: 'eyJ...' }) // verified
 ```
 
 Before iframe readiness, only the latest identity is queued. Once ready, identify requests are serialized behind `quackback:identify-result`; while a newer identity waits, an old result cannot restore the previous user or emit an obsolete identify event. `getUser()` stays `null` until the latest request is confirmed. If the iframe never acknowledges a request, identity remains unconfirmed; the SDK does not guess which late response belongs to a later request.
 
-See the [Identify users guide](https://quackback.io/docs/widget/identify-users) for JWT claims and server examples.
+Sign the token on your server with the workspace secret from Settings → Login in Kaneo.
 
 ### `open` deep-links
 
 ```ts
-Quackback.open() // home
-Quackback.open({ view: 'new-post', title: 'Bug:', body: '...', board: 'bugs' }) // pre-filled form
-Quackback.open({ view: 'changelog' }) // changelog feed
-Quackback.open({ view: 'help', query: 'pricing' }) // help search
-Quackback.open({ view: 'messages' }) // messenger conversations
-Quackback.open({ view: 'tickets' }) // the visitor's tickets, or messages when unavailable
-Quackback.open({ postId: 'post_01h...' }) // specific post
-Quackback.open({ articleId: 'article_01h...' }) // help article TypeID or slug
+Quills.open() // home
+Quills.open({ view: 'new-post', title: 'Bug:', body: '...', board: 'bugs' }) // pre-filled form
+Quills.open({ view: 'changelog' }) // changelog feed
+Quills.open({ view: 'help', query: 'pricing' }) // help search
+Quills.open({ view: 'messages' }) // messenger conversations
+Quills.open({ view: 'tickets' }) // the visitor's tickets, or messages when unavailable
+Quills.open({ postId: 'post_01h...' }) // specific post
+Quills.open({ articleId: 'article_01h...' }) // help article TypeID or slug
 ```
 
 `postId` and `articleId` win over `view` if both are set. `board` on `open` only applies to `view: 'new-post'`. Home / Popular Ideas filtering uses `init({ defaultBoard })` or the iframe `?board=` param.
@@ -165,7 +167,7 @@ Every `open` field is live. A disabled surface or an unseen board fails closed �
 ### Events
 
 ```ts
-const unsubscribe = Quackback.on('vote', (payload) => {
+const unsubscribe = Quills.on('vote', (payload) => {
   console.log('Voted on', payload.postId)
 })
 unsubscribe()
@@ -189,7 +191,7 @@ Invalid init options throw before replacing a working instance. A re-init or des
 
 Messages must come from both the configured origin and the current iframe window. Unknown message types, unknown event names, and malformed payloads are ignored. External navigation remains limited to HTTP(S), with `noopener,noreferrer`. The iframe protocol names and deep-link fields are unchanged.
 
-Subscriptions belong to the caller and survive `destroy()` and re-init. Use the returned unsubscribe function or `off()` to remove them; `useQuackbackEvent` unsubscribes when its component unmounts.
+Subscriptions belong to the caller and survive `destroy()` and re-init. Use the returned unsubscribe function or `off()` to remove them; `useQuillsEvent` unsubscribes when its component unmounts.
 
 The closed panel is inert. Opening moves focus into the iframe; closing restores the opener when it is still present. The launcher greeting is keyboard accessible, and host-side motion honors `prefers-reduced-motion`. Keyboard behavior inside the cross-origin iframe, including its close controls, is owned by the iframe application.
 
@@ -197,11 +199,11 @@ The default launcher is a white 40 px circle, 20 px from the edge; server theme 
 
 ## Optional React widget UI
 
-The `@quackback/widget/ui` entry provides the widget's Home, Messages, Help, Feedback, and Updates screens. Its CSS values follow the [UserJot widget reference](https://userjot.com/in-app-feedback-widget), with Quills branding and official Phosphor icons. The header defaults to Quills and can use a host’s `brandName`; the footer always reads “Powered by Quills.” The package name and SDK protocol remain `@quackback/widget` and `quackback:*`. Import the stylesheet explicitly:
+The `@quills/widget/ui` entry provides the widget's Home, Messages, Help, Feedback, and Updates screens. Its CSS values follow the [UserJot widget reference](https://userjot.com/in-app-feedback-widget), with Quills branding and official Phosphor icons. The header defaults to Quills and can use a host’s `brandName`; the footer always reads “Powered by Quills.” The SDK protocol keeps its `quackback:*` message names, so cached copies of older SDKs keep working. Import the stylesheet explicitly:
 
 ```tsx
-import { WidgetView } from '@quackback/widget/ui'
-import '@quackback/widget/ui/styles.css'
+import { WidgetView } from '@quills/widget/ui'
+import '@quills/widget/ui/styles.css'
 
 <WidgetView
   key={`${instanceId}:${visitorSessionId}`}
@@ -292,7 +294,7 @@ A visitor that the host app identified can attach images and a screenshot to a n
 3. These fields are left out of the image and covered with an opaque box: `input[type=password]`, any element with `data-private`, card fields (`autocomplete="cc-…"`, and names or IDs with `card`, `cvc` or `cvv`) and frames. Add `data-private` to any other element that must not appear, for example a field that shows a password as text.
 4. The visitor reviews the image, can draw boxes and arrows and blur or redact areas, and then attaches it. Nothing is sent before the visitor posts.
 5. The adapter uploads each image through `POST /widget/uploads`, the presigned PUT and `POST /widget/files`, and sends the file IDs with the post. A retry sends the same files.
-6. Each new post sends `metadata`: the keys from `Quackback.metadata`, `pageUrl` (the page origin and path, without the query and the fragment) and `browser` (for example `Chrome 131 on macOS`). Teammates read it on the post; customers do not.
+6. Each new post sends `metadata`: the keys from `Quills.metadata`, `pageUrl` (the page origin and path, without the query and the fragment) and `browser` (for example `Chrome 131 on macOS`). Teammates read it on the post; customers do not.
 
 Limits: the copy shows a sticky element or an inner scroll area at its unscrolled position, and an image from another origin without CORS shows as blank. A host page with a Content-Security-Policy must allow `img-src data:` for the capture. An anonymous visitor gets no picker and no camera, because the upload routes need an identified visitor. The browser SDK grows by about 17 KB (6 KB gzip) for the capture; the ESM and CommonJS entries load html-to-image only when a capture starts.
 
@@ -363,7 +365,7 @@ Tests use the repository's Vite+ runner. The package tests include a fresh build
 
 ## Docs
 
-Full documentation: https://quackback.io/docs/widget
+Source: https://github.com/PlaybookMediaLLC/kaneo/tree/main/packages/widget
 
 ## License
 
