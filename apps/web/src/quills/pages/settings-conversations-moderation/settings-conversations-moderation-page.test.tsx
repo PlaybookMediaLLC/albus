@@ -109,6 +109,37 @@ describe("SettingsConversationsModerationPage", () => {
     });
   });
 
+  it("shows the review queue to a member and does not read the spam filter", async () => {
+    api = mockApi();
+    api.reply(
+      getModerationStatusFixture.ok({ enabled: true, pendingCount: 1 }),
+    );
+    api.reply(pending);
+    api.reply(flagged);
+    const view = renderPage(SettingsConversationsModerationPage, meta, {
+      permissions: { manageSettings: false },
+    });
+    expect(await view.findByText("Please add dark mode.")).toBeVisible();
+    expect(view.getByRole("link", { name: "Buy cheap watches" })).toBeVisible();
+    expect(view.queryByLabelText("Trusted senders")).toBeNull();
+    expect(view.queryByRole("alert")).toBeNull();
+    expect(api.calls("getQuillsSpamFilterConfig")).toHaveLength(0);
+  });
+
+  it("shows a spam filter failure in its section and keeps the queue", async () => {
+    api = mockApi();
+    api.reply(
+      getModerationStatusFixture.ok({ enabled: true, pendingCount: 1 }),
+    );
+    api.reply(pending);
+    api.reply({ message: "Forbidden" }, 403);
+    api.reply(flagged);
+    const view = renderPage(SettingsConversationsModerationPage, meta);
+    expect(await view.findByText("Please add dark mode.")).toBeVisible();
+    expect(await view.findByRole("alert")).toHaveTextContent(/permission/i);
+    expect(view.getByRole("link", { name: "Buy cheap watches" })).toBeVisible();
+  });
+
   it("shows empty lists and says that no board holds posts", async () => {
     api = mockApi();
     api.reply(getModerationStatusFixture.ok());

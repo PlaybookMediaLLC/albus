@@ -44,13 +44,18 @@ export function SettingsConversationsModerationPage({
     { param, query: { limit: "50" } },
     team.viewer,
   );
-  const spam = useGetSpamFilterConfig({ param }, team.viewer);
+  const manage = team.permissions.manageSettings;
+  // Only managers may read the spam filter. An empty workspace ID keeps the read off.
+  const spam = useGetSpamFilterConfig(
+    { param: { workspaceId: manage ? workspaceId : "" } },
+    team.viewer,
+  );
   const flagged = useListFlaggedMessages(
     { param, query: { limit: "20" } },
     team.viewer,
   );
   const updateSpam = useUpdateSpamFilterConfig(team.viewer);
-  const queries = [status, pending, spam, flagged];
+  const queries = [status, pending, flagged];
   const posts = pending.data?.posts ?? [];
   const comments = pending.data?.comments ?? [];
   const by = (board: string, author: string | null) =>
@@ -110,37 +115,42 @@ export function SettingsConversationsModerationPage({
               )}
             </SettingsCard>
           </SettingsSection>
-          <SettingsSection title={t("settings-conversations.moderation.spam")}>
-            <SettingsCard>
-              <SettingSwitchRow
-                title={t("settings-conversations.moderation.classifier")}
-                description={t(
-                  "settings-conversations.moderation.classifierText",
-                )}
-                checked={spam.data?.aiClassifier ?? false}
-                disabled={!team.permissions.manageSettings}
-                onCheckedChange={async (aiClassifier) => {
-                  await updateSpam.mutateAsync({
-                    param,
-                    json: { aiClassifier },
-                  });
-                }}
-              />
-              {team.permissions.manageSettings && spam.data ? (
-                <SpamFilterForm
-                  senders={spam.data.trustedSenders}
-                  onSubmit={(trustedSenders) =>
-                    problemOf(
-                      updateSpam.mutateAsync({
+          {manage ? (
+            <SettingsSection
+              title={t("settings-conversations.moderation.spam")}
+            >
+              <TeamStateView loading={spam.isLoading} problem={spam.error}>
+                <SettingsCard>
+                  <SettingSwitchRow
+                    title={t("settings-conversations.moderation.classifier")}
+                    description={t(
+                      "settings-conversations.moderation.classifierText",
+                    )}
+                    checked={spam.data?.aiClassifier ?? false}
+                    onCheckedChange={async (aiClassifier) => {
+                      await updateSpam.mutateAsync({
                         param,
-                        json: { trustedSenders },
-                      }),
-                    )
-                  }
-                />
-              ) : null}
-            </SettingsCard>
-          </SettingsSection>
+                        json: { aiClassifier },
+                      });
+                    }}
+                  />
+                  {spam.data ? (
+                    <SpamFilterForm
+                      senders={spam.data.trustedSenders}
+                      onSubmit={(trustedSenders) =>
+                        problemOf(
+                          updateSpam.mutateAsync({
+                            param,
+                            json: { trustedSenders },
+                          }),
+                        )
+                      }
+                    />
+                  ) : null}
+                </SettingsCard>
+              </TeamStateView>
+            </SettingsSection>
+          ) : null}
           <SettingsSection
             title={t("settings-conversations.moderation.flagged")}
             description={t("settings-conversations.moderation.flaggedText")}
