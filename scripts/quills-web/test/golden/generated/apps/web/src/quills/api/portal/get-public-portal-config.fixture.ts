@@ -12,6 +12,17 @@ export const getPublicPortalConfigFixture = {
           ai: false,
         },
         portalAccess: { isPrivate: false },
+        nav: {
+          tabs: {
+            feedback: false,
+            roadmap: false,
+            changelog: false,
+            help: false,
+            support: false,
+            status: false,
+          },
+          links: [],
+        },
         branding: {
           logoUrl: null,
           theme: { themeMode: "light", light: {}, dark: {} },
