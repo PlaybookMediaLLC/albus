@@ -6,7 +6,6 @@ import {
 } from "@tanstack/react-router";
 import { fireEvent, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import { getNotificationUnreadCountFixture } from "../api/team/get-notification-unread-count.fixture";
 import { listSettingsFixture } from "../api/team/list-settings.fixture";
 import { mockApi } from "../test/mock-api";
 import { renderComponent } from "../test/render";
@@ -20,10 +19,8 @@ vi.mock("@/hooks/queries/config/use-get-config", () => ({
 
 const modules = listSettingsFixture.ok().modules;
 
-/** The bell asks for the unread notifications first, then the sidebar for the settings. */
 function render(settings = listSettingsFixture.ok()) {
   const api = mockApi();
-  api.reply(getNotificationUnreadCountFixture.ok());
   api.reply(settings);
   const router = createRouter({
     routeTree: createRootRoute(),
@@ -46,7 +43,7 @@ function render(settings = listSettingsFixture.ok()) {
           },
         }}
       >
-        <SettingsSidebar workspaceId="workspace_1" workspaceName="Acme" />
+        <SettingsSidebar workspaceId="workspace_1" />
       </TeamRuntimeProvider>
     </RouterContextProvider>,
   );
@@ -58,13 +55,13 @@ beforeEach(() => {
 });
 
 describe("SettingsSidebar", () => {
-  it("shows the workspace, Back, the settings sections, the current page and Docs", async () => {
+  it("shows the title, Back, the settings sections, the current page and Docs", async () => {
     const view = render(
       listSettingsFixture.ok({
         modules: { ...modules, feedback: true, supportInbox: true },
       }),
     );
-    expect(view.getByText("Acme")).toBeVisible();
+    expect(view.getByText("Settings")).toBeVisible();
     expect(view.getByRole("link", { name: "Back" })).toHaveAttribute(
       "href",
       "/feedback/workspace_1",

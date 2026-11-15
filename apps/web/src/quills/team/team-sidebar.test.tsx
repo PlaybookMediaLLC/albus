@@ -6,14 +6,11 @@ import {
 } from "@tanstack/react-router";
 import { fireEvent, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vite-plus/test";
-import { getNotificationUnreadCountFixture } from "../api/team/get-notification-unread-count.fixture";
 import { getTeamCountsFixture } from "../api/team/get-team-counts.fixture";
-import { mockApi } from "../test/mock-api";
 import { renderComponent } from "../test/render";
 import { TeamRuntimeProvider } from "./runtime";
+import type { ShellSection } from "./shell-section";
 import { TeamSidebar } from "./team-sidebar";
-
-vi.mock("@/components/user-avatar", () => ({ UserAvatar: () => null }));
 
 const permissions = {
   read: true,
@@ -23,8 +20,10 @@ const permissions = {
   manageSettings: true,
 };
 
-function render(onNavigate = vi.fn(), create = true) {
-  mockApi().reply(getNotificationUnreadCountFixture.ok());
+function render(
+  section: ShellSection,
+  { onNavigate = vi.fn(), create = true } = {},
+) {
   return renderComponent(
     <RouterContextProvider
       router={createRouter({
@@ -41,7 +40,7 @@ function render(onNavigate = vi.fn(), create = true) {
       >
         <TeamSidebar
           workspaceId="workspace_1"
-          workspaceName="Acme"
+          section={section}
           counts={getTeamCountsFixture.ok()}
           onNavigate={onNavigate}
         />
@@ -51,10 +50,15 @@ function render(onNavigate = vi.fn(), create = true) {
 }
 
 describe("TeamSidebar", () => {
-  it("has the top buttons, the sections, the desktop card and Support", () => {
+  it("shows the section name, New request, the views of the section and the desktop switch", () => {
     vi.stubGlobal("Notification", { permission: "default" });
     const onNavigate = vi.fn();
-    const view = render(onNavigate);
+    const view = render("requests", { onNavigate });
+    // The visible title, and the list name that only screen readers get.
+    const [title, label] = view.getAllByText("Requests");
+    expect(title).not.toHaveClass("sr-only");
+    expect(label).toHaveClass("sr-only");
+    expect(view.getByRole("list", { name: "Requests" })).toBeInTheDocument();
     const create = view.getByRole("link", { name: "New request" });
     expect(create).toHaveAttribute(
       "href",
@@ -62,28 +66,22 @@ describe("TeamSidebar", () => {
     );
     fireEvent.click(create);
     expect(onNavigate).toHaveBeenCalledOnce();
-    expect(view.getByRole("button", { name: "Notifications" })).toBeVisible();
     const nav = view.getByRole("navigation", { name: "Teammate app" });
     expect(
       within(nav).getByRole("link", { name: "Under review 0" }),
     ).toBeVisible();
+    expect(within(nav).queryByRole("link", { name: "Queue" })).toBeNull();
     expect(
       view.getByRole("switch", { name: "Desktop notifications" }),
     ).toBeVisible();
-    expect(view.getByRole("link", { name: "Support" })).toHaveAttribute(
-      "target",
-      "_blank",
-    );
     vi.unstubAllGlobals();
   });
 
-  it("leaves out New request without the create permission", async () => {
-    vi.stubGlobal("Notification", { permission: "default" });
-    const view = render(vi.fn(), false);
-    expect(
-      await view.findByRole("button", { name: "Notifications" }),
-    ).toBeVisible();
+  it("leaves Settings to the rail and New request out without the create permission", () => {
+    const view = render("workspace", { create: false });
+    const nav = view.getByRole("navigation", { name: "Teammate app" });
+    expect(within(nav).getByRole("link", { name: "Overview" })).toBeVisible();
+    expect(within(nav).queryByRole("link", { name: "Settings" })).toBeNull();
     expect(view.queryByRole("link", { name: "New request" })).toBeNull();
-    vi.unstubAllGlobals();
   });
 });

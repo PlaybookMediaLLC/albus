@@ -7,13 +7,20 @@ export interface IconButtonProps extends Omit<
 > {
   /** The accessible name. The tooltip shows the same text. */
   label: string;
+  /** The side of the tooltip, such as "right" in the app rail. */
+  side?: ComponentProps<typeof TooltipContent>["side"];
 }
 
 /**
  * An icon-only button with its name in a coss Tooltip. For a menu or popover trigger,
  * render it from the trigger: `<MenuTrigger render={<IconButton label="More" />}>`.
  */
-export function IconButton({ label, children, ...props }: IconButtonProps) {
+export function IconButton({
+  label,
+  side,
+  children,
+  ...props
+}: IconButtonProps) {
   return (
     <Tooltip>
       <TooltipTrigger
@@ -28,7 +35,7 @@ export function IconButton({ label, children, ...props }: IconButtonProps) {
       >
         {children}
       </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
+      <TooltipContent side={side}>{label}</TooltipContent>
     </Tooltip>
   );
 }

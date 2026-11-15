@@ -40,6 +40,8 @@
 		"unread_one": "Notifications, {{count}} unread",
 		"unread_other": "Notifications, {{count}} unread"
 	},
+	"rail": "Sections",
+	"railWaiting": "{{section}}, new items",
 	"roles": {
 		"admin": "Admin",
 		"member": "Member",
