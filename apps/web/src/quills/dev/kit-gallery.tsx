@@ -7,6 +7,7 @@ import { FeedbackEditor } from "../ui/feedback-editor";
 import { BoardNavigation } from "../ui/board-navigation";
 import { PortalSheetContent } from "../ui/portal-sheet-content";
 import { PortalSelectContent } from "../ui/portal-select-content";
+import { PortalMenuPopup } from "../ui/portal-menu-popup";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
@@ -78,7 +79,9 @@ import {
   SheetTitle,
   SheetPanel,
   Button,
+  Menu,
   MenuItem,
+  MenuTrigger,
   Input,
   Label,
   Field,
@@ -432,6 +435,14 @@ export function KitGallery() {
                 <SheetPanel>{demo}</SheetPanel>
               </PortalSheetContent>
             </Sheet>
+            <Menu>
+              <MenuTrigger render={<Button variant="outline" />}>
+                {demo}
+              </MenuTrigger>
+              <PortalMenuPopup>
+                <MenuItem>{demo}</MenuItem>
+              </PortalMenuPopup>
+            </Menu>
             <Dialog>
               <DialogTrigger render={<Button variant="outline" />}>
                 {demo}
