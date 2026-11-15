@@ -19,7 +19,7 @@ describe("DesktopNotifications", () => {
   it("asks the browser for permission and keeps the choice on this device", async () => {
     const ask = browser("default", "granted");
     const view = renderComponent(<DesktopNotifications />);
-    const toggle = view.getByRole("switch", { name: "Desktop notifications" });
+    const toggle = view.getByRole("switch", { name: "Browser notifications" });
     expect(toggle).not.toBeChecked();
     fireEvent.click(toggle);
     await waitFor(() => expect(toggle).toBeChecked());
