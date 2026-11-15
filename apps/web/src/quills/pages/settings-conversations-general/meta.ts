@@ -1,0 +1,27 @@
+import type { PageMeta } from "../../core/types";
+export const meta = {
+  id: "settings-conversations-general",
+  feature: "settings-conversations",
+  route: "/feedback/$workspaceId/settings/conversations/general",
+  audience: "teammate",
+  mailLinked: false,
+  token: "none",
+  operations: [
+    "getQuillsOfficeHours",
+    "setQuillsOfficeHours",
+    "getQuillsConversationRouting",
+    "setQuillsConversationRouting",
+    "getQuillsEmailAutoAck",
+    "setQuillsEmailAutoAck",
+    "getQuillsWorkflowAbandonedAutoClose",
+    "setQuillsWorkflowAbandonedAutoClose",
+    "getQuillsWorkflowCloseSpam",
+    "setQuillsWorkflowCloseSpam",
+    "getQuillsDefaultSlaPolicy",
+    "setQuillsDefaultSlaPolicy",
+    "listQuillsSlaPolicyOptions",
+    "getQuillsPortalSettings",
+    "updateQuillsPortalSettings",
+  ],
+  states: ["loading", "failed", "ready", "done"],
+} satisfies PageMeta;
