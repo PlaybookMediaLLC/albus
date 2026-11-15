@@ -1,11 +1,6 @@
 import { useTranslation } from "react-i18next";
-import { PortalSelectContent } from "../../../ui/portal-select-content";
+import { SettingSelect } from "../../../ui/setting-select";
 import {
-  Select,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   SettingsCard,
   SettingsRow,
   SettingsSection,
@@ -35,26 +30,12 @@ export function ThemeSection() {
           title={title}
           description={t("settings-workspace.account.themeText")}
         >
-          <Select
-            items={items}
+          <SettingSelect
+            label={title}
             value={theme}
-            onValueChange={(next) => {
-              if (next) setTheme(next);
-            }}
-          >
-            <SelectTrigger size="sm" className="w-auto" aria-label={title}>
-              <SelectValue />
-            </SelectTrigger>
-            <PortalSelectContent>
-              <SelectGroup>
-                {items.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </PortalSelectContent>
-          </Select>
+            options={items}
+            onValueChange={async (next) => setTheme(next)}
+          />
         </SettingsRow>
       </SettingsCard>
     </SettingsSection>

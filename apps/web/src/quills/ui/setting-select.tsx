@@ -12,11 +12,20 @@ import {
   toast,
 } from "./upstream";
 
+type Option<V extends string> = {
+  value: V;
+  label: string;
+  /** The class of a color dot before the label, such as "bg-red-600". */
+  dot?: string;
+};
+
 export interface SettingSelectProps<V extends string> {
   /** The accessible name of the select. */
   label: string;
-  value: V;
-  options: readonly { value: V; label: string }[];
+  value: V | null;
+  options: readonly Option<V>[];
+  /** Shows when `value` is not one of the options, such as a custom color. */
+  placeholder?: string;
   disabled?: boolean;
   className?: string;
   /**
@@ -32,11 +41,25 @@ const problems: Partial<Record<PortalProblemKind, string>> = {
   rateLimited: "core.problem.rateLimited",
 };
 
+const optionLabel = <V extends string>(option: Option<V>) =>
+  option.dot ? (
+    <span className="flex items-center gap-2">
+      <span
+        aria-hidden="true"
+        className={cn("size-2.5 shrink-0 rounded-full", option.dot)}
+      />
+      {option.label}
+    </span>
+  ) : (
+    option.label
+  );
+
 /** A compact select that saves on change (settings spec 1.5), like `SettingSwitchRow`. */
 export function SettingSelect<V extends string>({
   label,
   value,
   options,
+  placeholder,
   disabled,
   className,
   onValueChange,
@@ -70,13 +93,18 @@ export function SettingSelect<V extends string>({
         aria-label={label}
         className={cn("w-auto min-w-28", className)}
       >
-        <SelectValue />
+        <SelectValue>
+          {(current: V | null) => {
+            const option = options.find((item) => item.value === current);
+            return option ? optionLabel(option) : placeholder;
+          }}
+        </SelectValue>
       </SelectTrigger>
       <PortalSelectContent>
         <SelectGroup>
           {options.map((option) => (
             <SelectItem key={option.value} value={option.value}>
-              {option.label}
+              {optionLabel(option)}
             </SelectItem>
           ))}
         </SelectGroup>

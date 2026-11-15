@@ -47,4 +47,33 @@ describe("SettingSelect", () => {
       ).toHaveTextContent("Public"),
     );
   });
+
+  it("shows the placeholder for a stored value that is not an option", () => {
+    const view = renderComponent(
+      <SettingSelect
+        label="Primary color"
+        value={null}
+        placeholder="Custom"
+        options={[{ value: "red", label: "Red", dot: "bg-red-600" }]}
+        onValueChange={async () => undefined}
+      />,
+    );
+    expect(
+      view.getByRole("combobox", { name: "Primary color" }),
+    ).toHaveTextContent("Custom");
+  });
+
+  it("shows the color dot of an option", () => {
+    const view = renderComponent(
+      <SettingSelect
+        label="Primary color"
+        value="red"
+        options={[{ value: "red", label: "Red", dot: "bg-red-600" }]}
+        onValueChange={async () => undefined}
+      />,
+    );
+    const select = view.getByRole("combobox", { name: "Primary color" });
+    expect(select).toHaveTextContent("Red");
+    expect(select.querySelector(".bg-red-600")).not.toBeNull();
+  });
 });
