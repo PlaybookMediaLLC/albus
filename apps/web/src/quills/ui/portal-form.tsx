@@ -33,6 +33,17 @@ export interface PortalFormProps<T extends FieldValues> {
   submitIcon?: ReactNode;
 }
 
+/** True when the form values hold the path of an API issue, such as "days.0.end". */
+const holds = (values: unknown, path: string) => {
+  let current = values;
+  return path.split(".").every((key) => {
+    if (current === null || typeof current !== "object" || !(key in current))
+      return false;
+    current = (current as Record<string, unknown>)[key];
+    return true;
+  });
+};
+
 export function PortalForm<T extends FieldValues>(props: PortalFormProps<T>) {
   const { t } = useTranslation("quills");
   const form = useForm<T>({
@@ -61,9 +72,16 @@ export function PortalForm<T extends FieldValues>(props: PortalFormProps<T>) {
     try {
       const result = await props.onSubmit(values);
       if (result?.kind === "invalid" && result.issues?.length) {
+        // An issue without a matching field shows above the form, so no API issue is hidden.
+        const values = form.getValues();
+        const general: string[] = [];
         for (const issue of result.issues) {
-          form.setError(issue.path as never, { message: issue.message });
+          if (holds(values, issue.path))
+            form.setError(issue.path as never, { message: issue.message });
+          else general.push(issue.message || t("core.problem.invalid"));
         }
+        if (general.length)
+          form.setError("root", { message: general.join(" ") });
       } else {
         setProblem(result ?? null);
         if (!result && props.resetOnSuccess) form.reset();

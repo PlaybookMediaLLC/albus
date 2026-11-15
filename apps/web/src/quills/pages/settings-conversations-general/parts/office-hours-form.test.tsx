@@ -1,4 +1,5 @@
-import { describe } from "vite-plus/test";
+import { fireEvent } from "@testing-library/react";
+import { describe, expect, it, vi } from "vite-plus/test";
 import { describeFormContract } from "../../../test/contracts";
 import { renderComponent } from "../../../test/render";
 import { weekRows, type DayRow } from "../week";
@@ -27,5 +28,24 @@ describe("OfficeHoursForm", () => {
     },
     // An open day that closes when it opens.
     invalidValue: "09:00",
+  });
+
+  it("shows a field error for an opening time that is not HH:MM", async () => {
+    const onSubmit = vi.fn(async () => undefined);
+    const view = renderComponent(
+      <OfficeHoursForm
+        timezone="UTC"
+        intervals={intervals}
+        onSubmit={onSubmit}
+      />,
+    );
+    const opens = view.getByLabelText("Monday opens");
+    fireEvent.change(opens, { target: { value: "" } });
+    fireEvent.click(view.getByRole("button", { name: "Save" }));
+    expect(await view.findByRole("alert")).toHaveTextContent(
+      "Enter a time as HH:MM, such as 09:00.",
+    );
+    expect(opens).toHaveAttribute("aria-invalid", "true");
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });

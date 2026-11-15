@@ -61,6 +61,17 @@ describe("PortalForm", () => {
     press(/confirm/i);
     await waitFor(() => expect(submit).toHaveBeenCalledTimes(2));
   });
+  it("shows an API issue without a matching field above the form", async () => {
+    const submit = vi.fn(async () => ({
+      kind: "invalid" as const,
+      issues: [{ path: "intervals.0.start", message: "Use HH:MM." }],
+    }));
+    const view = setup(submit);
+    fill("Message", "A draft");
+    press(/confirm/i);
+    expect(await view.findByRole("alert")).toHaveTextContent("Use HH:MM.");
+    expect(view.getByLabelText("Message")).toHaveValue("A draft");
+  });
   it("lets the user submit again after a conflict", async () => {
     const submit = vi
       .fn()

@@ -112,6 +112,7 @@
 		"service": "Service level and portal",
 		"sla": "Default SLA policy",
 		"slaText": "New conversations get this policy when no workflow sets one.",
+		"timeInvalid": "Enter a time as HH:MM, such as 09:00.",
 		"timezone": "Time zone",
 		"title": "General",
 		"wait": "Wait before closing",
