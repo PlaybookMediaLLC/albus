@@ -43,7 +43,10 @@ export function LinksSection({
   const paired = ticket.data?.ticket;
   return (
     <section aria-labelledby="conversation-links">
-      <h2 id="conversation-links" className="mb-1 text-sm font-semibold">
+      <h2
+        id="conversation-links"
+        className="mb-1 text-xs font-medium text-muted-foreground"
+      >
         {t("team-conversations.links.title")}
       </h2>
       <PropertyRow label={t("team-conversations.links.ticket")}>

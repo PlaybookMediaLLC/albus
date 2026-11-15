@@ -37,7 +37,12 @@ export function TagEditor({
   );
   return (
     <div className="grid gap-1.5">
-      <ul className="flex flex-wrap gap-1">
+      {tags.length || free.length ? null : (
+        <span className="text-muted-foreground">
+          {t("team-conversations.links.none")}
+        </span>
+      )}
+      <ul className="flex flex-wrap gap-1 empty:hidden">
         {tags.map((tag) => (
           <li
             key={tag.id}

@@ -1,5 +1,7 @@
-import { ArrowUpRight, Share2 } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { avatarTone } from "../../../core/avatar-tone";
+import { cn } from "../../../ui/upstream";
 import { socialLinks } from "../share-links";
 
 export interface SocialLinksProps {
@@ -44,9 +46,17 @@ export function SocialLinks({ workspace, url }: SocialLinksProps) {
             href={row.href}
             target="_blank"
             rel="noreferrer"
-            className="flex items-start gap-3 rounded-lg p-2 hover:bg-muted/60"
+            className="flex items-center gap-3 rounded-lg border border-border p-3 hover:bg-muted/60"
           >
-            <Share2 aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
+            <span
+              aria-hidden="true"
+              className={cn(
+                "flex size-8 shrink-0 items-center justify-center rounded-lg text-sm font-semibold",
+                avatarTone(row.name),
+              )}
+            >
+              {row.name.charAt(0)}
+            </span>
             <span className="min-w-0 flex-1">
               <span className="block font-medium">{row.name}</span>
               <span className="block text-sm text-muted-foreground">

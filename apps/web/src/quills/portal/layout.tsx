@@ -11,6 +11,7 @@ import { useEvaluateMyPortalAccess } from "../hooks/portal/use-evaluate-my-porta
 import { useGetPublicPortalConfig } from "../hooks/portal/use-get-public-portal-config";
 import { PortalShell } from "../ui/portal-shell";
 import { StateView } from "../ui/state-view";
+import { PortalAccountMenu } from "./portal-account-menu";
 import { PortalSearch } from "./portal-search";
 import { PortalRuntimeProvider } from "./runtime";
 
@@ -84,26 +85,7 @@ export function PortalRoute() {
               <>
                 <PortalSearch workspaceId={workspaceId} />
                 {viewer.kind === "user" ? (
-                  <>
-                    <a
-                      className="text-muted-foreground hover:text-foreground"
-                      href={portalHref(workspaceId, "my-feedback")}
-                    >
-                      {t("my-feedback.nav")}
-                    </a>
-                    <a
-                      className="text-muted-foreground hover:text-foreground"
-                      href={portalHref(workspaceId, "preferences")}
-                    >
-                      {t("core.navPreferences")}
-                    </a>
-                    <a
-                      className="bg-muted text-foreground hover:bg-muted/70"
-                      href={portalHref(workspaceId, "profile")}
-                    >
-                      {t("core.navProfile")}
-                    </a>
-                  </>
+                  <PortalAccountMenu workspaceId={workspaceId} />
                 ) : (
                   <a
                     className="bg-muted text-foreground hover:bg-muted/70"

@@ -23,9 +23,7 @@ export interface TeamSharePageProps {
 }
 
 const label = (text: string): ReactNode => (
-  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-    {text}
-  </span>
+  <span className="text-sm font-medium text-foreground">{text}</span>
 );
 
 /**
