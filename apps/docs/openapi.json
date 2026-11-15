@@ -21064,7 +21064,7 @@
                       "type": "string",
                       "maxLength": 500
                     },
-                    "description": "Context from the host page, such as pageUrl and browser, and keys that the host app set with Quackback.metadata. Teammates read it; customers never do."
+                    "description": "Context from the host page, such as pageUrl and browser, and keys that the host app set with the widget's metadata command. Teammates read it; customers never do."
                   }
                 },
                 "required": [
