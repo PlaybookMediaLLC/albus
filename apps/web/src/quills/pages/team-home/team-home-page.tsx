@@ -98,7 +98,7 @@ export function TeamHomePage({ workspaceId }: TeamHomePageProps) {
     <PageFrame titleKey="team.nav.home" variant="app" landmark={false}>
       <ListHeader title={t("team.nav.home")} />
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto grid w-full max-w-5xl gap-8 px-6 py-5">
+        <div className="grid w-full max-w-5xl gap-8 px-4 pt-2 pb-6">
           <ViewLinks workspaceId={workspaceId} counts={counts.data} />
           <TeamStateView
             loading={overview.isLoading || boards.isLoading}

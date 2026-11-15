@@ -31,14 +31,16 @@ export function MemberRow({ member, href, onOpen }: MemberRowProps) {
         name={member.name}
         avatarUrl={member.image}
         colored
-        className="size-9 text-sm"
+        className="size-8 text-xs"
       />
       {/* The divider starts at the text, not under the avatar. */}
-      <span className="flex min-h-16 min-w-0 flex-1 items-center gap-3 border-b border-border pe-4">
+      <span className="flex min-h-13 min-w-0 flex-1 items-center gap-3 border-b border-border pe-4">
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-base">{member.name}</span>
+          <span className="block truncate text-sm font-medium">
+            {member.name}
+          </span>
           {email ? (
-            <span className="block truncate text-sm text-muted-foreground">
+            <span className="block truncate text-xs text-muted-foreground">
               {email}
             </span>
           ) : null}
