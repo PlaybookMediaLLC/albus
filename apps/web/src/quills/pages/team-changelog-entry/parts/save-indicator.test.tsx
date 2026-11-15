@@ -18,4 +18,34 @@ describe("SaveIndicator", () => {
     );
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
+
+  it("announces a failure and names what an unsaved entry needs", () => {
+    const view = renderComponent(
+      <SaveIndicator state="failed" onRetry={() => undefined} />,
+    );
+    expect(view.getByRole("status")).toHaveTextContent("Not saved. Try again.");
+    view.rerender(
+      <SaveIndicator
+        state="unsaved"
+        missing="title"
+        onRetry={() => undefined}
+      />,
+    );
+    expect(view.getByRole("status")).toHaveTextContent(
+      "Not saved yet. Add a title.",
+    );
+    view.rerender(
+      <SaveIndicator
+        state="unsaved"
+        missing="content"
+        onRetry={() => undefined}
+      />,
+    );
+    expect(view.getByRole("status")).toHaveTextContent(
+      "Not saved yet. Add text to the body.",
+    );
+    view.rerender(<SaveIndicator state="unsaved" onRetry={() => undefined} />);
+    expect(view.getByRole("status")).toHaveTextContent("Not saved yet.");
+    expect(view.queryByText("Saved")).toBeNull();
+  });
 });

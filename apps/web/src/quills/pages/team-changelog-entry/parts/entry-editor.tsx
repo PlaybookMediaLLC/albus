@@ -6,8 +6,9 @@ import { useCreateChangelogEntry } from "../../../hooks/team/use-create-changelo
 import { useUpdateChangelogEntry } from "../../../hooks/team/use-update-changelog-entry";
 import { useTeamRuntime } from "../../../team/runtime";
 import { IconButton } from "../../../ui/inbox/icon-button";
-import { Textarea } from "../../../ui/upstream";
-import { saveBody, TITLE_MAX } from "../save-body";
+import { Textarea, toast } from "../../../ui/upstream";
+import { missingField, saveBody, TITLE_MAX } from "../save-body";
+import { saveProblem } from "../save-problem";
 import { useAutosave } from "../use-autosave";
 import { AiMenu, type RewriteTarget } from "./ai-menu";
 import { BodyEditor } from "./body-editor";
@@ -45,26 +46,36 @@ export function EntryEditor({
   const body = useRef<HTMLTextAreaElement>(null);
   // Set before the parent re-renders, so a save right after the create updates the entry.
   const created = useRef<string | null>(null);
+  // The API is the authority. Without the permission, the text is read-only.
+  const canEdit =
+    team.permissions.update && (entry !== null || team.permissions.create);
   const autosave = useAutosave(text, async ({ title, content }) => {
     const id = entry?.id ?? created.current;
     const json = saveBody(title, content, !id);
     if (!json) return false;
-    if (id) {
-      await update.mutateAsync({ param: { workspaceId, entryId: id }, json });
+    try {
+      if (id) {
+        await update.mutateAsync({ param: { workspaceId, entryId: id }, json });
+        return true;
+      }
+      const made = await create.mutateAsync({
+        param: { workspaceId },
+        json: {
+          ...json,
+          content: json.content ?? "",
+          publishState: { type: "draft" },
+        },
+      });
+      created.current = made.id;
+      onCreated(made);
       return true;
+    } catch (error) {
+      const problem = saveProblem(error);
+      toast.error(t(problem.key), { description: problem.description });
+      throw error;
     }
-    const made = await create.mutateAsync({
-      param: { workspaceId },
-      json: {
-        ...json,
-        content: json.content ?? "",
-        publishState: { type: "draft" },
-      },
-    });
-    created.current = made.id;
-    onCreated(made);
-    return true;
   });
+  const missing = missingField(text.title, text.content, !entry);
   const target = (): RewriteTarget => {
     const field = body.current;
     const start = field?.selectionStart ?? 0;
@@ -73,14 +84,18 @@ export function EntryEditor({
       ? { text: text.content.slice(start, end), start, end }
       : { text: text.content, start: 0, end: text.content.length };
   };
-  const apply = (next: string, at: RewriteTarget) =>
-    setText((current) => ({
-      ...current,
+  const apply = (next: string, at: RewriteTarget) => {
+    // The user can type during the rewrite. Then the old offsets point to other text.
+    if (text.content.slice(at.start, at.end) !== at.text) {
+      toast.error(t("team-changelog.ai.changed"));
+      return;
+    }
+    setText({
+      ...text,
       content:
-        current.content.slice(0, at.start) +
-        next +
-        current.content.slice(at.end),
-    }));
+        text.content.slice(0, at.start) + next + text.content.slice(at.end),
+    });
+  };
   return (
     <>
       <div className="flex items-center justify-between gap-2 px-3 py-2">
@@ -91,9 +106,10 @@ export function EntryEditor({
           <PublishPopover
             workspaceId={workspaceId}
             entry={entry}
+            flush={autosave.flush}
             onDeleted={onBack}
           />
-          {aiOn ? (
+          {aiOn && canEdit ? (
             <AiMenu workspaceId={workspaceId} target={target} onApply={apply} />
           ) : null}
         </div>
@@ -105,6 +121,7 @@ export function EntryEditor({
           placeholder={t("team-changelog.untitled")}
           maxLength={TITLE_MAX}
           rows={1}
+          readOnly={!canEdit}
           value={text.title}
           onChange={(event) => setText({ ...text, title: event.target.value })}
           className="w-full text-3xl font-bold leading-tight tracking-tight md:text-4xl [&_textarea]:min-h-0 [&_textarea]:resize-none [&_textarea]:px-0"
@@ -113,10 +130,12 @@ export function EntryEditor({
           value={text.content}
           onChange={(content) => setText({ ...text, content })}
           textareaRef={body}
+          readOnly={!canEdit}
         />
       </div>
       <SaveIndicator
-        state={autosave.state}
+        state={missing ? "unsaved" : autosave.state}
+        missing={missing}
         onRetry={() => void autosave.retry()}
       />
     </>

@@ -8,10 +8,16 @@ export interface BodyEditorProps {
   value: string;
   onChange: (value: string) => void;
   textareaRef?: Ref<HTMLTextAreaElement>;
+  readOnly?: boolean;
 }
 
 /** The Markdown body of an entry, with a Write and Preview switch. */
-export function BodyEditor({ value, onChange, textareaRef }: BodyEditorProps) {
+export function BodyEditor({
+  value,
+  onChange,
+  textareaRef,
+  readOnly,
+}: BodyEditorProps) {
   const { t } = useTranslation("quills");
   const [mode, setMode] = useState("write");
   return (
@@ -38,6 +44,7 @@ export function BodyEditor({ value, onChange, textareaRef }: BodyEditorProps) {
           placeholder={t("team-changelog.editor.bodyPlaceholder")}
           maxLength={CONTENT_MAX}
           value={value}
+          readOnly={readOnly}
           onChange={(event) => onChange(event.target.value)}
           unstyled
           className="w-full text-base leading-7 [&_textarea]:min-h-60 [&_textarea]:px-0"
