@@ -36,15 +36,15 @@ const finished = {
   error: null,
   createdAt: "2026-01-01T00:00:00.000Z",
   finishedAt: "2026-01-01T00:01:00.000Z",
-  expiresAt: "2026-01-08T00:00:00.000Z",
+  expiresAt: "2099-01-08T00:00:00.000Z",
 };
 const settings = listSettingsFixture.ok({ slug: "acme" });
 let api: ReturnType<typeof mockApi>;
 /** The three page queries: the import runs, the export runs and the settings overview. */
-const prepare = () => {
+const prepare = (exported = finished) => {
   api = mockApi();
   api.reply(listImportRunsFixture.ok({ items: [failed] }));
-  api.reply(listExportRunsFixture.ok({ items: [finished] }));
+  api.reply(listExportRunsFixture.ok({ items: [exported] }));
   api.reply(settings);
   return api;
 };
@@ -184,5 +184,14 @@ describe("SettingsDataPage", () => {
     await waitFor(() =>
       expect(api.calls("listQuillsExportRunsDownload")).toHaveLength(1),
     );
+  });
+
+  it("says that an expired export file expired and offers no Download", async () => {
+    prepare({ ...finished, expiresAt: "2026-01-08T00:00:00.000Z" });
+    const view = renderPage(SettingsDataPage, meta);
+    expect(
+      await view.findByText("The file expired. Start a new export."),
+    ).toBeVisible();
+    expect(view.queryByRole("button", { name: "Download" })).toBeNull();
   });
 });

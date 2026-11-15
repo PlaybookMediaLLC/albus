@@ -26,6 +26,7 @@
 		"description": "Import posts from a CSV file, export your data and delete it.",
 		"download": "Download",
 		"downloadFailed": "The file could not be downloaded.",
+		"expired": "The file expired. Start a new export.",
 		"export": "Export",
 		"exportCsv": "Export to CSV",
 		"exportCsvText": "Download posts, people, companies or conversations as a CSV file.",
