@@ -48,7 +48,7 @@ describe("teamSections", () => {
     expect(requests!.items[0]!.to).toBe("/feedback/workspace_1/posts");
   });
 
-  it("puts the counts on the views and links outside the app where needed", () => {
+  it("puts the counts on the views and links each view in the app", () => {
     const [conversations, , workspace] = teamSections("workspace 1", counts);
     const queue = conversations!.items[0]!;
     expect(queue).toMatchObject({
@@ -61,10 +61,8 @@ describe("teamSections", () => {
       to: "/feedback/workspace%201",
       exact: true,
     });
-    expect(byId.get("roadmap")).toMatchObject({
-      to: "/portal/workspace%201/roadmap",
-      newTab: true,
-    });
+    expect(byId.get("roadmap")?.to).toBe("/feedback/workspace%201/roadmap");
+    expect(byId.get("roadmap")?.newTab).toBeUndefined();
     expect(byId.get("members")?.to).toBe("/feedback/workspace%201/members");
     expect(byId.get("share")?.to).toBe("/feedback/workspace%201/share");
     expect(byId.get("settings")?.to).toBe("/feedback/workspace%201/settings");

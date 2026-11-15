@@ -99,6 +99,7 @@ import { Route as LayoutAuthenticatedFeedbackWorkspaceIdInsightsIndexRouteImport
 import { Route as LayoutAuthenticatedFeedbackWorkspaceIdMembersIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/members/index'
 import { Route as LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/my-tickets/index'
 import { Route as LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/posts/index'
+import { Route as LayoutAuthenticatedFeedbackWorkspaceIdRoadmapIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/roadmap/index'
 import { Route as LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/settings/index'
 import { Route as LayoutAuthenticatedFeedbackWorkspaceIdShareIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/share/index'
 import { Route as LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRouteImport } from './routes/_layout/_authenticated/feedback/$workspaceId/surveys/index'
@@ -671,6 +672,12 @@ const LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute =
     path: '/posts/',
     getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
   } as any)
+const LayoutAuthenticatedFeedbackWorkspaceIdRoadmapIndexRoute =
+  LayoutAuthenticatedFeedbackWorkspaceIdRoadmapIndexRouteImport.update({
+    id: '/roadmap/',
+    path: '/roadmap/',
+    getParentRoute: () => LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute,
+  } as any)
 const LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRoute =
   LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRouteImport.update({
     id: '/settings/',
@@ -1148,6 +1155,7 @@ export interface FileRoutesByFullPath {
   '/feedback/$workspaceId/members/': typeof LayoutAuthenticatedFeedbackWorkspaceIdMembersIndexRoute
   '/feedback/$workspaceId/my-tickets/': typeof LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute
   '/feedback/$workspaceId/posts/': typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute
+  '/feedback/$workspaceId/roadmap/': typeof LayoutAuthenticatedFeedbackWorkspaceIdRoadmapIndexRoute
   '/feedback/$workspaceId/settings/': typeof LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRoute
   '/feedback/$workspaceId/share/': typeof LayoutAuthenticatedFeedbackWorkspaceIdShareIndexRoute
   '/feedback/$workspaceId/surveys/': typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute
@@ -1284,6 +1292,7 @@ export interface FileRoutesByTo {
   '/feedback/$workspaceId/members': typeof LayoutAuthenticatedFeedbackWorkspaceIdMembersIndexRoute
   '/feedback/$workspaceId/my-tickets': typeof LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute
   '/feedback/$workspaceId/posts': typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute
+  '/feedback/$workspaceId/roadmap': typeof LayoutAuthenticatedFeedbackWorkspaceIdRoadmapIndexRoute
   '/feedback/$workspaceId/settings': typeof LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRoute
   '/feedback/$workspaceId/share': typeof LayoutAuthenticatedFeedbackWorkspaceIdShareIndexRoute
   '/feedback/$workspaceId/surveys': typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute
@@ -1429,6 +1438,7 @@ export interface FileRoutesById {
   '/_layout/_authenticated/feedback/$workspaceId/members/': typeof LayoutAuthenticatedFeedbackWorkspaceIdMembersIndexRoute
   '/_layout/_authenticated/feedback/$workspaceId/my-tickets/': typeof LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute
   '/_layout/_authenticated/feedback/$workspaceId/posts/': typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute
+  '/_layout/_authenticated/feedback/$workspaceId/roadmap/': typeof LayoutAuthenticatedFeedbackWorkspaceIdRoadmapIndexRoute
   '/_layout/_authenticated/feedback/$workspaceId/settings/': typeof LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRoute
   '/_layout/_authenticated/feedback/$workspaceId/share/': typeof LayoutAuthenticatedFeedbackWorkspaceIdShareIndexRoute
   '/_layout/_authenticated/feedback/$workspaceId/surveys/': typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute
@@ -1573,6 +1583,7 @@ export interface FileRouteTypes {
     | '/feedback/$workspaceId/members/'
     | '/feedback/$workspaceId/my-tickets/'
     | '/feedback/$workspaceId/posts/'
+    | '/feedback/$workspaceId/roadmap/'
     | '/feedback/$workspaceId/settings/'
     | '/feedback/$workspaceId/share/'
     | '/feedback/$workspaceId/surveys/'
@@ -1709,6 +1720,7 @@ export interface FileRouteTypes {
     | '/feedback/$workspaceId/members'
     | '/feedback/$workspaceId/my-tickets'
     | '/feedback/$workspaceId/posts'
+    | '/feedback/$workspaceId/roadmap'
     | '/feedback/$workspaceId/settings'
     | '/feedback/$workspaceId/share'
     | '/feedback/$workspaceId/surveys'
@@ -1853,6 +1865,7 @@ export interface FileRouteTypes {
     | '/_layout/_authenticated/feedback/$workspaceId/members/'
     | '/_layout/_authenticated/feedback/$workspaceId/my-tickets/'
     | '/_layout/_authenticated/feedback/$workspaceId/posts/'
+    | '/_layout/_authenticated/feedback/$workspaceId/roadmap/'
     | '/_layout/_authenticated/feedback/$workspaceId/settings/'
     | '/_layout/_authenticated/feedback/$workspaceId/share/'
     | '/_layout/_authenticated/feedback/$workspaceId/surveys/'
@@ -2551,6 +2564,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRouteImport
       parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
     }
+    '/_layout/_authenticated/feedback/$workspaceId/roadmap/': {
+      id: '/_layout/_authenticated/feedback/$workspaceId/roadmap/'
+      path: '/roadmap'
+      fullPath: '/feedback/$workspaceId/roadmap/'
+      preLoaderRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRoadmapIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRouteRoute
+    }
     '/_layout/_authenticated/feedback/$workspaceId/settings/': {
       id: '/_layout/_authenticated/feedback/$workspaceId/settings/'
       path: '/settings'
@@ -3153,6 +3173,7 @@ interface LayoutAuthenticatedFeedbackWorkspaceIdRouteRouteChildren {
   LayoutAuthenticatedFeedbackWorkspaceIdMembersIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdMembersIndexRoute
   LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute
   LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute
+  LayoutAuthenticatedFeedbackWorkspaceIdRoadmapIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdRoadmapIndexRoute
   LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRoute
   LayoutAuthenticatedFeedbackWorkspaceIdShareIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdShareIndexRoute
   LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute: typeof LayoutAuthenticatedFeedbackWorkspaceIdSurveysIndexRoute
@@ -3212,6 +3233,8 @@ const LayoutAuthenticatedFeedbackWorkspaceIdRouteRouteChildren: LayoutAuthentica
       LayoutAuthenticatedFeedbackWorkspaceIdMyTicketsIndexRoute,
     LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute:
       LayoutAuthenticatedFeedbackWorkspaceIdPostsIndexRoute,
+    LayoutAuthenticatedFeedbackWorkspaceIdRoadmapIndexRoute:
+      LayoutAuthenticatedFeedbackWorkspaceIdRoadmapIndexRoute,
     LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRoute:
       LayoutAuthenticatedFeedbackWorkspaceIdSettingsIndexRoute,
     LayoutAuthenticatedFeedbackWorkspaceIdShareIndexRoute:
