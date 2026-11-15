@@ -171,3 +171,18 @@ export { copyToClipboard } from "@/lib/copy-to-clipboard";
 
 // Teammate settings, Connections (lane S): Kaneo's own API keys of the signed-in user.
 export { ApiKeysSettings } from "@/components/settings/api-keys/api-keys-settings";
+
+// Teammate settings (lane W): Kaneo's own account, team and billing parts. Account
+// composes the parts of Kaneo's ProfilePage, so its sections follow the settings design.
+export { AutosaveNote } from "@/components/settings/autosave-note";
+export { DeleteAccountSection } from "@/components/settings/profile/delete-account-section";
+export { ProfileDetailsSection } from "@/components/settings/profile/profile-details-section";
+export { useProfileNameAutosave } from "@/components/settings/profile/use-profile-name-autosave";
+export { default as useManagedProfileFields } from "@/hooks/queries/user/use-managed-profile-fields";
+export { default as useAuth } from "@/components/providers/auth-provider/hooks/use-auth";
+export { default as useListAccounts } from "@/hooks/queries/use-list-accounts";
+export { useUserPreferencesStore } from "@/store/user-preferences";
+export { default as MembersTable } from "@/components/team/members-table";
+export { default as InviteTeamMemberModal } from "@/components/team/invite-team-member-modal";
+export { default as useGetFullWorkspace } from "@/hooks/queries/workspace/use-get-full-workspace";
+export { BillingSettingsPage } from "@/components/billing/billing-settings-page";
