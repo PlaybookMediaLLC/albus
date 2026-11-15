@@ -1,6 +1,6 @@
 import { useLocation } from "@tanstack/react-router";
 import { Menu } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useLayoutEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useGetTeamCounts } from "../hooks/team/use-get-team-counts";
 import { IconButton } from "../ui/inbox/icon-button";
@@ -31,6 +31,11 @@ export function TeamShell({ children, ...sidebar }: TeamShellProps) {
   const mode = useLocation({
     select: (location) => shellMode(location.pathname),
   });
+  // The 90% scale and the icon stroke in index.css match this attribute on html.
+  useLayoutEffect(() => {
+    document.documentElement.setAttribute("data-quills-shell", "");
+    return () => document.documentElement.removeAttribute("data-quills-shell");
+  }, []);
   // The counts are only labels: a refused or failed request shows none.
   const counts = useGetTeamCounts(
     { param: { workspaceId: mode === "app" ? sidebar.workspaceId : "" } },
