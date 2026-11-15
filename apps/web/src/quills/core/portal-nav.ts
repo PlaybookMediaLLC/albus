@@ -23,6 +23,23 @@ export interface PortalNav {
   links: Array<{ label: string; url: string; newTab: boolean }>;
 }
 
+/**
+ * The nav of a public portal config. An older API sends no `nav`: then every tab is on and
+ * no link tab shows, so a newer web app keeps working during an upgrade.
+ */
+export const navOf = (nav: PortalNav | undefined): PortalNav =>
+  nav ?? {
+    tabs: {
+      feedback: true,
+      roadmap: true,
+      changelog: true,
+      help: true,
+      support: true,
+      status: true,
+    },
+    links: [],
+  };
+
 /** A tab that the stored list does not name shows on the portal. */
 export const navEnabled = (
   nav: readonly PortalNavItem[],
