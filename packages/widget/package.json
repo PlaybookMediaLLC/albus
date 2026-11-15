@@ -2,7 +2,7 @@
   "name": "@quills/widget",
   "version": "0.1.6",
   "license": "MIT",
-  "description": "Official SDK for the Quills feedback widget of Kaneo. Embed Quills in your app.",
+  "description": "Official SDK for the Quills feedback widget. Embed Quills in your app.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -75,11 +75,9 @@
     "url": "git+https://github.com/PlaybookMediaLLC/kaneo.git",
     "directory": "packages/widget"
   },
-  "homepage": "https://github.com/PlaybookMediaLLC/kaneo/tree/main/packages/widget#readme",
   "bugs": "https://github.com/PlaybookMediaLLC/kaneo/issues",
   "keywords": [
     "quills",
-    "kaneo",
     "feedback",
     "widget",
     "customer-feedback",
