@@ -38,6 +38,7 @@ export function DomainsForm({ domains, onSubmit }: DomainsFormProps) {
     <PortalForm
       schema={schema}
       defaultValues={{ domains: domains.join(", ") }}
+      resetOnSuccess
       submitKey="settings-product.dialog.save"
       className="max-w-none gap-3 px-4 py-3.5 [&_button[type=submit]]:self-end"
       onSubmit={async (values) => {

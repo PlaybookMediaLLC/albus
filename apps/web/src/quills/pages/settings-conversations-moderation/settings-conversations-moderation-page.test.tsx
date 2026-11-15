@@ -109,6 +109,20 @@ describe("SettingsConversationsModerationPage", () => {
     });
   });
 
+  it("shows the trusted senders that the API stored after a save", async () => {
+    ready();
+    api.reply({ trustedSenders: ["a.test"], aiClassifier: false });
+    api.reply(getSpamFilterConfigFixture.ok({ trustedSenders: ["a.test"] }));
+    const view = renderPage(SettingsConversationsModerationPage, meta);
+    fireEvent.change(await view.findByLabelText("Trusted senders"), {
+      target: { value: "A.TEST\nnot valid" },
+    });
+    fireEvent.click(view.getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(view.getByLabelText("Trusted senders")).toHaveValue("a.test"),
+    );
+  });
+
   it("shows the review queue to a member and does not read the spam filter", async () => {
     api = mockApi();
     api.reply(

@@ -55,6 +55,8 @@ export function SettingsConversationsModerationPage({
     team.viewer,
   );
   const updateSpam = useUpdateSpamFilterConfig(team.viewer);
+  type SpamPatch = Parameters<typeof updateSpam.mutateAsync>[0]["json"];
+  const saveSpam = (json: SpamPatch) => updateSpam.mutateAsync({ param, json });
   const queries = [status, pending, flagged];
   const posts = pending.data?.posts ?? [];
   const comments = pending.data?.comments ?? [];
@@ -128,22 +130,16 @@ export function SettingsConversationsModerationPage({
                     )}
                     checked={spam.data?.aiClassifier ?? false}
                     onCheckedChange={async (aiClassifier) => {
-                      await updateSpam.mutateAsync({
-                        param,
-                        json: { aiClassifier },
-                      });
+                      await saveSpam({ aiClassifier });
                     }}
                   />
                   {spam.data ? (
                     <SpamFilterForm
+                      // The API lowercases the senders and drops invalid ones: show what it stored.
+                      key={spam.data.trustedSenders.join("\n")}
                       senders={spam.data.trustedSenders}
                       onSubmit={(trustedSenders) =>
-                        problemOf(
-                          updateSpam.mutateAsync({
-                            param,
-                            json: { trustedSenders },
-                          }),
-                        )
+                        problemOf(saveSpam({ trustedSenders }))
                       }
                     />
                   ) : null}

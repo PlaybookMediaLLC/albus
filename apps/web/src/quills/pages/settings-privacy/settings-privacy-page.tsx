@@ -128,6 +128,8 @@ export function SettingsPrivacyPage({ workspaceId }: SettingsPrivacyPageProps) {
               ) : null}
               {visibility === "private" && !locked ? (
                 <DomainsForm
+                  // The API lowercases the domains and drops invalid ones: show what it stored.
+                  key={(data?.access.allowedDomains ?? []).join(",")}
                   domains={data?.access.allowedDomains ?? []}
                   onSubmit={(allowedDomains) =>
                     problemOf(

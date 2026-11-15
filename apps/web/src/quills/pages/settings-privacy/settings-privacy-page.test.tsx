@@ -106,6 +106,26 @@ describe("SettingsPrivacyPage", () => {
     });
   });
 
+  it("shows the domains that the API stored after a save", async () => {
+    api = mockApi();
+    api.reply(privatePortal);
+    api.reply(updatePortalAccessFixture.ok());
+    api.reply({
+      ...privatePortal,
+      access: { ...privatePortal.access, allowedDomains: ["a.test", "b.test"] },
+    });
+    const view = renderPage(SettingsPrivacyPage, meta);
+    fireEvent.change(await view.findByLabelText("Allowed email domains"), {
+      target: { value: "A.test, b.TEST, not a domain" },
+    });
+    fireEvent.click(view.getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(view.getByLabelText("Allowed email domains")).toHaveValue(
+        "a.test, b.test",
+      ),
+    );
+  });
+
   it("shows the domains as text to a teammate without manage_settings", async () => {
     mockApi().reply(privatePortal);
     const view = renderPage(SettingsPrivacyPage, meta, {

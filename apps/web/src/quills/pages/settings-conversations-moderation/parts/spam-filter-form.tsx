@@ -40,6 +40,7 @@ export function SpamFilterForm({ senders, onSubmit }: SpamFilterFormProps) {
     <PortalForm
       schema={schema}
       defaultValues={{ senders: senders.join("\n") }}
+      resetOnSuccess
       submitKey="settings-conversations.save"
       className="max-w-none gap-3 px-4 py-3.5 [&_button[type=submit]]:self-end"
       onSubmit={async (values) => {
