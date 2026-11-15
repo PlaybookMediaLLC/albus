@@ -43,8 +43,7 @@ export function RequestRow(props: RequestRowProps) {
       <span
         className={cn(
           "inline-flex shrink-0 items-center gap-1",
-          key === "inbox.votes" &&
-            "h-6 rounded-md border border-border px-1.5 text-foreground",
+          key === "inbox.votes" && "font-medium text-foreground",
         )}
       >
         {icon}
@@ -88,10 +87,12 @@ export function RequestRow(props: RequestRowProps) {
     return (
       <a href={props.href} {...link} className={cn("block", className)}>
         <span className="flex items-start gap-2">
+          {props.icon ? (
+            <span className="flex h-5 shrink-0 items-center">{props.icon}</span>
+          ) : null}
           <span className="line-clamp-2 min-w-0 flex-1 font-medium">
             {props.title}
           </span>
-          {props.icon}
         </span>
         {detail}
         <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">

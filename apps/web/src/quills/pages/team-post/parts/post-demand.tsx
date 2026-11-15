@@ -24,8 +24,11 @@ export function PostDemand({ workspaceId, postId }: PostDemandProps) {
     maximumFractionDigits: 0,
   });
   return (
-    <section aria-labelledby={heading} className="py-2">
-      <h3 id={heading} className="text-sm font-medium">
+    <section aria-labelledby={heading} className="py-3">
+      <h3
+        id={heading}
+        className="pb-1 text-xs font-medium text-muted-foreground"
+      >
         {t("team-post.demand")}
       </h3>
       <TeamStateView

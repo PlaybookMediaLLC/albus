@@ -40,7 +40,7 @@ export function ListHeader({
     <div className="flex min-h-14 flex-wrap items-center gap-2 px-4 py-2.5">
       <Heading
         tabIndex={-1}
-        className="min-w-0 flex-1 truncate text-lg font-semibold outline-none"
+        className="min-w-0 flex-1 truncate text-base font-semibold outline-none"
       >
         {title}
       </Heading>

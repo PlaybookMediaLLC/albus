@@ -24,8 +24,6 @@ export interface PostActionBarProps {
   statuses: ListStatusesResponse["statuses"];
   /** Opens the merge palette. */
   onMerge: () => void;
-  onPrevious: () => void;
-  onNext: () => void;
 }
 
 /** The floating bar of a request: the status picker, Merge, Close and the next status. */
@@ -119,8 +117,6 @@ export function PostActionBar(props: PostActionBarProps) {
             }
           : undefined
       }
-      onPrevious={props.onPrevious}
-      onNext={props.onNext}
     />
   );
 }

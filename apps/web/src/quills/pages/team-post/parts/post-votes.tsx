@@ -34,14 +34,14 @@ export function PostVotes({ workspaceId, post }: PostVotesProps) {
   const first = voters.data?.pages[0]?.items.slice(0, STACK) ?? [];
   return (
     <div className="ms-auto flex items-center gap-2">
-      <span aria-hidden="true" className="flex -space-x-1.5">
+      <span aria-hidden="true" className="flex -space-x-1">
         {first.map((voter) => (
           <PersonAvatar
             key={voter.principalId}
             colored
             name={voter.displayName}
             avatarUrl={voter.avatarUrl}
-            className="size-6 ring-2 ring-background"
+            className="size-7 ring-2 ring-background"
           />
         ))}
       </span>
