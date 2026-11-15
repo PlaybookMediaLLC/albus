@@ -1,0 +1,10 @@
+{
+	"blocked": "Blocked",
+	"empty": "No members yet",
+	"emptyText": "People show here after they post, vote or comment.",
+	"lead": "Lead",
+	"loadMore": "Load more members",
+	"noMatch": "No members match “{{query}}”",
+	"search": "Search members…",
+	"title": "Members"
+}
