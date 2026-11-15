@@ -65,7 +65,10 @@ export function SettingsChangelogPage({
       variant="app"
       landmark={false}
     >
-      <SettingsPage title={t("settings-product.changelog.title")}>
+      <SettingsPage
+        title={t("settings-product.changelog.title")}
+        description={t("settings-product.changelog.description")}
+      >
         <TeamStateView
           loading={portal.isPending || categories.isPending}
           problem={portal.error ?? categories.error}

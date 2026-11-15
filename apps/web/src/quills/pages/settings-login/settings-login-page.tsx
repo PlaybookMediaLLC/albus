@@ -42,7 +42,10 @@ export function SettingsLoginPage({ workspaceId }: SettingsLoginPageProps) {
       variant="app"
       landmark={false}
     >
-      <SettingsPage title={t("settings-product.login.title")}>
+      <SettingsPage
+        title={t("settings-product.login.title")}
+        description={t("settings-product.login.description")}
+      >
         <TeamStateView
           loading={portal.isPending || secret.isPending}
           problem={portal.error ?? secret.error}

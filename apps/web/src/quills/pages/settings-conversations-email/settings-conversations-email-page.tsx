@@ -43,7 +43,10 @@ export function SettingsConversationsEmailPage({
       variant="app"
       landmark={false}
     >
-      <SettingsPage title={t("settings-conversations.email.title")}>
+      <SettingsPage
+        title={t("settings-conversations.email.title")}
+        description={t("settings-conversations.email.description")}
+      >
         <TeamStateView
           loading={queries.some((query) => query.isPending)}
           problem={queries.find((query) => query.error)?.error}

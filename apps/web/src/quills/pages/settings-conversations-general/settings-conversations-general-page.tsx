@@ -60,7 +60,10 @@ export function SettingsConversationsGeneralPage({
       variant="app"
       landmark={false}
     >
-      <SettingsPage title={t("settings-conversations.general.title")}>
+      <SettingsPage
+        title={t("settings-conversations.general.title")}
+        description={t("settings-conversations.general.description")}
+      >
         <TeamStateView
           loading={queries.some((query) => query.isPending)}
           problem={queries.find((query) => query.error)?.error}

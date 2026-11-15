@@ -9,6 +9,7 @@
 	},
 	"copy": "Copy",
 	"copyNamed": "Copy {{label}}",
+	"description": "Share links to your portal and widget, so that customers can give feedback.",
 	"messages": {
 		"announcement": "Customer announcement",
 		"announcementBody": "Hello,\n\nWe opened a feedback board for {{workspace}}. Tell us what to build next, vote on ideas from other customers and follow the progress:\n\n{{url}}\n\nThank you for your help.",

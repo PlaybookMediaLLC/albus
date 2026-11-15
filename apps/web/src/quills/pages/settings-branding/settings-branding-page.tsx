@@ -60,7 +60,10 @@ export function SettingsBrandingPage({
       variant="app"
       landmark={false}
     >
-      <SettingsPage title={t("settings-workspace.branding.title")}>
+      <SettingsPage
+        title={t("settings-workspace.branding.title")}
+        description={t("settings-workspace.branding.description")}
+      >
         <TeamStateView
           loading={
             branding.isPending || poweredBy.isPending || config.isPending

@@ -51,7 +51,10 @@ export function SettingsPrivacyPage({ workspaceId }: SettingsPrivacyPageProps) {
       variant="app"
       landmark={false}
     >
-      <SettingsPage title={t("settings-product.privacy.title")}>
+      <SettingsPage
+        title={t("settings-product.privacy.title")}
+        description={t("settings-product.privacy.description")}
+      >
         <TeamStateView loading={portal.isPending} problem={portal.error}>
           <SettingsSection title={t("settings-product.privacy.board")}>
             <SettingsCard>

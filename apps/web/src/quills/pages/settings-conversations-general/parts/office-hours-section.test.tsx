@@ -53,9 +53,37 @@ describe("OfficeHoursSection", () => {
           permissions: { ...team.permissions, manageSettings: false },
         }}
       >
+        <OfficeHoursSection
+          workspaceId="workspace_1"
+          hours={{ ...hours, enabled: true }}
+        />
+      </TeamRuntimeProvider>,
+    );
+    expect(view.queryByRole("button", { name: "Save" })).toBeNull();
+  });
+
+  it("shows the schedule and the holiday note only while office hours are on", () => {
+    mockApi();
+    const view = renderComponent(
+      <TeamRuntimeProvider value={team}>
         <OfficeHoursSection workspaceId="workspace_1" hours={hours} />
       </TeamRuntimeProvider>,
     );
     expect(view.queryByRole("button", { name: "Save" })).toBeNull();
+    expect(
+      view.queryByText("This page does not change your holidays."),
+    ).toBeNull();
+    view.rerender(
+      <TeamRuntimeProvider value={team}>
+        <OfficeHoursSection
+          workspaceId="workspace_1"
+          hours={{ ...hours, enabled: true }}
+        />
+      </TeamRuntimeProvider>,
+    );
+    expect(view.getByRole("button", { name: "Save" })).toBeVisible();
+    expect(
+      view.getByText("This page does not change your holidays."),
+    ).toBeVisible();
   });
 });

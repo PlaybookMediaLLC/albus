@@ -21,6 +21,8 @@ export interface ConfirmActionProps {
   checked?: boolean;
   "aria-checked"?: boolean;
   pressed?: boolean;
+  /** The look of a plain button (without `pressed`), such as "outline" in a long list. */
+  variant?: "default" | "outline";
   className?: string;
 }
 
@@ -34,6 +36,7 @@ export function ConfirmAction({
   checked,
   "aria-checked": ariaChecked,
   pressed,
+  variant = "default",
   className,
 }: ConfirmActionProps) {
   const id = useId();
@@ -78,11 +81,7 @@ export function ConfirmAction({
         <Button
           type="button"
           variant={
-            pressed === undefined
-              ? "default"
-              : pressed
-                ? "secondary"
-                : "outline"
+            pressed === undefined ? variant : pressed ? "secondary" : "outline"
           }
           aria-label={children ? t(labelKey, labelValues) : undefined}
           aria-pressed={pressed}

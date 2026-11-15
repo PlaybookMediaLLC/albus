@@ -68,7 +68,10 @@ export function SettingsConversationsModerationPage({
       variant="app"
       landmark={false}
     >
-      <SettingsPage title={t("settings-conversations.moderation.title")}>
+      <SettingsPage
+        title={t("settings-conversations.moderation.title")}
+        description={t("settings-conversations.moderation.description")}
+      >
         <TeamStateView
           loading={queries.some((query) => query.isPending)}
           problem={queries.find((query) => query.error)?.error}

@@ -49,7 +49,10 @@ export function TeamSharePage({ workspaceId }: TeamSharePageProps) {
   const name = data?.name ?? "";
   return (
     <PageFrame titleKey="team-share.title" variant="app" landmark={false}>
-      <SettingsPage title={t("team-share.title")}>
+      <SettingsPage
+        title={t("team-share.title")}
+        description={t("team-share.description")}
+      >
         <TeamStateView
           loading={settings.isLoading}
           problem={settings.error}

@@ -40,7 +40,8 @@ export function OfficeHoursSection({
             await save({ ...hours, enabled });
           }}
         />
-        {manage ? (
+        {/* The schedule only matters while office hours are on. */}
+        {manage && hours.enabled ? (
           <OfficeHoursForm
             timezone={hours.timezone}
             intervals={hours.intervals}
@@ -56,9 +57,11 @@ export function OfficeHoursSection({
           />
         ) : null}
       </SettingsCard>
-      <SettingsNote>
-        {t("settings-conversations.general.hoursNote")}
-      </SettingsNote>
+      {hours.enabled ? (
+        <SettingsNote>
+          {t("settings-conversations.general.hoursNote")}
+        </SettingsNote>
+      ) : null}
     </SettingsSection>
   );
 }

@@ -45,6 +45,7 @@
 		"title": "Tags"
 	},
 	"changelog": {
+		"description": "Publish your product updates on the portal, in the widget and in an RSS feed.",
 		"public": "Public changelog",
 		"publicText": "Show the changelog on the portal, in the widget and in the RSS feed.",
 		"title": "Changelog"
@@ -57,6 +58,7 @@
 		"tooLong": "Use {{count}} characters or fewer."
 	},
 	"feedback": {
+		"description": "Manage the boards and tags of your feedback, and the public roadmap.",
 		"roadmap": "Public roadmap",
 		"roadmapText": "Show the roadmap tab and its pages on the portal.",
 		"title": "Feedback"
@@ -65,6 +67,7 @@
 		"authentication": "Authentication",
 		"create": "Create secret",
 		"created": "The new secret is ready. Copy it now.",
+		"description": "Choose how customers sign in to the portal and the widget, and manage the signing secrets.",
 		"docs": "the documentation",
 		"docsNote": "Read how to sign people in from your app:",
 		"methods": {
@@ -103,6 +106,7 @@
 			"none": "Off"
 		},
 		"board": "Public board",
+		"description": "Choose who can see the portal and the board, and who can post.",
 		"domainTooLong": "Each domain can have 253 characters or fewer.",
 		"domains": "Allowed email domains",
 		"domainsPlaceholder": "example.com, example.org",

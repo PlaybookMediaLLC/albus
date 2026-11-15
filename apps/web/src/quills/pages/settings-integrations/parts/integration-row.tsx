@@ -1,6 +1,7 @@
-import { Plug, Unplug } from "lucide-react";
+import { Unplug } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { avatarTone } from "../../../core/avatar-tone";
 import { useDeleteIntegration } from "../../../hooks/team/use-delete-integration";
 import { useTeamRuntime } from "../../../team/runtime";
 import {
@@ -37,7 +38,12 @@ export function IntegrationRow({
   const active = connection?.status === "active";
   return (
     <SettingsRow
-      icon={<Plug />}
+      icon={
+        <span className="text-sm font-semibold">
+          {provider.name.charAt(0).toUpperCase()}
+        </span>
+      }
+      iconClassName={`border-transparent ${avatarTone(provider.name)}`}
       title={provider.name}
       description={provider.description}
     >
