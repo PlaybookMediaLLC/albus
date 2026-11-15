@@ -13,9 +13,13 @@ export function traitText(
 ): string {
   if (type === "date") {
     const time = Date.parse(String(value));
+    // A date trait is stored as UTC midnight. In the local zone, west of UTC, it is the day before.
     return Number.isNaN(time)
       ? String(value)
-      : new Date(time).toLocaleDateString(locale, { dateStyle: "medium" });
+      : new Date(time).toLocaleDateString(locale, {
+          dateStyle: "medium",
+          timeZone: "UTC",
+        });
   }
   if (typeof value === "number" && type === "currency" && currencyCode)
     return value.toLocaleString(locale, {
