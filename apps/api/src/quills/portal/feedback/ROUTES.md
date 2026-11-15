@@ -17,6 +17,26 @@ declares the same factories with `audience: "widget"` in `../../widget/feedback`
 - `feedback.test.ts` calls every portal and public route with the portal off. It checks 404,
   no hidden or own value in the body, and no changed row.
 
+## Product rule: the roadmap and changelog tabs
+
+- The portal settings `nav` list (`PUT /quills/{workspaceId}/settings/portal`, `{ "nav": [...] }`)
+  turns each built-in portal tab on or off. The Feedback and Changelog settings pages save it.
+  A tab that the list does not name is on, so every existing installation keeps its tabs.
+- `GET /portal/config` returns `nav.tabs` (feedback, roadmap, changelog, help, support, status)
+  and `nav.links`, the custom link tabs that are on (http(s) URL, label of 1 to 30 characters,
+  at most 20). `../nav.ts` reads the list for every route below.
+- While the roadmap tab is off, `listQuillsPortalRoadmaps` and `listQuillsPortalRoadmapPosts`
+  return 404 `Roadmap not found`, the same answer as for a missing roadmap.
+- While the changelog tab is off, no published entry is visible to a customer
+  (`changelog.ts#entryVisible`). The portal and widget changelog lists return 404
+  `Changelog not found`, the entry routes and the entry reactions return 404
+  `Changelog entry not found`, the unread count is 0, the RSS feed returns 404 and the sitemap
+  lists no entries. Support embed cards of entries are empty.
+- Teammate routes do not read the tabs. The shipped mail (`jobs/handlers/shipped-mail.ts`) does
+  not read the changelog tab either.
+- `tabs.test.ts` turns each tab off and on with the settings route and checks the config and
+  every gated route.
+
 ## Private portal and the widget (decision to confirm)
 
 On a private portal (`access.visibility: "private"`), portal routes apply the P3a gate
@@ -93,10 +113,10 @@ similar posts, voted posts, roadmap posts, the changelog, the feed and the sitem
 | `editQuillsPortalOwnComment` | `PUT /portal/comments/{commentId}` (30 per 10 min; a held edit goes back to review and out of the count) | update | post_comments, post_comment_edit_history, posts | `comment.updated` | contract, rollback, ownership, author rules |
 | `deleteQuillsPortalOwnComment` | `DELETE /portal/comments/{commentId}` (30 per 10 min) | delete | post_comments, posts, post_activity | `comment.deleted` | contract, rollback, ownership |
 | `setQuillsPortalCommentReaction` | `PUT /portal/comments/{commentId}/reactions` `{emoji, reacted}` (120 per 10 min) | update | post_comment_reactions | `comment.reacted` / `comment.unreacted` when changed | contract, rollback |
-| `listQuillsPortalRoadmaps` | `GET /portal/roadmaps` | read | roadmaps, roadmap_columns | - | contract |
-| `listQuillsPortalRoadmapPosts` | `GET /portal/roadmaps/{roadmapId}/posts` (`statusId` of a column, `bucketId`, `search`, `sort`, offset paging) | read | roadmaps, posts, boards, post_tag_assignments, user_segments | - | contract |
-| `listQuillsPortalChangelog` | `GET /portal/changelog` (offset paging, 1-50) | read | changelog_* , posts, post_votes, principal | - | contract |
-| `getQuillsPortalChangelogEntry` | `GET /portal/changelog/{entryId}` | read | same | - | contract |
+| `listQuillsPortalRoadmaps` | `GET /portal/roadmaps` | read | roadmaps, roadmap_columns | - | contract, tabs |
+| `listQuillsPortalRoadmapPosts` | `GET /portal/roadmaps/{roadmapId}/posts` (`statusId` of a column, `bucketId`, `search`, `sort`, offset paging) | read | roadmaps, posts, boards, post_tag_assignments, user_segments | - | contract, tabs |
+| `listQuillsPortalChangelog` | `GET /portal/changelog` (offset paging, 1-50) | read | changelog_* , posts, post_votes, principal | - | contract, tabs |
+| `getQuillsPortalChangelogEntry` | `GET /portal/changelog/{entryId}` | read | same | - | contract, tabs |
 | `setQuillsPortalChangelogReaction` | `PUT /portal/changelog/{entryId}/reactions` `{emoji, reacted}` (120 per 10 min; RFC 0003, `../changelog-engagement.ts`) | update | changelog_reactions | `changelog.reacted` / `changelog.unreacted` when changed | contract, rollback, uniqueness, foreign entry |
 | `markQuillsPortalChangelogRead` | `PUT /portal/changelog/read` (120 per 10 min) | update | changelog_reads | none: the caller's own read mark | contract, rollback, per-caller marks |
 | `getQuillsPortalChangelogUnread` | `GET /portal/changelog/unread` (at most 99; 0 without a profile) | read | changelog_entries, changelog_reads, principal | - | contract, per-caller counts |
@@ -124,7 +144,8 @@ The same factories under `/widget/`: `listQuillsWidgetBoards`, `listQuillsWidget
 `setQuillsWidgetCommentReaction`, `listQuillsWidgetChangelog`, `getQuillsWidgetChangelogEntry`,
 `setQuillsWidgetChangelogReaction`, `markQuillsWidgetChangelogRead`,
 `getQuillsWidgetChangelogUnread`. Without sign-in, a widget visitor reacts only while the
-workspace allows anonymous interaction.
+workspace allows anonymous interaction. The widget changelog follows the portal changelog tab
+(see the product rule above) as well as the widget's own `tabs.changelog`.
 Every widget route needs a widget session, also for reads. Edit and delete of own content,
 statuses, tags and roadmaps are portal only, as in the source.
 
@@ -139,8 +160,8 @@ and posts still need the portal's `features.allowAnonymous` and the board tier.
 
 | operationId | Route | Action | Tables | Event | Tests |
 |---|---|---|---|---|---|
-| `getQuillsPublicChangelogFeed` | `GET /changelog/rss.xml` (RSS 2.0, 50 newest; 30 per minute per client) | read | settings, changelog_* | - | contract, portal-off, private portal |
-| `getQuillsPublicSitemap` | `GET /sitemap.xml` (sitemap XML; 30 per minute per client) | read | boards, posts, changelog_entries | - | contract, portal-off, private portal |
+| `getQuillsPublicChangelogFeed` | `GET /changelog/rss.xml` (RSS 2.0, 50 newest; 30 per minute per client; 404 while the changelog tab is off) | read | settings, changelog_* | - | contract, portal-off, private portal, tabs |
+| `getQuillsPublicSitemap` | `GET /sitemap.xml` (sitemap XML; 30 per minute per client; no entries while the changelog tab is off) | read | boards, posts, changelog_entries | - | contract, portal-off, private portal, tabs |
 
 Both show what an anonymous visitor of a public portal sees; a private portal gives empty lists.
 

@@ -4,15 +4,18 @@ import { settings } from "../../../database/quills/schema/auth";
 import { changelogEntries } from "../../../database/quills/schema/changelog";
 import { posts } from "../../../database/quills/schema/posts";
 import { defineQuillsRoute, type Database } from "../../framework/define-route";
+import { notFound } from "../../feedback/visibility";
 import { record } from "../../settings/area";
+import { navTabs } from "../nav";
 import { apiBase } from "../unsubscribe-token";
 import { portalPaths } from "../paths";
 import { entryVisible, shownAt } from "./changelog";
 import { postVisible, requirePortal, viewerFor, visibleBoards } from "./viewer";
 
 // Crawler and feed-reader documents (audience: "public"): what an anonymous visitor of a public
-// portal sees, as RSS and sitemap XML. A private portal gives an empty document. The XML helpers
-// here also serve the help-center sitemap and the status feed.
+// portal sees, as RSS and sitemap XML. A private portal gives an empty document. While the portal
+// changelog tab is off, the feed is 404 and the sitemap has no entries. The XML helpers here also
+// serve the help-center sitemap and the status feed.
 
 /** The absolute URL of a document under /quills-public/{workspaceId}, as the unsubscribe link builds it. */
 export const publicUrl = (workspaceId: string, path: string) =>
@@ -124,13 +127,16 @@ const feed = defineQuillsRoute({
   operationId: "getQuillsPublicChangelogFeed",
   summary: "Get the changelog RSS feed",
   description:
-    "RSS 2.0 with the 50 newest published entries that an anonymous visitor may see; empty on a private portal. Links point to the portal pages of the web app (/portal/{workspaceId}). The source's /changelog/feed, /changelog/rss and /changelog/rss.xml.",
+    "RSS 2.0 with the 50 newest published entries that an anonymous visitor may see; empty on a private portal; 404 while the portal changelog tab is off. Links point to the portal pages of the web app (/portal/{workspaceId}). The source's /changelog/feed, /changelog/rss and /changelog/rss.xml.",
   action: "read",
   rateLimit: { limit: 30, windowSeconds: 60 },
   raw: "application/rss+xml",
   response: z.string(),
   responseDescription: "The RSS document",
+  errors: { 404: "The portal changelog tab is off" },
   handler: async ({ db, workspaceId }) => {
+    if (!navTabs(await requirePortal(db)).changelog)
+      throw notFound("Changelog");
     const viewer = await anonymous(db);
     const [row] = await db
       .select({ name: settings.name })
@@ -172,7 +178,7 @@ const sitemap = defineQuillsRoute({
   operationId: "getQuillsPublicSitemap",
   summary: "Get the portal sitemap",
   description:
-    "Sitemap XML of the portal home, the boards, posts and changelog entries that an anonymous visitor may see: at most 10,000 posts (newest created first) and 1,000 entries. Empty on a private portal.",
+    "Sitemap XML of the portal home, the boards, posts and changelog entries that an anonymous visitor may see: at most 10,000 posts (newest created first) and 1,000 entries (none while the portal changelog tab is off). Empty on a private portal.",
   action: "read",
   rateLimit: { limit: 30, windowSeconds: 60 },
   raw: "application/xml",

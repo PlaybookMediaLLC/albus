@@ -5,6 +5,7 @@ import { defineQuillsRoute } from "../framework/define-route";
 import { imageUrl } from "../framework/files";
 import { bool, parseJson, record, str } from "../settings/area";
 import { requirePortal } from "./feedback/viewer";
+import { navLinks, navTabs } from "./nav";
 
 // The portal configuration that anyone may read. The access policy (allowed domains and
 // segments) stays server-side; only "is the portal private" leaves.
@@ -104,6 +105,34 @@ const portalConfig = defineQuillsRoute({
       }),
     }),
     portalAccess: z.object({ isPrivate: z.boolean() }),
+    nav: z.object({
+      tabs: z
+        .object({
+          feedback: z.boolean(),
+          roadmap: z.boolean(),
+          changelog: z.boolean(),
+          help: z.boolean(),
+          support: z.boolean(),
+          status: z.boolean(),
+        })
+        .openapi({
+          description:
+            "The built-in portal tabs that are on. A tab that the stored tab list does not name is on. While the roadmap or changelog tab is off, its customer routes answer 404.",
+        }),
+      links: z
+        .array(
+          z.object({
+            label: z.string().max(30),
+            url: z.string().max(2048),
+            newTab: z.boolean(),
+          }),
+        )
+        .max(20)
+        .openapi({
+          description:
+            "The custom link tabs that are on, in stored order. Only http(s) URLs with a label.",
+        }),
+    }),
     branding: z.object({
       logoUrl: z.string().nullable(),
       theme: z.object({
@@ -148,6 +177,7 @@ const portalConfig = defineQuillsRoute({
       portalAccess: {
         isPrivate: record(config.access).visibility === "private",
       },
+      nav: { tabs: navTabs(config), links: navLinks(config) },
       branding: {
         logoUrl: await safeLogoUrl(row?.logoKey ?? null),
         theme: publicBranding(row?.brandingConfig ?? null),

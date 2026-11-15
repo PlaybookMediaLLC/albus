@@ -41,7 +41,7 @@ Completion checks:             authenticated endpoint, tenant/object access, mut
 
 | operationId | Route | Audience | Action | Tables | Event | Tests |
 |---|---|---|---|---|---|---|
-| `getQuillsPublicPortalConfig` | `GET /portal/config` | public | read | `settings` | - | contract, audience, read-leak |
+| `getQuillsPublicPortalConfig` | `GET /portal/config` (`nav`: the portal tabs that are on and the safe custom links; see `feedback/ROUTES.md`) | public | read | `settings` | - | contract, audience, read-leak, tabs |
 | `getQuillsCustomerAvatar` | `GET /user/avatar/{customerId}` (JSON `{ url }`, not a redirect) | public | read | `customer_identity` | - | contract, audience, two-workspace |
 | `getQuillsWidgetConfig` | `GET /widget/config.json` | public | read | `settings` | - | contract, audience, read-leak |
 | `getQuillsWidgetCapabilities` | `GET /widget/capabilities` | public | read | none | - | contract, audience |

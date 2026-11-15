@@ -11751,6 +11751,73 @@
                         "isPrivate"
                       ]
                     },
+                    "nav": {
+                      "type": "object",
+                      "properties": {
+                        "tabs": {
+                          "type": "object",
+                          "properties": {
+                            "feedback": {
+                              "type": "boolean"
+                            },
+                            "roadmap": {
+                              "type": "boolean"
+                            },
+                            "changelog": {
+                              "type": "boolean"
+                            },
+                            "help": {
+                              "type": "boolean"
+                            },
+                            "support": {
+                              "type": "boolean"
+                            },
+                            "status": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "feedback",
+                            "roadmap",
+                            "changelog",
+                            "help",
+                            "support",
+                            "status"
+                          ],
+                          "description": "The built-in portal tabs that are on. A tab that the stored tab list does not name is on. While the roadmap or changelog tab is off, its customer routes answer 404."
+                        },
+                        "links": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "label": {
+                                "type": "string",
+                                "maxLength": 30
+                              },
+                              "url": {
+                                "type": "string",
+                                "maxLength": 2048
+                              },
+                              "newTab": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "label",
+                              "url",
+                              "newTab"
+                            ]
+                          },
+                          "maxItems": 20,
+                          "description": "The custom link tabs that are on, in stored order. Only http(s) URLs with a label."
+                        }
+                      },
+                      "required": [
+                        "tabs",
+                        "links"
+                      ]
+                    },
                     "branding": {
                       "type": "object",
                       "properties": {
@@ -12019,6 +12086,7 @@
                     "name",
                     "features",
                     "portalAccess",
+                    "nav",
                     "branding"
                   ]
                 }
@@ -19153,7 +19221,7 @@
             }
           },
           "404": {
-            "description": "Roadmap or status not found; Workspace not found or archived",
+            "description": "Roadmap or status not found, or the portal roadmap tab is off; Workspace not found or archived",
             "content": {
               "application/json": {
                 "schema": {
@@ -19402,7 +19470,7 @@
             }
           },
           "404": {
-            "description": "Roadmap or status not found; Workspace not found or archived",
+            "description": "Roadmap or status not found, or the portal roadmap tab is off; Workspace not found or archived",
             "content": {
               "application/json": {
                 "schema": {
@@ -19936,7 +20004,7 @@
             }
           },
           "404": {
-            "description": "Workspace not found or archived",
+            "description": "The portal changelog tab is off; Workspace not found or archived",
             "content": {
               "application/json": {
                 "schema": {
@@ -20136,7 +20204,7 @@
             }
           },
           "404": {
-            "description": "Changelog entry not found; Workspace not found or archived",
+            "description": "Changelog entry not found, or the portal changelog tab is off; Workspace not found or archived",
             "content": {
               "application/json": {
                 "schema": {
@@ -20155,7 +20223,7 @@
           "Quills"
         ],
         "summary": "Get the changelog RSS feed",
-        "description": "RSS 2.0 with the 50 newest published entries that an anonymous visitor may see; empty on a private portal. Links point to the portal pages of the web app (/portal/{workspaceId}). The source's /changelog/feed, /changelog/rss and /changelog/rss.xml.",
+        "description": "RSS 2.0 with the 50 newest published entries that an anonymous visitor may see; empty on a private portal; 404 while the portal changelog tab is off. Links point to the portal pages of the web app (/portal/{workspaceId}). The source's /changelog/feed, /changelog/rss and /changelog/rss.xml.",
         "security": [],
         "parameters": [
           {
@@ -20183,7 +20251,7 @@
             }
           },
           "404": {
-            "description": "Workspace not found or archived",
+            "description": "The portal changelog tab is off; Workspace not found or archived",
             "content": {
               "application/json": {
                 "schema": {
@@ -20212,7 +20280,7 @@
           "Quills"
         ],
         "summary": "Get the portal sitemap",
-        "description": "Sitemap XML of the portal home, the boards, posts and changelog entries that an anonymous visitor may see: at most 10,000 posts (newest created first) and 1,000 entries. Empty on a private portal.",
+        "description": "Sitemap XML of the portal home, the boards, posts and changelog entries that an anonymous visitor may see: at most 10,000 posts (newest created first) and 1,000 entries (none while the portal changelog tab is off). Empty on a private portal.",
         "security": [],
         "parameters": [
           {
@@ -23308,7 +23376,7 @@
             }
           },
           "404": {
-            "description": "Workspace not found or archived",
+            "description": "The portal changelog tab is off; Workspace not found or archived",
             "content": {
               "application/json": {
                 "schema": {
@@ -23518,7 +23586,7 @@
             }
           },
           "404": {
-            "description": "Changelog entry not found; Workspace not found or archived",
+            "description": "Changelog entry not found, or the portal changelog tab is off; Workspace not found or archived",
             "content": {
               "application/json": {
                 "schema": {
