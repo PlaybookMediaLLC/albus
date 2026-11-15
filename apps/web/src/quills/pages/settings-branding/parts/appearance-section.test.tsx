@@ -44,4 +44,19 @@ describe("AppearanceSection", () => {
       expect(onSave).toHaveBeenLastCalledWith({ ...theme, themeMode: "dark" }),
     );
   });
+
+  it("turns the other select off while a theme save runs", async () => {
+    let finish = () => {};
+    const onSave = vi.fn(
+      () => new Promise<void>((resolve) => (finish = resolve)),
+    );
+    const view = renderComponent(
+      <AppearanceSection theme={theme} onSave={onSave} />,
+    );
+    await choose("Primary color", "Red");
+    const mode = view.getByRole("combobox", { name: "Theme" });
+    await waitFor(() => expect(mode).toHaveAttribute("data-disabled"));
+    finish();
+    await waitFor(() => expect(mode).not.toHaveAttribute("data-disabled"));
+  });
 });

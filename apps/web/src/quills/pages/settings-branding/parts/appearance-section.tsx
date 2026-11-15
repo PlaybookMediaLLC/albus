@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { GetBrandingSettingsResponse } from "../../../api/team/get-branding-settings";
 import { SettingSelect } from "../../../ui/setting-select";
@@ -32,6 +33,17 @@ export function AppearanceSection({
   const { t } = useTranslation("quills");
   const colorTitle = t("settings-workspace.branding.primaryColor");
   const themeTitle = t("settings-workspace.branding.theme");
+  // Each save sends the whole theme. The other select waits for it, so that a second
+  // change starts from the saved theme and does not undo the first change.
+  const [saving, setSaving] = useState(false);
+  const save = async (next: Theme) => {
+    setSaving(true);
+    try {
+      await onSave(next);
+    } finally {
+      setSaving(false);
+    }
+  };
   return (
     <SettingsSection title={t("settings-workspace.branding.appearance")}>
       <SettingsCard>
@@ -48,8 +60,8 @@ export function AppearanceSection({
               label: t(color.labelKey),
               dot: color.dot,
             }))}
-            disabled={disabled}
-            onValueChange={(id) => onSave(withColor(theme, id))}
+            disabled={disabled || saving}
+            onValueChange={(id) => save(withColor(theme, id))}
           />
         </SettingsRow>
         <SettingsRow
@@ -60,8 +72,8 @@ export function AppearanceSection({
             label={themeTitle}
             value={theme.themeMode ?? "user"}
             options={modes.map(([value, key]) => ({ value, label: t(key) }))}
-            disabled={disabled}
-            onValueChange={(themeMode) => onSave({ ...theme, themeMode })}
+            disabled={disabled || saving}
+            onValueChange={(themeMode) => save({ ...theme, themeMode })}
           />
         </SettingsRow>
       </SettingsCard>
