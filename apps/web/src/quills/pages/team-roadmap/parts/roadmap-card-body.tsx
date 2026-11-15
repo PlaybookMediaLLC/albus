@@ -26,7 +26,9 @@ export interface RoadmapCardBodyProps {
   board: string | null;
   statuses: readonly { id: string; name: string }[];
   /** The drag activator: Space on the title link starts a keyboard drag. */
-  activatorRef: (element: HTMLElement | null) => void;
+  activatorRef?: (element: HTMLElement | null) => void;
+  /** The copy that follows the pointer during a drag: no link and no menu. */
+  preview?: boolean;
   /** The drag instructions for screen readers, when the card can move. */
   describedBy?: string;
   /** Moves the card; `byMenu` is true for the Move to menu. Left out without the update permission. */
@@ -59,17 +61,21 @@ export function RoadmapCardBody({
       <h3
         className={cn(
           "line-clamp-2 text-sm font-semibold leading-snug",
-          onMove && "pe-6",
+          onMove && !props.preview && "pe-6",
         )}
       >
-        <Link
-          ref={props.activatorRef}
-          to={teamHref(workspaceId, `/posts/${post.id}`)}
-          aria-describedby={props.describedBy}
-          className="outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-ring"
-        >
-          {title}
-        </Link>
+        {props.preview ? (
+          title
+        ) : (
+          <Link
+            ref={props.activatorRef}
+            to={teamHref(workspaceId, `/posts/${post.id}`)}
+            aria-describedby={props.describedBy}
+            className="outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-ring"
+          >
+            {title}
+          </Link>
+        )}
       </h3>
       {excerpt ? (
         <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
@@ -99,7 +105,7 @@ export function RoadmapCardBody({
           )}
         </span>
       </div>
-      {onMove ? (
+      {onMove && !props.preview ? (
         <Menu>
           <MenuTrigger
             render={

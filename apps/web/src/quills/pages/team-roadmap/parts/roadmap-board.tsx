@@ -6,6 +6,7 @@ import {
   type Over,
 } from "@dnd-kit/core";
 import { arrayMove, SortableContext } from "@dnd-kit/sortable";
+import { useReducedMotion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ListStatusesResponse } from "../../../api/team/list-statuses";
@@ -20,11 +21,13 @@ import { useRoadmapSensors } from "../use-roadmap-sensors";
 import {
   canDrop,
   columnCount,
+  landingCard,
   type DragItem,
   type PendingMove,
   type RoadmapPost,
 } from "../roadmap-moves";
 import { RoadmapColumn } from "./roadmap-column";
+import { dropAnimation, RoadmapDragPreview } from "./roadmap-drag-preview";
 
 type Status = ListStatusesResponse["statuses"][number];
 
@@ -60,6 +63,7 @@ export function RoadmapBoard({ workspaceId, ...props }: RoadmapBoardProps) {
   const [focusId, setFocusId] = useState<string | null>(null);
   const clearFocus = useCallback(() => setFocusId(null), []);
   const sensors = useRoadmapSensors();
+  const reduceMotion = useReducedMotion();
   const byId = useMemo(
     () => new Map(props.statuses.map((status) => [status.id, status])),
     [props.statuses],
@@ -166,6 +170,7 @@ export function RoadmapBoard({ workspaceId, ...props }: RoadmapBoardProps) {
                 overId === status.id &&
                 canDrop(dragged, status.id, byId)
               }
+              slot={landingCard(dragged, overId, status.id)}
               onToggle={() => toggle(status.id)}
               reorderable={team.permissions.manageSettings}
               onCreate={
@@ -176,11 +181,14 @@ export function RoadmapBoard({ workspaceId, ...props }: RoadmapBoardProps) {
           ))}
         </div>
       </SortableContext>
-      <DragOverlay>
+      <DragOverlay dropAnimation={reduceMotion ? null : dropAnimation}>
         {dragged ? (
-          <div className="w-72 rounded-lg border bg-card p-3 text-sm font-semibold shadow-lg">
-            {dragged.label}
-          </div>
+          <RoadmapDragPreview
+            workspaceId={workspaceId}
+            item={dragged}
+            boards={props.boards}
+            statuses={columns}
+          />
         ) : null}
       </DragOverlay>
     </DndContext>

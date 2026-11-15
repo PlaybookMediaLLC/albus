@@ -57,3 +57,16 @@ export function columnCount(
     total += Number(to === statusId) - Number(post.statusId === statusId);
   return total;
 }
+
+/** The card that would land in a column: a dragged card over another column than its own. */
+export function landingCard(
+  dragged: DragItem | null,
+  overId: string | null,
+  statusId: string,
+) {
+  return dragged?.type === "card" &&
+    overId === statusId &&
+    dragged.statusId !== statusId
+    ? dragged.post
+    : null;
+}

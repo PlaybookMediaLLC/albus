@@ -38,6 +38,8 @@ export interface RoadmapColumnProps {
   reorderable: boolean;
   /** Opens New request in this status. Left out without the create permission. */
   onCreate?: () => void;
+  /** A card from another column that would land here: its place shows as a slot. */
+  slot?: RoadmapPost | null;
   /** The card that takes the focus when it mounts, after a move by its menu. */
   focusId?: string | null;
   onFocused?: () => void;
@@ -65,7 +67,9 @@ export function RoadmapColumn({ status, ...props }: RoadmapColumnProps) {
   const panel = cn(
     "flex shrink-0 flex-col rounded-xl bg-muted/50 ring-ring/40 transition-shadow",
     props.dropTarget && "ring-2",
-    drag.isDragging && "opacity-50",
+    // The lifted column follows the pointer; its place shows as a dashed outline.
+    drag.isDragging &&
+      "bg-transparent outline-2 outline-dashed outline-ring/40 *:invisible",
   );
   const name = (
     // quills-web-allow C19: the status name takes the workspace status color, a runtime value.
@@ -155,6 +159,7 @@ export function RoadmapColumn({ status, ...props }: RoadmapColumnProps) {
           boards={props.boards}
           statuses={props.statuses}
           moves={props.moves}
+          slot={props.slot}
           focusId={props.focusId}
           onFocused={props.onFocused}
           onMove={props.onMove}

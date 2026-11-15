@@ -94,6 +94,9 @@ export { ShortcutListener } from "@/lib/shortcuts/shortcut-listener";
 // RFC 0004 lane P: the title and project of a task that a post links to.
 export { default as useGetTask } from "@/hooks/queries/task/use-get-task";
 
+// The roadmap drag uses the drop easing of the Kaneo board.
+export { EASE_OUT_CSS } from "@/lib/motion";
+
 // RFC 0004 revision 2: the sidebar shell and the shared thread parts.
 export {
   Menu,

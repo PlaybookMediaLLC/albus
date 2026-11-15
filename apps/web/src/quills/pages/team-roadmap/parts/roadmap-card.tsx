@@ -58,16 +58,21 @@ export function RoadmapCard({ focus, onFocused, ...body }: RoadmapCardProps) {
       {...ownListeners(drag.listeners)}
       className={cn(
         "group relative rounded-lg border bg-card p-3 shadow-xs transition-colors hover:bg-muted/40",
-        drag.isDragging && "opacity-50",
+        body.onMove && "cursor-grab active:cursor-grabbing",
+        // The lifted card follows the pointer; its place shows as an empty slot.
+        drag.isDragging &&
+          "border-dashed border-ring/40 bg-muted/40 shadow-none hover:bg-muted/40",
       )}
     >
-      <Body
-        {...body}
-        activatorRef={activatorRef}
-        describedBy={
-          body.onMove ? drag.attributes["aria-describedby"] : undefined
-        }
-      />
+      <div className={cn(drag.isDragging && "invisible")}>
+        <Body
+          {...body}
+          activatorRef={activatorRef}
+          describedBy={
+            body.onMove ? drag.attributes["aria-describedby"] : undefined
+          }
+        />
+      </div>
     </article>
   );
 }

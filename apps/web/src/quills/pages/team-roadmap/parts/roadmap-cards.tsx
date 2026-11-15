@@ -19,6 +19,8 @@ export interface RoadmapCardsProps {
   /** Every status, for the Move to menu of the cards. */
   statuses: readonly { id: string; name: string }[];
   moves: ReadonlyMap<string, PendingMove>;
+  /** A card from another column that would land here: a dashed slot shows its place. */
+  slot?: RoadmapPost | null;
   /** The card that takes the focus when it mounts, after a move by its menu. */
   focusId?: string | null;
   onFocused?: () => void;
@@ -47,6 +49,17 @@ export function RoadmapCards({ statusId, ...props }: RoadmapCardsProps) {
     props.moves,
     statusId,
   );
+  // The columns sort by votes, so a dropped card lands before the first card with fewer votes.
+  const slotAt = props.slot
+    ? cards.findIndex((post) => post.voteCount < props.slot!.voteCount)
+    : -1;
+  const slotIndex = props.slot && slotAt === -1 ? cards.length : slotAt;
+  const slotBox = (
+    <div
+      aria-hidden="true"
+      className="mb-2 h-20 rounded-lg border-2 border-dashed border-ring/40 bg-ring/5"
+    />
+  );
   return (
     <TeamStateView
       loading={posts.isPending}
@@ -55,8 +68,9 @@ export function RoadmapCards({ statusId, ...props }: RoadmapCardsProps) {
     >
       <SortableContext items={cards.map((post) => post.id)}>
         <ul className="flex flex-col gap-2">
-          {cards.map((post) => (
+          {cards.map((post, index) => (
             <li key={post.id}>
+              {index === slotIndex ? slotBox : null}
               <RoadmapCard
                 workspaceId={props.workspaceId}
                 post={post}
@@ -69,6 +83,7 @@ export function RoadmapCards({ statusId, ...props }: RoadmapCardsProps) {
               />
             </li>
           ))}
+          {props.slot && slotIndex === cards.length ? <li>{slotBox}</li> : null}
         </ul>
       </SortableContext>
       {posts.hasNextPage ? (

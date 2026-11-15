@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { inboxPosts } from "../team-posts/inbox.fixture";
 import {
   canDrop,
+  landingCard,
   columnCount,
   columnPosts,
   type PendingMove,
@@ -52,5 +53,22 @@ describe("roadmap moves", () => {
     expect(canDrop(column, "status_planned", statuses)).toBe(true);
     expect(canDrop(column, "status_done", statuses)).toBe(false);
     expect(canDrop(column, "status_open", statuses)).toBe(false);
+  });
+
+  it("finds the card that would land in a column", () => {
+    const post = { ...inboxPosts.items[0]!, statusId: "open" };
+    const card = { type: "card", post, statusId: "open", label: "x" } as const;
+    expect(landingCard(card, "planned", "planned")).toBe(post);
+    // Over its own column, over another column, or a column drag: no slot.
+    expect(landingCard(card, "open", "open")).toBeNull();
+    expect(landingCard(card, "planned", "done")).toBeNull();
+    expect(
+      landingCard(
+        { type: "column", statusId: "open", label: "Open" },
+        "planned",
+        "planned",
+      ),
+    ).toBeNull();
+    expect(landingCard(null, "planned", "planned")).toBeNull();
   });
 });
