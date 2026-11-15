@@ -171,3 +171,6 @@ export { copyToClipboard } from "@/lib/copy-to-clipboard";
 
 // Teammate settings, Connections (lane S): Kaneo's own API keys of the signed-in user.
 export { ApiKeysSettings } from "@/components/settings/api-keys/api-keys-settings";
+
+// Group A workspace pages (lane M): the member tabs and the changelog editor.
+export { TabsPanel } from "@/components/ui/tabs";

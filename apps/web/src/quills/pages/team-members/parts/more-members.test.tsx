@@ -3,8 +3,8 @@ import { describe, expect, it } from "vite-plus/test";
 import { getUserFixture } from "../../../api/team/get-user.fixture";
 import { listUsersFixture } from "../../../api/team/list-users.fixture";
 import { mockApi } from "../../../test/mock-api";
-import { renderPage } from "../../../test/render";
-import { meta } from "../meta";
+import { renderComponent } from "../../../test/render";
+import { inTeam } from "../../team-member/member.fixture";
 import { MoreMembers } from "./more-members";
 
 const { segments: _segments, tags: _tags, ...person } = getUserFixture.ok();
@@ -17,7 +17,7 @@ const More = () => (
 describe("MoreMembers", () => {
   it("sends nothing before the click, then retries a failed page", async () => {
     const api = mockApi();
-    const view = renderPage(More, meta);
+    const view = renderComponent(inTeam(<More />));
     expect(api.calls()).toHaveLength(0);
     api.fail();
     fireEvent.click(view.getByRole("button", { name: "Load more members" }));
