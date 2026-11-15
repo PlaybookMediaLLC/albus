@@ -10,16 +10,17 @@ import { useUpdateBrandingSettings } from "../../hooks/team/use-update-branding-
 import { useTeamRuntime } from "../../team/runtime";
 import { TeamStateView } from "../../team/team-state-view";
 import { PageFrame } from "../../ui/page-frame";
+import { SettingSelect } from "../../ui/setting-select";
 import { SettingSwitchRow } from "../../ui/setting-switch-row";
 import {
   SettingsCard,
   SettingsPage,
+  SettingsRow,
   SettingsSection,
   toast,
 } from "../../ui/upstream";
 import { AppearanceSection } from "./parts/appearance-section";
 import { BrandForm } from "./parts/brand-form";
-import { SelectRow } from "./parts/select-row";
 
 export interface SettingsBrandingPageProps {
   workspaceId: string;
@@ -88,29 +89,37 @@ export function SettingsBrandingPage({
                     }
                   }}
                 >
-                  <SelectRow
+                  <SettingsRow
                     title={t("settings-workspace.branding.header")}
                     description={t("settings-workspace.branding.headerText")}
-                    value={branding.data.headerDisplayMode}
-                    placeholder={t("settings-workspace.branding.headerCustom")}
-                    options={[
-                      {
-                        value: "logo_and_name",
-                        label: t("settings-workspace.branding.logoAndName"),
-                      },
-                      {
-                        value: "logo_only",
-                        label: t("settings-workspace.branding.logoOnly"),
-                      },
-                    ]}
-                    disabled={disabled}
-                    onValueChange={(mode) =>
-                      save({
-                        headerDisplayMode:
-                          mode === "logo_only" ? "logo_only" : "logo_and_name",
-                      })
-                    }
-                  />
+                  >
+                    <SettingSelect
+                      label={t("settings-workspace.branding.header")}
+                      value={branding.data.headerDisplayMode}
+                      placeholder={t(
+                        "settings-workspace.branding.headerCustom",
+                      )}
+                      options={[
+                        {
+                          value: "logo_and_name",
+                          label: t("settings-workspace.branding.logoAndName"),
+                        },
+                        {
+                          value: "logo_only",
+                          label: t("settings-workspace.branding.logoOnly"),
+                        },
+                      ]}
+                      disabled={disabled}
+                      onValueChange={(mode) =>
+                        save({
+                          headerDisplayMode:
+                            mode === "logo_only"
+                              ? "logo_only"
+                              : "logo_and_name",
+                        })
+                      }
+                    />
+                  </SettingsRow>
                 </BrandForm>
               </SettingsSection>
               <AppearanceSection

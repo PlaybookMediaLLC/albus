@@ -5,6 +5,7 @@ import type { PortalProblem } from "../../core/types";
 import { useArchiveConversationTag } from "../../hooks/team/use-archive-conversation-tag";
 import { useCreateConversationTag } from "../../hooks/team/use-create-conversation-tag";
 import { useDeleteConversationTag } from "../../hooks/team/use-delete-conversation-tag";
+import { useListConversationTagUsage } from "../../hooks/team/use-list-conversation-tag-usage";
 import { useListConversationTags } from "../../hooks/team/use-list-conversation-tags";
 import { useRestoreConversationTag } from "../../hooks/team/use-restore-conversation-tag";
 import { useUpdateConversationTag } from "../../hooks/team/use-update-conversation-tag";
@@ -13,6 +14,7 @@ import { TeamStateView } from "../../team/team-state-view";
 import { PageFrame } from "../../ui/page-frame";
 import { TagList } from "../../ui/tag-list";
 import { SettingsPage, toast } from "../../ui/upstream";
+import { ArchivedTopics } from "./parts/archived-topics";
 
 export interface SettingsConversationsTopicsPageProps {
   workspaceId: string;
@@ -49,6 +51,12 @@ export function SettingsConversationsTopicsPage({
     { param: { workspaceId }, query: { counts: "true" } },
     team.viewer,
   );
+  const manage = team.permissions.manageSettings;
+  // Only managers may read the archived topics. An empty workspace ID keeps the read off.
+  const usage = useListConversationTagUsage(
+    { param: { workspaceId: manage ? workspaceId : "" } },
+    team.viewer,
+  );
   const create = useCreateConversationTag(team.viewer);
   const rename = useUpdateConversationTag(team.viewer);
   const archive = useArchiveConversationTag(team.viewer);
@@ -83,7 +91,10 @@ export function SettingsConversationsTopicsPage({
         title={t("settings-conversations.topics.title")}
         description={t("settings-conversations.topics.description")}
       >
-        <TeamStateView loading={tags.isPending} problem={tags.error}>
+        <TeamStateView
+          loading={tags.isPending || usage.isLoading}
+          problem={tags.error ?? usage.error}
+        >
           <TagList
             items={(tags.data?.items ?? []).map((tag) => ({
               ...tag,
@@ -96,7 +107,7 @@ export function SettingsConversationsTopicsPage({
             }))}
             copy={copy}
             maxLength={50}
-            canManage={team.permissions.manageSettings}
+            canManage={manage}
             onCreate={async (name): Promise<PortalProblem | void> => {
               try {
                 const result = await create.mutateAsync({
@@ -125,6 +136,11 @@ export function SettingsConversationsTopicsPage({
                 onSelect: () => void archiveTopic(item.id, item.name),
               },
             ]}
+          />
+          <ArchivedTopics
+            items={(usage.data?.items ?? []).filter((tag) => tag.archived)}
+            pending={restore.isPending}
+            onRestore={(tagId) => void undo(tagId)}
           />
         </TeamStateView>
       </SettingsPage>

@@ -14,6 +14,9 @@ import {
   Field,
   FieldLabel,
   Input,
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
 } from "./upstream";
 
 export interface NameDialogProps {
@@ -24,6 +27,8 @@ export interface NameDialogProps {
   /** The field label, such as "Name". */
   label: string;
   placeholder?: string;
+  /** A fixed text before the field, such as "https://". */
+  prefix?: string;
   maxLength: number;
   /** The current name when the dialog renames an item. */
   defaultValue?: string;
@@ -31,6 +36,8 @@ export interface NameDialogProps {
   submitKey: string;
   /** The field error for a conflict, such as "A tag with this name exists". */
   taken?: string;
+  /** The API issue path of the field when it is not "name", such as "domain". */
+  issuePath?: string;
   /** Saves the trimmed name. Return a problem to keep the dialog open. */
   onSubmit: (name: string) => Promise<PortalProblem | void>;
 }
@@ -69,27 +76,47 @@ export function NameDialog(props: NameDialogProps) {
           )}
           onSubmit={async ({ name }) => {
             const problem = await props.onSubmit(name);
-            return problem?.kind === "conflict" && props.taken
-              ? {
-                  kind: "invalid",
-                  issues: [{ path: "name", message: props.taken }],
-                }
-              : problem;
+            if (problem?.kind === "conflict" && props.taken)
+              return {
+                kind: "invalid",
+                issues: [{ path: "name", message: props.taken }],
+              };
+            if (problem?.kind !== "invalid" || !props.issuePath) return problem;
+            return {
+              ...problem,
+              issues: problem.issues?.map((issue) =>
+                issue.path === props.issuePath
+                  ? { ...issue, path: "name" }
+                  : issue,
+              ),
+            };
           }}
         >
           {(form) => {
             const error = form.formState.errors.name?.message;
+            const input = {
+              id,
+              autoComplete: "off",
+              autoFocus: true,
+              placeholder: props.placeholder,
+              "aria-invalid": Boolean(error),
+              ...form.register("name"),
+            };
             return (
               <Field invalid={Boolean(error)}>
                 <FieldLabel htmlFor={id}>{props.label}</FieldLabel>
-                <Input
-                  id={id}
-                  autoComplete="off"
-                  autoFocus
-                  placeholder={props.placeholder}
-                  aria-invalid={Boolean(error)}
-                  {...form.register("name")}
-                />
+                {props.prefix ? (
+                  <InputGroup>
+                    <InputGroupInput {...input} />
+                    <InputGroupAddon align="inline-start">
+                      <span className="font-mono text-xs text-muted-foreground">
+                        {props.prefix}
+                      </span>
+                    </InputGroupAddon>
+                  </InputGroup>
+                ) : (
+                  <Input {...input} />
+                )}
                 {error ? (
                   <p role="alert" className="text-sm text-destructive">
                     {String(error)}

@@ -45,7 +45,8 @@ export function SettingsConversationsAiPage({
   const data = settings.data;
   const locked = !team.permissions.manageSettings;
   // The API refuses a write that does not name the revision it read. On a conflict another
-  // person saved first: reload their values, then show the problem.
+  // person saved first: reload their values, then show the problem. The voice form keeps
+  // the unsaved text of the user, and its next save sends the new revision.
   const save = async (patch: Patch) => {
     try {
       await update.mutateAsync({
@@ -81,7 +82,6 @@ export function SettingsConversationsAiPage({
               >
                 <SettingsCard>
                   <VoiceForm
-                    key={data.revision}
                     values={{ name: data.identity.name, ...data.agent.voice }}
                     onSubmit={({ name, ...agentVoice }) =>
                       problemOf(save({ name, agentVoice }))

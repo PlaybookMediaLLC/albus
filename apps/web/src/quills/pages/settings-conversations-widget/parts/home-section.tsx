@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { GetWidgetSettingsResponse } from "../../../api/team/get-widget-settings";
 import type { UpdateWidgetSettingsRequest } from "../../../api/team/update-widget-settings";
@@ -43,6 +44,17 @@ export function HomeSection({
   onSave,
 }: HomeSectionProps) {
   const { t } = useTranslation("quills");
+  // A card save sends the whole list. The other card switches wait for it, so that a
+  // second change starts from the saved list and does not undo the first change.
+  const [saving, setSaving] = useState(false);
+  const saveCards = async (cards: Card[]) => {
+    setSaving(true);
+    try {
+      await onSave({ cards });
+    } finally {
+      setSaving(false);
+    }
+  };
   // The API replaces the card list whole, so each card goes back as it was stored.
   const withCard = (id: string, enabled: boolean): Card[] =>
     home.cards.map((card) => ({
@@ -79,10 +91,8 @@ export function HomeSection({
             title={card.title ?? t(cardKeys[card.type] ?? card.type)}
             description={card.subtitle ?? undefined}
             checked={card.enabled}
-            disabled={locked}
-            onCheckedChange={(enabled) =>
-              onSave({ cards: withCard(card.id, enabled) })
-            }
+            disabled={locked || saving}
+            onCheckedChange={(enabled) => saveCards(withCard(card.id, enabled))}
           />
         ))}
       </SettingsCard>

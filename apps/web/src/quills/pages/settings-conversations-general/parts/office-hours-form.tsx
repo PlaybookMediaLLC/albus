@@ -16,6 +16,9 @@ export interface OfficeHoursFormProps {
   }) => Promise<PortalProblem | void>;
 }
 
+// The time format of the API: 24-hour HH:MM.
+const hhmm = /^([01]\d|2[0-3]):[0-5]\d$/;
+
 // 2023-01-01 was a Sunday, so day N of the API is January 1 + N.
 const dayName = (day: number, locale: string) =>
   new Intl.DateTimeFormat(locale, { weekday: "long", timeZone: "UTC" }).format(
@@ -30,6 +33,14 @@ export function OfficeHoursForm({
 }: OfficeHoursFormProps) {
   const { t, i18n } = useTranslation("quills");
   const zones = Intl.supportedValuesOf("timeZone");
+  // A closed day is not sent, so only an open day needs valid times.
+  const time = (key: "start" | "end") => ({
+    check: (row: DayRow) => !row.open || hhmm.test(row[key]),
+    params: {
+      message: t("settings-conversations.general.timeInvalid"),
+      path: [key],
+    },
+  });
   const schema = z.object({
     timezone: z.string().min(1),
     days: z.array(
@@ -40,6 +51,8 @@ export function OfficeHoursForm({
           start: z.string(),
           end: z.string(),
         })
+        .refine(time("start").check, time("start").params)
+        .refine(time("end").check, time("end").params)
         .refine((row) => !row.open || row.start !== row.end, {
           message: t("settings-conversations.general.sameTime"),
           path: ["end"],
@@ -66,7 +79,9 @@ export function OfficeHoursForm({
             ).map((zone) => ({ value: zone, label: zone }))}
           />
           {form.getValues("days").map((row, index) => {
-            const error = form.formState.errors.days?.[index]?.end?.message;
+            const errors = form.formState.errors.days?.[index];
+            const startError = errors?.start?.message;
+            const error = startError ?? errors?.end?.message;
             const name = dayName(row.day, i18n.language);
             return (
               <div
@@ -91,6 +106,7 @@ export function OfficeHoursForm({
                   aria-label={t("settings-conversations.general.opens", {
                     day: name,
                   })}
+                  aria-invalid={Boolean(startError)}
                   {...form.register(`days.${index}.start`)}
                 />
                 <Input
@@ -98,7 +114,7 @@ export function OfficeHoursForm({
                   aria-label={t("settings-conversations.general.closes", {
                     day: name,
                   })}
-                  aria-invalid={Boolean(error)}
+                  aria-invalid={Boolean(errors?.end?.message)}
                   {...form.register(`days.${index}.end`)}
                 />
                 {error ? (

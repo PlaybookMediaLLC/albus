@@ -17,6 +17,11 @@ import { StateView } from "./state-view";
 export interface PortalFormProps<T extends FieldValues> {
   schema: z.ZodType<T, T>;
   defaultValues: DefaultValues<T>;
+  /**
+   * The stored values, when they can change while the form is open (for example, another
+   * person saves). The form takes them, but a field that the user changed keeps its value.
+   */
+  values?: T;
   submitKey: string;
   resetOnSuccess?: boolean;
   onSubmit: (values: T) => Promise<PortalProblem | void>;
@@ -28,16 +33,36 @@ export interface PortalFormProps<T extends FieldValues> {
   submitIcon?: ReactNode;
 }
 
+/** True when the form values hold the path of an API issue, such as "days.0.end". */
+const holds = (values: unknown, path: string) => {
+  let current = values;
+  return path.split(".").every((key) => {
+    if (current === null || typeof current !== "object" || !(key in current))
+      return false;
+    current = (current as Record<string, unknown>)[key];
+    return true;
+  });
+};
+
 export function PortalForm<T extends FieldValues>(props: PortalFormProps<T>) {
   const { t } = useTranslation("quills");
   const form = useForm<T>({
     defaultValues: props.defaultValues,
+    ...(props.values && {
+      values: props.values,
+      resetOptions: { keepDirtyValues: true },
+    }),
     resolver: zodResolver(props.schema) as Resolver<T>,
   });
   const [problem, setProblem] = useState<PortalProblem | null>(null);
+  // After a field problem or a conflict (the stored data changed), the user can submit
+  // again. Other problems wait for "Try again" or a reload.
+  const blocked = Boolean(
+    problem && problem.kind !== "invalid" && problem.kind !== "conflict",
+  );
   const running = useRef(false);
   const submit = form.handleSubmit(async (values) => {
-    if (running.current || (problem && problem.kind !== "invalid")) return;
+    if (running.current || blocked) return;
     setProblem(null);
     if (isFramed()) {
       form.setError("root", { message: t("core.frameBlocked") });
@@ -47,9 +72,16 @@ export function PortalForm<T extends FieldValues>(props: PortalFormProps<T>) {
     try {
       const result = await props.onSubmit(values);
       if (result?.kind === "invalid" && result.issues?.length) {
+        // An issue without a matching field shows above the form, so no API issue is hidden.
+        const values = form.getValues();
+        const general: string[] = [];
         for (const issue of result.issues) {
-          form.setError(issue.path as never, { message: issue.message });
+          if (holds(values, issue.path))
+            form.setError(issue.path as never, { message: issue.message });
+          else general.push(issue.message || t("core.problem.invalid"));
         }
+        if (general.length)
+          form.setError("root", { message: general.join(" ") });
       } else {
         setProblem(result ?? null);
         if (!result && props.resetOnSuccess) form.reset();
@@ -82,10 +114,7 @@ export function PortalForm<T extends FieldValues>(props: PortalFormProps<T>) {
       size={props.submitIcon ? "icon-sm" : undefined}
       className={props.submitIcon ? "ml-auto rounded-full" : undefined}
       aria-label={props.submitIcon ? t(props.submitKey) : undefined}
-      disabled={
-        form.formState.isSubmitting ||
-        Boolean(problem && problem.kind !== "invalid")
-      }
+      disabled={form.formState.isSubmitting || blocked}
       loading={form.formState.isSubmitting}
     >
       {props.submitIcon ?? t(props.submitKey)}

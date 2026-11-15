@@ -23,6 +23,14 @@ export function useDeleteConversationTag(viewer: Viewer) {
           "listConversationTags",
         ),
       });
+      await queryClient.invalidateQueries({
+        queryKey: quillsOperationKey(
+          input.param.workspaceId,
+          viewer,
+          "team",
+          "listConversationTagUsage",
+        ),
+      });
     },
   });
 }

@@ -22,6 +22,12 @@ describe("useCreateConversationTag", () => {
         "team",
         "listConversationTags",
       ),
+      quillsOperationKey(
+        "workspace_test_1",
+        { kind: "anonymous" },
+        "team",
+        "listConversationTagUsage",
+      ),
     ],
   });
 });

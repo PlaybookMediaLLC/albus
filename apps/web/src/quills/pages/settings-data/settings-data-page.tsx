@@ -69,18 +69,33 @@ export function SettingsDataPage({ workspaceId }: SettingsDataPageProps) {
           <SettingsSection title={t("settings-connections.data.export")}>
             <SettingsCard>
               <ExportDialog workspaceId={workspaceId} />
-              {exports.data?.items.map((run) => (
-                <RunRow
-                  key={run.id}
-                  name={run.fileName}
-                  status={run.status}
-                  problems={run.error ? [run.error] : undefined}
-                >
-                  {run.status === "completed" ? (
-                    <DownloadButton workspaceId={workspaceId} runId={run.id} />
-                  ) : null}
-                </RunRow>
-              ))}
+              {exports.data?.items.map((run) => {
+                // ponytail: checked at render; a page left open past the time gets the API error.
+                const expired =
+                  run.expiresAt !== null &&
+                  Date.parse(run.expiresAt) <= Date.now();
+                const ready = run.status === "completed";
+                return (
+                  <RunRow
+                    key={run.id}
+                    name={run.fileName}
+                    status={run.status}
+                    detail={
+                      ready && expired
+                        ? t("settings-connections.data.expired")
+                        : undefined
+                    }
+                    problems={run.error ? [run.error] : undefined}
+                  >
+                    {ready && !expired ? (
+                      <DownloadButton
+                        workspaceId={workspaceId}
+                        runId={run.id}
+                      />
+                    ) : null}
+                  </RunRow>
+                );
+              })}
             </SettingsCard>
           </SettingsSection>
           <SettingsSection title={t("settings-connections.data.danger")}>

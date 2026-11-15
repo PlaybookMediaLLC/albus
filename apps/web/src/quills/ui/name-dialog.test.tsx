@@ -61,4 +61,33 @@ describe("NameDialog", () => {
       "A tag with this name exists.",
     );
   });
+
+  it("shows a prefix and an API issue of its own path at the field", async () => {
+    const view = renderComponent(
+      <NameDialog
+        open
+        onOpenChange={() => undefined}
+        title="Add domain"
+        description="Use your own domain."
+        label="Domain"
+        prefix="https://"
+        maxLength={253}
+        issuePath="domain"
+        submitKey="settings-workspace.domain.save"
+        onSubmit={async () => ({
+          kind: "invalid",
+          issues: [{ path: "domain", message: "Use a public host name." }],
+        })}
+      />,
+    );
+    const dialog = await view.findByRole("dialog", { name: "Add domain" });
+    expect(within(dialog).getByText("https://")).toBeVisible();
+    const field = within(dialog).getByLabelText("Domain");
+    fireEvent.change(field, { target: { value: "localhost" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(field).toHaveAttribute("aria-invalid", "true"));
+    expect(within(dialog).getByRole("alert")).toHaveTextContent(
+      "Use a public host name.",
+    );
+  });
 });

@@ -2,6 +2,7 @@ import { apiRouter, z } from "../../openapi";
 import { settings } from "../../database/quills/schema/auth";
 import { defineQuillsRoute } from "../framework/define-route";
 import { bool, parseJson, record, str } from "../settings/area";
+import { widgetTabs } from "../settings/widget-tabs";
 
 // Public boot reads for the widget: its server config, the realtime transport and the locale.
 // They carry no identity, so they never read the widget secret or any customer row.
@@ -59,22 +60,13 @@ const widgetConfig = defineQuillsRoute({
       .limit(1);
     const stored = parseJson(row?.widgetConfig ?? null);
     if (stored.enabled !== true) return { enabled: false, config: null };
-    // An empty blob takes today's tab defaults, as the settings read does.
-    const fresh = Object.keys(stored).length === 0;
-    const tabs = record(stored.tabs);
     const branding = parseJson(row?.brandingConfig ?? null);
     const mode = branding.themeMode;
     return {
       enabled: true,
       config: {
-        tabs: {
-          feedback: bool(tabs.feedback, true),
-          changelog: bool(tabs.changelog, fresh),
-          help: bool(tabs.help, false),
-          messenger: bool(tabs.messenger, fresh),
-          tickets: bool(tabs.tickets, true),
-          home: bool(tabs.home, true),
-        },
+        // The same tab defaults as the settings read.
+        tabs: widgetTabs(stored),
         hmacRequired: true,
         visitorAnalytics: bool(stored.visitorAnalytics, true),
         visitorDeviceTracking: bool(stored.visitorDeviceTracking, true),

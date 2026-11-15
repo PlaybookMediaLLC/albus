@@ -15,6 +15,7 @@ const schema = z.object({
 export type VoiceValues = z.infer<typeof schema>;
 
 export interface VoiceFormProps {
+  /** The stored values. A change keeps the text that the user has not saved yet. */
   values: VoiceValues;
   onSubmit: (values: VoiceValues) => Promise<PortalProblem | void>;
 }
@@ -27,6 +28,7 @@ export function VoiceForm({ values, onSubmit }: VoiceFormProps) {
     <PortalForm
       schema={schema}
       defaultValues={values}
+      values={values}
       submitKey="settings-conversations.save"
       className="max-w-none gap-4 px-4 py-3.5 [&_button[type=submit]]:self-end"
       onSubmit={onSubmit}

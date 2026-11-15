@@ -9,6 +9,14 @@ const stored = {
 };
 
 describe("brand colors", () => {
+  it("stores hex values, the only colors that the widget config passes on", () => {
+    for (const color of brandColors)
+      for (const value of [
+        ...Object.values(color.light),
+        ...Object.values(color.dark),
+      ])
+        expect(value).toMatch(/^#[0-9a-f]{6}$/);
+  });
   it("changes only the primary keys and keeps every other stored key", () => {
     const next = withColor(stored, "red");
     const red = brandColors.find((color) => color.id === "red")!;
