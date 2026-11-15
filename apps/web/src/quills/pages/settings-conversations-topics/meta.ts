@@ -8,6 +8,7 @@ export const meta = {
   token: "none",
   operations: [
     "listQuillsConversationTags",
+    "listQuillsConversationTagUsage",
     "createQuillsConversationTag",
     "updateQuillsConversationTag",
     "archiveQuillsConversationTag",
