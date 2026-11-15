@@ -186,3 +186,6 @@ export { default as MembersTable } from "@/components/team/members-table";
 export { default as InviteTeamMemberModal } from "@/components/team/invite-team-member-modal";
 export { default as useGetFullWorkspace } from "@/hooks/queries/workspace/use-get-full-workspace";
 export { BillingSettingsPage } from "@/components/billing/billing-settings-page";
+// Group A workspace pages (lane M): the member tabs and the changelog editor.
+export { TabsPanel } from "@/components/ui/tabs";
+export { Skeleton } from "@/components/ui/skeleton";

@@ -1,6 +1,9 @@
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vite-plus/test";
+import { createChangelogEntryFixture } from "../../api/team/create-changelog-entry.fixture";
 import { draftChangelogFromPostsFixture } from "../../api/team/draft-changelog-from-posts.fixture";
+import { getChangelogEntryFixture } from "../../api/team/get-changelog-entry.fixture";
+import { listChangelogFixture } from "../../api/team/list-changelog.fixture";
 import { listChangelogEngagementFixture } from "../../api/team/list-changelog-engagement.fixture";
 import { searchShippedPostsFixture } from "../../api/team/search-shipped-posts.fixture";
 import { press } from "../../test/actions";
@@ -10,18 +13,13 @@ import { renderPage } from "../../test/render";
 import { meta } from "./meta";
 import { TeamChangelogPage } from "./team-changelog-page";
 
-const engagement = listChangelogEngagementFixture.ok({
-  items: [
-    {
-      id: "changelog_test_1",
-      title: "November release",
-      publishedAt: "2026-11-01T12:00:00.000Z",
-      readCount: 4,
-      reactions: [{ emoji: "🎉", count: 2 }],
-    },
-  ],
-  nextOffset: 20,
+const entry = getChangelogEntryFixture.ok({
+  id: "changelog_test_1",
+  title: "November release",
+  status: "draft",
+  createdAt: "2026-11-01T12:00:00.000Z",
 });
+const entries = listChangelogFixture.ok({ entries: [entry] });
 const shipped = searchShippedPostsFixture.ok({
   posts: [
     {
@@ -34,59 +32,59 @@ const shipped = searchShippedPostsFixture.ok({
     },
   ],
 });
+const draft = draftChangelogFromPostsFixture.ok({
+  title: "Dark mode is here",
+  body: "- Dark mode",
+  postIds: ["post_test_1"],
+  requesterCount: 3,
+});
+
+/** Opens the draft sheet and drafts from the one shipped post. */
+async function draftDarkMode() {
+  press("Draft from shipped requests");
+  (await screen.findByRole("checkbox", { name: /Dark mode/ })).click();
+  const submit = screen.getByRole("button", { name: "Draft with AI" });
+  await vi.waitFor(() => expect(submit).toBeEnabled());
+  submit.click();
+}
 
 describe("TeamChangelogPage", () => {
   describePageContract(meta, TeamChangelogPage, {
     loading: {
       prepare: () => {
-        const api = mockApi();
-        api.defer(() => undefined);
-        api.defer(() => undefined);
+        mockApi().defer(() => undefined);
       },
     },
     failed: {
       prepare: () => {
-        const api = mockApi();
-        api.fail();
-        api.fail();
+        mockApi().fail();
       },
     },
     ready: {
       prepare: () => {
         const api = mockApi();
-        api.reply(engagement);
+        api.reply(entries);
         api.reply(shipped);
       },
       assert: async (view) => {
-        expect(await view.findByText("November release")).toBeInTheDocument();
-        expect(view.getByText("4 readers")).toBeInTheDocument();
-        expect(
-          view.getByRole("button", { name: "Load more updates" }),
-        ).toBeInTheDocument();
+        const row = await view.findByRole("link", { name: /November release/ });
+        expect(row).toHaveAttribute(
+          "href",
+          "/feedback/workspace_test_1/changelog/changelog_test_1",
+        );
+        expect(view.getByRole("img", { name: "Draft" })).toBeInTheDocument();
       },
     },
     done: {
       prepare: () => {
         const api = mockApi();
-        api.reply(engagement);
+        api.reply(entries);
         api.reply(shipped);
-        api.reply(
-          draftChangelogFromPostsFixture.ok({
-            title: "Dark mode is here",
-            body: "- Dark mode",
-            postIds: ["post_test_1"],
-            requesterCount: 3,
-          }),
-        );
-        api.reply(engagement);
+        api.reply(draft);
       },
       act: async (view) => {
         await view.findByText("November release");
-        press("Draft from shipped requests");
-        (await screen.findByRole("checkbox", { name: /Dark mode/ })).click();
-        const submit = screen.getByRole("button", { name: "Draft with AI" });
-        await vi.waitFor(() => expect(submit).toBeEnabled());
-        submit.click();
+        await draftDarkMode();
       },
       assert: async () => {
         expect(
@@ -96,45 +94,73 @@ describe("TeamChangelogPage", () => {
     },
   });
 
-  describe("behavior", () => {
-    it("opens an update on the portal", async () => {
-      const api = mockApi();
-      api.reply(engagement);
-      api.reply(shipped);
-      const view = renderPage(TeamChangelogPage, meta);
-      const link = await view.findByRole("link", { name: /November release/ });
-      expect(link).toHaveAttribute(
-        "href",
-        "/portal/workspace_test_1/changelog/changelog_test_1",
-      );
-      expect(link).toHaveTextContent("🎉 2");
-      link.click();
-      await vi.waitFor(() =>
-        expect(view.router.state.location.pathname).toBe(
-          "/portal/workspace_test_1/changelog/changelog_test_1",
-        ),
-      );
-    });
+  it("filters by status and says when no entry exists", async () => {
+    const api = mockApi();
+    api.reply(entries);
+    api.reply(shipped);
+    api.reply(listChangelogFixture.ok());
+    const view = renderPage(TeamChangelogPage, meta);
+    await view.findByText("November release");
+    fireEvent.click(view.getByRole("button", { name: "Filters" }));
+    fireEvent.click(
+      await view.findByRole("menuitemradio", { name: "Published" }),
+    );
+    expect(
+      await view.findByText("No changelog entries yet"),
+    ).toBeInTheDocument();
+    const url = new URL(api.calls("listQuillsChangelog")[1]!.url);
+    expect(url.searchParams.get("status")).toBe("published");
+  });
 
-    it("sends the chosen post IDs and nothing else", async () => {
-      const api = mockApi();
-      api.reply(engagement);
-      api.reply(shipped);
-      api.reply(draftChangelogFromPostsFixture.ok());
-      api.reply(engagement);
-      const view = renderPage(TeamChangelogPage, meta);
-      await view.findByText("November release");
-      press("Draft from shipped requests");
-      (await screen.findByRole("checkbox", { name: /Dark mode/ })).click();
-      const submit = screen.getByRole("button", { name: "Draft with AI" });
-      await vi.waitFor(() => expect(submit).toBeEnabled());
-      submit.click();
-      await vi.waitFor(() =>
-        expect(api.calls("draftQuillsChangelogFromPosts")).toHaveLength(1),
-      );
-      expect(
-        await api.calls("draftQuillsChangelogFromPosts")[0]!.clone().json(),
-      ).toEqual({ postIds: ["post_test_1"] });
+  it("shows the engagement of published updates on its tab", async () => {
+    const api = mockApi();
+    api.reply(entries);
+    api.reply(shipped);
+    api.reply(
+      listChangelogEngagementFixture.ok({
+        items: [
+          {
+            id: "changelog_test_2",
+            title: "October release",
+            publishedAt: "2026-10-01T12:00:00.000Z",
+            readCount: 4,
+            reactions: [{ emoji: "🎉", count: 2 }],
+          },
+        ],
+      }),
+    );
+    const view = renderPage(TeamChangelogPage, meta);
+    await view.findByText("November release");
+    expect(api.calls("listQuillsChangelogEngagement")).toHaveLength(0);
+    fireEvent.click(view.getByRole("tab", { name: "Engagement" }));
+    expect(
+      await view.findByRole("link", { name: /October release/ }),
+    ).toHaveTextContent("🎉 2");
+  });
+
+  it("saves the AI draft as a draft entry and opens it", async () => {
+    const api = mockApi();
+    api.reply(entries);
+    api.reply(shipped);
+    api.reply(draft);
+    api.reply(createChangelogEntryFixture.ok({ id: "changelog_new" }));
+    api.reply(entries);
+    const view = renderPage(TeamChangelogPage, meta);
+    await view.findByText("November release");
+    await draftDarkMode();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Create draft entry" }),
+    );
+    await vi.waitFor(() =>
+      expect(view.router.state.location.pathname).toBe(
+        "/feedback/workspace_test_1/changelog/changelog_new",
+      ),
+    );
+    expect(await api.calls("createQuillsChangelogEntry")[0]!.json()).toEqual({
+      title: "Dark mode is here",
+      content: "- Dark mode",
+      linkedPostIds: ["post_test_1"],
+      publishState: { type: "draft" },
     });
   });
 });
