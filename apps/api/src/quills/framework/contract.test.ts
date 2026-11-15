@@ -104,6 +104,12 @@ const fixtures: Record<string, Fixture> = {
   ...appFixtures,
 };
 const app = contractApp(quillsRouter, publicRouter);
+// CI runs the routes in shards ("2/3"). Each fingerprint hashes every row that earlier routes seeded.
+const shardSpec = process.env.QUILLS_CONTRACT_SHARD ?? "1/1";
+const [shard, shards] = shardSpec.split("/").map(Number) as [number, number];
+if (!(Number.isInteger(shard) && shard >= 1 && shard <= shards))
+  throw new Error(`QUILLS_CONTRACT_SHARD must be i/n, got ${shardSpec}`);
+const routes = [...registry.keys()].filter((_, i) => i % shards === shard - 1);
 
 describe.skipIf(!url)("Quills route contract", () => {
   beforeAll(async () => {
@@ -126,7 +132,7 @@ describe.skipIf(!url)("Quills route contract", () => {
     expect(registry.size).toBeGreaterThan(0);
     expect(unregisteredRoutes(app)).toEqual([]);
   });
-  it.each([...registry.keys()].map((d) => [d.operationId, d] as const))(
+  it.each(routes.map((d) => [d.operationId, d] as const))(
     "%s passes every contract check",
     async (operationId, d) => {
       expect(await checkRoute(app, d, fixtures[operationId])).toEqual([]);
