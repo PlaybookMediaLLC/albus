@@ -25,6 +25,7 @@ import {
   postListInput,
   postSearch,
   type PostSearch,
+  requestListTitle,
 } from "./post-search";
 import { useRequestQuery } from "./use-request-query";
 
@@ -33,14 +34,6 @@ export interface TeamPostsPageProps {
   params: Record<string, string>;
   search: Record<string, unknown>;
 }
-
-const titles = {
-  active: "team-posts.title",
-  complete: "team-posts.complete",
-  closed: "team-posts.closed",
-  all: "team.nav.allRequests",
-  deleted: "team-posts.deleted",
-} as const;
 
 /** The Requests list: the posts of the visible boards by status, with filters, search and keyboard moves. */
 export function TeamPostsPage({
@@ -96,10 +89,7 @@ export function TeamPostsPage({
   return (
     <PageFrame titleKey="team-posts.title" landmark={false} variant="app">
       <ListHeader
-        title={
-          statuses.data?.statuses.find((s) => s.id === search.statusId)?.name ??
-          t(titles[tab])
-        }
+        title={requestListTitle(search, statuses.data?.statuses ?? [], t)}
         filters={
           <RequestFilters
             status={search.statusId ? "" : tab}

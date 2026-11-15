@@ -56,7 +56,10 @@ export function SettingsLanguagesPage({
       variant="app"
       landmark={false}
     >
-      <SettingsPage title={t("settings-workspace.languages.title")}>
+      <SettingsPage
+        title={t("settings-workspace.languages.title")}
+        description={t("settings-workspace.languages.description")}
+      >
         <SettingsSection
           title={t("settings-workspace.languages.title")}
           action={

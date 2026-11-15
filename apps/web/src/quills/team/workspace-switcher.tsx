@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ChevronDown } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   Avatar,
@@ -15,6 +15,7 @@ import {
   MenuSeparator,
   MenuTrigger,
 } from "../ui/upstream";
+import { IconButton } from "../ui/inbox/icon-button";
 import { WorkspaceMenuItems } from "./workspace-menu-items";
 
 export interface WorkspaceSwitcherProps {
@@ -31,7 +32,7 @@ const roles: Record<string, string> = {
   member: "team.roles.member",
 };
 
-/** The workspace at the top of the sidebar: switch to another workspace or go back to Kaneo. */
+/** The workspace logo at the top of the rail: switch to another workspace or go back to Kaneo. */
 export function WorkspaceSwitcher({
   workspaceId,
   workspaceName,
@@ -41,30 +42,37 @@ export function WorkspaceSwitcher({
   const { t } = useTranslation("quills");
   return (
     <Menu>
-      <MenuTrigger className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-start outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring">
-        <Avatar aria-hidden="true" className="size-6 rounded-md">
+      <MenuTrigger
+        render={
+          <IconButton
+            side="right"
+            className="size-9 hover:bg-sidebar-accent sm:size-9"
+            label={workspaceName ?? t("team.switcher")}
+          />
+        }
+      >
+        <Avatar aria-hidden="true" className="size-7 rounded-lg">
           {workspaceLogo ? (
             // quills-web-allow C3: the logo is decorative, so its image needs an empty alt.
             <AvatarImage src={workspaceLogo} alt="" />
           ) : null}
-          <AvatarFallback className="rounded-md bg-primary text-[10px] font-semibold text-primary-foreground">
+          <AvatarFallback className="rounded-lg bg-muted text-xs font-semibold text-foreground ring-1 ring-border ring-inset">
             {getInitials(workspaceName, "")}
           </AvatarFallback>
         </Avatar>
-        <span className="min-w-0 truncate text-sm font-semibold">
-          {workspaceName}
-        </span>
-        {role ? (
-          <Badge variant="outline" size="sm" className="shrink-0">
-            {roles[role] ? t(roles[role]) : role}
-          </Badge>
-        ) : null}
-        <ChevronDown
-          aria-hidden="true"
-          className="ms-auto size-3.5 shrink-0 text-muted-foreground"
-        />
       </MenuTrigger>
-      <MenuPopup align="start" className="min-w-56">
+      <MenuPopup side="right" align="start" className="min-w-60">
+        <div className="flex items-center gap-2 px-2 py-1.5">
+          <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+            {workspaceName}
+          </span>
+          {role ? (
+            <Badge variant="outline" size="sm" className="shrink-0">
+              {roles[role] ? t(roles[role]) : role}
+            </Badge>
+          ) : null}
+        </div>
+        <MenuSeparator />
         <MenuGroup>
           <MenuGroupLabel>{t("team.switcher")}</MenuGroupLabel>
           <WorkspaceMenuItems />

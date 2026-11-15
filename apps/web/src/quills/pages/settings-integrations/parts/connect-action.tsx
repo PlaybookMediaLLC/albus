@@ -55,6 +55,7 @@ export function ConnectAction({
   if (!connector.fields.length)
     return (
       <ConfirmAction
+        variant="outline"
         labelKey="settings-connections.integrations.connectTo"
         labelValues={{ name }}
         onConfirm={async () => {
@@ -73,6 +74,7 @@ export function ConnectAction({
       <DialogTrigger
         render={
           <Button
+            variant="outline"
             aria-label={t("settings-connections.integrations.connectTo", {
               name,
             })}

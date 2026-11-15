@@ -35,6 +35,7 @@ export function SettingsAccountPage(_props: SettingsAccountPageProps) {
     >
       <SettingsPage
         title={t("settings-workspace.account.title")}
+        description={t("settings-workspace.account.description")}
         actions={<AutosaveNote />}
       >
         <ProfileDetailsSection

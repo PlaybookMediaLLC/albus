@@ -1,6 +1,7 @@
 {
 	"account": {
 		"appearance": "Appearance",
+		"description": "Your profile, the appearance of the app and how you sign in.",
 		"methods": {
 			"discord": "Discord",
 			"email": "Email link or code",
@@ -39,6 +40,7 @@
 			"violet": "Violet"
 		},
 		"customColor": "Custom",
+		"description": "Set the name, logo, colors and theme that customers see.",
 		"header": "Header shows",
 		"headerCustom": "Custom logo",
 		"headerText": "What the header of your public board shows.",
@@ -98,13 +100,15 @@
 		"save": "Save",
 		"scheme": "https://",
 		"title": "Domain",
-		"unanswered": "No DNS answer"
+		"unanswered": "No DNS answer",
+		"description": "Show the portal on your own domain."
 	},
 	"languages": {
 		"actions": "Actions for {{language}}",
 		"add": "Add language",
 		"default": "Default language",
 		"defaultText": "The language that the help center shows first.",
+		"description": "Choose the languages of the portal and the widget, and the default language.",
 		"dialogText": "The help center homepage shows this text in the language.",
 		"edit": "Edit homepage text",
 		"editTitle": "Edit {{language}}",

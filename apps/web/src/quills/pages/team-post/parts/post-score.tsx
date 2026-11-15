@@ -28,14 +28,15 @@ export function PostScore({ workspaceId, post, onSaved }: PostScoreProps) {
           maximumFractionDigits: 1,
         }).format(rice);
   return (
-    <div className="py-2">
+    <div className="py-3">
       <PropertyRow label={t("team-post.rice")}>
         <span className="flex items-center justify-between gap-2">
           {value}
           {team.permissions.update ? (
             <Button
               variant="ghost"
-              size="sm"
+              size="xs"
+              className="text-muted-foreground"
               aria-expanded={editing}
               onClick={() => setEditing(!editing)}
             >

@@ -31,7 +31,7 @@ export function PostLinks({ workspaceId, postId }: PostLinksProps) {
     links.data?.posts.filter((link) => link.postId === postId) ?? [];
   const failed = links.error ?? conversations.error;
   return (
-    <section aria-label={t("team-post.links")} className="py-2">
+    <section aria-label={t("team-post.links")} className="py-3">
       {failed ? (
         <p role="alert" className="text-sm text-destructive-foreground">
           {t("core.problem.failed")}

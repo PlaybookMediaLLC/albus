@@ -65,7 +65,10 @@ export function SettingsConversationsAiPage({
       variant="app"
       landmark={false}
     >
-      <SettingsPage title={t("settings-conversations.ai.title")}>
+      <SettingsPage
+        title={t("settings-conversations.ai.title")}
+        description={t("settings-conversations.ai.description")}
+      >
         <TeamStateView loading={settings.isPending} problem={settings.error}>
           {data && !data.aiConfigured ? (
             <Alert>

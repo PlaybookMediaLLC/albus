@@ -35,17 +35,18 @@ const render = (workspaceRole?: string) =>
   );
 
 describe("WorkspaceSwitcher", () => {
-  it("shows the workspace with its initials and the role badge", () => {
+  it("shows the workspace initials, and its name and role badge in the menu", async () => {
     const view = render("owner");
-    const trigger = view.getByRole("button", { name: /Acme Corp/ });
+    const trigger = view.getByRole("button", { name: "Acme Corp" });
     expect(trigger).toHaveTextContent("AC");
-    expect(trigger).toHaveTextContent("Owner");
+    press("Acme Corp");
+    expect(await view.findByText("Owner")).toBeVisible();
   });
 
   it("switches to another workspace or goes back to Kaneo", async () => {
     const view = render("Support lead");
-    expect(view.getByText("Support lead")).toBeVisible();
-    press(/Acme Corp/);
+    press("Acme Corp");
+    expect(await view.findByText("Support lead")).toBeVisible();
     expect(
       await view.findByRole("menuitem", { name: "Globex" }),
     ).toHaveAttribute("href", "/feedback/workspace_2");

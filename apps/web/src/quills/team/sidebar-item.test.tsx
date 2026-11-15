@@ -41,7 +41,7 @@ describe("SidebarItem", () => {
     );
     const link = view.getByRole("link", { name: "Queue 0" });
     expect(link).toHaveAttribute("aria-current", "page");
-    expect(view.getByText("0")).not.toHaveClass("bg-priority-high");
+    expect(view.getByText("0")).not.toHaveClass("bg-priority-high/15");
     fireEvent.click(link);
     expect(onNavigate).toHaveBeenCalledOnce();
   });

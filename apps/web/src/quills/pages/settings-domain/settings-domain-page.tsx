@@ -51,7 +51,10 @@ export function SettingsDomainPage({ workspaceId }: SettingsDomainPageProps) {
       variant="app"
       landmark={false}
     >
-      <SettingsPage title={t("settings-workspace.domain.title")}>
+      <SettingsPage
+        title={t("settings-workspace.domain.title")}
+        description={t("settings-workspace.domain.description")}
+      >
         <TeamStateView
           loading={domains.isPending || settings.isPending}
           problem={domains.error ?? settings.error}

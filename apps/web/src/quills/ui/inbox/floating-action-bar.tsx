@@ -66,7 +66,7 @@ export function FloatingActionBar({
     );
   };
   return (
-    <div className="pointer-events-none sticky bottom-4 z-10 mt-auto flex flex-wrap justify-center gap-2 px-4">
+    <div className="pointer-events-none sticky bottom-4 z-10 mt-auto flex flex-wrap justify-center gap-2 px-4 before:absolute before:inset-x-0 before:-top-8 before:bottom-0 before:-z-10 before:bg-linear-to-t before:from-background before:from-40% before:to-transparent">
       <div role="group" aria-label={label} className={pill}>
         {status}
         {actions.map((action) => button(action))}

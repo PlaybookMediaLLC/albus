@@ -42,7 +42,10 @@ export function SettingsFeedbackPage({
       variant="app"
       landmark={false}
     >
-      <SettingsPage title={t("settings-product.feedback.title")}>
+      <SettingsPage
+        title={t("settings-product.feedback.title")}
+        description={t("settings-product.feedback.description")}
+      >
         <TeamStateView
           loading={portal.isPending || boards.isPending || tags.isPending}
           problem={portal.error ?? boards.error ?? tags.error}

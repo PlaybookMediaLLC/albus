@@ -5,16 +5,8 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useListSettings } from "../hooks/team/use-list-settings";
 import { SearchField } from "../ui/inbox/search-field";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-  Button,
-  getInitials,
-  useGetConfig,
-} from "../ui/upstream";
+import { Button, useGetConfig } from "../ui/upstream";
 import { filterSettingsNav } from "./filter-settings-nav";
-import { NotificationsButton } from "./notifications-button";
 import { useTeamRuntime } from "./runtime";
 import { settingsSections } from "./settings-nav";
 import { SidebarItem } from "./sidebar-item";
@@ -23,20 +15,16 @@ import { teamHref } from "./team-href";
 
 export interface SettingsSidebarProps {
   workspaceId: string;
-  workspaceName?: string;
-  workspaceLogo?: string | null;
   /** Runs after an item is chosen, for example to close the sheet on small screens. */
   onNavigate?: () => void;
 }
 
 /**
- * The sidebar of the settings area (settings spec 1.3): the workspace, Back and the bell,
- * a search field, the settings sections and Docs.
+ * The sidebar of the settings area (settings spec 1.3): the title and Back, a search field,
+ * the settings sections and Docs. The rail beside it has the workspace and the bell.
  */
 export function SettingsSidebar({
   workspaceId,
-  workspaceName,
-  workspaceLogo,
   onNavigate,
 }: SettingsSidebarProps) {
   const { t } = useTranslation("quills");
@@ -56,22 +44,11 @@ export function SettingsSidebar({
   );
   const first = sections[0]?.items[0];
   return (
-    <div className="flex h-full min-h-0 w-full flex-col gap-3 px-3 py-3">
-      <div className="flex items-center gap-1">
-        <div className="flex min-w-0 flex-1 items-center gap-2 px-2">
-          <Avatar aria-hidden="true" className="size-6 rounded-md">
-            {workspaceLogo ? (
-              // quills-web-allow C3: the logo is decorative, so its image needs an empty alt.
-              <AvatarImage src={workspaceLogo} alt="" />
-            ) : null}
-            <AvatarFallback className="rounded-md bg-primary text-[10px] font-semibold text-primary-foreground">
-              {getInitials(workspaceName, "")}
-            </AvatarFallback>
-          </Avatar>
-          <span className="min-w-0 truncate text-sm font-medium">
-            {workspaceName}
-          </span>
-        </div>
+    <div className="flex h-full min-h-0 w-full flex-col gap-2 px-2.5 pt-2 pb-3">
+      <div className="flex h-14 shrink-0 items-center gap-1 ps-2">
+        <p className="min-w-0 flex-1 truncate text-base font-semibold">
+          {t("team.nav.settings")}
+        </p>
         <Button
           variant="ghost"
           size="xs"
@@ -81,10 +58,6 @@ export function SettingsSidebar({
           <ArrowLeft aria-hidden="true" />
           {t("settings.back")}
         </Button>
-        <NotificationsButton
-          workspaceId={workspaceId}
-          onNavigate={onNavigate}
-        />
       </div>
       <SearchField
         label={t("settings.search")}

@@ -44,7 +44,10 @@ export function SettingsConversationsOperatorsPage({
       variant="app"
       landmark={false}
     >
-      <SettingsPage title={t("settings-conversations.operators.title")}>
+      <SettingsPage
+        title={t("settings-conversations.operators.title")}
+        description={t("settings-conversations.operators.description")}
+      >
         <SettingsCard>
           <AvailabilityRow workspaceId={workspaceId} />
         </SettingsCard>

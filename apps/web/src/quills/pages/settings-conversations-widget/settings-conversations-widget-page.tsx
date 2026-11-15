@@ -70,7 +70,10 @@ export function SettingsConversationsWidgetPage({
       variant="app"
       landmark={false}
     >
-      <SettingsPage title={t("settings-conversations.widget.title")}>
+      <SettingsPage
+        title={t("settings-conversations.widget.title")}
+        description={t("settings-conversations.widget.description")}
+      >
         <TeamStateView loading={settings.isPending} problem={settings.error}>
           {data ? (
             <>

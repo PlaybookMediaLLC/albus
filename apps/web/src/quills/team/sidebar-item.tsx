@@ -11,7 +11,7 @@ export interface SidebarItemProps {
 }
 
 const row =
-  "flex h-8 w-full items-center gap-2 rounded-lg border border-transparent px-2 text-start text-sm text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:border-border aria-[current=page]:bg-background aria-[current=page]:font-medium aria-[current=page]:text-foreground aria-[current=page]:shadow-xs [&>svg]:size-4 [&>svg]:shrink-0";
+  "flex h-8 w-full items-center gap-2.5 rounded-md px-2 text-start text-sm text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-background aria-[current=page]:font-medium aria-[current=page]:text-foreground aria-[current=page]:shadow-xs aria-[current=page]:inset-ring aria-[current=page]:inset-ring-border [&>svg]:size-4 [&>svg]:shrink-0 [&>.lucide]:text-muted-foreground aria-[current=page]:[&>.lucide]:text-foreground";
 
 /** One sidebar view: icon, label and a right-aligned count. The current view is a white pill. */
 export function SidebarItem({ item, onNavigate }: SidebarItemProps) {
@@ -30,9 +30,9 @@ export function SidebarItem({ item, onNavigate }: SidebarItemProps) {
       {item.count === undefined ? null : (
         <span
           className={cn(
-            "min-w-5 rounded-full px-1.5 text-center text-xs tabular-nums",
+            "min-w-5 rounded-full px-1.5 text-center text-xs leading-5 tabular-nums",
             item.attention && item.count > 0
-              ? "bg-priority-high font-semibold text-background"
+              ? "bg-priority-high/15 font-semibold text-orange-800 dark:text-priority-high"
               : "text-muted-foreground",
           )}
         >
