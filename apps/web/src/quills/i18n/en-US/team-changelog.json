@@ -1,6 +1,8 @@
 {
+	"createFailed": "The entry was not created. Try again.",
 	"draft": {
 		"choose": "Shipped requests",
+		"create": "Create draft entry",
 		"none": "No request has shipped yet.",
 		"open": "Draft from shipped requests",
 		"post_one": "{{title}} · {{count}} vote",
@@ -11,11 +13,26 @@
 		"review": "Review the draft. It is not saved or published.",
 		"submit": "Draft with AI"
 	},
+	"empty": "No changelog entries yet",
 	"loadMore": "Load more updates",
+	"loadMoreEntries": "Load more entries",
 	"nav": "Changelog",
+	"newEntry": "New entry",
 	"readsNoReactions_one": "{{count}} reader · No reactions",
 	"readsNoReactions_other": "{{count}} readers · No reactions",
 	"reads_one": "{{count}} reader",
 	"reads_other": "{{count}} readers",
-	"title": "Changelog"
+	"status": {
+		"all": "All",
+		"draft": "Draft",
+		"published": "Published",
+		"scheduled": "Scheduled"
+	},
+	"tabs": {
+		"engagement": "Engagement",
+		"entries": "Entries",
+		"label": "Changelog view"
+	},
+	"title": "Changelog",
+	"untitled": "Untitled"
 }
