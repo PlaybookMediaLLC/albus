@@ -65,17 +65,17 @@ export function widgetSnippets(apiBase: string, workspace: string) {
   const sdk = `${apiBase.replace(/\/+$/, "")}/quills-public/${encodeURIComponent(workspace)}/widget/sdk.js`;
   return {
     load: [
-      "<script>window.Quackback=window.Quackback||function(){(window.Quackback.q=window.Quackback.q||[]).push(arguments)};</script>",
+      "<script>window.Quills=window.Quills||function(){(window.Quills.q=window.Quills.q||[]).push(arguments)};</script>",
       `<script src="${sdk}" defer></script>`,
     ].join("\n"),
     start: [
       "<script>",
-      '  Quackback("init", { placement: "right" });',
+      '  Quills("init", { placement: "right" });',
       "</script>",
     ].join("\n"),
     identify: [
       "<script>",
-      '  Quackback("identify", { ssoToken: "TOKEN_FROM_YOUR_SERVER" });',
+      '  Quills("identify", { ssoToken: "TOKEN_FROM_YOUR_SERVER" });',
       "</script>",
     ].join("\n"),
   };

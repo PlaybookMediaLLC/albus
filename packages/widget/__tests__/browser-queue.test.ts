@@ -13,6 +13,7 @@ import {
 
 declare global {
   interface Window {
+    Quills?: ((...args: unknown[]) => unknown) & { q?: IArguments[] };
     Quackback?: ((...args: unknown[]) => unknown) & { q?: IArguments[] };
     __QUACKBACK_URL__?: string;
   }
@@ -43,19 +44,21 @@ function servedFrom(src: string): void {
   });
 }
 
-function installQueueStub(): void {
+/** The inline snippet's queue stub, on `window.Quills` or the older `window.Quackback`. */
+function installQueueStub(name: "Quills" | "Quackback" = "Quills"): void {
   const q: IArguments[] = [];
   const queueFn = function (this: void) {
     // oxlint-disable-next-line prefer-rest-params
     q.push(arguments);
   } as ((...args: unknown[]) => unknown) & { q: IArguments[] };
   queueFn.q = q;
-  window.Quackback = queueFn;
+  window[name] = queueFn;
 }
 
 describe("browser-queue", () => {
   beforeEach(() => {
     vi.resetModules();
+    delete (window as Window).Quills;
     delete (window as Window).Quackback;
     delete (window as Window).__QUACKBACK_URL__;
     document.body.innerHTML = "";
@@ -74,7 +77,7 @@ describe("browser-queue", () => {
 
   afterEach(() => {
     delete (document as { currentScript?: unknown }).currentScript;
-    window.Quackback?.("destroy");
+    window.Quills?.("destroy");
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
@@ -82,8 +85,8 @@ describe("browser-queue", () => {
   it("replays queued commands through the SDK after the script loads", async () => {
     const dispatched = mockSDK();
     installQueueStub();
-    window.Quackback!("init", { instanceUrl: "https://feedback.acme.com" });
-    window.Quackback!("identify", { id: "u1", email: "a@b.c" });
+    window.Quills!("init", { instanceUrl: "https://feedback.acme.com" });
+    window.Quills!("identify", { id: "u1", email: "a@b.c" });
 
     await import("../src/browser-queue");
 
@@ -99,7 +102,7 @@ describe("browser-queue", () => {
     ]);
   });
 
-  it("replaces window.Quackback with a live dispatcher after loading", async () => {
+  it("replaces window.Quills with a live dispatcher after loading", async () => {
     vi.doMock("../src/core/sdk", () => ({
       createSDK: () => ({
         dispatch: () => "DISPATCHED",
@@ -111,10 +114,30 @@ describe("browser-queue", () => {
 
     await import("../src/browser-queue");
 
-    expect(typeof window.Quackback).toBe("function");
-    expect((window.Quackback as (...args: unknown[]) => unknown)("open")).toBe(
+    expect(typeof window.Quills).toBe("function");
+    expect((window.Quills as (...args: unknown[]) => unknown)("open")).toBe(
       "DISPATCHED",
     );
+    // A new install gets no global with the old name.
+    expect(window.Quackback).toBeUndefined();
+  });
+
+  it("keeps a snippet pasted before the rename working on window.Quackback", async () => {
+    const dispatched = mockSDK();
+    installQueueStub("Quackback");
+    window.Quackback!("init", { instanceUrl: "https://feedback.acme.com" });
+
+    await import("../src/browser-queue");
+
+    expect(dispatched[0]).toEqual([
+      "init",
+      { instanceUrl: "https://feedback.acme.com" },
+      undefined,
+    ]);
+    // Later calls from that host page still reach the SDK.
+    window.Quackback!("open");
+    expect(dispatched[1]).toEqual(["open", undefined, undefined]);
+    expect(window.Quills).toBe(window.Quackback);
   });
 
   it("auto-dispatches init with the baked instance URL if no init was queued", async () => {
@@ -137,7 +160,7 @@ describe("browser-queue", () => {
     window.__QUACKBACK_URL__ = "https://feedback.acme.com";
     installQueueStub();
     // Script-tag installs omit instanceUrl — it's baked into the served sdk.js.
-    window.Quackback!("init", { launcher: false, placement: "left" });
+    window.Quills!("init", { launcher: false, placement: "left" });
 
     await import("../src/browser-queue");
 
@@ -159,7 +182,7 @@ describe("browser-queue", () => {
     await import("../src/browser-queue");
 
     // Host page's config call lands after the bundle loaded (e.g. from React).
-    window.Quackback!("init", { launcher: false, placement: "left" });
+    window.Quills!("init", { launcher: false, placement: "left" });
 
     // Let the deferred auto-init fall through.
     await new Promise((r) => setTimeout(r, 0));
@@ -178,7 +201,7 @@ describe("browser-queue", () => {
     window.__QUACKBACK_URL__ = "https://feedback.acme.com";
     installQueueStub();
     // The documented admin snippet — no second argument at all.
-    window.Quackback!("init");
+    window.Quills!("init");
 
     await import("../src/browser-queue");
 
@@ -194,7 +217,7 @@ describe("browser-queue", () => {
     window.__QUACKBACK_URL__ = "https://feedback.acme.com";
 
     await import("../src/browser-queue");
-    window.Quackback!("destroy");
+    window.Quills!("destroy");
     await new Promise((r) => setTimeout(r, 0));
 
     // Host explicitly destroyed — the fallback must not spawn a default widget.
@@ -223,7 +246,7 @@ describe("browser-queue", () => {
     ).not.toBeNull();
 
     // Host's explicit init must destroy + rebuild with the new options.
-    window.Quackback!("init", { launcher: false, placement: "left" });
+    window.Quills!("init", { launcher: false, placement: "left" });
 
     expect(
       document.querySelector('button[aria-label="Open feedback widget"]'),
@@ -248,7 +271,7 @@ describe("browser-queue", () => {
 
     await import("../src/browser-queue");
 
-    window.Quackback!("init", { launcher: false, placement: "left" });
+    window.Quills!("init", { launcher: false, placement: "left" });
     await new Promise((r) => setTimeout(r, 0));
 
     expect(
@@ -267,7 +290,7 @@ describe("browser-queue", () => {
       "https://kaneo.acme.com/sub/api/quills-public/acme-team/widget/sdk.js?v=1",
     );
     installQueueStub();
-    window.Quackback!("init", { launcher: false });
+    window.Quills!("init", { launcher: false });
 
     await import("../src/browser-queue");
     await new Promise((r) => setTimeout(r, 0));
@@ -290,7 +313,7 @@ describe("browser-queue", () => {
     servedFrom("https://kaneo.acme.com/api/quills-public/acme/widget/sdk.js");
 
     await import("../src/browser-queue");
-    window.Quackback!("init", { workspace: "other" });
+    window.Quills!("init", { workspace: "other" });
 
     expect(dispatched[0]).toEqual([
       "init",
@@ -315,7 +338,7 @@ describe("browser-queue", () => {
     const dispatched = mockSDK();
     window.__QUACKBACK_URL__ = "https://feedback.acme.com";
     installQueueStub();
-    window.Quackback!("init", { instanceUrl: "https://override.example" });
+    window.Quills!("init", { instanceUrl: "https://override.example" });
 
     await import("../src/browser-queue");
     await new Promise((r) => setTimeout(r, 0));

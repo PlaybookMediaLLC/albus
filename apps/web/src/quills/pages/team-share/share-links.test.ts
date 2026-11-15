@@ -58,7 +58,9 @@ describe("widgetSnippets", () => {
     expect(code.load).toContain(
       '<script src="https://kaneo.test/api/quills-public/acme/widget/sdk.js" defer></script>',
     );
-    expect(code.start).toContain('Quackback("init"');
+    expect(code.start).toContain('Quills("init"');
+    expect(code.load).toContain("window.Quills=window.Quills||");
+    expect(code.load).not.toContain("Quackback");
     expect(code.identify).toContain("ssoToken");
   });
 });
