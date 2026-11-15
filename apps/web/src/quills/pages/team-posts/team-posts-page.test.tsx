@@ -39,7 +39,7 @@ const creating = () => {
 };
 const createFlow = async (view: ReturnType<typeof renderPage>) => {
   await view.findByRole("dialog");
-  fill("Submission title", "Dark mode");
+  fill("Request title", "Dark mode");
   fill("Add details", "For the **night** shift.");
   press("Create");
 };

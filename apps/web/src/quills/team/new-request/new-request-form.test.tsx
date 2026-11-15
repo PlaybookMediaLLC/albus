@@ -1,9 +1,13 @@
-import { waitFor } from "@testing-library/react";
+import { fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vite-plus/test";
-import { fill, press } from "../../../test/actions";
-import { describeFormContract } from "../../../test/contracts";
-import { renderComponent } from "../../../test/render";
-import { inboxBoards, inboxStatuses, inboxTags } from "../inbox.fixture";
+import { choose, fill, press } from "../../test/actions";
+import { describeFormContract } from "../../test/contracts";
+import { renderComponent } from "../../test/render";
+import {
+  inboxBoards,
+  inboxStatuses,
+  inboxTags,
+} from "../../pages/team-posts/inbox.fixture";
 import { NewRequestForm, type NewRequestFormProps } from "./new-request-form";
 
 const render = (props: Partial<NewRequestFormProps> = {}) => {
@@ -24,7 +28,7 @@ const render = (props: Partial<NewRequestFormProps> = {}) => {
 describe("NewRequestForm", () => {
   describeFormContract({
     render: (onSubmit) => render({ onSubmit }).view,
-    fieldName: "Submission title",
+    fieldName: "Request title",
     issuePath: "title",
     submitName: "Create",
     validValue: "Dark mode",
@@ -41,7 +45,7 @@ describe("NewRequestForm", () => {
 
   it("explains that no board exists", async () => {
     const { view, onSubmit } = render({ boards: [] });
-    fill("Submission title", "Dark mode");
+    fill("Request title", "Dark mode");
     press("Create");
     expect(await view.findByRole("alert")).toHaveTextContent(
       "No board exists. Add a board in Settings first.",
@@ -51,7 +55,7 @@ describe("NewRequestForm", () => {
 
   it("asks for a board when the board of the filter is missing", async () => {
     const { view, onSubmit } = render({ boardId: "board_deleted" });
-    fill("Submission title", "Dark mode");
+    fill("Request title", "Dark mode");
     press("Create");
     expect(await view.findByRole("alert")).toHaveTextContent("Choose a board.");
     expect(onSubmit).not.toHaveBeenCalled();
@@ -63,7 +67,7 @@ describe("NewRequestForm", () => {
       "maxlength",
       "10000",
     );
-    fill("Submission title", "Dark mode");
+    fill("Request title", "Dark mode");
     // A long paste stops at the limit; the limit then shows before a submit.
     fill("Add details", "a".repeat(10000));
     expect(await view.findByRole("alert")).toHaveTextContent(
@@ -75,7 +79,7 @@ describe("NewRequestForm", () => {
 
   it("refuses details over 10,000 characters", async () => {
     const { view, onSubmit } = render();
-    fill("Submission title", "Dark mode");
+    fill("Request title", "Dark mode");
     fill("Add details", "a".repeat(10001));
     press("Create");
     await waitFor(() =>
@@ -85,5 +89,51 @@ describe("NewRequestForm", () => {
       ),
     );
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+  it("starts on the given status", async () => {
+    const { view, onSubmit } = render({ defaultStatusId: "status_planned" });
+    expect(view.getByRole("combobox", { name: "Status" })).toHaveTextContent(
+      "Planned",
+    );
+    fill("Request title", "Dark mode");
+    press("Create");
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ statusId: "status_planned" }),
+      ),
+    );
+  });
+
+  it("sends the status and the tags chosen in their menus", async () => {
+    const { view, onSubmit } = render();
+    fill("Request title", "Dark mode");
+    await choose("Status", "Complete");
+    fireEvent.click(view.getByRole("button", { name: "Tags" }));
+    fireEvent.click(await view.findByRole("menuitemcheckbox", { name: "UX" }));
+    expect(view.getByRole("button", { name: "1 tag" })).toBeVisible();
+    press("Create");
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          statusId: "status_done",
+          tagIds: ["tag_ux"],
+        }),
+      ),
+    );
+  });
+
+  it("sends the form on Cmd+Enter or Ctrl+Enter in a text field", async () => {
+    const { view, onSubmit } = render();
+    fill("Request title", "Dark mode");
+    fireEvent.keyDown(view.getByLabelText("Add details"), {
+      key: "Enter",
+      metaKey: true,
+    });
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+    fireEvent.keyDown(view.getByLabelText("Request title"), {
+      key: "Enter",
+      ctrlKey: true,
+    });
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(2));
   });
 });

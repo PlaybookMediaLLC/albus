@@ -1,12 +1,12 @@
 import { fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vite-plus/test";
-import { listUsersFixture } from "../../../api/team/list-users.fixture";
-import { TeamRuntimeProvider } from "../../../team/runtime";
-import { fill } from "../../../test/actions";
-import { mockApi } from "../../../test/mock-api";
-import { renderComponent } from "../../../test/render";
-import { postTeam } from "../../team-post/post.fixture";
-import { inboxCustomer } from "../inbox.fixture";
+import { listUsersFixture } from "../../api/team/list-users.fixture";
+import { TeamRuntimeProvider } from "../runtime";
+import { fill } from "../../test/actions";
+import { mockApi } from "../../test/mock-api";
+import { renderComponent } from "../../test/render";
+import { postTeam } from "../../pages/team-post/post.fixture";
+import { inboxCustomer } from "../../pages/team-posts/inbox.fixture";
 import { AuthorPicker } from "./author-picker";
 
 const render = (onChange = vi.fn(), team = postTeam) =>

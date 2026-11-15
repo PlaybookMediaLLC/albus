@@ -7,14 +7,11 @@ export const meta = {
   mailLinked: false,
   token: "none",
   // The order of the requests: listQuillsPosts waits for the statuses. The New request
-  // modal (`new=true`) loads the tags, and the customers for a typed author search.
+  // dialog (`new=true`) is shared with the roadmap in team/new-request and loads its own data.
   operations: [
     "listQuillsStatuses",
     "listQuillsBoards",
     "listQuillsPosts",
-    "listQuillsTags",
-    "listQuillsUsers",
-    "createQuillsPost",
     "restoreQuillsPost",
   ],
   states: ["loading", "failed", "empty", "ready", "done"],
