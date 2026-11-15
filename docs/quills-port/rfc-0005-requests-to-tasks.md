@@ -1,6 +1,7 @@
 # RFC 0005: requests become Kaneo tasks
 
-Status: draft; decisions 1–5 made (2026-11-15), delegated by the owner. Owner: to be decided.
+Status: draft; decisions 1–5 made (2026-11-15), delegated by the owner; scope rule added
+(2026-11-15, section 1.1). Owner: to be decided.
 
 ## 1. Summary
 
@@ -20,6 +21,40 @@ Terms in this RFC:
   `public.task`). A task has a key such as `APP-12`; Kaneo calls it the ticket ID.
 - **Support ticket**: a Quills support ticket. This RFC does not change support tickets. The
   UI says "task", never "ticket", for Kaneo work, so the two do not mix.
+
+### 1.1 Scope rule: Quills code only, Quills → Kaneo
+
+The owner set this rule on 2026-11-15, so that upstream Kaneo merges stay free of conflicts.
+
+1. **Change only Quills code:**
+   - `apps/api/src/quills/**`;
+   - `apps/api/src/database/quills/**`, with the separate `drizzle/quills` history;
+   - `apps/web/src/quills/**`;
+   - `docs/quills-port/**`.
+2. **Do not edit any Kaneo file.** This includes Kaneo API modules, the `public` schema and its
+   migrations, Kaneo web screens, the Kaneo event bus and Kaneo notifications.
+3. **Write into Kaneo only through Kaneo's existing exported code:**
+   - The calls include `createTask`, task updates, comments, labels, relations, custom field
+     values, external links and assets.
+   - One Quills module, `quills/framework/platform-writes.ts`, wraps every Kaneo function that
+     Quills calls. Next to it, `platform-reads.ts` already wraps the reads.
+   - A contract test pins the wrapped signatures, so an upstream change fails in a test and not
+     in production.
+   - If a Kaneo function cannot be called without a Kaneo change, the feature falls back to what
+     the existing code can do (usually a task comment), or it waits.
+4. **Listen to Kaneo only through the existing `subscribeToEvent` seam**, from Quills code, as the
+   task-done sync does in `quills/jobs/worker.ts`.
+5. **Build the Quills → Kaneo direction first.** Kaneo → Quills features (a Kaneo action that
+   changes the feedback app) wait, even when they need only Quills code.
+6. **Check permissions in Quills before every write into Kaneo:**
+   - project access with `accessibleProjectIds`;
+   - the Kaneo capability with the shared `@kaneo/permissions` package.
+
+   Quills does not rely on Kaneo route middleware that it does not run through.
+
+Every item below is marked **Now** (Quills → Kaneo, Quills code only), **Later** (Kaneo → Quills,
+still Quills code only) or **Out** (needs a Kaneo code or UI change). Section 6.2 and the Kaneo
+task panel in 7.3 are affected.
 
 ## 2. What exists today
 
@@ -155,7 +190,7 @@ The flow:
 - **Request deleted** (soft delete): the links stay, so a restore brings them back. The
   Kaneo-side "Feedback" panel (7.3) hides deleted requests.
 
-### 6.2 Task → request
+### 6.2 Task → request (Later: Kaneo → Quills)
 
 The board setting grows from one value (`statusOnTaskDone`) to a column map, **per project**,
 because each project has its own columns:
@@ -191,7 +226,8 @@ Rules:
    - "Create task", "Link existing task" (search by key or title in projects the viewer can
      open) and "Unlink".
    - An unavailable task shows as "A task in a project you cannot open".
-3. **Kaneo task page → Feedback panel:**
+3. **Out (scope rule): Kaneo task page → Feedback panel.** It needs a Kaneo screen. The
+   `listQuillsTaskPosts` route still ships for the API and MCP (B.49).
    - the linked requests with their status, votes and a link to the teammate app;
    - this is the one new Kaneo-side screen;
    - it reads through a Quills route that checks Quills `read`, so Kaneo never reads the Quills
@@ -211,7 +247,7 @@ a real database:
 |---|---|
 | `createQuillsPostTask` (POST `/posts/{postId}/tasks`) | Create a Kaneo task as the caller and link it. Body: optional `projectId`, `columnId`, field overrides. |
 | `listQuillsPostTasks` (GET `/posts/{postId}/tasks`) | The linked tasks with the key, the title, the column and the assignee, filtered to projects the caller can open. Replaces the 100-link scan in `post-links.tsx`. |
-| `listQuillsTaskPosts` (GET `/tasks/{taskId}/posts`) | The requests linked to a task, for the Kaneo Feedback panel. |
+| `listQuillsTaskPosts` (GET `/tasks/{taskId}/posts`) | The requests linked to a task, for the API and MCP tools (B.49). It is a Quills route; no Kaneo screen calls it. |
 | Board settings | Add `delivery` (project, rule, priority) and `taskSync.columns` (per project: column ID → status ID). Keep reading `statusOnTaskDone` for existing installs. |
 
 Data:
@@ -245,7 +281,7 @@ Data:
 |---|---|---|
 | 1 | "Create task" and "Link existing task" on the request page and the roadmap card; `createQuillsPostTask`, `listQuillsPostTasks`; the task description template. | Teams can plan in Kaneo today, by hand. |
 | 2 | Board delivery project and the creation rule; `post_tasks.source`; failure activity and notification. | Planned requests become tasks automatically. |
-| 3 | Column-to-status map per project, with the all-tasks-done rule; Kaneo task Feedback panel; roadmap task chip. | Both apps show the same progress. |
+| 3 | Roadmap task chip and the Quills screens for linked tasks (Now). Later: the column-to-status map per project, with the all-tasks-done rule (Kaneo → Quills). Out: the Kaneo task Feedback panel (section 1.1). | Requests show their work; progress sync follows when the scope allows it. |
 | 4 | Bulk create, backfill, tag routing (option B), priority from demand. | Scale and fine control. |
 
 ## 11. Decisions
@@ -327,7 +363,7 @@ automatic). The phases follow section 10.
 | 2 | A teammate presses "Create task" (request page, roadmap card, triage row) | Create a task from the template | Manual | 1 |
 | 3 | A teammate presses "Link existing task" | Link them, and add a backlink comment on the task | Manual | 1 |
 | 4 | A request moves to a status that the column map names | Move the task to that column, only if it is in an earlier column | Off | 3 |
-| 5 | A request is marked Complete while its tasks are open | Task comment "Request marked Complete by …", and notify the assignee | On | 3 |
+| 5 | A request is marked Complete while its tasks are open | Task comment "Request marked Complete by …", and notify the assignee through Kaneo's existing notification code (else the comment only) | On | 3 |
 | 6 | A request is closed as "won't do" | Task comment and label `wont-do`; the task stays | On | 3 |
 | 7 | A closed request opens again | Task comment | On | 3 |
 | 8 | The request target date (ETA) is set or changed | Set the task due date, if it is empty or came from the ETA last time | On | 2 |
@@ -335,7 +371,7 @@ automatic). The phases follow section 10.
 | 10 | The request details change | Task comment with a link to the change | Off | 3 |
 | 11 | A request gets an owner | Task assignee, if the task has none and the owner can open the project | On | 2 |
 | 12 | The request owner changes | Reassign the task, only if its assignee was the previous owner | On | 3 |
-| 13 | A request moves to a board with another delivery project | Task comment with a "Move to project …" action | On | 3 |
+| 13 | A request moves to a board with another delivery project | Task comment; the "Move to project …" action lives on the Quills request page | On | 3 |
 | 14 | A request is deleted | Task comment "Linked request deleted"; the link stays for a restore | On | 3 |
 | 15 | A deleted request is restored | Task comment | On | 3 |
 | 16 | Requests merge | Links move to the kept request; the two tasks get a `related` relation and a comment | On | 3 |
@@ -369,7 +405,7 @@ automatic). The phases follow section 10.
 | 34 | A teammate types a task key (APP-12) in a request comment or note | Link the request and the task, and add a backlink comment | On | 2 |
 | 35 | A teammate types a task key in a support conversation | Add the conversation as an external link on the task, and a comment | On | 3 |
 | 36 | A support conversation is linked to a request | Custom field "Conversations", and external links to them | On | 3 |
-| 37 | A Kaneo task comment is marked "Share with customers" | Post it as a team update on the linked requests (the reverse direction, by choice) | Off | 4 |
+| 37 | **Out (scope rule):** a Kaneo task comment is marked "Share with customers" | Post it as a team update on the linked requests. It needs a Kaneo UI flag. | Off | — |
 
 ### A.5 Support tickets and incidents
 
@@ -524,3 +560,43 @@ after section 10.
 | 48 | Effort from time entries | Kaneo time entries on linked tasks add up into the request's "Cost to deliver" and, by choice, its RICE effort. | K→Q | S | 4 |
 | 49 | API and MCP tools | Public API routes and MCP tools: `create_task_from_request`, `link_request_task`, `list_task_requests`, `list_request_tasks`. | Both | M | 3 |
 | 50 | Planning export | A CSV that joins requests, tasks, statuses, demand and MRR for planning reviews. | Both | S | 3 |
+
+### B.9 Scope of the 50 features (section 1.1)
+
+- **Now** (Quills → Kaneo, Quills code only), 12 features:
+  - 12 asked but not planned
+  - 16 churn risk flag
+  - 25 "Did this solve it?" (it starts on a Quills changelog publish)
+  - 32 customer commitments
+  - 35 plan-based weight
+  - 36 engineering triage column
+  - 40 postmortem task
+  - 41 task spec from feedback
+  - 46 setup wizard
+  - 47 task templates per board
+  - 49 API and MCP tools
+  - 50 planning export
+- **Later** (Kaneo → Quills, Quills code only), 25 features. Some are only the Quills half of a
+  feature for both apps:
+  - 3, 4, 6, 7, 8, 9, 10
+  - 11 (only the Insights half)
+  - 13, 14, 15, 17
+  - 27 (only Cmd+K in Quills)
+  - 28 (only the Projects link in the Quills rail)
+  - 29 (only the hover cards in Quills)
+  - 33, 34, 37, 38, 39, 42, 43, 44, 45, 48
+- **Out** (needs a Kaneo code or UI change), 13 features:
+  - 1, 2: intake view and drag to plan in Kaneo
+  - 5: Kaneo calendar feed
+  - 18: Feedback panel actions
+  - 19: one notification center
+  - 20: mentions across apps
+  - 21: customer update from Kaneo
+  - 22: close-the-loop checklist
+  - 23, 24: actions on a Kaneo task
+  - 26: Kaneo chat integrations
+  - 30: back links on the Kaneo task
+  - 31: who is waiting, in the Kaneo panel
+
+Appendix A: all 66 connections are **Now**, except 37 (**Out**). Their only Kaneo effects are
+writes through the wrapped Kaneo functions.
