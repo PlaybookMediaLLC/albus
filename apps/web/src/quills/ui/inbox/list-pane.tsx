@@ -57,7 +57,9 @@ export function ListPane(props: ListPaneProps) {
           <SearchField {...props.search} />
         </div>
       ) : null}
-      <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
+      {/* `relative` keeps absolute row parts (screen-reader labels) inside this scroll area, so
+          they cannot make the page taller and let scrollIntoView move the whole app. */}
+      <div className="relative min-h-0 flex-1 overflow-y-auto px-2 pb-2">
         <TeamStateView
           loading={props.loading}
           problem={props.problem}

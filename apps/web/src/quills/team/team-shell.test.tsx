@@ -8,6 +8,7 @@ import { waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vite-plus/test";
 import { getNotificationUnreadCountFixture } from "../api/team/get-notification-unread-count.fixture";
 import { getTeamCountsFixture } from "../api/team/get-team-counts.fixture";
+import { listSettingsFixture } from "../api/team/list-settings.fixture";
 import { press } from "../test/actions";
 import { mockApi } from "../test/mock-api";
 import { renderComponent } from "../test/render";
@@ -15,6 +16,9 @@ import { TeamRuntimeProvider } from "./runtime";
 import { TeamShell } from "./team-shell";
 
 vi.mock("@/components/user-avatar", () => ({ UserAvatar: () => null }));
+vi.mock("@/hooks/queries/config/use-get-config", () => ({
+  default: () => ({ data: { billingEnabled: false } }),
+}));
 
 const counts = getTeamCountsFixture.ok({
   queueConversations: 3,
@@ -67,19 +71,27 @@ function answer(body: unknown = counts, status = 200) {
 }
 
 describe("TeamShell", () => {
-  it("shows one sidebar with the sections, counts and the current view, and the page", async () => {
+  it("shows the rail and the views of the current section, with counts, and the page", async () => {
     const api = answer();
     const view = renderShell("/feedback/workspace_1/conversations/queue");
+    const rail = view.getByRole("navigation", { name: "Sections" });
+    expect(
+      await within(rail).findByRole("link", {
+        name: "Conversations, new items",
+      }),
+    ).toHaveAttribute("aria-current", "page");
     const nav = view.getByRole("navigation", { name: "Teammate app" });
-    for (const name of ["Conversations", "Requests", "Workspace"])
-      expect(within(nav).getByRole("list", { name })).toBeInTheDocument();
+    expect(
+      within(nav).getByRole("list", { name: "Conversations" }),
+    ).toBeInTheDocument();
+    expect(within(nav).queryByRole("list", { name: "Requests" })).toBeNull();
     const queue = await within(nav).findByRole("link", { name: "Queue 3" });
     expect(queue).toHaveAttribute("aria-current", "page");
-    expect(within(queue).getByText("3")).toHaveClass("bg-priority-high");
-    expect(within(nav).getByText("5")).not.toHaveClass("bg-priority-high");
-    expect(view.getByRole("button", { name: /^Acme/ })).toHaveTextContent(
-      "Admin",
-    );
+    expect(within(queue).getByText("3")).toHaveClass("bg-priority-high/15");
+    expect(within(nav).getByText("5")).not.toHaveClass("bg-priority-high/15");
+    expect(document.documentElement).toHaveAttribute("data-quills-shell");
+    press("Acme");
+    expect(await view.findByText("Admin")).toBeVisible();
     expect(view.getByRole("main")).toHaveTextContent("Page content");
     expect(api.calls("getQuillsTeamCounts")).toHaveLength(1);
   });
@@ -91,7 +103,7 @@ describe("TeamShell", () => {
     const pending = await within(requests).findByRole("link", {
       name: "Pending 4",
     });
-    expect(within(pending).getByText("4")).toHaveClass("bg-priority-high");
+    expect(within(pending).getByText("4")).toHaveClass("bg-priority-high/15");
     const planned = within(requests).getByRole("link", { name: "Planned 1" });
     expect(planned).toHaveAttribute(
       "href",
@@ -101,15 +113,36 @@ describe("TeamShell", () => {
     expect(pending).not.toHaveAttribute("aria-current");
   });
 
+  it("marks Requests on an open request, where the router does not mark the link", () => {
+    answer();
+    const view = renderShell("/feedback/workspace_1/posts/post_1");
+    const rail = view.getByRole("navigation", { name: "Sections" });
+    expect(
+      within(rail).getByRole("link", { name: /^Requests/ }),
+    ).toHaveAttribute("aria-current", "page");
+  });
+
+  it("marks html for the 90% scale only while the shell is open", () => {
+    answer();
+    const view = renderShell("/feedback/workspace_1");
+    expect(document.documentElement).toHaveAttribute("data-quills-shell");
+    view.unmount();
+    expect(document.documentElement).not.toHaveAttribute("data-quills-shell");
+  });
+
   it("shows the views without counts when the counts request fails", async () => {
     const api = answer(getTeamCountsFixture.problem(403).body, 403);
     const view = renderShell("/feedback/workspace_1");
     await waitFor(() => expect(api.calls()).toHaveLength(2));
-    expect(view.getByRole("link", { name: "Queue" })).toBeVisible();
+    expect(view.getByRole("link", { name: "Workspace" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
     expect(view.getByRole("link", { name: "Overview" })).toHaveAttribute(
       "aria-current",
       "page",
     );
+    expect(view.getByRole("link", { name: "Duplicates" })).toBeVisible();
   });
 
   it("opens the sidebar in a sheet on small screens", async () => {
@@ -121,5 +154,34 @@ describe("TeamShell", () => {
     expect(
       await within(sheet).findByRole("link", { name: "Insights" }),
     ).toBeVisible();
+  });
+
+  it("shows the settings sidebar under /settings and asks for no counts", async () => {
+    const api = mockApi();
+    api.reply(getNotificationUnreadCountFixture.ok());
+    api.reply(listSettingsFixture.ok());
+    const view = renderShell("/feedback/workspace_1/settings/integrations");
+    const nav = view.getByRole("navigation", { name: "Settings" });
+    expect(
+      within(nav).getByRole("link", { name: "Integrations" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      view.queryByRole("navigation", { name: "Teammate app" }),
+    ).not.toBeInTheDocument();
+    expect(view.getByRole("link", { name: "Settings" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    await waitFor(() => expect(api.calls()).toHaveLength(2));
+    expect(api.calls("getQuillsTeamCounts")).toHaveLength(0);
+    expect(view.getByRole("main")).toHaveTextContent("Page content");
+  });
+
+  it("shows no sidebar and no menu bar in the changelog editor", () => {
+    mockApi();
+    const view = renderShell("/feedback/workspace_1/changelog/new");
+    expect(view.queryByRole("navigation")).not.toBeInTheDocument();
+    expect(view.queryByRole("button", { name: "Menu" })).toBeNull();
+    expect(view.getByRole("main")).toHaveTextContent("Page content");
   });
 });

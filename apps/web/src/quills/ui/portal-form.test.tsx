@@ -61,6 +61,54 @@ describe("PortalForm", () => {
     press(/confirm/i);
     await waitFor(() => expect(submit).toHaveBeenCalledTimes(2));
   });
+  it("shows an API issue without a matching field above the form", async () => {
+    const submit = vi.fn(async () => ({
+      kind: "invalid" as const,
+      issues: [{ path: "intervals.0.start", message: "Use HH:MM." }],
+    }));
+    const view = setup(submit);
+    fill("Message", "A draft");
+    press(/confirm/i);
+    expect(await view.findByRole("alert")).toHaveTextContent("Use HH:MM.");
+    expect(view.getByLabelText("Message")).toHaveValue("A draft");
+  });
+  it("lets the user submit again after a conflict", async () => {
+    const submit = vi
+      .fn()
+      .mockResolvedValueOnce({ kind: "conflict" })
+      .mockResolvedValue(undefined);
+    const view = setup(submit);
+    fill("Message", "A draft");
+    press(/confirm/i);
+    await view.findByRole("alert");
+    expect(view.getByRole("button", { name: /confirm/i })).toBeEnabled();
+    press(/confirm/i);
+    await waitFor(() => expect(submit).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(view.queryByRole("alert")).toBeNull());
+  });
+  it("takes new stored values and keeps the fields that the user changed", async () => {
+    const form = (values: { name: string; note: string }) => (
+      <PortalForm
+        schema={z.object({ name: z.string(), note: z.string() })}
+        defaultValues={values}
+        values={values}
+        submitKey="core.gallery.confirm"
+        onSubmit={async () => undefined}
+      >
+        {(form) => (
+          <>
+            <input aria-label="Name" {...form.register("name")} />
+            <input aria-label="Note" {...form.register("note")} />
+          </>
+        )}
+      </PortalForm>
+    );
+    const view = renderComponent(form({ name: "Ava", note: "Old" }));
+    fill("Name", "Bob");
+    view.rerender(form({ name: "Cy", note: "New" }));
+    await waitFor(() => expect(view.getByLabelText("Note")).toHaveValue("New"));
+    expect(view.getByLabelText("Name")).toHaveValue("Bob");
+  });
   it("honors rate limits without resending or clearing the draft", async () => {
     vi.useFakeTimers();
     const submit = vi.fn(async () => ({

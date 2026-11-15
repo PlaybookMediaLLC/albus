@@ -14,7 +14,11 @@ import {
   statusIcon,
   type ListedPost,
 } from "../../team-posts/post-list";
-import { filterPatch, type PostSearch } from "../../team-posts/post-search";
+import {
+  filterPatch,
+  type PostSearch,
+  requestListTitle,
+} from "../../team-posts/post-search";
 import { useRequestQuery } from "../../team-posts/use-request-query";
 
 export interface PostListPaneProps {
@@ -51,7 +55,7 @@ export function PostListPane({
   const context = rowContext(props.statuses, props.boards, t);
   return (
     <ListPane
-      title={t("team-posts.title")}
+      title={requestListTitle(search, props.statuses, t)}
       headingLevel={2}
       filters={
         <RequestFilters

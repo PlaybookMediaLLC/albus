@@ -118,7 +118,7 @@ Merged: 12. Visibility rule for every board and post read: if the board has rows
 
 | operationId | Route | Action | Tables | Event | Tests |
 |---|---|---|---|---|---|
-| `listQuillsPosts` | `GET /posts` (board, status, tag, owner, search, date, sort, cursor; `limit` ≤ 100) | read | `posts`, `post_statuses`, `post_tag_assignments`, `user_segments` | - | contract, read-leak, page-bounds |
+| `listQuillsPosts` | `GET /posts` (board, status, tag, owner, author, search, date, sort, cursor; `limit` ≤ 100) | read | `posts`, `post_statuses`, `post_tag_assignments`, `user_segments` | - | contract, read-leak, page-bounds |
 | `getQuillsPostFilterCounts` | `GET /posts/counts` | read | `posts` | - | contract, read-leak |
 | `getQuillsPost` | `GET /posts/{postId}` | read | `posts`, `post_votes`, `post_tags`, `principal` | - | contract, read-leak |
 | `createQuillsPost` | `POST /posts` | create | `posts`, `post_activity`, `post_subscriptions`, `post_tag_assignments` | `post.created` | contract, rollback |

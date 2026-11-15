@@ -4,6 +4,7 @@ import { setPortalChangelogReactionFixture } from "../../api/changelog/set-porta
 import { press } from "../../test/actions";
 import { describePageContract } from "../../test/contracts";
 import { mockApi } from "../../test/mock-api";
+import { renderPage } from "../../test/render";
 import { meta } from "./meta";
 import { ChangelogEntryPage } from "./changelog-entry-page";
 describe("ChangelogEntryPage", () => {
@@ -67,6 +68,17 @@ describe("ChangelogEntryPage", () => {
         "getQuillsPortalChangelogEntry",
         "setQuillsPortalChangelogReaction",
       ]);
+    });
+    it("shows the not-found state while the changelog tab is off", async () => {
+      const api = mockApi();
+      const view = renderPage(ChangelogEntryPage, meta, {
+        ...options,
+        tabs: { changelog: false },
+      });
+      expect(await view.findByRole("alert")).toHaveTextContent(
+        "This item could not be found.",
+      );
+      expect(api.calls()).toHaveLength(0);
     });
   });
 });

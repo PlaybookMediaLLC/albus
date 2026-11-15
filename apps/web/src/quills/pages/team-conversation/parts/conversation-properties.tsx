@@ -61,7 +61,10 @@ export function ConversationProperties({
         email={conversation.visitorEmail}
       />
       <section aria-labelledby="conversation-details">
-        <h2 id="conversation-details" className="mb-1 text-sm font-semibold">
+        <h2
+          id="conversation-details"
+          className="mb-1 text-xs font-medium text-muted-foreground"
+        >
           {t("team-conversations.properties.title")}
         </h2>
         <PropertyRow label={t("team-conversations.properties.team")}>

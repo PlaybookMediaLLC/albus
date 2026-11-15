@@ -78,7 +78,8 @@ export function NotificationsButton({
       <PopoverTrigger
         render={
           <IconButton
-            className="relative"
+            className="relative size-9 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground sm:size-9"
+            side="right"
             label={
               count
                 ? t("team.notifications.unread", { count })
@@ -87,7 +88,7 @@ export function NotificationsButton({
           />
         }
       >
-        <Bell aria-hidden="true" />
+        <Bell aria-hidden="true" className="size-4.5" />
         {count ? (
           <span
             aria-hidden="true"
@@ -95,7 +96,7 @@ export function NotificationsButton({
           />
         ) : null}
       </PopoverTrigger>
-      <PopoverPopup align="start" className="w-80">
+      <PopoverPopup side="right" align="end" className="w-80">
         <div className="mb-2 flex items-center justify-between gap-2">
           <PopoverTitle className="text-sm">
             {t("team.notifications.title")}

@@ -177,6 +177,18 @@ jobs:
   unit:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        # apps/web has most of the test files, so it runs in shards beside the other packages.
+        include:
+          - tests: packages
+          - tests: web
+            shard: 1/3
+          - tests: web
+            shard: 2/3
+          - tests: web
+            shard: 3/3
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -196,15 +208,25 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Test release security controls
+        if: matrix.tests == 'packages'
         run: |
           docker pull nginx:1.30.6-alpine
           node --test scripts/security/*.test.mjs scripts/ci/*.test.mjs scripts/contribution-eligibility/*.test.mjs
 
       - name: Run unit tests
+        if: matrix.tests == 'packages'
         env:
           # Let jsdom supply browser storage instead of Node's native storage.
           NODE_OPTIONS: --no-experimental-webstorage
-        run: pnpm test
+        # Exclude the root too: its test script runs every package, web included.
+        run: pnpm exec vp run -F '!kaneo' -F '!@kaneo/web' test
+
+      - name: Run web unit tests
+        if: matrix.tests == 'web'
+        env:
+          NODE_OPTIONS: --no-experimental-webstorage
+          SHARD: ${{ matrix.shard }}
+        run: pnpm --filter @kaneo/web test --shard="$SHARD"
 
   build:
     runs-on: ubuntu-24.04

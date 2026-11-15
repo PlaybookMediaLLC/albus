@@ -24,8 +24,6 @@ const render = (team = postTeam, onMerge = vi.fn()) =>
         post={postDetail}
         statuses={[...inboxStatuses.statuses, closed]}
         onMerge={onMerge}
-        onPrevious={vi.fn()}
-        onNext={vi.fn()}
       />
     </TeamRuntimeProvider>,
   );

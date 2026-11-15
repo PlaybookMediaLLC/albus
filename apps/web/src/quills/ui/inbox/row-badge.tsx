@@ -13,13 +13,13 @@ const variants = {
   info: "info",
 } as const;
 
-/** One small caps status badge of an inbox row. */
+/** One status badge of an inbox row, in sentence case. */
 export function RowBadge({ badge }: RowBadgeProps) {
   return (
     <Badge
       variant={variants[badge.tone ?? "neutral"]}
       size="sm"
-      className="font-semibold uppercase tracking-wide"
+      className="font-medium"
     >
       {badge.label}
     </Badge>

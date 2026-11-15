@@ -30,7 +30,7 @@ export function PostMerge({ workspaceId, post }: PostMergeProps) {
     teamHref(workspaceId, `/posts/${encodeURIComponent(postId)}`);
   const duplicates = merged.data?.posts ?? [];
   return (
-    <section aria-labelledby={heading} className="grid gap-2 py-2 text-sm">
+    <section aria-labelledby={heading} className="grid gap-2 py-3 text-sm">
       {failed ? (
         <p role="alert" className="text-destructive-foreground">
           {t("core.problem.failed")}
@@ -54,7 +54,7 @@ export function PostMerge({ workspaceId, post }: PostMergeProps) {
           )}
         </div>
       ) : null}
-      <h3 id={heading} className="font-medium">
+      <h3 id={heading} className="text-xs font-medium text-muted-foreground">
         {t("team-post.duplicates", { count: duplicates.length })}
       </h3>
       <ul className="grid grid-cols-1 gap-1">

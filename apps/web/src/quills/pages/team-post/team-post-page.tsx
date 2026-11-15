@@ -179,8 +179,6 @@ export function TeamPostPage({
               post={data}
               statuses={statuses.data.statuses}
               onMerge={() => setMerge("into")}
-              onPrevious={nav.previous}
-              onNext={nav.next}
             />
           ) : null}
         </div>

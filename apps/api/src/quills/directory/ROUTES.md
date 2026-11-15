@@ -16,7 +16,9 @@ Tables and owning schema:      quills: principal, customer_identity, companies,
                                company_attribute_definitions, user_attribute_definitions,
                                user_tags, user_tag_assignments, segments, user_segments,
                                teams, audit_log, settings, kv_store; the lead merge also
-                               writes the 30 activity tables in lead-merge.ts.
+                               writes the 30 activity tables in lead-merge.ts;
+                               user-comments.ts reads posts, post_comments,
+                               post_comment_reactions, boards and board_projects.
                                public: workspace_member (read only, platform-reads.ts).
 Actor and workspace source:    authenticated context (helper)
 Permissions:                   workspace:read + quills:<action>; native: none
@@ -45,6 +47,7 @@ People are customers only: `customer_identity` rows with a principal, no
 | `updateQuillsUser` | `PUT /users/{principalId}` | update | `customer_identity`, `principal`, `user_attribute_definitions` | `user.updated` | contract, rollback |
 | `deleteQuillsUser` | `DELETE /users/{principalId}` | delete | `principal`, `customer_identity` | `user.deleted` | contract, rollback, feature (409) |
 | `listQuillsUserDuplicates` | `GET /users/{principalId}/duplicates` | read | `principal`, `customer_identity` | - | contract |
+| `listQuillsUserComments` | `GET /users/{principalId}/comments` (`cursor`; `limit` ≤ 100; newest first) | read | `principal`, `customer_identity`, `post_comments`, `posts`, `boards`, `board_projects`, `post_comment_reactions` | - | contract, read-leak (`user-comments.test.ts`) |
 | `mergeQuillsLeadIntoUser` | `POST /users/{principalId}/merge` | update | 30 activity tables, `principal`, `customer_identity` | `user.lead_merged` | contract, rollback, feature |
 
 Merged: 14. `listQuillsUsers` (v1), `listQuillsPortalUsers`, `searchQuillsPeople`;

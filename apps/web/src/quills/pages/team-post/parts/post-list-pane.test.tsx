@@ -51,4 +51,38 @@ describe("PostListPane", () => {
     fireEvent.click(view.getByRole("link", { name: /Request 1/ }));
     expect(onOpen).toHaveBeenCalledWith("post_1");
   });
+
+  it("names the chosen status in the title, like the list page", () => {
+    const statuses = listStatusesFixture.ok({
+      statuses: [
+        {
+          id: "status_planned",
+          name: "Planned",
+          slug: "planned",
+          color: "purple",
+          category: "active",
+          position: 0,
+          showOnRoadmap: true,
+          isDefault: false,
+          createdAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    }).statuses;
+    const view = renderComponent(
+      <PostListPane
+        posts={[]}
+        statuses={statuses}
+        boards={inboxBoards.items}
+        search={{ statusId: "status_planned" }}
+        onSearch={vi.fn()}
+        activeId=""
+        href={(id) => `/feedback/workspace_test_1/posts/${id}`}
+        onOpen={vi.fn()}
+        loading={false}
+      />,
+    );
+    expect(
+      view.getByRole("heading", { level: 2, name: "Planned" }),
+    ).toBeVisible();
+  });
 });

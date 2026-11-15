@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { PostStatusIcon } from "../ui/inbox/post-status-icon";
-import { cn, toast } from "../ui/upstream";
+import { cn } from "../ui/upstream";
 import type { TeamNavItem } from "./nav";
 
 export interface SidebarItemProps {
@@ -11,7 +11,7 @@ export interface SidebarItemProps {
 }
 
 const row =
-  "flex h-8 w-full items-center gap-2 rounded-lg border border-transparent px-2 text-start text-sm text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:border-border aria-[current=page]:bg-background aria-[current=page]:font-medium aria-[current=page]:text-foreground aria-[current=page]:shadow-xs [&>svg]:size-4 [&>svg]:shrink-0";
+  "flex h-8 w-full items-center gap-2.5 rounded-md px-2 text-start text-sm text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-background aria-[current=page]:font-medium aria-[current=page]:text-foreground aria-[current=page]:shadow-xs aria-[current=page]:inset-ring aria-[current=page]:inset-ring-border [&>svg]:size-4 [&>svg]:shrink-0 [&>.lucide]:text-muted-foreground aria-[current=page]:[&>.lucide]:text-foreground";
 
 /** One sidebar view: icon, label and a right-aligned count. The current view is a white pill. */
 export function SidebarItem({ item, onNavigate }: SidebarItemProps) {
@@ -30,9 +30,9 @@ export function SidebarItem({ item, onNavigate }: SidebarItemProps) {
       {item.count === undefined ? null : (
         <span
           className={cn(
-            "min-w-5 rounded-full px-1.5 text-center text-xs tabular-nums",
+            "min-w-5 rounded-full px-1.5 text-center text-xs leading-5 tabular-nums",
             item.attention && item.count > 0
-              ? "bg-priority-high font-semibold text-background"
+              ? "bg-priority-high/15 font-semibold text-orange-800 dark:text-priority-high"
               : "text-muted-foreground",
           )}
         >
@@ -41,25 +41,6 @@ export function SidebarItem({ item, onNavigate }: SidebarItemProps) {
       )}
     </>
   );
-  if (item.copy)
-    return (
-      <button
-        type="button"
-        className={row}
-        onClick={() => {
-          const link = new URL(item.to, window.location.origin).href;
-          const copy = navigator.clipboard
-            ? navigator.clipboard.writeText(link)
-            : Promise.reject(new Error("No clipboard"));
-          void copy.then(
-            () => toast.success(t("team.shareCopied")),
-            () => toast.error(t("core.problem.failed")),
-          );
-        }}
-      >
-        {content}
-      </button>
-    );
   if (item.newTab)
     return (
       <a href={item.to} target="_blank" rel="noreferrer" className={row}>

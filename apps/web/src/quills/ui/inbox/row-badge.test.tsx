@@ -9,7 +9,7 @@ describe("RowBadge", () => {
         badge={{ id: "resolved", label: "Resolved", tone: "success" }}
       />,
     );
-    expect(view.getByText("Resolved")).toHaveClass("uppercase");
+    expect(view.getByText("Resolved")).not.toHaveClass("uppercase");
     expect(view.getByText("Resolved").className).toMatch(/success/);
   });
 });

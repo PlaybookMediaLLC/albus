@@ -6,4 +6,5 @@ export * from "./lead-merge.fixture";
 export * from "./people.fixture";
 export * from "./principals.fixture";
 export * from "./segments.fixture";
+export * from "./user-comments.fixture";
 export * from "./user-tags.fixture";
