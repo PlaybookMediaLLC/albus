@@ -1,16 +1,16 @@
 import { describe, it, expect, vi, afterEach } from "vite-plus/test";
 import { render } from "@testing-library/react";
-import { useQuackbackEvent } from "../../src/react/use-event";
-import Quackback from "../../src";
+import { useQuillsEvent } from "../../src/react/use-event";
+import Quills from "../../src";
 
 afterEach(() => vi.restoreAllMocks());
 
-describe("useQuackbackEvent", () => {
+describe("useQuillsEvent", () => {
   it("subscribes on mount and unsubscribes on unmount", () => {
     const unsub = vi.fn();
-    const on = vi.spyOn(Quackback, "on").mockReturnValue(unsub);
+    const on = vi.spyOn(Quills, "on").mockReturnValue(unsub);
     function C() {
-      useQuackbackEvent("vote", () => {});
+      useQuillsEvent("vote", () => {});
       return null;
     }
     const { unmount } = render(<C />);
@@ -23,11 +23,11 @@ describe("useQuackbackEvent", () => {
     const unsubA = vi.fn();
     const unsubB = vi.fn();
     const on = vi
-      .spyOn(Quackback, "on")
+      .spyOn(Quills, "on")
       .mockReturnValueOnce(unsubA)
       .mockReturnValueOnce(unsubB);
     function C({ name }: { name: "vote" | "post:created" }) {
-      useQuackbackEvent(name, () => {});
+      useQuillsEvent(name, () => {});
       return null;
     }
     const { rerender, unmount } = render(<C name="vote" />);

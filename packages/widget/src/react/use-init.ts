@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
-import Quackback from "../index.js";
+import Quills from "../index.js";
 import type { InitOptions, Identity } from "../types.js";
 
-export interface UseQuackbackInitOptions extends Omit<InitOptions, "identity"> {
+export interface UseQuillsInitOptions extends Omit<InitOptions, "identity"> {
   identity?: Identity;
   /** Skip init while `false`. Flipping to `true` later inits on that render. */
   shouldInitialize?: boolean;
@@ -11,12 +11,12 @@ export interface UseQuackbackInitOptions extends Omit<InitOptions, "identity"> {
 }
 
 /**
- * Boots the Quackback widget when the host component mounts, and tears it
+ * Boots the Quills widget when the host component mounts, and tears it
  * down on unmount. Identity changes (by structural equality via JSON key) fire
  * a follow-up `identify` call. Instance URL, workspace, enablement, and delay changes restart initialization. Other
  * options are read when startup runs. Identity removal selects anonymous mode.
  */
-export function useQuackbackInit(options: UseQuackbackInitOptions): void {
+export function useQuillsInit(options: UseQuillsInitOptions): void {
   const {
     identity,
     shouldInitialize,
@@ -43,7 +43,7 @@ export function useQuackbackInit(options: UseQuackbackInitOptions): void {
       if (cancelled) return;
       const latest = optsRef.current;
       const { shouldInitialize: _s, initializeDelay: _d, ...init } = latest;
-      Quackback.init(init);
+      Quills.init(init);
       started = true;
       startedRef.current = true;
       appliedIdentity.current =
@@ -56,13 +56,13 @@ export function useQuackbackInit(options: UseQuackbackInitOptions): void {
         cancelled = true;
         clearTimeout(id);
         startedRef.current = false;
-        if (started) Quackback.destroy();
+        if (started) Quills.destroy();
       };
     }
     start();
     return () => {
       startedRef.current = false;
-      if (started) Quackback.destroy();
+      if (started) Quills.destroy();
     };
   }, [instanceUrl, workspace, shouldInit, initializeDelay]);
 
@@ -79,7 +79,7 @@ export function useQuackbackInit(options: UseQuackbackInitOptions): void {
       identityKey === appliedIdentity.current
     )
       return;
-    Quackback.identify(identityRef.current);
+    Quills.identify(identityRef.current);
     appliedIdentity.current = identityKey;
   }, [identityKey, shouldInit]);
 }

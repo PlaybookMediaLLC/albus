@@ -1,8 +1,8 @@
-// Workspace Quackback URL — e.g. "https://feedback.acme.com"
+// Workspace Kaneo URL — e.g. "https://feedback.acme.com"
 export type InstanceUrl = string;
 
 /**
- * Languages Quackback ships catalogs for, as BCP-47 tags (autocomplete hints
+ * Languages the widget ships catalogs for, as BCP-47 tags (autocomplete hints
  * for the `locale` option). This is the single source for the `locale` type
  * below. The widget is a standalone package and does not import application catalogs.
  */
@@ -22,9 +22,9 @@ export const WIDGET_LOCALES = [
   "uk",
 ] as const;
 
-/** Passed to `Quackback("init", ...)` or `Quackback.init(...)`. */
+/** Passed to `Quills("init", ...)` or `Quills.init(...)`. */
 export interface InitOptions {
-  /** Workspace Quackback instance URL — required when using the npm package. */
+  /** Kaneo instance URL — required when using the npm package. */
   instanceUrl: InstanceUrl;
   /** Kaneo workspace ID or slug. Script-tag installs read it from the sdk.js URL. */
   workspace: string;
@@ -34,8 +34,8 @@ export interface InitOptions {
   launcher?: boolean;
   /**
    * Override the auto-detected UI language. Accepts any BCP-47 tag — the host
-   * forwards it and the Quackback instance resolves the closest catalog it has.
-   * The literals are autocomplete hints for the languages Quackback ships today
+   * forwards it and the Kaneo instance resolves the closest catalog it has.
+   * The literals are autocomplete hints for the languages the widget ships today
    * (see WIDGET_LOCALES).
    */
   locale?: (typeof WIDGET_LOCALES)[number] | (string & {});
@@ -44,8 +44,8 @@ export interface InitOptions {
   /**
    * Set `tracking: false` to keep host-page visitor analytics off: no pageview
    * beacons and no new device id, for example until the visitor accepts
-   * analytics cookies. Turn it on later with `Quackback.tracking(true)`, or
-   * withdraw with `Quackback.tracking(false)`, which also removes a stored
+   * analytics cookies. Turn it on later with `Quills.tracking(true)`, or
+   * withdraw with `Quills.tracking(false)`, which also removes a stored
    * device id. Omitting the option keeps the host's last choice. Tracking runs
    * only when the instance also enables visitor analytics.
    */
@@ -68,7 +68,7 @@ export type Identity =
     >);
 
 /**
- * Arguments to `Quackback.open(...)`. Discriminated on the target:
+ * Arguments to `Quills.open(...)`. Discriminated on the target:
  * - omit the payload or `{ view: 'home' }` to open the home view
  * - `{ view: 'new-post', title?, body?, board? }` pre-fills the new-post form
  * - `{ view: 'changelog', entryId? }` opens the changelog, optionally to one entry
