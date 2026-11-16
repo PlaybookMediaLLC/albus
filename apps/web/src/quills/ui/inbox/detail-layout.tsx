@@ -1,4 +1,11 @@
-import { type ReactNode, useState } from "react";
+import {
+  type CSSProperties,
+  type ReactNode,
+  useEffect,
+  useId,
+  useState,
+} from "react";
+import { useTranslation } from "react-i18next";
 import {
   cn,
   Sheet,
@@ -8,9 +15,11 @@ import {
   SheetTitle,
 } from "../upstream";
 import { DetailPaneContext } from "./detail-pane-context";
+import { ListResizer } from "./list-resizer";
+import { readListWidth, writeListWidth } from "./list-width";
 
 export interface DetailLayoutProps {
-  /** The list pane (ListPane), about 360 px wide. Hidden below md while an item is open. */
+  /** The list pane (ListPane), 360 px wide until resized. Hidden below md while an item is open. */
   list: ReactNode;
   listLabel: string;
   /** False when no item is open: below md the list then fills the screen. */
@@ -36,7 +45,11 @@ export function DetailLayout({
   properties,
   propertiesLabel = "",
 }: DetailLayoutProps) {
+  const { t } = useTranslation("quills");
+  const listId = useId();
   const [listOpen, setListOpen] = useState(true);
+  const [listWidth, setListWidth] = useState(readListWidth);
+  useEffect(() => writeListWidth(listWidth), [listWidth]);
   const [panelOpen, setPanelOpen] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
   const panel = properties
@@ -59,13 +72,22 @@ export function DetailLayout({
         {/* A hidden list comes back from ShowListButton in the DetailHeader or EmptySelection. */}
         {listOpen ? (
           <section
+            id={listId}
             aria-label={listLabel}
+            style={{ "--list-width": `${listWidth}px` } as CSSProperties}
             className={cn(
-              "min-h-0 w-full shrink-0 flex-col border-e border-border md:flex md:w-90",
+              "relative min-h-0 w-full shrink-0 flex-col border-e border-border md:flex md:w-(--list-width)",
               itemOpen ? "hidden" : "flex",
             )}
           >
             {list}
+            <ListResizer
+              className="hidden md:block"
+              label={t("inbox.resizeList")}
+              controls={listId}
+              width={listWidth}
+              onResize={setListWidth}
+            />
           </section>
         ) : null}
         <div

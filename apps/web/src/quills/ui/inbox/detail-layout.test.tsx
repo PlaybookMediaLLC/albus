@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from "vite-plus/test";
+import { fireEvent } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { press } from "../../test/actions";
 import { renderComponent } from "../../test/render";
 import { DetailHeader } from "./detail-header";
@@ -27,6 +28,8 @@ function renderDetail(itemOpen = true) {
 }
 
 describe("DetailLayout", () => {
+  afterEach(() => window.localStorage.clear());
+
   it("shows the list pane, the item and the right panel in named panes", () => {
     const view = renderDetail();
     expect(
@@ -69,6 +72,23 @@ describe("DetailLayout", () => {
     press("Hide the list");
     press("Show the list");
     expect(view.getByRole("region", { name: "Conversations" })).toBeVisible();
+  });
+
+  it("resizes the list pane with the keys and keeps the width on this device", () => {
+    const view = renderDetail();
+    const handle = view.getByRole("separator", { name: "Resize the list" });
+    const list = view.getByRole("region", { name: "Conversations" });
+    expect(handle).toHaveAttribute("aria-controls", list.id);
+    expect(handle).toHaveAttribute("aria-valuenow", "360");
+    fireEvent.keyDown(handle, { key: "ArrowRight" });
+    expect(handle).toHaveAttribute("aria-valuenow", "376");
+    expect(list.style.getPropertyValue("--list-width")).toBe("376px");
+    fireEvent.keyDown(handle, { key: "End" });
+    expect(handle).toHaveAttribute("aria-valuenow", "520");
+    view.unmount();
+    expect(
+      renderDetail().getByRole("separator", { name: "Resize the list" }),
+    ).toHaveAttribute("aria-valuenow", "520");
   });
 
   it("toggles the right panel from the header on wide screens", () => {
