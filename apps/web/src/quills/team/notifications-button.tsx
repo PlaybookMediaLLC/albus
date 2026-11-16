@@ -90,7 +90,8 @@ export function NotificationsButton({
       <PopoverTrigger
         render={
           <IconButton
-            className="relative size-9 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground sm:size-9"
+            size="icon-lg"
+            className="relative text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
             side="right"
             label={
               count

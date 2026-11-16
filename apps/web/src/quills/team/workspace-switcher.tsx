@@ -46,7 +46,8 @@ export function WorkspaceSwitcher({
         render={
           <IconButton
             side="right"
-            className="size-9 hover:bg-sidebar-accent sm:size-9"
+            size="icon-lg"
+            className="hover:bg-sidebar-accent"
             label={workspaceName ?? t("team.switcher")}
           />
         }

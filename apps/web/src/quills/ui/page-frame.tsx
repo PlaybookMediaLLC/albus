@@ -106,7 +106,7 @@ export function PageFrame({
   return (
     <Root
       className={cn(
-        "portal-page mx-auto w-full flex-1 px-5 pb-16 pt-8 md:pt-12 [&_h2]:tracking-tight [&_h3]:font-semibold [&_time]:text-xs [&_time]:text-muted-foreground",
+        "portal-page mx-auto w-full flex-1 px-5 pb-16 pt-8 md:pt-12",
         wide || aside ? "max-w-5xl" : "max-w-3xl",
       )}
       data-page={titleKey}

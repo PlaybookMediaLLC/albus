@@ -26,7 +26,7 @@ export interface PostChipsProps {
   boards: ListBoardsResponse["items"];
 }
 
-const chip = "h-7 gap-1.5 rounded-full px-2.5 text-xs font-medium sm:text-xs";
+const chip = "rounded-full before:rounded-full";
 
 /** The chip row under a request: its board, its visibility on the board, its tags and the AI chip. */
 export function PostChips({ workspaceId, post, boards }: PostChipsProps) {

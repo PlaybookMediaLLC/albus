@@ -16,7 +16,7 @@ export interface BoardNavigationProps {
 }
 
 const section =
-  "[&_h2]:mb-2.5 [&_h2]:text-[11px] [&_h2]:font-semibold [&_h2]:uppercase [&_h2]:tracking-wider [&_h2]:text-foreground";
+  "[&_h2]:mb-2 [&_h2]:text-xs [&_h2]:font-medium [&_h2]:text-muted-foreground";
 const item =
   "flex w-full items-center gap-2 whitespace-nowrap rounded-md py-1 text-left text-sm text-muted-foreground transition-colors hover:text-foreground aria-[current]:font-medium aria-[current]:text-foreground aria-pressed:font-medium aria-pressed:text-foreground";
 
@@ -114,9 +114,7 @@ export function BoardNavigation({
                 key={label}
                 className="flex flex-col-reverse rounded-lg bg-muted/60 py-2"
               >
-                <dt className="text-[11px] text-muted-foreground">
-                  {t(label)}
-                </dt>
+                <dt className="text-xs text-muted-foreground">{t(label)}</dt>
                 <dd className="text-sm font-semibold tabular-nums">{value}</dd>
               </div>
             ))}

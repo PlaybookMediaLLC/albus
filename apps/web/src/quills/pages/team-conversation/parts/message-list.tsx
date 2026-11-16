@@ -72,7 +72,7 @@ export function MessageList(props: MessageListProps) {
   return (
     <section
       aria-labelledby="conversation-thread"
-      className="mx-auto grid w-full max-w-205 gap-3"
+      className="mx-auto grid w-full max-w-200 gap-3"
     >
       <h2 id="conversation-thread" className="sr-only">
         {t("team-conversations.thread")}

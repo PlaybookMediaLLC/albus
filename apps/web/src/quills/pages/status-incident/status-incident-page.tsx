@@ -109,7 +109,10 @@ export function StatusIncidentPage(props: StatusIncidentPageProps) {
                             })}
                           </p>
                           <p>{update.body}</p>
-                          <time dateTime={update.createdAt}>
+                          <time
+                            className="text-xs text-muted-foreground"
+                            dateTime={update.createdAt}
+                          >
                             {new Date(update.createdAt).toLocaleString()}
                           </time>
                         </li>

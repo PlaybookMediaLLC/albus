@@ -40,7 +40,10 @@ export function ConversationMessages({ messages }: ConversationMessagesProps) {
                     {t("conversation.attachment", { name: attachment.name })}
                   </p>
                 ))}
-                <time dateTime={message.createdAt}>
+                <time
+                  className="text-xs text-muted-foreground"
+                  dateTime={message.createdAt}
+                >
                   {new Date(message.createdAt).toLocaleString()}
                 </time>
               </li>

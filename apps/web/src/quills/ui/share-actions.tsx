@@ -4,6 +4,7 @@ import {
 } from "nucleo-ui-essential-outline-18";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Button } from "./upstream";
 
 export interface ShareActionsProps {
   className?: string;
@@ -11,8 +12,9 @@ export interface ShareActionsProps {
   compact?: boolean;
 }
 
+// A quiet ghost action. The list's negative margin lines the text up with the headings.
 const action =
-  "flex w-full items-center gap-2 rounded-md py-1 text-left text-sm text-muted-foreground transition-colors hover:text-foreground";
+  "w-full justify-start text-muted-foreground hover:text-foreground";
 
 /** Copy or share the current page address. */
 export function ShareActions({ className, compact }: ShareActionsProps) {
@@ -47,31 +49,42 @@ export function ShareActions({ className, compact }: ShareActionsProps) {
     return (
       <div className={`flex items-center gap-2 ${className ?? ""}`}>
         {live}
-        <button
-          type="button"
-          className="rounded-full bg-muted px-3 py-1 text-xs font-medium transition-colors hover:bg-muted/70"
+        <Button
+          variant="secondary"
+          size="xs"
+          className="rounded-full before:rounded-full"
           onClick={() =>
             void (typeof navigator.share === "function" ? share() : copy())
           }
         >
           {t("core.share")}
-        </button>
+        </Button>
       </div>
     );
   return (
     <div className={className}>
-      <ul className="grid gap-0.5">
+      <ul className="-mx-2 grid gap-0.5">
         <li>
-          <button type="button" className={action} onClick={() => void copy()}>
-            <IconLinkOutline18 aria-hidden="true" className="size-3.5" />
+          <Button
+            variant="ghost"
+            size="sm"
+            className={action}
+            onClick={() => void copy()}
+          >
+            <IconLinkOutline18 aria-hidden="true" />
             {t("core.copyLink")}
-          </button>
+          </Button>
         </li>
         <li>
-          <button type="button" className={action} onClick={() => void share()}>
-            <IconPaperPlane2Outline18 aria-hidden="true" className="size-3.5" />
+          <Button
+            variant="ghost"
+            size="sm"
+            className={action}
+            onClick={() => void share()}
+          >
+            <IconPaperPlane2Outline18 aria-hidden="true" />
             {t("core.share")}
-          </button>
+          </Button>
         </li>
       </ul>
       <div className="mt-1 max-w-44">{live}</div>

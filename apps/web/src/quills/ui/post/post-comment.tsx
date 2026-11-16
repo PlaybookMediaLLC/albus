@@ -75,11 +75,12 @@ export function PostComment({ comment, ...props }: PostCommentProps) {
         <p className="flex flex-wrap items-baseline gap-x-2 text-sm">
           <span className="font-medium">{author}</span>
           {comment.author.isTeamMember ? (
-            <span className="rounded bg-muted px-1.5 text-[11px] text-muted-foreground">
+            <span className="rounded bg-muted px-1.5 text-xs text-muted-foreground">
               {t("post.team")}
             </span>
           ) : null}
           <time
+            className="text-xs text-muted-foreground"
             dateTime={comment.createdAt}
             title={new Date(comment.createdAt).toLocaleString(i18n.language)}
           >

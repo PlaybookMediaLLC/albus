@@ -67,7 +67,7 @@ function HelpSidebarSection(props: {
   );
   return (
     <section>
-      <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider">
+      <h2 className="mb-2 text-xs font-medium text-muted-foreground">
         <a
           href={portalHref(props.workspaceId, props.category.path)}
           aria-current={props.current ? "page" : undefined}

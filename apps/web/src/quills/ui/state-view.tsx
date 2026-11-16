@@ -6,8 +6,11 @@ import {
   Alert,
   AlertDescription,
   Empty,
-  EmptyHeader,
+  EmptyContent,
   EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
   Spinner,
 } from "./upstream";
 
@@ -28,6 +31,11 @@ export interface StateViewProps {
   problem?: PortalProblem | null;
   children: ReactNode;
   onRetry?: () => void;
+  /** The empty state: an icon, a title, a line (the generic line by default) and an action. */
+  emptyIcon?: ReactNode;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  emptyAction?: ReactNode;
 }
 
 export function StateView({
@@ -36,6 +44,10 @@ export function StateView({
   problem,
   children,
   onRetry,
+  emptyIcon,
+  emptyTitle,
+  emptyDescription,
+  emptyAction,
 }: StateViewProps) {
   const { t } = useTranslation("quills");
   const [now, setNow] = useState(Date.now);
@@ -73,8 +85,15 @@ export function StateView({
     return (
       <Empty role="status">
         <EmptyHeader>
-          <EmptyDescription>{t("core.empty")}</EmptyDescription>
+          {emptyIcon ? (
+            <EmptyMedia variant="icon">{emptyIcon}</EmptyMedia>
+          ) : null}
+          {emptyTitle ? <EmptyTitle>{emptyTitle}</EmptyTitle> : null}
+          <EmptyDescription>
+            {emptyDescription ?? t("core.empty")}
+          </EmptyDescription>
         </EmptyHeader>
+        {emptyAction ? <EmptyContent>{emptyAction}</EmptyContent> : null}
       </Empty>
     );
   return children;

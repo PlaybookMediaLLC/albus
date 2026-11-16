@@ -7,6 +7,7 @@ import type { PortalProblem } from "../../core/types";
 import { PersonAvatar } from "../person-avatar";
 import { PostVoteButton } from "./post-vote-button";
 import { StatusIcon } from "./status-icon";
+import { StateView } from "../state-view";
 import { Button } from "../upstream";
 export interface PostListProps {
   canLoadMore: boolean;
@@ -24,9 +25,13 @@ export function PostList(props: PostListProps) {
   const { t } = useTranslation("quills");
   if (!props.posts.length)
     return (
-      <p className="portal-post-empty rounded-xl border border-dashed border-border p-8 text-center text-muted-foreground">
-        {t("feedback.noPosts")}
-      </p>
+      <StateView
+        empty
+        emptyIcon={<IconMsgsOutline18 aria-hidden="true" />}
+        emptyDescription={t("feedback.noPosts")}
+      >
+        {null}
+      </StateView>
     );
   return (
     <div className="portal-post-feed">

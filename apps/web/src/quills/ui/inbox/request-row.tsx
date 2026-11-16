@@ -125,7 +125,7 @@ export function RequestRow(props: RequestRowProps) {
         {votes}
         {comments}
         {props.board ? (
-          <span className="hidden max-w-32 items-center gap-1.5 truncate text-[11px] font-medium uppercase tracking-wide sm:inline-flex">
+          <span className="hidden max-w-32 items-center gap-1.5 truncate text-xs font-medium uppercase tracking-wide sm:inline-flex">
             <span
               aria-hidden="true"
               className="size-1.5 rounded-full bg-current"

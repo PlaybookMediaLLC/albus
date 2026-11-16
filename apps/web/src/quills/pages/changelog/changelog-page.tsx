@@ -79,18 +79,22 @@ export function ChangelogPage(props: ChangelogPageProps) {
       actions={
         <>
           <ShareActions compact />
-          <a
-            className="rounded-full bg-muted px-3 py-1 text-xs font-medium transition-colors hover:bg-muted/70"
-            href={changelogFeedUrl(props.workspaceId)}
+          <Button
+            variant="secondary"
+            size="xs"
+            className="rounded-full before:rounded-full"
+            render={<a href={changelogFeedUrl(props.workspaceId)} />}
           >
             {t("changelog.rss")}
-          </a>
-          <a
-            className="rounded-full bg-muted px-3 py-1 text-xs font-medium transition-colors hover:bg-muted/70"
-            href={portalHref(props.workspaceId, "preferences")}
+          </Button>
+          <Button
+            variant="secondary"
+            size="xs"
+            className="rounded-full before:rounded-full"
+            render={<a href={portalHref(props.workspaceId, "preferences")} />}
           >
             {t("changelog.emailUpdates")}
-          </a>
+          </Button>
         </>
       }
     >
