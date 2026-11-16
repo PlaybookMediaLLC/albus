@@ -5951,7 +5951,10 @@
                   "newest",
                   "oldest",
                   "votes",
-                  "priority"
+                  "priority",
+                  "rice",
+                  "trending",
+                  "stale"
                 ]
               },
               "dateFrom": {
@@ -67696,13 +67699,15 @@
                 "oldest",
                 "votes",
                 "rice",
-                "mrr"
+                "mrr",
+                "trending",
+                "stale"
               ],
               "default": "newest",
-              "description": "rice: the RICE score, posts without one last. mrr: the monthly revenue of the voters' companies."
+              "description": "rice: the RICE score, posts without one last. mrr: the monthly revenue of the voters' companies. trending: the most votes in the last 7 days. stale: the least recently changed first."
             },
             "required": false,
-            "description": "rice: the RICE score, posts without one last. mrr: the monthly revenue of the voters' companies.",
+            "description": "rice: the RICE score, posts without one last. mrr: the monthly revenue of the voters' companies. trending: the most votes in the last 7 days. stale: the least recently changed first.",
             "name": "sort",
             "in": "query"
           },
@@ -67769,6 +67774,12 @@
                             "type": "string"
                           },
                           "authorName": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "authorAvatarUrl": {
                             "type": [
                               "string",
                               "null"
@@ -67941,6 +67952,7 @@
                           "statusId",
                           "principalId",
                           "authorName",
+                          "authorAvatarUrl",
                           "ownerPrincipalId",
                           "voteCount",
                           "commentCount",
@@ -68118,6 +68130,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -68244,6 +68262,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",
@@ -68758,6 +68777,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -68878,6 +68903,9 @@
                     "hasVoted": {
                       "type": "boolean"
                     },
+                    "viewerPrincipalId": {
+                      "type": "string"
+                    },
                     "widgetMetadata": {
                       "type": [
                         "object",
@@ -68896,6 +68924,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",
@@ -68910,6 +68939,7 @@
                     "tags",
                     "score",
                     "hasVoted",
+                    "viewerPrincipalId",
                     "widgetMetadata"
                   ]
                 }
@@ -69054,6 +69084,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -69180,6 +69216,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",
@@ -69305,6 +69342,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -69431,6 +69474,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",
@@ -69574,6 +69618,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -69700,6 +69750,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",
@@ -69844,6 +69895,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -69970,6 +70027,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",
@@ -70117,6 +70175,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -70243,6 +70307,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",
@@ -70391,6 +70456,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -70517,6 +70588,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",
@@ -70644,6 +70716,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -70770,6 +70848,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",
@@ -71641,6 +71720,12 @@
                               "null"
                             ]
                           },
+                          "authorAvatarUrl": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
                           "content": {
                             "type": "string"
                           },
@@ -71703,6 +71788,7 @@
                           "parentId",
                           "principalId",
                           "authorName",
+                          "authorAvatarUrl",
                           "content",
                           "isTeamMember",
                           "isPrivate",
@@ -71860,6 +71946,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "content": {
                       "type": "string"
                     },
@@ -71922,6 +72014,7 @@
                     "parentId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "content",
                     "isTeamMember",
                     "isPrivate",
@@ -72038,6 +72131,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "content": {
                       "type": "string"
                     },
@@ -72100,6 +72199,7 @@
                     "parentId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "content",
                     "isTeamMember",
                     "isPrivate",
@@ -72234,6 +72334,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "content": {
                       "type": "string"
                     },
@@ -72296,6 +72402,7 @@
                     "parentId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "content",
                     "isTeamMember",
                     "isPrivate",
@@ -72411,6 +72518,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "content": {
                       "type": "string"
                     },
@@ -72473,6 +72586,7 @@
                     "parentId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "content",
                     "isTeamMember",
                     "isPrivate",
@@ -72590,6 +72704,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "content": {
                       "type": "string"
                     },
@@ -72652,6 +72772,7 @@
                     "parentId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "content",
                     "isTeamMember",
                     "isPrivate",
@@ -81394,6 +81515,120 @@
         }
       }
     },
+    "/quills/{workspaceId}/posts/{postId}/visibility": {
+      "put": {
+        "operationId": "setQuillsPostVisibility",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Show a post on its board or hide it",
+        "description": "Moves a published post to archived (hidden) or back. A post that waits for review uses approveQuillsPost. Sends no mail or notification.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "visible": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "visible"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The post and its new moderation state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "moderationState": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "moderationState"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Post not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The post is neither published nor hidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
     "/quills/{workspaceId}/moderation/comments/{commentId}/approve": {
       "post": {
         "operationId": "approveQuillsComment",
@@ -82509,7 +82744,10 @@
                           "newest",
                           "oldest",
                           "votes",
-                          "priority"
+                          "priority",
+                          "rice",
+                          "trending",
+                          "stale"
                         ]
                       },
                       "dateFrom": {
@@ -149098,6 +149336,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -149224,6 +149468,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",
