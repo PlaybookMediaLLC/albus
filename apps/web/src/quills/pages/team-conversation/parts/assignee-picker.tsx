@@ -23,7 +23,10 @@ export interface AssigneePickerProps {
 
 const NOBODY = "none";
 
-/** The assignee pill of the conversation header: "You", a teammate or "Assign", and a teammate picker. */
+/**
+ * The assignee pill of the conversation header: "You", a teammate or "Assign", and a teammate
+ * picker with "Me" first. "Unassigned" shows only when someone is assigned.
+ */
 export function AssigneePicker(props: AssigneePickerProps) {
   const { t } = useTranslation("quills");
   const person = props.people.find((item) => item.id === props.value);
@@ -33,6 +36,16 @@ export function AssigneePicker(props: AssigneePickerProps) {
       ? t("team-conversations.you")
       : (person?.name ?? t("team-conversations.unknown"));
   const current = props.value ?? NOBODY;
+  const me = props.people.find((item) => item.id === props.myPrincipalId);
+  const others = props.people.filter((item) => item !== me);
+  const option = (item: Teammate, name: string) => (
+    <MenuRadioItem key={item.id} value={item.id}>
+      <span className="flex items-center gap-2">
+        <PersonAvatar colored name={item.name} avatarUrl={item.avatarUrl} />
+        {name}
+      </span>
+    </MenuRadioItem>
+  );
   return (
     <Menu>
       <MenuTrigger
@@ -65,23 +78,15 @@ export function AssigneePicker(props: AssigneePickerProps) {
               props.onChange(value === NOBODY ? null : String(value));
           }}
         >
-          <MenuRadioItem value={NOBODY}>
-            {t("team-conversations.unassigned")}
-          </MenuRadioItem>
-          {props.people.map((item) => (
-            <MenuRadioItem key={item.id} value={item.id}>
-              <span className="flex items-center gap-2">
-                <PersonAvatar
-                  colored
-                  name={item.name}
-                  avatarUrl={item.avatarUrl}
-                />
-                {item.id === props.myPrincipalId
-                  ? t("team-conversations.youName", { name: item.name ?? "" })
-                  : (item.name ?? t("team-conversations.unknown"))}
-              </span>
+          {props.value ? (
+            <MenuRadioItem value={NOBODY}>
+              {t("team-conversations.unassigned")}
             </MenuRadioItem>
-          ))}
+          ) : null}
+          {me ? option(me, t("team-conversations.me")) : null}
+          {others.map((item) =>
+            option(item, item.name ?? t("team-conversations.unknown")),
+          )}
         </MenuRadioGroup>
       </MenuPopup>
     </Menu>

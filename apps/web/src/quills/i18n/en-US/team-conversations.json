@@ -38,6 +38,7 @@
 	},
 	"loadMore": "Load more conversations",
 	"markSpam": "Mark as spam",
+	"me": "Me",
 	"more": "More actions",
 	"newMessage": {
 		"compose": "Write a message…",
@@ -114,6 +115,5 @@
 		"unassigned": "Unassigned"
 	},
 	"yes": "Yes",
-	"you": "You",
-	"youName": "{{name}} (you)"
+	"you": "You"
 }

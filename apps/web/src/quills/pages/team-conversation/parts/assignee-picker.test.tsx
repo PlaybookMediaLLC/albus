@@ -14,7 +14,7 @@ const people = ["Ada", "Lin"].map((name, index) => ({
 }));
 
 describe("AssigneePicker", () => {
-  it("reads Assign without an assignee and picks a teammate", async () => {
+  it("reads Assign without an assignee, lists Me first and picks a teammate", async () => {
     const onChange = vi.fn();
     const view = renderComponent(
       <AssigneePicker
@@ -25,12 +25,11 @@ describe("AssigneePicker", () => {
       />,
     );
     press("Assignee: Assign");
-    expect(
-      await view.findByRole("menuitemradio", { name: "Unassigned" }),
-    ).toHaveAttribute("aria-checked", "true");
-    expect(
-      view.getByRole("menuitemradio", { name: /Ada \(you\)/ }),
-    ).toBeInTheDocument();
+    const options = await view.findAllByRole("menuitemradio");
+    // No "Unassigned" while nobody is assigned; the avatar initials come first.
+    expect(options).toHaveLength(2);
+    expect(options[0]).toHaveTextContent(/Me$/);
+    expect(options[1]).toHaveTextContent(/Lin$/);
     fireEvent.click(view.getByRole("menuitemradio", { name: /Lin/ }));
     expect(onChange).toHaveBeenCalledWith("principal_test_2");
   });
