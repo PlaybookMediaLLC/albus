@@ -4,6 +4,7 @@
 	"assign": "Assign",
 	"assignee": "Assignee: {{name}}",
 	"attachment": "Attachment: {{name}}",
+	"attachmentFailed": "The file could not be opened. Try again.",
 	"block": "Block sender",
 	"cancel": "Cancel",
 	"conversation": "Conversation",

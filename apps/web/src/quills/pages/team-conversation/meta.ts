@@ -41,7 +41,6 @@ export const meta = {
     "unarchiveQuillsConversation",
     "createQuillsUpload",
     "createQuillsFiles",
-    "getQuillsFile",
     "blockQuillsUser",
     "unblockQuillsUser",
   ],

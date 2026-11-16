@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useGetMyConversationFile } from "../../../hooks/support/use-get-my-conversation-file";
-import { usePortalRuntime } from "../../../portal/runtime";
+import { getMyConversationFile } from "../../../api/support/get-my-conversation-file";
+import { openDownload } from "../../../core/open-download";
 
 export interface ConversationFileLinkProps {
   workspaceId: string;
@@ -9,27 +10,39 @@ export interface ConversationFileLinkProps {
   name: string;
 }
 
-/** A file of a team reply: a download link once its short-lived URL loads, else its name. */
+/** A file of a team reply. A click asks for a short-lived download URL and opens it. */
 export function ConversationFileLink(props: ConversationFileLinkProps) {
   const { t } = useTranslation("quills");
-  const portal = usePortalRuntime();
-  const file = useGetMyConversationFile(
-    {
-      param: {
-        workspace: props.workspaceId,
-        conversationId: props.conversationId,
-        fileId: props.fileId,
-      },
-    },
-    portal.viewer,
-  );
-  const label = t("conversation.attachment", { name: props.name });
-  const url = file.data?.downloadUrl;
-  return url ? (
-    <a href={url} target="_blank" rel="noreferrer" className="underline">
-      {label}
-    </a>
-  ) : (
-    <span>{label}</span>
+  const [state, setState] = useState<"idle" | "opening" | "failed">("idle");
+  const open = async () => {
+    setState("opening");
+    try {
+      const file = await getMyConversationFile({
+        param: {
+          workspace: props.workspaceId,
+          conversationId: props.conversationId,
+          fileId: props.fileId,
+        },
+      });
+      openDownload(file.downloadUrl);
+      setState("idle");
+    } catch {
+      setState("failed");
+    }
+  };
+  return (
+    <>
+      <button
+        type="button"
+        disabled={state === "opening"}
+        onClick={() => void open()}
+        className="underline disabled:opacity-60"
+      >
+        {t("conversation.attachment", { name: props.name })}
+      </button>
+      {state === "failed" ? (
+        <span role="alert"> {t("conversation.attachmentFailed")}</span>
+      ) : null}
+    </>
   );
 }
