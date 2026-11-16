@@ -592,3 +592,14 @@ jobs:
           CI_SKIP_EXPENSIVE: ${{ needs.detect-pr-changes.outputs.skip_expensive }}
           CI_GATE_JOBS: '{"detect-pr-changes":"${{ needs.detect-pr-changes.result }}","smoke":"${{ needs.smoke.result }}","peekareq-tests":"${{ needs.peekareq-tests.result }}","slop-labeler-tests":"${{ needs.slop-labeler-tests.result }}","quality":"${{ needs.quality.result }}","unit":"${{ needs.unit.result }}","build":"${{ needs.build.result }}","integration":"${{ needs.integration.result }}","docker-build":"${{ needs.docker-build.result }}","workflows":"${{ needs.workflows.result }}","storage":"${{ needs.storage.result }}","split-images":"${{ needs.split-images.result }}","secret-scan":"${{ needs.secret-scan.result }}"}'
         run: node scripts/ci/pr-change-classification.mjs
+
+  deploy:
+    name: Deploy to production
+    # Each merge to main deploys after the full CI gate passes. A failed gate skips the deploy.
+    needs: ci-result
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    uses: ./.github/workflows/deploy-digitalocean.yml # zizmor: ignore[self-repository] $/-syntax not parsed by pinned actionlint v1.7.12; revisit when supported
