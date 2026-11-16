@@ -75,6 +75,19 @@ async function enabled(page, target) {
     );
   }, `Enable ${target.name}`);
 }
+// The panel a disclosure button opens, as a CSS selector for `within`.
+async function controlled(page, trigger) {
+  return until(async () => {
+    const css = await selector(page, trigger);
+    return (
+      css &&
+      page.evaluate((css) => {
+        const id = document.querySelector(css).getAttribute("aria-controls");
+        return id && `#${CSS.escape(id)}`;
+      }, css)
+    );
+  }, `Panel for ${trigger.name}`);
+}
 async function editTask(browser, page, title, updated) {
   await click(page, { by: "text", name: title });
   const input = { by: "placeholder", name: "Click to add a title" };
@@ -123,8 +136,9 @@ test(
       const boardUrl = await createProject(page);
       await createTask(page, "Collaborative task");
       const colleague = await launchBrowser({ ignoreHTTPSErrors: tls });
+      let observer;
       try {
-        const observer = await colleague.newPage();
+        observer = await colleague.newPage();
         const email = await signUp(observer);
         const invitation = await post(page, "auth/organization/invite-member", {
           organizationId: workspaceId,
@@ -186,12 +200,13 @@ test(
         await visible(observer, { by: "text", name: "Updated by my teammate" });
         await hidden(observer, { by: "text", name: "Collaborative task" });
       } catch (error) {
-        await saveFailure(
-          colleague,
-          observer,
-          new URL("../../.cache/e2e/realtime-observer/", import.meta.url)
-            .pathname,
-        );
+        if (observer)
+          await saveFailure(
+            colleague,
+            observer,
+            new URL("../../.cache/e2e/realtime-observer/", import.meta.url)
+              .pathname,
+          );
         throw error;
       } finally {
         await colleague.close();
@@ -243,8 +258,10 @@ test(
       await page.reload();
       await enabled(page, start);
       await click(page, history);
-      await visible(page, { by: "text", name: "Task Tester" }, { first: true });
-      await hidden(page, { by: "text", name: /^Running / });
+      // The user's name is also in the sidebar; the single entry row is in this panel.
+      const log = await controlled(page, history);
+      await visible(page, { by: "text", name: "Task Tester", within: log });
+      await hidden(page, { by: "text", name: /^Running /, within: log });
       const entries = await jsonRequest(
         page,
         `/api/time-entry/task/${entry.taskId}`,
