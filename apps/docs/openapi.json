@@ -108691,6 +108691,18 @@
             "schema": {
               "type": "string",
               "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "required": false,
+            "name": "unreadOnly",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
                 "all",
                 "mentions",
                 "spam",
@@ -120956,7 +120968,7 @@
           "Quills"
         ],
         "summary": "List the inbox: conversations and tickets",
-        "description": "Conversations and tickets in one page, newest activity first (a conversation's last message, a ticket's last change). `facet` maps to a conversation status (waiting = snoozed) and a ticket status category (waiting = pending). A customer ticket with a linked conversation lists as that conversation. A conversation-only filter (visitor, tag, channel, source, waitingOnly or a view) lists conversations only. Pass `nextCursor` as `cursor` for the next page.",
+        "description": "Conversations and tickets in one page, newest activity first (a conversation's last message, a ticket's last change). `facet` maps to a conversation status (waiting = snoozed) and a ticket status category (waiting = pending). A customer ticket with a linked conversation lists as that conversation. A conversation-only filter (visitor, tag, channel, source, waitingOnly, unreadOnly or a view) lists conversations only. Pass `nextCursor` as `cursor` for the next page.",
         "parameters": [
           {
             "schema": {
@@ -121059,6 +121071,18 @@
             },
             "required": false,
             "name": "waitingOnly",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "required": false,
+            "name": "unreadOnly",
             "in": "query"
           },
           {

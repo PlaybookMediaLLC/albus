@@ -620,6 +620,58 @@ describe.skipIf(!url)("Support conversations", () => {
     expect(await notices(spam)).toEqual([["chat_ended", null]]);
   });
 
+  it("lists only conversations with customer messages the team has not read", async () => {
+    const { read, later, neverRead, who } = await world.scoped(
+      world.a,
+      world.users.owner,
+      async (db) => {
+        const who = await customer(db, `${unique("unread")}@example.test`);
+        const make = async () =>
+          (await conversation(db, ids.ownerId, who)).conversationId;
+        const neverRead = await make();
+        // The seed marks a thread read; this one the team never opened.
+        await db
+          .update(conversations)
+          .set({ agentLastReadAt: null })
+          .where(eq(conversations.id, neverRead as never));
+        return { read: await make(), later: await make(), neverRead, who };
+      },
+    );
+    for (const id of [read, later])
+      expect((await owner("POST", `/conversations/${id}/read`)).status).toBe(
+        200,
+      );
+    // A customer message after the read makes the conversation unread again.
+    await world.scoped(world.a, world.users.owner, (db) =>
+      db.insert(conversationMessages).values({
+        conversationId: later as never,
+        principalId: who as never,
+        senderType: "visitor",
+        content: "One more thing",
+        createdAt: new Date(Date.now() + 60_000),
+      }),
+    );
+    const listed = await owner(
+      "GET",
+      `/conversations?unreadOnly=true&visitorPrincipalId=${who}&limit=100`,
+    );
+    expect(listed.status).toBe(200);
+    expect(
+      listed.body.items.map((item: { id: string }) => item.id).sort(),
+    ).toEqual([later, neverRead].sort());
+    expect(
+      listed.body.items.every(
+        (item: { unreadCount: number }) => item.unreadCount > 0,
+      ),
+    ).toBe(true);
+    // A foreign workspace's conversation never lists, unread or not.
+    const scoped = await owner(
+      "GET",
+      `/conversations?unreadOnly=true&visitorPrincipalId=${foreign.visitor}&limit=100`,
+    );
+    expect(scoped.body.items).toEqual([]);
+  });
+
   it("lets only the author edit a message and keeps note events team-only", async () => {
     const edit = await member(
       "PATCH",

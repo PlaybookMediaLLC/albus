@@ -51,6 +51,11 @@ export const listFilters = z.object({
     .enum(["true", "false"])
     .optional()
     .transform((value) => value === "true"),
+  /** Only conversations with a customer message after the team last read them. */
+  unreadOnly: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((value) => value === "true"),
   view: z.enum(["all", "mentions", "spam", "created_by_me"]).default("all"),
   search: z.string().trim().max(200).optional(),
   sort: z
@@ -137,6 +142,26 @@ function conditions(
     filters.channel ? eq(conversations.channel, filters.channel) : undefined,
     filters.source ? eq(conversations.source, filters.source) : undefined,
     filters.waitingOnly ? isNotNull(conversations.waitingSince) : undefined,
+    // The same messages as the row's unreadCount: live customer messages after the team read.
+    filters.unreadOnly
+      ? exists(
+          db
+            .select({ one: sql`1` })
+            .from(conversationMessages)
+            .where(
+              and(
+                sql`${conversationMessages.conversationId} = ${conversations.id}`,
+                eq(conversationMessages.senderType, "visitor"),
+                eq(conversationMessages.isInternal, false),
+                isNull(conversationMessages.deletedAt),
+                or(
+                  isNull(conversations.agentLastReadAt),
+                  sql`${conversationMessages.createdAt} > ${conversations.agentLastReadAt}`,
+                ),
+              ),
+            ),
+        )
+      : undefined,
     filters.tagId
       ? inArray(
           conversations.id,
