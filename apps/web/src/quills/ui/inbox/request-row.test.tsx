@@ -34,6 +34,18 @@ describe("RequestRow", () => {
       expect(link).toHaveTextContent(text);
   });
 
+  it("keeps the vote count at zero but leaves out a zero comment count", () => {
+    const view = renderComponent(
+      <RequestRow {...row} votes={0} comments={0} compact={false} />,
+    );
+    expect(view.getByRole("link")).toHaveTextContent("0 votes");
+    expect(view.getByRole("link")).not.toHaveTextContent("0 comments");
+    const compact = renderComponent(
+      <RequestRow {...row} comments={0} compact />,
+    );
+    expect(compact.getAllByRole("link")[0]).not.toHaveTextContent("0 comments");
+  });
+
   it("shows a plain detail line and leaves out the counts and the date it has not got", () => {
     const view = renderComponent(
       <RequestRow

@@ -55,6 +55,7 @@ export function TicketHeader({
       <div className="min-w-0">
         <h1
           tabIndex={-1}
+          title={ticket?.title}
           className="truncate font-semibold leading-tight outline-none"
         >
           {ticket?.title ?? t("team-tickets.ticket")}
