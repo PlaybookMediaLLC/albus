@@ -48,6 +48,17 @@ const composer = (
 );
 
 describe("ConversationComposer", () => {
+  it("inserts a picked emoji at the caret", async () => {
+    mockApi().reply(sendConversationTypingFixture.ok());
+    const view = render(composer);
+    fill("Reply to Grace…", "Thanks!");
+    const box = view.getByLabelText("Reply to Grace…") as HTMLTextAreaElement;
+    box.setSelectionRange(6, 6);
+    press("Add emoji");
+    fireEvent.click(await view.findByRole("button", { name: "Insert 🙏" }));
+    expect(box).toHaveValue("Thanks🙏!");
+  });
+
   it("uploads the chosen files and sends them with the reply", async () => {
     const api = mockApi();
     api.reply(sendConversationTypingFixture.ok());

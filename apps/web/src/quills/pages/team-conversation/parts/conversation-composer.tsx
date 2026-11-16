@@ -14,6 +14,7 @@ import { Composer } from "../../../ui/inbox/composer";
 import type { ComposerMode } from "../../../ui/inbox/inbox-types";
 import { useKeyShortcuts } from "../../../ui/inbox/use-key-shortcuts";
 import { ActionProblem } from "./action-problem";
+import { EmojiButton } from "./emoji-button";
 
 export interface ConversationComposerProps {
   workspaceId: string;
@@ -86,6 +87,17 @@ export function ConversationComposer(props: ConversationComposerProps) {
       : []),
   ];
   const sending = mode === "reply" ? reply : note;
+  // Puts an emoji at the caret (or over the selection) and keeps the caret after it.
+  const insert = (emoji: string) => {
+    const box = input.current;
+    const start = box?.selectionStart ?? text.length;
+    const end = box?.selectionEnd ?? text.length;
+    setText(text.slice(0, start) + emoji + text.slice(end));
+    requestAnimationFrame(() => {
+      box?.focus();
+      box?.setSelectionRange(start + emoji.length, start + emoji.length);
+    });
+  };
   const upload = async (file: File) => {
     const saved = uploaded.current.get(file);
     if (saved) return saved;
@@ -159,17 +171,20 @@ export function ConversationComposer(props: ConversationComposerProps) {
         disabled={!modes.length}
         inputRef={input}
         tools={
-          <AttachmentPicker
-            attachments={[]}
-            files={files}
-            disabled={uploading || sending.isPending || !modes.length}
-            onFilesChange={setFiles}
-            onRemove={() => undefined}
-            onRemoveFile={(file) => {
-              uploaded.current.delete(file);
-              setFiles((list) => list.filter((item) => item !== file));
-            }}
-          />
+          <>
+            <AttachmentPicker
+              attachments={[]}
+              files={files}
+              disabled={uploading || sending.isPending || !modes.length}
+              onFilesChange={setFiles}
+              onRemove={() => undefined}
+              onRemoveFile={(file) => {
+                uploaded.current.delete(file);
+                setFiles((list) => list.filter((item) => item !== file));
+              }}
+            />
+            <EmojiButton disabled={!modes.length} onPick={insert} />
+          </>
         }
       />
       <ActionProblem problem={uploadProblem ?? sending.error} />
