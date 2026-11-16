@@ -1216,6 +1216,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills-public/{workspace}/support/conversations/{conversationId}",
   },
   {
+    operationId: "getQuillsMyConversationFile",
+    method: "GET",
+    path: "/api/quills-public/{workspace}/support/conversations/{conversationId}/files/{fileId}",
+  },
+  {
     operationId: "getQuillsMyLanguagePreference",
     method: "GET",
     path: "/api/quills-public/{workspace}/user/language",
@@ -1594,6 +1599,11 @@ export const quillsOperationRoutes = [
     operationId: "getQuillsWidgetConversation",
     method: "GET",
     path: "/api/quills-public/{workspace}/widget/conversations/{conversationId}",
+  },
+  {
+    operationId: "getQuillsWidgetConversationFile",
+    method: "GET",
+    path: "/api/quills-public/{workspace}/widget/conversations/{conversationId}/files/{fileId}",
   },
   {
     operationId: "getQuillsWidgetConversationLinkedTicket",

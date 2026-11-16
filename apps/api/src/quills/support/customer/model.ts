@@ -105,7 +105,13 @@ export const customerMessageSchema = z.object({
   /** Records a teammate shared into the thread, for example a post (the text may be empty). */
   embeds: z.array(z.object({ kind: z.string(), id: z.string() })),
   attachments: z.array(
-    z.object({ name: z.string(), contentType: z.string(), size: z.number() }),
+    z.object({
+      /** Downloads through the conversation file route; null for refs older than the file pipeline. */
+      fileId: z.string().nullable(),
+      name: z.string(),
+      contentType: z.string(),
+      size: z.number(),
+    }),
   ),
   createdAt: responseTimestamp,
   editedAt: nullableResponseTimestamp,
@@ -250,6 +256,7 @@ export const toMessages = (rows: MessageRow[]) =>
     content: row.content,
     embeds: embedsOf(row.contentJson),
     attachments: (row.attachments ?? []).map((file) => ({
+      fileId: file.fileId ?? null,
       name: file.name,
       contentType: file.contentType,
       size: file.size,

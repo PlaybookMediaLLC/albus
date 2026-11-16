@@ -27382,6 +27382,12 @@
                           "items": {
                             "type": "object",
                             "properties": {
+                              "fileId": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
                               "name": {
                                 "type": "string"
                               },
@@ -27393,6 +27399,7 @@
                               }
                             },
                             "required": [
+                              "fileId",
                               "name",
                               "contentType",
                               "size"
@@ -27810,6 +27817,12 @@
                             "items": {
                               "type": "object",
                               "properties": {
+                                "fileId": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
                                 "name": {
                                   "type": "string"
                                 },
@@ -27821,6 +27834,7 @@
                                 }
                               },
                               "required": [
+                                "fileId",
                                 "name",
                                 "contentType",
                                 "size"
@@ -28041,6 +28055,12 @@
                             "items": {
                               "type": "object",
                               "properties": {
+                                "fileId": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
                                 "name": {
                                   "type": "string"
                                 },
@@ -28052,6 +28072,7 @@
                                 }
                               },
                               "required": [
+                                "fileId",
                                 "name",
                                 "contentType",
                                 "size"
@@ -28262,6 +28283,12 @@
                           "items": {
                             "type": "object",
                             "properties": {
+                              "fileId": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
                               "name": {
                                 "type": "string"
                               },
@@ -28273,6 +28300,7 @@
                               }
                             },
                             "required": [
+                              "fileId",
                               "name",
                               "contentType",
                               "size"
@@ -28426,6 +28454,118 @@
           },
           "429": {
             "description": "Too many attempts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quills-public/{workspace}/support/conversations/{conversationId}/files/{fileId}": {
+      "get": {
+        "operationId": "getQuillsMyConversationFile",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Get a file of a conversation of the signed-in customer and a short-lived download URL",
+        "description": "Only a file of a live message that the customer reads: never one of an internal note, of a deleted message or of another conversation.",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Workspace ID or slug"
+            },
+            "required": true,
+            "description": "Workspace ID or slug",
+            "name": "workspace",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "conversationId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "fileId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "contentType": {
+                      "type": "string"
+                    },
+                    "size": {
+                      "type": "number"
+                    },
+                    "downloadUrl": {
+                      "type": "string"
+                    },
+                    "downloadExpiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "contentType",
+                    "size",
+                    "downloadUrl",
+                    "downloadExpiresAt"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This account is blocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation, message or support surface not found; Workspace not found or archived",
             "content": {
               "application/json": {
                 "schema": {
@@ -30732,6 +30872,12 @@
                           "items": {
                             "type": "object",
                             "properties": {
+                              "fileId": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
                               "name": {
                                 "type": "string"
                               },
@@ -30743,6 +30889,7 @@
                               }
                             },
                             "required": [
+                              "fileId",
                               "name",
                               "contentType",
                               "size"
@@ -31160,6 +31307,12 @@
                             "items": {
                               "type": "object",
                               "properties": {
+                                "fileId": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
                                 "name": {
                                   "type": "string"
                                 },
@@ -31171,6 +31324,7 @@
                                 }
                               },
                               "required": [
+                                "fileId",
                                 "name",
                                 "contentType",
                                 "size"
@@ -31391,6 +31545,12 @@
                             "items": {
                               "type": "object",
                               "properties": {
+                                "fileId": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
                                 "name": {
                                   "type": "string"
                                 },
@@ -31402,6 +31562,7 @@
                                 }
                               },
                               "required": [
+                                "fileId",
                                 "name",
                                 "contentType",
                                 "size"
@@ -31612,6 +31773,12 @@
                           "items": {
                             "type": "object",
                             "properties": {
+                              "fileId": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
                               "name": {
                                 "type": "string"
                               },
@@ -31623,6 +31790,7 @@
                               }
                             },
                             "required": [
+                              "fileId",
                               "name",
                               "contentType",
                               "size"
@@ -31776,6 +31944,118 @@
           },
           "429": {
             "description": "Too many attempts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quills-public/{workspace}/widget/conversations/{conversationId}/files/{fileId}": {
+      "get": {
+        "operationId": "getQuillsWidgetConversationFile",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Get a file of a conversation of the widget visitor and a short-lived download URL",
+        "description": "Only a file of a live message that the customer reads: never one of an internal note, of a deleted message or of another conversation.",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Workspace ID or slug"
+            },
+            "required": true,
+            "description": "Workspace ID or slug",
+            "name": "workspace",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "conversationId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "fileId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "contentType": {
+                      "type": "string"
+                    },
+                    "size": {
+                      "type": "number"
+                    },
+                    "downloadUrl": {
+                      "type": "string"
+                    },
+                    "downloadExpiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "contentType",
+                    "size",
+                    "downloadUrl",
+                    "downloadExpiresAt"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Valid widget session required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This account is blocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation, message or support surface not found; Workspace not found or archived",
             "content": {
               "application/json": {
                 "schema": {
