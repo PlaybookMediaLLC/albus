@@ -29,6 +29,7 @@ export const postDetail: GetPostResponse = {
   statusId: "status_open",
   principalId: "principal_author",
   authorName: "Ada",
+  authorAvatarUrl: null,
   ownerPrincipalId: null,
   voteCount: 3,
   commentCount: 3,
@@ -43,6 +44,7 @@ export const postDetail: GetPostResponse = {
   tags: [{ id: "tag_api", name: "API", color: "gray" }],
   score: { reach: 100, impact: 2, confidence: 80, effort: 4, rice: 40 },
   hasVoted: false,
+  viewerPrincipalId: "principal_team",
   widgetMetadata: null,
 };
 
@@ -57,6 +59,7 @@ const comment = (
   parentId: null,
   principalId: team ? "principal_team" : "principal_customer",
   authorName: team ? "Grace" : "Linus",
+  authorAvatarUrl: null,
   content,
   isTeamMember: team,
   isPrivate,

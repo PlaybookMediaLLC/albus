@@ -141,7 +141,9 @@ describe("TeamPostPage", () => {
     expect(view.getByRole("button", { name: "Board: Ideas" })).toBeVisible();
     expect(view.getByText("On board")).toBeVisible();
     expect(view.getByText("API")).toBeVisible();
-    expect(view.getByRole("button", { name: "3 votes" })).toBeVisible();
+    expect(
+      view.getByRole("button", { name: "Add my vote (3 votes)" }),
+    ).toBeVisible();
     expect(
       view.getByText("Two enterprise accounts ask for this."),
     ).toBeVisible();

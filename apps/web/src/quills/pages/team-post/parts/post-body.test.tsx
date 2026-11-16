@@ -22,7 +22,9 @@ describe("PostBody", () => {
     expect(view.getByText("Ada")).toBeVisible();
     expect(view.getByText("CSV").tagName).toBe("STRONG");
     expect(view.getByRole("button", { name: "Board: Ideas" })).toBeVisible();
-    expect(view.getByRole("button", { name: "3 votes" })).toBeVisible();
+    expect(
+      view.getByRole("button", { name: "Add my vote (3 votes)" }),
+    ).toBeVisible();
     await view.findByText("On board");
     expect(api.calls("listQuillsPostVoters")).toHaveLength(1);
   });

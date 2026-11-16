@@ -13,22 +13,34 @@ export interface PostBodyProps {
   boards: ListBoardsResponse["items"];
 }
 
-/** The author line with the votes, the rendered text and the chip row of a request, under its title. */
+/** The author and date, the rendered text, and the chip row with the votes of a request, under its title. */
 export function PostBody({ workspaceId, post, boards }: PostBodyProps) {
   const { t, i18n } = useTranslation("quills");
   const author = post.authorName ?? t("team-post.anonymous");
   return (
     <div className="grid grid-cols-1 gap-5">
-      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-        <PersonAvatar colored name={author} className="size-6" />
-        <span className="font-medium text-foreground">{author}</span>
-        <time dateTime={post.createdAt}>
-          {shortDate(post.createdAt, i18n.language)}
-        </time>
-        <PostVotes workspaceId={workspaceId} post={post} />
+      <div className="flex items-center gap-3">
+        <PersonAvatar
+          colored
+          name={author}
+          avatarUrl={post.authorAvatarUrl}
+          className="size-9"
+        />
+        <div className="grid min-w-0 text-sm">
+          <span className="truncate font-medium">{author}</span>
+          <time
+            dateTime={post.createdAt}
+            className="text-xs text-muted-foreground"
+          >
+            {shortDate(post.createdAt, i18n.language)}
+          </time>
+        </div>
       </div>
       <MarkdownContent customer content={post.content} />
-      <PostChips workspaceId={workspaceId} post={post} boards={boards} />
+      <div className="flex flex-wrap items-center gap-2">
+        <PostChips workspaceId={workspaceId} post={post} boards={boards} />
+        <PostVotes workspaceId={workspaceId} post={post} />
+      </div>
     </div>
   );
 }
