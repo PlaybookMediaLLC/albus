@@ -11,6 +11,7 @@ import {
   urlMatches,
   jsonRequest,
   until,
+  selector,
   saveFailure,
 } from "@kaneo/browser-test";
 import { origin, tls, runBrowser } from "./browser.mjs";
@@ -66,6 +67,27 @@ async function createTask(page, title) {
   await hidden(page, { by: "placeholder", name: "Task title" });
   await visible(page, { by: "text", name: title });
 }
+async function enabled(page, target) {
+  await until(async () => {
+    const css = await selector(page, target);
+    return (
+      css && page.evaluate((css) => !document.querySelector(css).disabled, css)
+    );
+  }, `Enable ${target.name}`);
+}
+// The panel a disclosure button opens, as a CSS selector for `within`.
+async function controlled(page, trigger) {
+  return until(async () => {
+    const css = await selector(page, trigger);
+    return (
+      css &&
+      page.evaluate((css) => {
+        const id = document.querySelector(css).getAttribute("aria-controls");
+        return id && `#${CSS.escape(id)}`;
+      }, css)
+    );
+  }, `Panel for ${trigger.name}`);
+}
 async function editTask(browser, page, title, updated) {
   await click(page, { by: "text", name: title });
   const input = { by: "placeholder", name: "Click to add a title" };
@@ -114,8 +136,9 @@ test(
       const boardUrl = await createProject(page);
       await createTask(page, "Collaborative task");
       const colleague = await launchBrowser({ ignoreHTTPSErrors: tls });
+      let observer;
       try {
-        const observer = await colleague.newPage();
+        observer = await colleague.newPage();
         const email = await signUp(observer);
         const invitation = await post(page, "auth/organization/invite-member", {
           organizationId: workspaceId,
@@ -177,15 +200,75 @@ test(
         await visible(observer, { by: "text", name: "Updated by my teammate" });
         await hidden(observer, { by: "text", name: "Collaborative task" });
       } catch (error) {
-        await saveFailure(
-          colleague,
-          observer,
-          new URL("../../.cache/e2e/realtime-observer/", import.meta.url)
-            .pathname,
-        );
+        if (observer)
+          await saveFailure(
+            colleague,
+            observer,
+            new URL("../../.cache/e2e/realtime-observer/", import.meta.url)
+              .pathname,
+          );
         throw error;
       } finally {
         await colleague.close();
       }
+    }),
+);
+
+test(
+  "task timer persists across reloads and stops from task details",
+  { timeout: 90_000 },
+  () =>
+    runBrowser("task-timer", async ({ browser, page }) => {
+      await createWorkspace(page);
+      await createProject(page);
+      await createTask(page, "Track release work");
+      await click(page, { by: "text", name: "Track release work" });
+      const start = { by: "role", role: "button", name: "Start timer" };
+      const stop = { by: "role", role: "button", name: "Stop timer" };
+      const history = { by: "role", role: "button", name: "Time tracking" };
+      const running = { by: "text", name: /^Running \d+s$/ };
+      const monitor = browser.monitor(page);
+      await enabled(page, start);
+      await click(page, history);
+      await visible(page, { by: "text", name: "No time logged yet." });
+
+      const entry = await monitor.response(
+        /^\/api\/time-entry\/?$/,
+        "POST",
+        () => click(page, start),
+      );
+      assert.equal(entry.endTime, null);
+      await enabled(page, stop);
+      await visible(page, running);
+
+      await page.reload();
+      await enabled(page, stop);
+      await click(page, history);
+      await visible(page, running);
+      const stopped = await monitor.response(
+        `/api/time-entry/${entry.id}`,
+        "PUT",
+        () => click(page, stop),
+      );
+      assert.notEqual(stopped.endTime, null);
+      assert.ok(stopped.duration >= 0);
+      await enabled(page, start);
+      await hidden(page, stop);
+
+      await page.reload();
+      await enabled(page, start);
+      await click(page, history);
+      // The user's name is also in the sidebar; the single entry row is in this panel.
+      const log = await controlled(page, history);
+      await visible(page, { by: "text", name: "Task Tester", within: log });
+      await hidden(page, { by: "text", name: /^Running /, within: log });
+      const entries = await jsonRequest(
+        page,
+        `/api/time-entry/task/${entry.taskId}`,
+      );
+      assert.equal(entries.length, 1);
+      assert.equal(entries[0].id, entry.id);
+      assert.equal(entries[0].endTime, stopped.endTime);
+      assert.equal(entries[0].duration, stopped.duration);
     }),
 );

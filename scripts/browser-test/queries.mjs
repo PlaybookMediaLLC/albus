@@ -143,7 +143,8 @@ export async function jsonRequest(
       });
       return { status: response.status, body: await response.json() };
     },
-    { path, method, body },
+    // Stagehand rejects an undefined property as not JSON-serializable.
+    { path, method, ...(body === undefined ? {} : { body }) },
   );
   assert.ok(
     result.status >= 200 && result.status < 300,
