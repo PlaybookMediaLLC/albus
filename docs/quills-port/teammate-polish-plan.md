@@ -1,6 +1,8 @@
 # Teammate app polish plan
 
-Status: draft, 2026-11-16. Not yet reviewed by the owner.
+Status: accepted, 2026-11-16. The owner accepted the recommendations D1 (b), D2 (a) and D3 (a),
+with every phase in one PR and one commit for each phase. Section 9 records how the build differs
+from this draft.
 Scope: the teammate app (`/feedback/{id}`): the shell, Requests (list and detail), Conversations
 and Tickets (list, thread, side panel), Roadmap, Changelog, Triage, Insights, Members and the
 settings shell. The settings forms themselves are out of scope.
@@ -227,3 +229,31 @@ code.
   board column truncating, and use `tabular-nums` for counts.
 - The panel rework (T12) touches components that #185 just changed. Build on its section
   component; do not fork it.
+
+## 9. Implementation notes
+
+All phases ship in one PR, one commit for each phase. The scale change (D1) is its own commit,
+because it is the only Kaneo file. These points differ from the draft above.
+
+1. **Header wrapping (Phase 1, T13).** The detail header still wraps. On a phone the back label
+   truncates and the gaps are tighter, so a request header fits one row; the action bar shows
+   icons with screen-reader labels. The draft's "reserve room for the action bar" was not needed:
+   the bar is sticky, so content scrolls clear of it at the end.
+2. **Separator (Phase 1, T7).** The subject and preview separator is a CSS `::before` dot, so it
+   is not text that rule C3 asks to translate. The assignee avatar is 20 px with initials.
+3. **Columns (Phase 3, T3).** The counts are right-aligned in their slots, as numbers in a column
+   should be. Their left edges differ only by digit width (7 px across the first 16 rows; it was
+   88 px). The right edges line up.
+4. **Ticket tones (Phase 3, T8).** Tickets have three status categories, not four stages: open
+   is info, pending is a warning and closed is a success.
+5. **Changelog author (Phase 3, T9).** The entry list API already returned the author, so the
+   row shows it with no API change.
+6. **Panels (Phase 4, T12).** `PropertySelect` moves from the conversation page to `ui/inbox`,
+   and the ticket panel uses it. `TicketSelect`, a bordered copy, is removed. Two copy keys that
+   only the old layout used are removed (`team-post.duplicates`, `team-post.importanceCounts`).
+7. **Title room (Phase 4).** The 95% scale left a ticket title only a few letters wide at 1440 px.
+   A header title now keeps at least 12rem; with less room, the actions move to a second row.
+8. **Insights (Phase 5, T10).** The content keeps its 4xl width but starts at the left. A new
+   `calendarDate` helper formats date-only values in UTC.
+
+Verification evidence is in the pull request description.
