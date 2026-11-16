@@ -24,14 +24,14 @@ export const messageFiles = (db: Database, messageId: MessageId) =>
     .where(and(eq(files.messageId, messageId), isNull(files.deletedAt)))
     .orderBy(asc(files.createdAt), asc(files.id));
 
+type StoredFile = Awaited<ReturnType<typeof messageFiles>>[number];
+
 /**
  * The bytes of the files that fit one mail, read in the mail content's `prepare` step: outside any
  * transaction and before the delivery claim. A file past the budget or gone from storage stays
  * out; the mail's link opens the thread with it. Another storage failure throws, so the job fails
  * and retries before anything is sent.
  */
-type StoredFile = Awaited<ReturnType<typeof messageFiles>>[number];
-
 export async function loadMailAttachments(
   stored: readonly StoredFile[],
   budget = MAX_EMAIL_ATTACHMENT_BYTES,
