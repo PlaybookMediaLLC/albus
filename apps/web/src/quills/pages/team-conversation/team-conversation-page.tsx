@@ -24,6 +24,7 @@ import { listTitle } from "../team-conversations/list-filters";
 import { ConversationComposer } from "./parts/conversation-composer";
 import { ConversationHeader } from "./parts/conversation-header";
 import { emailSecurityOf } from "./email-security";
+import { useKeptOpen } from "./keep-open";
 import { ConversationListRows } from "./parts/conversation-list-rows";
 import { ConversationProperties } from "./parts/conversation-properties";
 import { MessageList } from "./parts/message-list";
@@ -70,7 +71,7 @@ export function TeamConversationPage(props: TeamConversationPageProps) {
     team.viewer,
   );
   const people = principals.data?.items ?? [];
-  const items = list.data?.pages.flatMap((page) => page.items) ?? [];
+  const items = useKeptOpen(list.data?.pages, conversationId);
   const data = conversation.data;
   const { mutate: markRead } = useMarkConversationRead(team.viewer);
 
@@ -123,6 +124,7 @@ export function TeamConversationPage(props: TeamConversationPageProps) {
             <ConversationListRows
               workspaceId={workspaceId}
               context={context}
+              items={items}
               list={list}
               loading={waiting || list.isLoading}
               quiet={Boolean(problem)}

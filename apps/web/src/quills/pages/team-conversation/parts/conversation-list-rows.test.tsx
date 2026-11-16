@@ -34,7 +34,12 @@ describe("ConversationListRows", () => {
       hasNextPage: true,
     });
     const view = renderComponent(
-      <ConversationListRows {...props} list={more} quiet={false} />,
+      <ConversationListRows
+        {...props}
+        items={[row]}
+        list={more}
+        quiet={false}
+      />,
     );
     expect(view.getAllByRole("link")).toHaveLength(1);
     press("Load more conversations");
@@ -44,11 +49,16 @@ describe("ConversationListRows", () => {
   it("keeps its failure quiet while the main pane shows one", () => {
     const failed = list({ error: { kind: "failed" } });
     const view = renderComponent(
-      <ConversationListRows {...props} list={failed} quiet />,
+      <ConversationListRows {...props} items={[]} list={failed} quiet />,
     );
     expect(view.queryByRole("button", { name: "Try again" })).toBeNull();
     view.rerender(
-      <ConversationListRows {...props} list={failed} quiet={false} />,
+      <ConversationListRows
+        {...props}
+        items={[]}
+        list={failed}
+        quiet={false}
+      />,
     );
     press("Try again");
     expect(failed.refetch).toHaveBeenCalledOnce();
