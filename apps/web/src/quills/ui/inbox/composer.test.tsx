@@ -1,4 +1,5 @@
 import { fireEvent } from "@testing-library/react";
+import { Lock } from "lucide-react";
 import { describe, expect, it, vi } from "vite-plus/test";
 import { press } from "../../test/actions";
 import { renderComponent } from "../../test/render";
@@ -6,7 +7,7 @@ import { Composer, type ComposerProps } from "./composer";
 
 const modes = [
   { value: "reply", label: "Reply" },
-  { value: "note", label: "Note", private: true },
+  { value: "note", label: "Note", icon: Lock, private: true },
 ];
 
 function renderComposer(props: Partial<ComposerProps> = {}) {
@@ -61,7 +62,13 @@ describe("Composer", () => {
       "bg-warning/5",
     );
     press("Mode: Note");
-    fireEvent.click(await view.findByRole("menuitemradio", { name: "Reply" }));
+    // Each choice shows its icon, as the trigger does.
+    expect(
+      (await view.findByRole("menuitemradio", { name: "Note" })).querySelector(
+        ".lucide-lock",
+      ),
+    ).not.toBeNull();
+    fireEvent.click(view.getByRole("menuitemradio", { name: "Reply" }));
     expect(onModeChange).toHaveBeenCalledWith("reply");
   });
 

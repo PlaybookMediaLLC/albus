@@ -1,4 +1,4 @@
-import { MessageSquareReply, StickyNote } from "lucide-react";
+import { Lock, MessageSquareReply } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAddConversationNote } from "../../../hooks/team/use-add-conversation-note";
@@ -64,7 +64,7 @@ export function ConversationComposer(props: ConversationComposerProps) {
           {
             value: "note",
             label: t("team-conversations.note"),
-            icon: StickyNote,
+            icon: Lock,
             private: true,
           },
         ]

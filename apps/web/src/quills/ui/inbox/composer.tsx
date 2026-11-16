@@ -94,9 +94,12 @@ export function Composer(props: ComposerProps) {
                 value={current.value}
                 onValueChange={(value) => props.onModeChange?.(String(value))}
               >
-                {props.modes.map((mode) => (
-                  <MenuRadioItem key={mode.value} value={mode.value}>
-                    {mode.label}
+                {props.modes.map(({ value, label, icon: ModeIcon }) => (
+                  <MenuRadioItem key={value} value={value}>
+                    <span className="flex items-center gap-2">
+                      {ModeIcon ? <ModeIcon aria-hidden="true" /> : null}
+                      {label}
+                    </span>
                   </MenuRadioItem>
                 ))}
               </MenuRadioGroup>
