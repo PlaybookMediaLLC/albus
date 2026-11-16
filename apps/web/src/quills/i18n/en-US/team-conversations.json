@@ -21,10 +21,6 @@
 		"pass": "Passed",
 		"title": "Email security"
 	},
-	"emoji": {
-		"insert": "Insert {{emoji}}",
-		"open": "Add emoji"
-	},
 	"empty": {
 		"text": "Pick a thread from the list to read it and reply.",
 		"title": "Select a conversation"

@@ -11,10 +11,10 @@ import { useSendConversationTyping } from "../../../hooks/team/use-send-conversa
 import { useTeamRuntime } from "../../../team/runtime";
 import { AttachmentPicker } from "../../../ui/attachment-picker";
 import { Composer } from "../../../ui/inbox/composer";
+import { EmojiMenu } from "../../../ui/inbox/emoji-menu";
 import type { ComposerMode } from "../../../ui/inbox/inbox-types";
 import { useKeyShortcuts } from "../../../ui/inbox/use-key-shortcuts";
 import { ActionProblem } from "./action-problem";
-import { EmojiButton } from "./emoji-button";
 
 export interface ConversationComposerProps {
   workspaceId: string;
@@ -185,7 +185,7 @@ export function ConversationComposer(props: ConversationComposerProps) {
                 setFiles((list) => list.filter((item) => item !== file));
               }}
             />
-            <EmojiButton disabled={!modes.length} onPick={insert} />
+            <EmojiMenu disabled={!modes.length} onPick={insert} />
           </>
         }
       />

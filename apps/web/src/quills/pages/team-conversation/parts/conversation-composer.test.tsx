@@ -54,9 +54,9 @@ describe("ConversationComposer", () => {
     fill("Reply to Grace…", "Thanks!");
     const box = view.getByLabelText("Reply to Grace…") as HTMLTextAreaElement;
     box.setSelectionRange(6, 6);
-    press("Add emoji");
-    fireEvent.click(await view.findByRole("button", { name: "Insert 🙏" }));
-    expect(box).toHaveValue("Thanks🙏!");
+    press("Add an emoji");
+    fireEvent.click(await view.findByRole("menuitem", { name: "Insert 🎉" }));
+    expect(box).toHaveValue("Thanks🎉!");
   });
 
   it("uploads the chosen files and sends them with the reply", async () => {
