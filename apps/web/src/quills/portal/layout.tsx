@@ -53,6 +53,15 @@ export function PortalRoute() {
   const access = useEvaluateMyPortalAccess(input, viewer);
   // The portal pages read the nav from the runtime, so this one fallback covers them all.
   const nav = navOf(config.data?.nav);
+  const section =
+    currentPath
+      .split(/[?#]/)[0]!
+      .slice(portalHref(workspaceId).length)
+      .split("/")[1] ?? "";
+  // Small screens have no room for the header action, so feedback pages float it at the bottom.
+  const floatSubmit =
+    nav.tabs.feedback &&
+    ["", "boards", "posts", "roadmap", "changelog"].includes(section);
 
   return (
     <StateView
@@ -104,6 +113,14 @@ export function PortalRoute() {
             }
           >
             <Outlet />
+            {floatSubmit ? (
+              <a
+                className="fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-30 mx-auto w-fit rounded-full bg-primary px-5 py-3 font-medium text-primary-foreground shadow-lg outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:hidden"
+                href={portalHref(workspaceId, "", { openFeedback: "1" })}
+              >
+                {t("feedback.submit")}
+              </a>
+            ) : null}
           </PortalLayout>
         </PortalRuntimeProvider>
       ) : null}

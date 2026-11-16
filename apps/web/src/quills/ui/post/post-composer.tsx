@@ -47,7 +47,7 @@ export interface PostComposerProps {
 }
 
 const card =
-  "rounded-xl border border-border bg-card px-4 py-3 shadow-xs transition-shadow focus-within:shadow-sm";
+  "rounded-2xl border border-border bg-card px-4 py-3 shadow-xs transition-shadow focus-within:shadow-sm";
 
 export function PostComposer(props: PostComposerProps) {
   const { t } = useTranslation("quills");
@@ -89,7 +89,7 @@ export function PostComposer(props: PostComposerProps) {
   const titleInput = (field?: ComponentProps<typeof Input>) => (
     <Input
       unstyled
-      className="text-base"
+      className="text-base [&_input]:text-ellipsis"
       id="feedback-title"
       aria-label={t("feedback.postTitle")}
       placeholder={t("feedback.composer", { name: props.workspaceName })}
@@ -123,6 +123,8 @@ export function PostComposer(props: PostComposerProps) {
         }}
         submitKey="feedback.submit"
         submitIcon={<ArrowUpIcon />}
+        // The send button stays quiet until there is a title to send.
+        submitVariant={title.trim() ? "default" : "secondary"}
         className={cn(
           card,
           "max-w-none gap-1 py-2",

@@ -265,6 +265,11 @@
 		"reason": "Persisted editor markup or CSS selector; not display copy."
 	},
 	{
+		"file": "apps/web/src/quills/ui/markdown-content.tsx",
+		"value": "kaneo-comment-editor-prose",
+		"reason": "Kaneo's rendered-comment CSS class, reused for portal Markdown; not display copy."
+	},
+	{
 		"file": "apps/web/src/components/activity/comment-editor.tsx",
 		"value": "kaneo-comment-editor-prose-readonly",
 		"reason": "Persisted editor markup or CSS selector; not display copy."

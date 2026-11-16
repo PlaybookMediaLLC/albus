@@ -1,3 +1,4 @@
+import { Rss } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { changelogFeedUrl } from "../../core/changelog-feed-url";
 import { portalHref } from "../../core/portal-href";
@@ -82,11 +83,13 @@ export function ChangelogPage(props: ChangelogPageProps) {
           <ShareActions compact />
           <Button
             variant="secondary"
-            size="xs"
+            size="icon-xs"
             className="rounded-full before:rounded-full"
+            aria-label={t("changelog.rss")}
+            title={t("changelog.rss")}
             render={<a href={changelogFeedUrl(props.workspaceId)} />}
           >
-            {t("changelog.rss")}
+            <Rss aria-hidden="true" />
           </Button>
           <Button
             variant="secondary"
