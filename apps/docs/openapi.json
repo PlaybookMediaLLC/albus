@@ -52428,7 +52428,7 @@
           "Quills"
         ],
         "summary": "Register an uploaded file",
-        "description": "Verifies an object uploaded with a URL from POST /files/uploads or POST /files/settings-uploads (assistant avatar) and registers it in the workspace's files.",
+        "description": "Verifies an object uploaded with a URL from POST /files/uploads or POST /files/settings-uploads (assistant avatar) and registers it in the workspace's files. A file of the `file` purpose that no reply or note attaches within a day is removed.",
         "parameters": [
           {
             "schema": {
@@ -121462,6 +121462,48 @@
                                 "field": {
                                   "type": "string",
                                   "enum": [
+                                    "unread"
+                                  ]
+                                },
+                                "value": {
+                                  "type": "boolean",
+                                  "enum": [
+                                    true
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "field",
+                                "value"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "field": {
+                                  "type": "string",
+                                  "enum": [
+                                    "archived"
+                                  ]
+                                },
+                                "value": {
+                                  "type": "boolean",
+                                  "enum": [
+                                    true
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "field",
+                                "value"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "field": {
+                                  "type": "string",
+                                  "enum": [
                                     "kind"
                                   ]
                                 },
@@ -121969,6 +122011,48 @@
                                   "type": "string",
                                   "enum": [
                                     "waiting"
+                                  ]
+                                },
+                                "value": {
+                                  "type": "boolean",
+                                  "enum": [
+                                    true
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "field",
+                                "value"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "field": {
+                                  "type": "string",
+                                  "enum": [
+                                    "unread"
+                                  ]
+                                },
+                                "value": {
+                                  "type": "boolean",
+                                  "enum": [
+                                    true
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "field",
+                                "value"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "field": {
+                                  "type": "string",
+                                  "enum": [
+                                    "archived"
                                   ]
                                 },
                                 "value": {

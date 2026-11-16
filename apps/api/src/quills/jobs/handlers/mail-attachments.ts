@@ -10,12 +10,6 @@ import { isMissingObjectError } from "../../../storage/head-uploaded-object";
 import { readObject } from "../../framework/files";
 
 type MessageId = (typeof conversationMessages.$inferSelect)["id"];
-type StoredFile = {
-  storageKey: string;
-  name: string;
-  contentType: string;
-  size: number;
-};
 
 /** The live files of a message, in upload order. Read in the mail job's transaction. */
 export const messageFiles = (db: Database, messageId: MessageId) =>
@@ -29,6 +23,8 @@ export const messageFiles = (db: Database, messageId: MessageId) =>
     .from(files)
     .where(and(eq(files.messageId, messageId), isNull(files.deletedAt)))
     .orderBy(asc(files.createdAt), asc(files.id));
+
+type StoredFile = Awaited<ReturnType<typeof messageFiles>>[number];
 
 /**
  * The bytes of the files that fit one mail, read in the mail content's `prepare` step: outside any

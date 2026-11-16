@@ -24,6 +24,7 @@ import { listTitle } from "../team-conversations/list-filters";
 import { ConversationComposer } from "./parts/conversation-composer";
 import { ConversationHeader } from "./parts/conversation-header";
 import { emailSecurityOf } from "./email-security";
+import { useKeptOpen } from "./keep-open";
 import { ConversationListRows } from "./parts/conversation-list-rows";
 import { ConversationProperties } from "./parts/conversation-properties";
 import { MessageList } from "./parts/message-list";
@@ -58,11 +59,9 @@ export function TeamConversationPage(props: TeamConversationPageProps) {
   );
   const saved = views.data?.items.find((view) => view.id === context.savedView);
   const waiting = Boolean(context.savedView) && views.isLoading;
+  const query = listQuery(context, saved);
   const list = useListConversations(
-    {
-      param: { workspaceId: waiting ? "" : workspaceId },
-      query: listQuery(context, saved),
-    },
+    { param: { workspaceId: waiting ? "" : workspaceId }, query },
     team.viewer,
   );
   const principals = useListPrincipals(
@@ -70,8 +69,8 @@ export function TeamConversationPage(props: TeamConversationPageProps) {
     team.viewer,
   );
   const people = principals.data?.items ?? [];
-  const items = list.data?.pages.flatMap((page) => page.items) ?? [];
   const data = conversation.data;
+  const items = useKeptOpen(list.data?.pages, conversationId, data, query);
   const { mutate: markRead } = useMarkConversationRead(team.viewer);
 
   // An open conversation is read: one request each time it gets unread messages.
@@ -123,6 +122,7 @@ export function TeamConversationPage(props: TeamConversationPageProps) {
             <ConversationListRows
               workspaceId={workspaceId}
               context={context}
+              items={items}
               list={list}
               loading={waiting || list.isLoading}
               quiet={Boolean(problem)}

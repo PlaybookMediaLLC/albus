@@ -112,6 +112,8 @@ export interface Conversation {
     sentAt?: string;
     fromVisitor?: boolean;
     attachments?: readonly Attachment[];
+    /** Files a teammate sent: each downloads through onOpenFile. */
+    files?: ReadonlyArray<{ id: string; name: string }>;
   }>;
 }
 
@@ -188,6 +190,8 @@ export interface WidgetViewProps {
     conversationId: string,
     throughMessageId: string,
   ) => Promise<unknown>;
+  /** Resolves with a short-lived download URL of a file in a conversation. */
+  onOpenFile?: (conversationId: string, fileId: string) => Promise<string>;
   onReadUpdate?: (entryId: string) => Promise<unknown>;
   onVoteFeedback?: (postId: string, voted: boolean) => Promise<unknown>;
   onFollowFeedback?: (postId: string, following: boolean) => Promise<unknown>;

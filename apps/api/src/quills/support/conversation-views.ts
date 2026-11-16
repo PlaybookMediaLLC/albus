@@ -43,6 +43,9 @@ const rule = z.discriminatedUnion("field", [
   z.object({ field: z.literal("tag"), value: id }),
   z.object({ field: z.literal("source"), value: z.string().min(1).max(32) }),
   z.object({ field: z.literal("waiting"), value: z.literal(true) }),
+  // listQuillsConversations unreadOnly=true and view=archived.
+  z.object({ field: z.literal("unread"), value: z.literal(true) }),
+  z.object({ field: z.literal("archived"), value: z.literal(true) }),
   z.object({
     field: z.literal("kind"),
     value: z.enum(["conversation", "ticket"]),

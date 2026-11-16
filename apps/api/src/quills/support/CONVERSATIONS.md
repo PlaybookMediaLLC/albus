@@ -212,7 +212,7 @@ Merged: 7. The ticket target of `setQuillsConversationAttributeValue` belongs to
 | `addQuillsConversationParticipant` | `POST /conversations/{conversationId}/participants` (an existing customer by `principalId` or `email`) | update | `conversation_participants`, `conversation_messages` | `conversation.participant_added` |
 | `removeQuillsConversationParticipant` | `DELETE /conversations/{conversationId}/participants/{principalId}` | update | same | `conversation.participant_removed` |
 | `listQuillsConversationViews` | `GET /conversation-views` (shared and own private, pinned first) | read | `conversation_views`, pins | - |
-| `createQuillsConversationView` | `POST /conversation-views` (≤ 15 rules; tag, team and assignee IDs checked) | create | `conversation_views` | `conversation_view.created` |
+| `createQuillsConversationView` | `POST /conversation-views` (≤ 15 rules; tag, team and assignee IDs checked; `waiting`, `unread` and `archived` take `true`) | create | `conversation_views` | `conversation_view.created` |
 | `updateQuillsConversationView` | `PATCH /conversation-views/{viewId}` | update | `conversation_views` | `conversation_view.updated` |
 | `deleteQuillsConversationView` | `DELETE /conversation-views/{viewId}` (soft delete, drops pins) | delete | views, pins | `conversation_view.deleted` |
 | `pinQuillsConversationView`, `unpinQuillsConversationView` | `PUT` and `DELETE /conversation-views/{viewId}/pin` | update | pins | none (a personal marker) |

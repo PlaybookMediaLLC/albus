@@ -496,6 +496,8 @@ export function useWidgetData({
             ),
           ),
         ),
+      onOpenFile: (conversationId: string, fileId: string) =>
+        run((signal) => send.fileUrl(conversationId, fileId, signal)),
       onReadConversation: (conversationId: string, throughMessageId: string) =>
         run(async (signal) => {
           const result = await send.markRead(

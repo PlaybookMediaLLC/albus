@@ -139,6 +139,10 @@ export function ConversationComposer(props: ConversationComposerProps) {
     const request = { param, json };
     const sent = text;
     const options = {
+      // A file that retention removed (a retry a day later) is 404: upload again next time.
+      onError: (problem: PortalProblem) => {
+        if (problem.kind === "notFound") uploaded.current.clear();
+      },
       onSuccess: () => {
         // Text typed while the files uploaded stays in the box.
         setText((current) => (current === sent ? "" : current));

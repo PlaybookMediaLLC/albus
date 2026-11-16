@@ -130,6 +130,20 @@ describe("conversation list", () => {
         saved([{ field: "tag", value: "tag_2" }]),
       ),
     ).toEqual({ sort: "recent", limit: "50", tagId: "tag_2" });
+    expect(
+      listQuery(
+        { view: "all", status: "any" },
+        saved([
+          { field: "unread", value: true },
+          { field: "archived", value: true },
+        ]),
+      ),
+    ).toEqual({
+      sort: "recent",
+      limit: "50",
+      unreadOnly: "true",
+      view: "archived",
+    });
   });
 
   it("names the customer, the title and the assignee of a row", () => {

@@ -20,6 +20,7 @@ import { postStatuses } from "../../database/quills/schema/statuses";
 import { teams } from "../../database/quills/schema/teams";
 import * as kaneo from "../../database/schema";
 import { startFeature } from "../feedback/harness.fixture";
+import { pruneQuillsWorkspace } from "../jobs/retention";
 import { conversation, customer } from "./conversation-seed.fixture";
 import { insertVisitorMessage } from "./customer/model";
 
@@ -761,7 +762,14 @@ describe.skipIf(!url)("Support conversations", () => {
     const customerUpload = await file(world.a, world.users.owner, "portal");
     const foreignFile = await file(world.b, world.users.outsider);
     const mine = await file(world.a, world.users.owner);
-    for (const refused of [others, customerUpload, foreignFile])
+    const removed = await file(world.a, world.users.owner);
+    await world.scoped(world.a, world.users.owner, (db) =>
+      db
+        .update(files)
+        .set({ deletedAt: new Date() })
+        .where(eq(files.id, removed)),
+    );
+    for (const refused of [others, customerUpload, foreignFile, removed])
       expect(
         (
           await owner("POST", `/conversations/${c}/reply`, {
@@ -803,6 +811,61 @@ describe.skipIf(!url)("Support conversations", () => {
     expect(stored!.messageId).toBe(sent.body.message.id);
   });
 
+  it("sweeps a day-old teammate reply upload that never attached, and keeps the rest", async () => {
+    const stale = new Date(Date.now() - 2 * 86_400_000);
+    const kept = await world.scoped(
+      world.a,
+      world.users.owner,
+      async (db, actor) => {
+        const message = (await conversation(db, ids.ownerId, ids.visitor))
+          .agentMessageId;
+        const add = async (
+          purpose: string,
+          values: Partial<typeof files.$inferInsert> = {},
+        ) =>
+          (
+            await db
+              .insert(files)
+              .values({
+                storageKey: `workspace/${world.a}/quills/${purpose}/${unique("key")}.pdf`,
+                name: "a.pdf",
+                contentType: "application/pdf",
+                family: "pdf",
+                size: 10,
+                sha256: unique("sha"),
+                source: "agent",
+                uploadedById: actor.principalId,
+                previewStatus: "none",
+                createdAt: stale,
+                ...values,
+              })
+              .returning({ id: files.id })
+          )[0]!.id;
+        return {
+          abandoned: await add("file"),
+          sent: await add("file", {
+            messageId: message as never,
+            attachedAt: stale,
+          }),
+          image: await add("post_image"),
+          fresh: await add("file", { createdAt: new Date() }),
+        };
+      },
+    );
+    await world.scoped(world.a, world.users.owner, (db) =>
+      pruneQuillsWorkspace(db),
+    );
+    const left = await world.scoped(world.a, world.users.owner, (db) =>
+      db
+        .select({ id: files.id })
+        .from(files)
+        .where(inArray(files.id, Object.values(kept) as never[])),
+    );
+    expect(left.map((row) => row.id).sort()).toEqual(
+      [kept.sent, kept.image, kept.fresh].sort(),
+    );
+  });
+
   it("lets only the author edit a message and keeps note events team-only", async () => {
     const edit = await member(
       "PATCH",
@@ -837,6 +900,25 @@ describe.skipIf(!url)("Support conversations", () => {
     expect(
       (await owner("DELETE", `/conversation-messages/${system}`)).status,
     ).toBe(409);
+  });
+
+  it("saves the unread and archived lists as views", async () => {
+    for (const field of ["unread", "archived"]) {
+      const saved = await owner("POST", "/conversation-views", {
+        name: unique(field),
+        filters: { rules: [{ field, value: true }] },
+      });
+      expect(saved.status).toBe(200);
+      expect(saved.body.filters.rules).toEqual([{ field, value: true }]);
+      expect(
+        (
+          await owner("POST", "/conversation-views", {
+            name: unique(field),
+            filters: { rules: [{ field, value: false }] },
+          })
+        ).status,
+      ).toBe(400);
+    }
   });
 
   it("keeps a private view to its creator", async () => {

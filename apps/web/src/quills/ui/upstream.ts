@@ -68,6 +68,7 @@ export {
 export { Kbd } from "@/components/ui/kbd";
 
 export { useDebouncedValue } from "@/hooks/use-debounced-value";
+export { useStoredState } from "@/hooks/use-stored-state";
 
 export {
   SidebarGroup,

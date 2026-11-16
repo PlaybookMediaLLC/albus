@@ -186,6 +186,20 @@ type Row = Awaited<
 >[number];
 
 /** Adds unread counts and live tags, with one query each for the page. */
+/**
+ * A live customer message after the team read mark: what a row's unreadCount counts and the
+ * unreadOnly list filter finds. Reads conversations, so the query joins it or correlates it.
+ */
+export const unreadByTeam = and(
+  eq(conversationMessages.senderType, "visitor"),
+  eq(conversationMessages.isInternal, false),
+  isNull(conversationMessages.deletedAt),
+  or(
+    isNull(conversations.agentLastReadAt),
+    gt(conversationMessages.createdAt, conversations.agentLastReadAt),
+  ),
+)!;
+
 export async function toItems(db: Database, rows: Row[]) {
   const ids = rows.map((row) => row.id);
   const unread = ids.length
@@ -197,16 +211,7 @@ export async function toItems(db: Database, rows: Row[]) {
           eq(conversations.id, conversationMessages.conversationId),
         )
         .where(
-          and(
-            inArray(conversationMessages.conversationId, ids),
-            eq(conversationMessages.senderType, "visitor"),
-            eq(conversationMessages.isInternal, false),
-            isNull(conversationMessages.deletedAt),
-            or(
-              isNull(conversations.agentLastReadAt),
-              gt(conversationMessages.createdAt, conversations.agentLastReadAt),
-            ),
-          ),
+          and(inArray(conversationMessages.conversationId, ids), unreadByTeam),
         )
         .groupBy(conversationMessages.conversationId)
     : [];

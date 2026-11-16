@@ -131,17 +131,11 @@ export function listTitle(
 type Rules = CreateConversationViewRequest["json"]["filters"]["rules"];
 
 /**
- * The rules that save the current list as a view. Spam, archived, unread, the search text and a saved view
- * have no rule, so those lists cannot be saved (null).
+ * The rules that save the current list as a view. Spam, the search text and a saved view have no
+ * rule, so those lists cannot be saved (null).
  */
 export function viewRules(context: ListContext): Rules | null {
-  if (
-    context.status === "spam" ||
-    context.status === "archived" ||
-    context.status === "unread" ||
-    context.savedView ||
-    context.search
-  )
+  if (context.status === "spam" || context.savedView || context.search)
     return null;
   if (context.view === "queue")
     return [
@@ -152,7 +146,9 @@ export function viewRules(context: ListContext): Rules | null {
   if (context.view === "mine") rules.push({ field: "assignee", value: "me" });
   if (context.view === "unassigned")
     rules.push({ field: "assignee", value: "unassigned" });
-  if (context.status !== "any")
+  if (context.status === "unread" || context.status === "archived")
+    rules.push({ field: context.status, value: true });
+  else if (context.status !== "any")
     rules.push({ field: "status", value: context.status });
   return rules;
 }

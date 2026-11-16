@@ -100,6 +100,8 @@ const ruleParams: Record<string, (value: string) => Partial<Query>> = {
   tag: (value) => ({ tagId: value }),
   source: (value) => ({ source: value }),
   waiting: () => ({ waitingOnly: "true" }),
+  unread: () => ({ unreadOnly: "true" }),
+  archived: () => ({ view: "archived" }),
 };
 
 /**
