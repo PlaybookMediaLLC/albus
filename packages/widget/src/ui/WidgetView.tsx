@@ -60,6 +60,7 @@ export function WidgetView({
   onSubmitFeedback,
   onReplyMessage,
   onReadConversation,
+  onOpenFile,
   onReadUpdate,
   onVoteFeedback,
   onFollowFeedback,
@@ -399,6 +400,11 @@ export function WidgetView({
             }
             reading={readState.pending}
             readError={readState.error}
+            onOpenFile={
+              onOpenFile
+                ? (fileId) => onOpenFile(conversation.id, fileId)
+                : undefined
+            }
           />
         ) : selected ? (
           <p className="qb-empty">This item is no longer available.</p>

@@ -109,6 +109,16 @@ export const writes = (api: Api) => ({
       { content, idempotencyKey },
       signal,
     ),
+  /** A short-lived download URL of a file that a teammate sent in the conversation. */
+  fileUrl: (conversationId: string, fileId: string, signal?: AbortSignal) =>
+    api
+      .request<{ downloadUrl: string }>(
+        "GET",
+        `/widget/conversations/${id(conversationId)}/files/${id(fileId)}`,
+        undefined,
+        signal,
+      )
+      .then((file) => file.downloadUrl),
   /** The watermark only moves forward on the server. */
   markRead: (
     conversationId: string,

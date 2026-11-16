@@ -71,6 +71,8 @@ export interface ApiMessage {
   author: Person | null;
   content: string;
   createdAt: string;
+  /** A file with a fileId downloads through the conversation file route. */
+  attachments?: ReadonlyArray<{ fileId: string | null; name: string }>;
 }
 
 /** The widget's comment vote is the 👍 reaction (portal/feedback/ROUTES.md). */
@@ -168,12 +170,16 @@ export function toArticle(article: ApiArticle): HelpArticle {
 export function toMessage(
   message: ApiMessage,
 ): Conversation["messages"][number] {
+  const files = (message.attachments ?? []).flatMap((file) =>
+    file.fileId ? [{ id: file.fileId, name: file.name }] : [],
+  );
   return {
     id: message.id,
     body: message.content,
     author: message.fromVisitor ? "You" : (message.author?.name ?? "Team"),
     sentAt: message.createdAt,
     fromVisitor: message.fromVisitor,
+    ...(files.length ? { files } : {}),
   };
 }
 

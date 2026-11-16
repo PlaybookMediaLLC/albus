@@ -2,6 +2,7 @@ import { Fragment, useEffect, useRef, type RefObject } from "react";
 import { useConversationScroll } from "./useConversationScroll.js";
 import { AttachmentGallery } from "./AttachmentGallery.js";
 import { Composer } from "./Composer.js";
+import { MessageFiles } from "./MessageFiles.js";
 import { messageTime } from "./message-time.js";
 import type { Conversation } from "./types.js";
 import type { Draft } from "./useDrafts.js";
@@ -19,6 +20,7 @@ export function ConversationView({
   reading,
   readError,
   scrollContainer,
+  onOpenFile,
 }: {
   conversation: Conversation;
   attachmentsEnabled?: boolean;
@@ -32,6 +34,8 @@ export function ConversationView({
   reading: boolean;
   readError: string;
   scrollContainer: RefObject<HTMLDivElement | null>;
+  /** Resolves with a short-lived download URL of a file of this conversation. */
+  onOpenFile?: (fileId: string) => Promise<string>;
 }) {
   const scroll = useConversationScroll(conversation, scrollContainer);
   const acknowledged = useRef(false);
@@ -88,6 +92,7 @@ export function ConversationView({
                 <strong>{message.author}</strong>
                 <p>{message.body}</p>
                 <AttachmentGallery attachments={message.attachments} />
+                <MessageFiles files={message.files} onOpen={onOpenFile} />
                 {(stamp || message.fromVisitor) && (
                   <span className="qb-message-meta">
                     {stamp && <time dateTime={stamp.iso}>{stamp.time}</time>}
