@@ -50,7 +50,7 @@ Visibility: `quills:read` sees every conversation of the workspace (D2: Kaneo ha
 
 | operationId | Route | Action | Tables | Event | Tests |
 |---|---|---|---|---|---|
-| `listQuillsConversations` | `GET /conversations` (status, priority, assignee `mine`/`unassigned`/principal, teamId, visitorPrincipalId, channel, source, waitingOnly, tagId, view `all`/`mentions`/`spam`/`created_by_me`, search, sort, cursor; `limit` ≤ 100) | read | `conversations`, `principal`, `user`, `conversation_messages`, `conversation_tag_assignments`, `conversation_tags`, `conversation_message_mentions` | - | contract, read-leak, page-bounds |
+| `listQuillsConversations` | `GET /conversations` (status, priority, assignee `mine`/`unassigned`/principal, teamId, visitorPrincipalId, channel, source, waitingOnly, unreadOnly, tagId, view `all`/`mentions`/`spam`/`created_by_me`/`archived`, search, sort, cursor; `limit` ≤ 100; an archived conversation lists only in `archived`) | read | `conversations`, `principal`, `user`, `conversation_messages`, `conversation_tag_assignments`, `conversation_tags`, `conversation_message_mentions` | - | contract, read-leak, page-bounds |
 | `getQuillsConversation` | `GET /conversations/{conversationId}` | read | `conversations`, `conversation_summaries`, tags | - | contract |
 | `exportQuillsConversationTranscript` | `GET /conversations/{conversationId}/transcript` | read | `conversations`, `conversation_messages`, `principal` | - | contract |
 | `listQuillsConversationFiles` | `GET /conversations/{conversationId}/files` | read | `conversation_messages` | - | contract |
@@ -93,6 +93,8 @@ Reply and note take plain text (≤ 10000). Rich content and attachments are not
 | `snoozeQuillsConversation` | `POST /conversations/{conversationId}/snooze` | update | same | `conversation.status_changed` | contract, rollback |
 | `endQuillsConversation` | `POST /conversations/{conversationId}/end` (reason, note ≤ 2000; close checks required attributes unless the reason is spam: 409) | update | same | `conversation.status_changed` | contract, rollback |
 | `restoreQuillsConversationFromSpam` | `POST /conversations/{conversationId}/restore-spam` (409 unless spam) | update | same | `conversation.status_changed` | contract, rollback |
+| `archiveQuillsConversation` | `POST /conversations/{conversationId}/archive` (the status stays; a new customer message unarchives) | update | `conversations` | `conversation.updated` | contract, rollback |
+| `unarchiveQuillsConversation` | `POST /conversations/{conversationId}/unarchive` | update | `conversations` | `conversation.updated` | contract, rollback |
 | `setQuillsConversationPriority` | `POST /conversations/{conversationId}/priority` | update | same | `conversation.priority_changed` | contract, rollback |
 | `assignQuillsConversation` | `POST /conversations/{conversationId}/assign` (`assigneePrincipalId`: a current member, `me` or null) | update | `conversations`, `principal`, `conversation_messages`; reads `workspace_member` | `conversation.assigned` | contract, rollback |
 | `assignQuillsConversationTeam` | `PUT /conversations/{conversationId}/team` | update | `conversations`, `teams`, `conversation_messages` | `conversation.assigned` | contract, rollback |

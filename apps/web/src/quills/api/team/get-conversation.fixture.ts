@@ -23,6 +23,7 @@ export const getConversationFixture = {
         waitingSince: null,
         snoozedUntil: null,
         resolvedAt: null,
+        archivedAt: null,
         endReason: null,
         endNote: null,
         spamReason: null,

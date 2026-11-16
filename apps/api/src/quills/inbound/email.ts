@@ -326,6 +326,8 @@ const inbound = defineQuillsRoute({
         lastMessagePreview: preview(content),
         waitingSince: conversation.waitingSince ?? message.createdAt,
         resolvedAt: null,
+        // A customer message brings an archived conversation back to the inbox.
+        archivedAt: null,
         updatedAt: message.createdAt,
       })
       .where(eq(conversations.id, conversation.id));

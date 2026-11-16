@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vite-plus/test";
 import { and, eq, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { toUuid } from "@kaneo/ids";
+import { createId, toUuid } from "@kaneo/ids";
 import { boards } from "../../database/quills/schema/boards";
 import {
   conversationMessages,
@@ -20,6 +20,7 @@ import { teams } from "../../database/quills/schema/teams";
 import * as kaneo from "../../database/schema";
 import { startFeature } from "../feedback/harness.fixture";
 import { conversation, customer } from "./conversation-seed.fixture";
+import { insertVisitorMessage } from "./customer/model";
 
 let pool: Pool;
 vi.mock("../../database/index", () => ({
@@ -670,6 +671,61 @@ describe.skipIf(!url)("Support conversations", () => {
       `/conversations?unreadOnly=true&visitorPrincipalId=${foreign.visitor}&limit=100`,
     );
     expect(scoped.body.items).toEqual([]);
+  });
+
+  it("archives apart from the status and lists an archived thread only in the archived view", async () => {
+    const { c, who } = await world.scoped(
+      world.a,
+      world.users.owner,
+      async (db) => {
+        const who = await customer(db, `${unique("archive")}@example.test`);
+        return {
+          c: (await conversation(db, ids.ownerId, who)).conversationId,
+          who,
+        };
+      },
+    );
+    const listed = async (query: string) =>
+      (
+        await owner("GET", `/conversations?visitorPrincipalId=${who}&${query}`)
+      ).body.items.map((item: { id: string }) => item.id);
+    const counts = async () =>
+      (await owner("GET", "/reporting/team-counts")).body;
+    const before = await counts();
+    const updated = await eventCount("conversation.updated", c);
+    const archived = await owner("POST", `/conversations/${c}/archive`);
+    expect(archived.status).toBe(200);
+    expect(archived.body).toMatchObject({ status: "open", changed: true });
+    expect(archived.body.archivedAt).not.toBeNull();
+    expect(await eventCount("conversation.updated", c)).toBe(updated + 1);
+    expect(
+      (await owner("POST", `/conversations/${c}/archive`)).body.changed,
+    ).toBe(false);
+    expect(await listed("status=open")).toEqual([]);
+    expect(await listed("view=archived")).toEqual([c]);
+    const after = await counts();
+    expect(after.openConversations).toBe(before.openConversations - 1);
+    // Another workspace's thread cannot be archived through this one.
+    expect(
+      (await owner("POST", `/conversations/${foreign.conversationId}/archive`))
+        .status,
+    ).toBe(404);
+    const back = await owner("POST", `/conversations/${c}/unarchive`);
+    expect(back.body).toMatchObject({ archivedAt: null, changed: true });
+    expect(await listed("status=open")).toEqual([c]);
+    // A new customer message brings an archived thread back.
+    await owner("POST", `/conversations/${c}/archive`);
+    await world.scoped(world.a, world.users.owner, (db) =>
+      insertVisitorMessage(
+        db,
+        who as never,
+        { id: c, status: "open", endReason: null } as never,
+        createId("conversation_message") as never,
+        "Still there?",
+      ),
+    );
+    expect((await row(c))!.archivedAt).toBeNull();
+    expect(await listed("view=archived")).toEqual([]);
   });
 
   it("lets only the author edit a message and keeps note events team-only", async () => {

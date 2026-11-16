@@ -369,6 +369,8 @@ export async function ingestGitHub(
       lastMessageAt: message.createdAt,
       lastMessagePreview: preview(content),
       waitingSince: sql`case when ${conversations.status} = 'closed' then ${conversations.waitingSince} else coalesce(${conversations.waitingSince}, now()) end`,
+      // A customer message brings an archived conversation back to the inbox.
+      archivedAt: null,
       updatedAt: message.createdAt,
     })
     .where(eq(conversations.id, conversationId));

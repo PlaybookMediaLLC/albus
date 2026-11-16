@@ -56,7 +56,9 @@ export const listFilters = z.object({
     .enum(["true", "false"])
     .optional()
     .transform((value) => value === "true"),
-  view: z.enum(["all", "mentions", "spam", "created_by_me"]).default("all"),
+  view: z
+    .enum(["all", "mentions", "spam", "created_by_me", "archived"])
+    .default("all"),
   search: z.string().trim().max(200).optional(),
   sort: z
     .enum(["recent", "oldest", "created", "waiting", "priority"])
@@ -108,6 +110,8 @@ export const notSpam = or(
   isNull(conversations.endReason),
   ne(conversations.endReason, "spam"),
 );
+/** Not archived: every inbox list and count except the archived view. */
+export const notArchived = isNull(conversations.archivedAt);
 
 function conditions(
   db: Database,
@@ -117,13 +121,19 @@ function conditions(
   const search = filters.search && escapeLike(filters.search);
   return and(
     realConversation,
-    // A spam-ended thread leaves every triage view; only the spam view lists it.
+    // An archived thread leaves every other view, spam too; only the archived view lists it.
+    filters.view === "archived"
+      ? isNotNull(conversations.archivedAt)
+      : notArchived,
+    // A spam-ended thread leaves every triage view; only the spam and archived views list it.
     filters.view === "spam"
       ? and(
           eq(conversations.status, "closed"),
           eq(conversations.endReason, "spam"),
         )
-      : notSpam,
+      : filters.view === "archived"
+        ? undefined
+        : notSpam,
     filters.status ? eq(conversations.status, filters.status) : undefined,
     filters.priority ? eq(conversations.priority, filters.priority) : undefined,
     filters.assignee === "mine"
@@ -245,9 +255,10 @@ export async function listConversations(
   return { items, nextCursor: hasMore ? items.at(-1)!.id : null, hasMore };
 }
 
-/** Open, real, non-spam conversations: the queue the inbox counts. */
+/** Open, real, non-spam, unarchived conversations: the queue the inbox counts. */
 export const openQueue = and(
   realConversation,
   eq(conversations.status, "open"),
   notSpam,
+  notArchived,
 )!;

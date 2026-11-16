@@ -108706,7 +108706,8 @@
                 "all",
                 "mentions",
                 "spam",
-                "created_by_me"
+                "created_by_me",
+                "archived"
               ],
               "default": "all"
             },
@@ -108880,6 +108881,13 @@
                             ],
                             "format": "date-time"
                           },
+                          "archivedAt": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date-time"
+                          },
                           "endReason": {
                             "type": [
                               "string",
@@ -108962,6 +108970,7 @@
                           "waitingSince",
                           "snoozedUntil",
                           "resolvedAt",
+                          "archivedAt",
                           "endReason",
                           "endNote",
                           "spamReason",
@@ -109197,6 +109206,13 @@
                           ],
                           "format": "date-time"
                         },
+                        "archivedAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        },
                         "endReason": {
                           "type": [
                             "string",
@@ -109279,6 +109295,7 @@
                         "waitingSince",
                         "snoozedUntil",
                         "resolvedAt",
+                        "archivedAt",
                         "endReason",
                         "endNote",
                         "spamReason",
@@ -109678,6 +109695,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -109849,6 +109873,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -110835,6 +110860,13 @@
                           ],
                           "format": "date-time"
                         },
+                        "archivedAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        },
                         "endReason": {
                           "type": [
                             "string",
@@ -110917,6 +110949,7 @@
                         "waitingSince",
                         "snoozedUntil",
                         "resolvedAt",
+                        "archivedAt",
                         "endReason",
                         "endNote",
                         "spamReason",
@@ -112687,6 +112720,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -112861,6 +112901,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -113090,6 +113131,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -113264,6 +113312,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -113500,6 +113549,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -113674,6 +113730,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -113881,6 +113938,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -114055,6 +114119,785 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
+                    "endReason",
+                    "endNote",
+                    "spamReason",
+                    "csatRating",
+                    "agentLastReadAt",
+                    "visitorLastReadAt",
+                    "tags",
+                    "attributes",
+                    "translation",
+                    "summary",
+                    "csatComment",
+                    "changed"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation or related record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The conversation is not in the required state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
+    "/quills/{workspaceId}/conversations/{conversationId}/archive": {
+      "post": {
+        "operationId": "archiveQuillsConversation",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Archive a conversation",
+        "description": "Takes the conversation out of every inbox list and count except the archived view (`view=archived`). The status does not change. A new customer message unarchives it.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "conversationId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The conversation and whether it changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "open",
+                        "snoozed",
+                        "closed"
+                      ]
+                    },
+                    "priority": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "low",
+                        "medium",
+                        "high",
+                        "urgent"
+                      ]
+                    },
+                    "channel": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "string"
+                    },
+                    "subject": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "lastMessagePreview": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "lastMessageAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "visitorPrincipalId": {
+                      "type": "string"
+                    },
+                    "visitorName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "visitorEmail": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "isTest": {
+                      "type": "boolean"
+                    },
+                    "assignedAgentPrincipalId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "assignedTeamId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "unreadCount": {
+                      "type": "number"
+                    },
+                    "waitingSince": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "snoozedUntil": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "resolvedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "endReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "endNote": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "spamReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "csatRating": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "agentLastReadAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "visitorLastReadAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "color": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "color"
+                        ]
+                      }
+                    },
+                    "attributes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "source": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "at": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "value",
+                          "source",
+                          "at"
+                        ]
+                      }
+                    },
+                    "translation": {
+                      "type": "object",
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "detectedLanguage": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "dismissedAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "enabled",
+                        "detectedLanguage",
+                        "dismissedAt"
+                      ]
+                    },
+                    "summary": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "csatComment": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "changed": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status",
+                    "priority",
+                    "channel",
+                    "source",
+                    "subject",
+                    "lastMessagePreview",
+                    "lastMessageAt",
+                    "createdAt",
+                    "updatedAt",
+                    "visitorPrincipalId",
+                    "visitorName",
+                    "visitorEmail",
+                    "isTest",
+                    "assignedAgentPrincipalId",
+                    "assignedTeamId",
+                    "unreadCount",
+                    "waitingSince",
+                    "snoozedUntil",
+                    "resolvedAt",
+                    "archivedAt",
+                    "endReason",
+                    "endNote",
+                    "spamReason",
+                    "csatRating",
+                    "agentLastReadAt",
+                    "visitorLastReadAt",
+                    "tags",
+                    "attributes",
+                    "translation",
+                    "summary",
+                    "csatComment",
+                    "changed"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation or related record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The conversation is not in the required state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
+    "/quills/{workspaceId}/conversations/{conversationId}/unarchive": {
+      "post": {
+        "operationId": "unarchiveQuillsConversation",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Unarchive a conversation",
+        "description": "Puts an archived conversation back in the inbox lists and counts.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "conversationId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The conversation and whether it changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "open",
+                        "snoozed",
+                        "closed"
+                      ]
+                    },
+                    "priority": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "low",
+                        "medium",
+                        "high",
+                        "urgent"
+                      ]
+                    },
+                    "channel": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "string"
+                    },
+                    "subject": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "lastMessagePreview": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "lastMessageAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "visitorPrincipalId": {
+                      "type": "string"
+                    },
+                    "visitorName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "visitorEmail": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "isTest": {
+                      "type": "boolean"
+                    },
+                    "assignedAgentPrincipalId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "assignedTeamId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "unreadCount": {
+                      "type": "number"
+                    },
+                    "waitingSince": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "snoozedUntil": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "resolvedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "endReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "endNote": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "spamReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "csatRating": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "agentLastReadAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "visitorLastReadAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "color": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "color"
+                        ]
+                      }
+                    },
+                    "attributes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "source": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "at": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "value",
+                          "source",
+                          "at"
+                        ]
+                      }
+                    },
+                    "translation": {
+                      "type": "object",
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "detectedLanguage": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "dismissedAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "enabled",
+                        "detectedLanguage",
+                        "dismissedAt"
+                      ]
+                    },
+                    "summary": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "csatComment": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "changed": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status",
+                    "priority",
+                    "channel",
+                    "source",
+                    "subject",
+                    "lastMessagePreview",
+                    "lastMessageAt",
+                    "createdAt",
+                    "updatedAt",
+                    "visitorPrincipalId",
+                    "visitorName",
+                    "visitorEmail",
+                    "isTest",
+                    "assignedAgentPrincipalId",
+                    "assignedTeamId",
+                    "unreadCount",
+                    "waitingSince",
+                    "snoozedUntil",
+                    "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -114285,6 +115128,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -114459,6 +115309,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -114696,6 +115547,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -114870,6 +115728,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -115097,6 +115956,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -115271,6 +116137,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -115497,6 +116364,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -115671,6 +116545,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -115895,6 +116770,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -116069,6 +116951,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -116275,6 +117158,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -116449,6 +117339,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -121282,7 +122173,8 @@
                 "all",
                 "mentions",
                 "spam",
-                "created_by_me"
+                "created_by_me",
+                "archived"
               ],
               "default": "all"
             },
@@ -121494,6 +122386,13 @@
                                 ],
                                 "format": "date-time"
                               },
+                              "archivedAt": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "format": "date-time"
+                              },
                               "endReason": {
                                 "type": [
                                   "string",
@@ -121576,6 +122475,7 @@
                               "waitingSince",
                               "snoozedUntil",
                               "resolvedAt",
+                              "archivedAt",
                               "endReason",
                               "endNote",
                               "spamReason",

@@ -361,6 +361,8 @@ export async function insertVisitorMessage(
       lastMessagePreview: preview(content),
       visitorLastReadAt: at,
       waitingSince: sql`coalesce(${conversations.waitingSince}, ${at})`,
+      // A customer message brings an archived conversation back to the inbox.
+      archivedAt: null,
       updatedAt: at,
       ...(reopen && {
         status: "open" as const,

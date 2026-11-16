@@ -122,6 +122,17 @@ export async function requireClosable(
     );
 }
 
+/** Archive or unarchive. The status stays: an archived thread can be open, snoozed or closed. */
+export async function setArchived(
+  db: Database,
+  conversation: Conversation,
+  archived: boolean,
+) {
+  if ((conversation.archivedAt !== null) === archived) return false;
+  await update(db, conversation, { archivedAt: archived ? new Date() : null });
+  return true;
+}
+
 /** Snooze until a time, or until the customer replies (null). The notice is team-only. */
 export async function snooze(
   db: Database,
