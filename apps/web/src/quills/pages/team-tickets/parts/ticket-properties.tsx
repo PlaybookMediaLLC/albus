@@ -4,12 +4,13 @@ import { relativeTime } from "../../../core/relative-time";
 import { useSetTicketPriority } from "../../../hooks/team/use-set-ticket-priority";
 import { useSetTicketStatus } from "../../../hooks/team/use-set-ticket-status";
 import { useTeamRuntime } from "../../../team/runtime";
+import { PanelSection } from "../../../ui/inbox/panel-section";
 import { PropertyRow } from "../../../ui/inbox/property-row";
+import { PropertySelect } from "../../../ui/inbox/property-select";
 import { PersonAvatar } from "../../../ui/person-avatar";
 import { PRIORITIES, PRIORITY_KEYS, type TicketStatus } from "../ticket-scope";
 import { TicketAi } from "./ticket-ai";
 import { TicketLinks } from "./ticket-links";
-import { TicketSelect } from "./ticket-select";
 import { TicketWatchers } from "./ticket-watchers";
 
 export interface TicketPropertiesProps {
@@ -29,22 +30,27 @@ export function TicketProperties({ ticket, statuses }: TicketPropertiesProps) {
   const requester =
     ticket.requester?.displayName ?? t("team-tickets.noRequester");
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-col items-center gap-2 pt-2 text-center">
+    <div className="grid gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         <PersonAvatar
           colored
           name={requester}
           avatarUrl={ticket.requester?.avatarUrl}
-          className="size-14 text-lg"
+          className="size-9 text-xs"
         />
-        <p className="font-semibold">{requester}</p>
-        {ticket.company ? (
-          <p className="text-sm text-muted-foreground">{ticket.company.name}</p>
-        ) : null}
+        <div className="min-w-0">
+          <p className="truncate font-semibold">{requester}</p>
+          {ticket.company ? (
+            <p className="truncate text-xs text-muted-foreground">
+              {ticket.company.name}
+            </p>
+          ) : null}
+        </div>
       </div>
-      <div>
+      <PanelSection title={t("team-tickets.ticket")}>
         <PropertyRow label={t("team-tickets.status")}>
-          <TicketSelect
+          <PropertySelect
+            ghost
             label={t("team-tickets.status")}
             value={ticket.status.id}
             options={
@@ -62,7 +68,8 @@ export function TicketProperties({ ticket, statuses }: TicketPropertiesProps) {
           />
         </PropertyRow>
         <PropertyRow label={t("team-tickets.priorityLabel")}>
-          <TicketSelect
+          <PropertySelect
+            ghost
             label={t("team-tickets.priorityLabel")}
             value={ticket.priority}
             options={PRIORITIES.map((value) => ({
@@ -91,7 +98,7 @@ export function TicketProperties({ ticket, statuses }: TicketPropertiesProps) {
             {t("team-tickets.failed")}
           </p>
         ) : null}
-      </div>
+      </PanelSection>
       <TicketWatchers ticketId={ticket.id} />
       <TicketLinks ticketId={ticket.id} />
       <TicketAi ticket={ticket} />

@@ -27,6 +27,17 @@ describe("EntryRow", () => {
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
+  it("names the author beside the date", () => {
+    const view = renderComponent(
+      <EntryRow
+        entry={{ ...entry, author: { name: "Grace Hopper", avatarUrl: null } }}
+        href="/changelog/1"
+        onOpen={vi.fn()}
+      />,
+    );
+    expect(view.getByRole("link")).toHaveTextContent("Grace Hopper");
+  });
+
   it("prefers the display date and names an untitled draft", () => {
     const view = renderComponent(
       <EntryRow

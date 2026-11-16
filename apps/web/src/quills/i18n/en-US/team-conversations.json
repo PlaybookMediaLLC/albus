@@ -13,7 +13,24 @@
 		"country": "Country",
 		"mrr": "MRR",
 		"plan": "Plan",
-		"segments": "Segments"
+		"title": "Customer",
+		"locale": "Locale",
+		"joined": "Joined",
+		"activity": "Activity",
+		"requestCount_one": "{{count}} request",
+		"requestCount_other": "{{count}} requests",
+		"voteCount_one": "{{count}} vote",
+		"voteCount_other": "{{count}} votes",
+		"commentCount_one": "{{count}} comment",
+		"commentCount_other": "{{count}} comments",
+		"lead": "Lead",
+		"blocked": "Blocked",
+		"labels": "Segments and tags",
+		"noEmail": "No email",
+		"copyEmail": "Copy email",
+		"copied": "Email copied.",
+		"copyFailed": "The email could not be copied.",
+		"profile": "Open the customer profile"
 	},
 	"emailSecurity": {
 		"fail": "Failed",
@@ -48,9 +65,22 @@
 		"postContent": "Details (optional)",
 		"postTitle": "Request title",
 		"posts": "Requests",
-		"ticket": "Linked ticket",
+		"ticket": "Ticket",
 		"ticketName": "{{reference}} {{title}} · {{status}}",
-		"title": "Links"
+		"title": "Links",
+		"createTicket": "Create ticket",
+		"ticketDialog": "Create a customer ticket",
+		"ticketDescription": "The ticket shares this conversation's thread, so replies reach the customer here.",
+		"ticketTitle": "Ticket title",
+		"ticketCreated": "Created ticket {{reference}}.",
+		"ticketNotLinked": "Created ticket {{reference}}, but it could not be linked to this conversation. Find it in Tickets.",
+		"newRequest": "New request",
+		"newRequestDescription": "Creates a request by {{name}} with their vote, and shares it in the conversation so {{name}} sees it.",
+		"linkRequest": "Link existing",
+		"findRequest": "Find a request to add {{name}}'s vote to…",
+		"linked": "Linked “{{title}}”, added {{name}}'s vote and shared it in the conversation.",
+		"unlink": "Unlink “{{title}}”",
+		"unlinked": "Unlinked “{{title}}”. The request and the vote stay."
 	},
 	"loadMore": "Load more conversations",
 	"markSpam": "Mark as spam",
@@ -90,7 +120,7 @@
 		"priority": "Priority",
 		"tags": "Tags",
 		"team": "Team",
-		"title": "Details"
+		"title": "Conversation"
 	},
 	"removeTag": "Remove the tag {{name}}",
 	"reopenResolved": "Resolved, reopen",
@@ -113,7 +143,10 @@
 		"off": "AI is off for this workspace.",
 		"refresh": "Summarize again",
 		"requested": "The summary is on its way. It shows here when it is ready.",
-		"title": "AI summary"
+		"title": "AI summary",
+		"empty": "No summary yet. Summarize the thread to see its main points.",
+		"updated": "Updated {{time}}",
+		"settings": "Turn on AI in settings"
 	},
 	"teammate": "Teammate",
 	"thread": "Messages",
@@ -132,5 +165,25 @@
 		"unassigned": "Unassigned"
 	},
 	"yes": "Yes",
-	"you": "You"
+	"you": "You",
+	"facts": {
+		"channel": "Channel",
+		"started": "Started",
+		"waitingSince": "Waiting since",
+		"snoozedUntil": "Snoozed until",
+		"language": "Language",
+		"rating": "Rating",
+		"ratingValue": "{{rating}} / 5",
+		"messenger": "Messenger",
+		"email": "Email",
+		"github": "GitHub"
+	},
+	"history": {
+		"title": "Previous conversations",
+		"more": "Show more",
+		"open": "Open",
+		"snoozed": "Snoozed",
+		"closed": "Resolved"
+	},
+	"sharedRequest": "Shared a request"
 }

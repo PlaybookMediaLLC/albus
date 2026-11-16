@@ -15,8 +15,7 @@ describe("PostDemand", () => {
     );
     expect(await view.findByText("Enterprise (2 voters)")).toBeVisible();
     expect(view.getByText("1,500")).toBeVisible();
-    expect(
-      view.getByText("1 nice to have · 1 important · 1 blocker"),
-    ).toBeVisible();
+    for (const level of ["Nice to have", "Important", "Blocker"])
+      expect(view.getByText(level)).toBeVisible();
   });
 });

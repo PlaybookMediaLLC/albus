@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vite-plus/test";
-import { choose } from "../../../test/actions";
-import { renderComponent } from "../../../test/render";
+import { choose } from "../../test/actions";
+import { renderComponent } from "../../test/render";
 import { PropertySelect } from "./property-select";
 
 const options = [

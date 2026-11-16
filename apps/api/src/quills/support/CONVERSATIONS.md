@@ -51,7 +51,7 @@ Visibility: `quills:read` sees every conversation of the workspace (D2: Kaneo ha
 | operationId | Route | Action | Tables | Event | Tests |
 |---|---|---|---|---|---|
 | `listQuillsConversations` | `GET /conversations` (status, priority, assignee `mine`/`unassigned`/principal, teamId, visitorPrincipalId, channel, source, waitingOnly, unreadOnly, tagId, view `all`/`mentions`/`spam`/`created_by_me`/`archived`, search, sort, cursor; `limit` ≤ 100; an archived conversation lists only in `archived`) | read | `conversations`, `principal`, `user`, `conversation_messages`, `conversation_tag_assignments`, `conversation_tags`, `conversation_message_mentions` | - | contract, read-leak, page-bounds |
-| `getQuillsConversation` | `GET /conversations/{conversationId}` | read | `conversations`, `conversation_summaries`, tags | - | contract |
+| `getQuillsConversation` | `GET /conversations/{conversationId}` (with `summary` and `summaryUpdatedAt`) | read | `conversations`, `conversation_summaries`, tags | - | contract |
 | `exportQuillsConversationTranscript` | `GET /conversations/{conversationId}/transcript` | read | `conversations`, `conversation_messages`, `principal` | - | contract |
 | `listQuillsConversationFiles` | `GET /conversations/{conversationId}/files` | read | `conversation_messages` | - | contract |
 
@@ -222,10 +222,11 @@ Merged: 7. The ticket target of `setQuillsConversationAttributeValue` belongs to
 | `createQuillsPostFromConversation` | `POST /conversations/{conversationId}/posts` (new post by the visitor, or the visitor's vote on `asUpvoteOfPostId`) | create | `posts`, `post_votes`, `post_subscriptions`, `post_activity`, `post_comments`, `post_external_links`, `conversation_messages`, `conversations` | `post.created` or `post.voted` |
 | `shareQuillsPost` | `POST /conversations/{conversationId}/share-post` | update | `conversation_messages`, `conversations`, `posts` | `message.created` |
 | `getQuillsLinkedPostsForConversation` | `GET /conversations/{conversationId}/posts` | read | `post_external_links`, `posts`, `boards` | - |
+| `unlinkQuillsPostFromConversation` | `DELETE /conversations/{conversationId}/posts/{postId}` (idempotent; the post, the visitor's vote and the shared message stay) | update | `post_external_links` | `conversation.post_unlinked` when changed |
 | `getQuillsLinkedConversationsForPost` | `GET /posts/{postId}/conversations` | read | `post_external_links`, `conversations` | - |
 | `getQuillsConversationTicketLink` | `GET /conversations/{conversationId}/ticket` (the paired customer ticket or null; RFC 0004 lane C) | read | `conversations`, `ticket_conversations`, `tickets`, `ticket_statuses` | - |
 
-Merged: 18. The inbox is the source's unified inbox: the conversation branch and the ticket branch
+Merged: 19. The inbox is the source's unified inbox: the conversation branch and the ticket branch
 (`support/ticket-list.ts`, shared with `listQuillsTickets`), each paged by its own keyset cursor and
 merged in order; the opaque cursor carries both. A customer ticket with a linked conversation lists as
 that conversation, and test customers' tickets stay out, as their conversations do. `waiting` maps to

@@ -3566,6 +3566,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills-public/{workspace}/user/profile",
   },
   {
+    operationId: "unlinkQuillsPostFromConversation",
+    method: "DELETE",
+    path: "/api/quills/{workspaceId}/conversations/{conversationId}/posts/{postId}",
+  },
+  {
     operationId: "unlinkQuillsPostFromTask",
     method: "DELETE",
     path: "/api/quills/{workspaceId}/posts/{postId}/tasks/{taskId}",

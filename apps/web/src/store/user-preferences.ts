@@ -68,7 +68,10 @@ type UserPreferencesStore = {
 export const useUserPreferencesStore = create<UserPreferencesStore>()(
   persist(
     (set) => ({
-      theme: "dark",
+      // A first visit to a customer portal follows the device; a stored choice still wins.
+      theme: window.location.pathname.startsWith("/portal/")
+        ? "system"
+        : "dark",
       setTheme: (
         theme: "light" | "dark" | "system",
         coordinates?: { x: number; y: number },

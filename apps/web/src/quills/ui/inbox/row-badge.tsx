@@ -16,11 +16,7 @@ const variants = {
 /** One status badge of an inbox row, in sentence case. */
 export function RowBadge({ badge }: RowBadgeProps) {
   return (
-    <Badge
-      variant={variants[badge.tone ?? "neutral"]}
-      size="sm"
-      className="font-medium"
-    >
+    <Badge variant={variants[badge.tone ?? "neutral"]} className="font-medium">
       {badge.label}
     </Badge>
   );

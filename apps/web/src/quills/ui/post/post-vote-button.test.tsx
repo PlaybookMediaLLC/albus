@@ -3,6 +3,16 @@ import { press } from "../../test/actions";
 import { renderComponent } from "../../test/render";
 import { PostVoteButton } from "./post-vote-button";
 describe("PostVoteButton", () => {
+  it("animates a changed vote, but not the first render", () => {
+    const onVote = vi.fn(async () => undefined);
+    const view = renderComponent(
+      <PostVoteButton voted={false} voteCount={3} onVote={onVote} />,
+    );
+    expect(view.getByText("3")).not.toHaveClass("starting:opacity-0");
+    view.rerender(<PostVoteButton voted voteCount={4} onVote={onVote} />);
+    expect(view.getByText("4")).toHaveClass("starting:opacity-0");
+  });
+
   it("exposes vote state and requests the reverse action", async () => {
     const onVote = vi.fn(async () => undefined);
     const view = renderComponent(

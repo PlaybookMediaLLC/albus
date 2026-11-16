@@ -147,7 +147,7 @@ export function RoadmapBoard({ workspaceId, ...props }: RoadmapBoardProps) {
       }}
     >
       <SortableContext items={order}>
-        <div className="flex h-full gap-3">
+        <div className="flex h-full gap-3 pe-12">
           {columns.map((status) => (
             <RoadmapColumn
               key={status.id}

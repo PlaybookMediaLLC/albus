@@ -374,8 +374,50 @@ const linkedConversations = defineQuillsRoute({
   },
 });
 
+const unlinkPost = defineQuillsRoute({
+  method: "delete",
+  path: "/conversations/{conversationId}/posts/{postId}",
+  operationId: "unlinkQuillsPostFromConversation",
+  summary: "Stop tracking a post from a conversation",
+  description:
+    "Idempotent. Removes only the link: the post, the visitor's vote and the shared message stay. The post must be on a board the caller can see.",
+  action: "update",
+  params: conversationParams.extend({ postId: flexibleToTypeIdSchema("post") }),
+  response: z.object({ changed: z.boolean() }),
+  responseDescription: "Whether a link was removed",
+  errors,
+  event: ({ params }, result) =>
+    result.changed && {
+      type: "conversation.post_unlinked",
+      entityType: "conversation",
+      entityId: params.conversationId,
+      payload: { postId: params.postId },
+    },
+  load: loadProjects,
+  handler: async ({ db, params, loaded: projects }) => {
+    const conversation = await findConversation(
+      db,
+      params.conversationId,
+      true,
+    );
+    const post = await findPost(db, params.postId, projects);
+    const removed = await db
+      .delete(postExternalLinks)
+      .where(
+        and(
+          eq(postExternalLinks.postId, post.id),
+          eq(postExternalLinks.integrationType, LINK_TYPE),
+          eq(postExternalLinks.externalId, conversation.id),
+        ),
+      )
+      .returning({ id: postExternalLinks.id });
+    return { changed: removed.length > 0 };
+  },
+});
+
 export default apiRouter<BaseVariables & { workspaceId: string }>()
   .openapi(...createPost)
   .openapi(...sharePost)
   .openapi(...linkedPosts)
+  .openapi(...unlinkPost)
   .openapi(...linkedConversations);

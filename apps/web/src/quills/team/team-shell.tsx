@@ -40,7 +40,7 @@ export function TeamShell({ children, ...rail }: TeamShellProps) {
   const section = useLocation({
     select: (location) => shellSection(location.pathname),
   });
-  // The 90% scale and the icon stroke in index.css match this attribute on html.
+  // The 95% scale and the icon stroke in index.css match this attribute on html.
   useLayoutEffect(() => {
     document.documentElement.setAttribute("data-quills-shell", "");
     return () => document.documentElement.removeAttribute("data-quills-shell");

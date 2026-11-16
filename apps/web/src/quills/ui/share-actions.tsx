@@ -8,7 +8,7 @@ import { Button } from "./upstream";
 
 export interface ShareActionsProps {
   className?: string;
-  /** One share pill that copies the link when the browser cannot share. */
+  /** One share icon button that copies the link when the browser cannot share. */
   compact?: boolean;
 }
 
@@ -51,13 +51,15 @@ export function ShareActions({ className, compact }: ShareActionsProps) {
         {live}
         <Button
           variant="secondary"
-          size="xs"
+          size="icon-xs"
           className="rounded-full before:rounded-full"
+          aria-label={t("core.share")}
+          title={t("core.share")}
           onClick={() =>
             void (typeof navigator.share === "function" ? share() : copy())
           }
         >
-          {t("core.share")}
+          <IconPaperPlane2Outline18 aria-hidden="true" />
         </Button>
       </div>
     );

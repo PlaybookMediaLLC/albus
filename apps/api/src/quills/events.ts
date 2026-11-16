@@ -339,6 +339,7 @@ export const changeSchema = z.object({
     "post.tags_backfill_requested",
     "conversation.summary_requested",
     "conversation.summarized",
+    "conversation.post_unlinked",
     "ticket.summary_requested",
     "ticket.summarized",
     "help_center.article_translation_requested",
