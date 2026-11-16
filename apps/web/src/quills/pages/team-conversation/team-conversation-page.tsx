@@ -59,11 +59,9 @@ export function TeamConversationPage(props: TeamConversationPageProps) {
   );
   const saved = views.data?.items.find((view) => view.id === context.savedView);
   const waiting = Boolean(context.savedView) && views.isLoading;
+  const query = listQuery(context, saved);
   const list = useListConversations(
-    {
-      param: { workspaceId: waiting ? "" : workspaceId },
-      query: listQuery(context, saved),
-    },
+    { param: { workspaceId: waiting ? "" : workspaceId }, query },
     team.viewer,
   );
   const principals = useListPrincipals(
@@ -71,8 +69,8 @@ export function TeamConversationPage(props: TeamConversationPageProps) {
     team.viewer,
   );
   const people = principals.data?.items ?? [];
-  const items = useKeptOpen(list.data?.pages, conversationId);
   const data = conversation.data;
+  const items = useKeptOpen(list.data?.pages, conversationId, data, query);
   const { mutate: markRead } = useMarkConversationRead(team.viewer);
 
   // An open conversation is read: one request each time it gets unread messages.
