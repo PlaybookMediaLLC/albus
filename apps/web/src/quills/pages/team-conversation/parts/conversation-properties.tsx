@@ -3,6 +3,7 @@ import type { GetConversationResponse } from "../../../api/team/get-conversation
 import { ConversationSection } from "./conversation-section";
 import { CustomerIdentity } from "./customer-identity";
 import { CustomerSection } from "./customer-section";
+import { type EmailAuth, EmailSecuritySection } from "./email-security-section";
 import { LinksSection } from "./links-section";
 import { PreviousConversations } from "./previous-conversations";
 import { SummarySection } from "./summary-section";
@@ -10,17 +11,20 @@ import { SummarySection } from "./summary-section";
 export interface ConversationPropertiesProps {
   workspaceId: string;
   conversation: GetConversationResponse;
+  /** The checks of the newest inbound mail that has them. */
+  emailSecurity?: { auth: EmailAuth; receivedAt: string } | null;
 }
 
 /**
- * The right panel (design section 2): who the customer is, then the conversation's properties,
- * its AI summary, its links, the customer's details and their other conversations. The header
- * holds the status and the assignee. The API has no email security checks (SPF, DKIM, DMARC),
- * so the panel has no such section.
+ * The right panel (design section 2): who the customer is, the email security checks of an
+ * email conversation, then the conversation's properties, its AI summary, its links, the
+ * customer's details and their other conversations. The header holds the status and the
+ * assignee.
  */
 export function ConversationProperties({
   workspaceId,
   conversation,
+  emailSecurity,
 }: ConversationPropertiesProps) {
   const { t } = useTranslation("quills");
   const customerName =
@@ -35,6 +39,7 @@ export function ConversationProperties({
         name={conversation.visitorName}
         email={conversation.visitorEmail}
       />
+      {emailSecurity ? <EmailSecuritySection {...emailSecurity} /> : null}
       <ConversationSection
         workspaceId={workspaceId}
         conversation={conversation}

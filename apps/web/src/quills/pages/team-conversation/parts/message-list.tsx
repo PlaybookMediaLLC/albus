@@ -22,6 +22,7 @@ import { arrivedClass, useArrived } from "../../../ui/inbox/use-arrived";
 import { PageContext } from "../../../ui/page-context";
 import { cn } from "../../../ui/upstream";
 import type { Teammate } from "../../team-conversations/conversation-list";
+import { AttachmentLink } from "./attachment-link";
 
 type Message = ListConversationMessagesResponse["items"][number];
 
@@ -45,6 +46,18 @@ const eventIcons: Record<string, LucideIcon> = {
   ticket_linked: Ticket,
   ticket_status_changed: Ticket,
   csat_submitted: Star,
+};
+
+// Resolve and reopen notices name the teammate who acted: "You resolved this conversation".
+const actorKeys: Record<string, { you: string; named: string }> = {
+  chat_ended: {
+    you: "team-conversations.events.resolvedByYou",
+    named: "team-conversations.events.resolvedBy",
+  },
+  chat_reopened: {
+    you: "team-conversations.events.reopenedByYou",
+    named: "team-conversations.events.reopenedBy",
+  },
 };
 
 const day = (iso: string) => new Date(iso).toDateString();
@@ -78,6 +91,16 @@ export function MessageList(props: MessageListProps) {
   );
   const avatar = (id: string | null) =>
     props.people.find((person) => person.id === id)?.avatarUrl;
+  const me = props.people.find((person) => person.userId === team.viewer.id);
+  // An unknown teammate, automation and older rows keep the stored text.
+  const eventText = (message: Message) => {
+    const keys = actorKeys[message.systemKind ?? ""];
+    const actor = message.systemActorPrincipalId;
+    if (!keys || !actor) return message.content;
+    if (actor === me?.id) return t(keys.you);
+    const name = props.people.find((person) => person.id === actor)?.name;
+    return name ? t(keys.named, { name }) : message.content;
+  };
   return (
     <section
       aria-labelledby="conversation-thread"
@@ -106,7 +129,7 @@ export function MessageList(props: MessageListProps) {
                 icon={eventIcons[message.systemKind ?? ""]}
                 time={message.createdAt}
               >
-                {message.content}
+                {eventText(message)}
               </SystemEvent>
             ) : (
               <MessageBubble
@@ -144,13 +167,13 @@ export function MessageList(props: MessageListProps) {
                       {t("team-conversations.sharedRequest")}
                     </Link>
                   ))}
-                {message.attachments.map((file) => (
-                  <p
-                    key={`${message.id}:${file.name}`}
-                    className="mt-1 text-xs opacity-80"
-                  >
-                    {t("team-conversations.attachment", { name: file.name })}
-                  </p>
+                {message.attachments.map((file, index) => (
+                  <AttachmentLink
+                    key={file.fileId ?? `${message.id}:${index}`}
+                    workspaceId={props.workspaceId}
+                    fileId={file.fileId}
+                    name={file.name}
+                  />
                 ))}
                 {message.senderType === "visitor" ? (
                   <PageContext

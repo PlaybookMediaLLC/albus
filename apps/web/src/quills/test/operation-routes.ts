@@ -96,6 +96,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/moderation/posts/{postId}/approve",
   },
   {
+    operationId: "archiveQuillsConversation",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/conversations/{conversationId}/archive",
+  },
+  {
     operationId: "archiveQuillsConversationAttribute",
     method: "POST",
     path: "/api/quills/{workspaceId}/conversation-attributes/{attributeId}/archive",
@@ -1211,6 +1216,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills-public/{workspace}/support/conversations/{conversationId}",
   },
   {
+    operationId: "getQuillsMyConversationFile",
+    method: "GET",
+    path: "/api/quills-public/{workspace}/support/conversations/{conversationId}/files/{fileId}",
+  },
+  {
     operationId: "getQuillsMyLanguagePreference",
     method: "GET",
     path: "/api/quills-public/{workspace}/user/language",
@@ -1589,6 +1599,11 @@ export const quillsOperationRoutes = [
     operationId: "getQuillsWidgetConversation",
     method: "GET",
     path: "/api/quills-public/{workspace}/widget/conversations/{conversationId}",
+  },
+  {
+    operationId: "getQuillsWidgetConversationFile",
+    method: "GET",
+    path: "/api/quills-public/{workspace}/widget/conversations/{conversationId}/files/{fileId}",
   },
   {
     operationId: "getQuillsWidgetConversationLinkedTicket",
@@ -3504,6 +3519,11 @@ export const quillsOperationRoutes = [
     operationId: "translateQuillsPortalContent",
     method: "POST",
     path: "/api/quills-public/{workspace}/portal/translations",
+  },
+  {
+    operationId: "unarchiveQuillsConversation",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/conversations/{conversationId}/unarchive",
   },
   {
     operationId: "unblockQuillsUser",

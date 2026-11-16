@@ -107,6 +107,12 @@ export type MailContent = {
   ledgerKey?: string;
   /** Recorded on the `email_log` row. */
   conversationId?: string;
+  /**
+   * Loads what `send` needs (such as attachment bytes) outside any transaction and before the
+   * delivery claim. A throw fails the job, so it retries; a throw inside `send` would leave the
+   * mail uncertain and never sent again.
+   */
+  prepare?: () => Promise<void>;
   /** Uses only values read before it is returned, never the transaction. */
   send: (to: string) => Promise<EmailResult>;
 };

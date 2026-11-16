@@ -1022,6 +1022,10 @@ export interface ConversationSystemEvent {
   kind: ConversationSystemEventKind;
   /** Assignee display name for 'assigned'. */
   agentName?: string;
+  /** The teammate principal whose action posted a 'chat_ended' or 'chat_reopened' notice, so
+   *  the inbox can say "You resolved this conversation". Absent for automation, the customer and
+   *  older rows. Team-only: surfaced only via the agent DTO. */
+  actorPrincipalId?: string;
   /** Customer-facing stage label for 'ticket_status_changed' (never the raw
    *  internal status name). Absent when `closed` is set. */
   stageLabel?: string;
@@ -1253,6 +1257,15 @@ export interface ChannelDelivery {
   error?: string;
 }
 
+/** One SPF, DKIM or DMARC result of an inbound mail: "none" when nothing conclusive was found. */
+export type EmailAuthResult = "pass" | "fail" | "none";
+/** The receiving server's checks of an inbound mail (inbound/email-auth.ts). */
+export interface EmailAuth {
+  spf: EmailAuthResult;
+  dkim: EmailAuthResult;
+  dmarc: EmailAuthResult;
+}
+
 export interface ConversationMessageMetadata {
   /** Private workspace turn identity and its server-authored final payload. */
   workspaceTurn?: { runId: string; payload?: Record<string, unknown> };
@@ -1271,6 +1284,9 @@ export interface ConversationMessageMetadata {
   inboundDeliveryKey?: string;
   /** Provider Message-ID for an inbound email, used to dedupe webhook retries. */
   emailMessageId?: string;
+  /** The trusted receiving server's SPF, DKIM and DMARC results for an inbound email. Absent
+   *  when EMAIL_INBOUND_AUTHSERV_ID is not set or the mail had no header from that server. */
+  emailAuth?: EmailAuth;
   /** RFC 5322 threading of an inbound email message: the parent it replied to
    *  and the full References chain (bare ids). Populated on the email channel. */
   inReplyTo?: string;

@@ -1,12 +1,19 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { createId } from "@kaneo/ids";
 import { flexibleToTypeIdSchema } from "@kaneo/ids/zod";
-import { apiRouter, pagingNumber, z } from "../../../openapi";
+import {
+  apiRouter,
+  pagingNumber,
+  responseTimestamp,
+  z,
+} from "../../../openapi";
 import {
   conversationMessages,
   conversations,
 } from "../../../database/quills/schema/conversation";
+import { files } from "../../../database/quills/schema/files";
 import { defineQuillsRoute } from "../../framework/define-route";
+import { createDownload } from "../../framework/files";
 import { widgetMetadata } from "../../portal/feedback/posts";
 import {
   claimReceipt,
@@ -213,6 +220,67 @@ export function conversationRoutes(audience: Customer) {
         hasMore,
         teamTyping: await isTyping(db, conversation.id, "agent"),
       };
+    },
+  });
+
+  const file = defineQuillsRoute({
+    audience,
+    method: "get",
+    path: `${base}/conversations/{conversationId}/files/{fileId}`,
+    operationId: name(
+      "getQuillsWidgetConversationFile",
+      "getQuillsMyConversationFile",
+    ),
+    summary: `Get a file of a conversation of ${who} and a short-lived download URL`,
+    description:
+      "Only a file of a live message that the customer reads: never one of an internal note, of a deleted message or of another conversation.",
+    action: "read",
+    params: conversationParams.extend({
+      fileId: flexibleToTypeIdSchema("file"),
+    }),
+    response: z.object({
+      id: z.string(),
+      name: z.string(),
+      contentType: z.string(),
+      size: z.number(),
+      downloadUrl: z.string(),
+      downloadExpiresAt: responseTimestamp,
+    }),
+    responseDescription: "The file",
+    errors,
+    handler: async ({ db, caller, params }) => {
+      await requireSurface(db, audience, caller, "messenger");
+      const conversation = await ownConversation(
+        db,
+        caller.principalId,
+        params.conversationId,
+      );
+      const [row] = await db
+        .select({
+          id: files.id,
+          name: files.name,
+          contentType: files.contentType,
+          size: files.size,
+          storageKey: files.storageKey,
+        })
+        .from(files)
+        .innerJoin(
+          conversationMessages,
+          eq(conversationMessages.id, files.messageId),
+        )
+        .where(
+          and(
+            eq(files.id, params.fileId),
+            isNull(files.deletedAt),
+            eq(conversationMessages.conversationId, conversation.id),
+            eq(conversationMessages.isInternal, false),
+            isNull(conversationMessages.deletedAt),
+          ),
+        )
+        .limit(1);
+      if (!row) throw notFound("File");
+      const { id, name, contentType, size } = row;
+      return { id, name, contentType, size, ...(await createDownload(row)) };
     },
   });
 
@@ -538,6 +606,7 @@ export function conversationRoutes(audience: Customer) {
     .openapi(...start)
     .openapi(...get)
     .openapi(...listMessages)
+    .openapi(...file)
     .openapi(...send)
     .openapi(...markRead)
     .openapi(...typing)

@@ -1,5 +1,10 @@
-import { PanelLeftOpen } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import {
+  type CSSProperties,
+  type ReactNode,
+  useEffect,
+  useId,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import {
   cn,
@@ -10,10 +15,11 @@ import {
   SheetTitle,
 } from "../upstream";
 import { DetailPaneContext } from "./detail-pane-context";
-import { IconButton } from "./icon-button";
+import { ListResizer } from "./list-resizer";
+import { readListWidth, writeListWidth } from "./list-width";
 
 export interface DetailLayoutProps {
-  /** The list pane (ListPane), about 360 px wide. Hidden below md while an item is open. */
+  /** The list pane (ListPane), 360 px wide until resized. Hidden below md while an item is open. */
   list: ReactNode;
   listLabel: string;
   /** False when no item is open: below md the list then fills the screen. */
@@ -40,7 +46,10 @@ export function DetailLayout({
   propertiesLabel = "",
 }: DetailLayoutProps) {
   const { t } = useTranslation("quills");
+  const listId = useId();
   const [listOpen, setListOpen] = useState(true);
+  const [listWidth, setListWidth] = useState(readListWidth);
+  useEffect(() => writeListWidth(listWidth), [listWidth]);
   const [panelOpen, setPanelOpen] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
   const panel = properties
@@ -53,29 +62,35 @@ export function DetailLayout({
     : null;
   return (
     <DetailPaneContext.Provider
-      value={{ hideList: () => setListOpen(false), panel }}
+      value={{
+        hideList: () => setListOpen(false),
+        showList: listOpen ? null : () => setListOpen(true),
+        panel,
+      }}
     >
       <div data-slot="detail-layout" className="flex h-full min-h-0">
+        {/* A hidden list comes back from ShowListButton in the DetailHeader or EmptySelection. */}
         {listOpen ? (
+          // quills-web-allow C19: the dragged list width is a runtime value; no token can hold it.
           <section
+            id={listId}
             aria-label={listLabel}
+            style={{ "--list-width": `${listWidth}px` } as CSSProperties}
             className={cn(
-              "min-h-0 w-full shrink-0 flex-col border-e border-border md:flex md:w-90",
+              "relative min-h-0 w-full shrink-0 flex-col border-e border-border md:flex md:w-(--list-width)",
               itemOpen ? "hidden" : "flex",
             )}
           >
             {list}
+            <ListResizer
+              className="hidden md:block"
+              label={t("inbox.resizeList")}
+              controls={listId}
+              width={listWidth}
+              onResize={setListWidth}
+            />
           </section>
-        ) : (
-          <div className="hidden shrink-0 border-e border-border p-2 md:block">
-            <IconButton
-              label={t("inbox.showList")}
-              onClick={() => setListOpen(true)}
-            >
-              <PanelLeftOpen aria-hidden="true" />
-            </IconButton>
-          </div>
-        )}
+        ) : null}
         <div
           className={cn(
             "min-h-0 min-w-0 flex-1 flex-col",

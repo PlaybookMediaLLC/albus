@@ -1,10 +1,9 @@
 import { useTranslation } from "react-i18next";
-import type { PortalProblem } from "../../../core/types";
-import { useCreateConversationView } from "../../../hooks/team/use-create-conversation-view";
-import { useTeamRuntime } from "../../../team/runtime";
-import { Dialog, DialogPopup, DialogTitle } from "../../../ui/upstream";
-import type { ListContext } from "../conversation-list";
-import { viewRules } from "../list-filters";
+import type { PortalProblem } from "../../core/types";
+import type { useCreateConversationView } from "../../hooks/team/use-create-conversation-view";
+import { Dialog, DialogPopup, DialogTitle } from "../../ui/upstream";
+import type { ListContext } from "./conversation-list";
+import { viewRules } from "./list-filters";
 import { SaveViewForm } from "./save-view-form";
 
 export interface SaveViewDialogProps {
@@ -15,13 +14,14 @@ export interface SaveViewDialogProps {
   onOpenChange: (open: boolean) => void;
   /** Runs with the new view. */
   onSaved: (viewId: string) => void;
+  /** The page's createQuillsConversationView mutation. */
+  create: ReturnType<typeof useCreateConversationView>;
 }
 
 /** "Save as view…": names the current list and saves its filters as a conversation view. */
 export function SaveViewDialog(props: SaveViewDialogProps) {
   const { t } = useTranslation("quills");
-  const team = useTeamRuntime();
-  const create = useCreateConversationView(team.viewer);
+  const { create } = props;
   const rules = viewRules(props.context);
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>

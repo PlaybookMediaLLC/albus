@@ -115,6 +115,17 @@ subscribers["test.mail"] = {
       }),
   }),
 };
+// The same mail with a `prepare` step that fails `prepareFails` times first, as storage can.
+let prepareFails = 0;
+subscribers["test.prepare"] = {
+  ...subscribers["test.mail"],
+  mail: async (...args) => ({
+    ...(await subscribers["test.mail"]!.mail!(...args))!,
+    prepare: async () => {
+      if (prepareFails-- > 0) throw new Error("storage timeout");
+    },
+  }),
+};
 const mailed = (actorId?: string) =>
   h.emit(h.a, {
     type: "test.mail",
@@ -272,6 +283,27 @@ describe.skipIf(!url)("Quills mail delivery", () => {
       status: "succeeded",
       attempts: 2,
     });
+    expect(messages).toBe(1);
+  });
+
+  it("retries a failed prepare step before it claims or sends anything", async () => {
+    prepareFails = 1;
+    const eventId = await h.emit(h.a, {
+      type: "test.prepare",
+      entityType: "team",
+      entityId: "mail",
+    });
+    await h.drain(h.a);
+    expect(messages).toBe(0);
+    expect((await job(eventId))!).toMatchObject({
+      status: "pending",
+      attempts: 1,
+    });
+    // Nothing was claimed, so the retry is not uncertain.
+    expect(await outcome(eventId)).toBeUndefined();
+    await h.due(h.a);
+    await h.drain(h.a);
+    expect((await job(eventId))!.status).toBe("succeeded");
     expect(messages).toBe(1);
   });
 

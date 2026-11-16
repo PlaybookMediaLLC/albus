@@ -1,9 +1,12 @@
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { DateSeparator } from "../inbox/date-separator";
 import { MessageBubble } from "../inbox/message-bubble";
 import { SystemEvent } from "../inbox/system-event";
 import { arrivedClass, useArrived } from "../inbox/use-arrived";
 import { cn } from "../upstream";
+
+type Attachment = { fileId?: string | null; name: string };
 
 export interface ConversationMessagesProps {
   messages: Array<{
@@ -12,15 +15,20 @@ export interface ConversationMessagesProps {
     senderType: string;
     author: { name: string | null } | null;
     content: string;
-    attachments: Array<{ name: string }>;
+    attachments: Attachment[];
     createdAt: string;
   }>;
+  /** Renders a file that has an ID, such as a download link; otherwise its name shows. */
+  renderAttachment?: (attachment: Attachment & { fileId: string }) => ReactNode;
 }
 
 const day = (iso: string) => new Date(iso).toDateString();
 
 /** The customer's thread, with the bubbles of the teammate inbox: the customer's own messages on the right. */
-export function ConversationMessages({ messages }: ConversationMessagesProps) {
+export function ConversationMessages({
+  messages,
+  renderAttachment,
+}: ConversationMessagesProps) {
   const { t } = useTranslation("quills");
   const arrived = useArrived(
     messages.map((message) => message.id),
@@ -65,12 +73,14 @@ export function ConversationMessages({ messages }: ConversationMessagesProps) {
                   time={message.createdAt}
                 >
                   <p className="whitespace-pre-wrap">{message.content}</p>
-                  {message.attachments.map((attachment) => (
+                  {message.attachments.map(({ fileId, name }, index) => (
                     <p
-                      key={`${message.id}:${attachment.name}`}
+                      key={fileId ?? `${message.id}:${index}`}
                       className="mt-1 text-xs opacity-80"
                     >
-                      {t("conversation.attachment", { name: attachment.name })}
+                      {fileId && renderAttachment
+                        ? renderAttachment({ fileId, name })
+                        : t("conversation.attachment", { name })}
                     </p>
                   ))}
                 </MessageBubble>

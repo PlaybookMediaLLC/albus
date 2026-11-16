@@ -137,11 +137,11 @@ const bulkUpdate = defineQuillsRoute({
       case "close":
         apply = async (c) => {
           if (c.status !== "closed") await requireClosable(db, c);
-          return setStatus(db, c, "closed");
+          return setStatus(db, c, "closed", actor);
         };
         break;
       case "reopen":
-        apply = (c) => setStatus(db, c, "open");
+        apply = (c) => setStatus(db, c, "open", actor);
         break;
       case "restore_spam":
         apply = (c) => restoreFromSpam(db, c);

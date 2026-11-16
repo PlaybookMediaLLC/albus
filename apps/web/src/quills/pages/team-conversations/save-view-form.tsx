@@ -1,8 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
-import type { PortalProblem } from "../../../core/types";
-import { PortalForm } from "../../../ui/portal-form";
-import { Field, FieldLabel, Input } from "../../../ui/upstream";
+import type { PortalProblem } from "../../core/types";
+import { PortalForm } from "../../ui/portal-form";
+import { Field, FieldLabel, Input } from "../../ui/upstream";
 
 const schema = z.object({ name: z.string().trim().min(1).max(80) });
 export type SaveViewValues = z.infer<typeof schema>;

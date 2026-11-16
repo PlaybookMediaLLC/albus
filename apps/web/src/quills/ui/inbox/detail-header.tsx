@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button, cn } from "../upstream";
 import { DetailPaneContext } from "./detail-pane-context";
 import { IconButton } from "./icon-button";
+import { ShowListButton } from "./show-list-button";
 
 export interface DetailHeaderProps {
   /** The left side, such as the customer's avatar and name. */
@@ -36,6 +37,7 @@ export function DetailHeader({
   ];
   return (
     <div className="flex min-h-14 shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-2 max-sm:px-2">
+      <ShowListButton className="hidden md:inline-flex" />
       {onBack ? (
         <Button
           variant="ghost"

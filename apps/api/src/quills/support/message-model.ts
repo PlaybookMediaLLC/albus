@@ -25,6 +25,7 @@ import { conflict, notFound } from "./conversation-model";
 
 export type MessageId = TypeId<"conversation_msg">;
 export const reactionEmojis = ["👍", "❤️", "🎉", "😄", "🤔", "👀"] as const;
+const emailAuthResults = ["pass", "fail", "none"] as const;
 
 const reactions = z.array(
   z.object({ emoji: z.string(), count: z.number(), reacted: z.boolean() }),
@@ -39,6 +40,16 @@ export const messageSchema = z.object({
   authorName: z.string().nullable(),
   content: z.string(),
   systemKind: z.string().nullable(),
+  /** The teammate who resolved or reopened, on those notices; null otherwise and on older rows. */
+  systemActorPrincipalId: z.string().nullable(),
+  /** The receiving server's SPF, DKIM and DMARC results of an inbound email; null otherwise. */
+  emailAuth: z
+    .object({
+      spf: z.enum(emailAuthResults),
+      dkim: z.enum(emailAuthResults),
+      dmarc: z.enum(emailAuthResults),
+    })
+    .nullable(),
   /** Host-page context that the widget sent with a visitor's message, such as pageUrl and browser. */
   widgetMetadata: z.record(z.string(), z.string()).nullable(),
   embeds: z.array(z.object({ kind: z.string(), id: z.string() })),
@@ -150,6 +161,8 @@ export async function toMessages(
     ...row,
     conversationId: row.conversationId!,
     systemKind: metadata?.systemEvent?.kind ?? null,
+    systemActorPrincipalId: metadata?.systemEvent?.actorPrincipalId ?? null,
+    emailAuth: metadata?.emailAuth ?? null,
     // Only string values: the column also holds other channels' structured metadata.
     widgetMetadata: metadata?.widgetMetadata
       ? Object.fromEntries(

@@ -52,11 +52,13 @@ import { ConversationRow } from "../ui/inbox/conversation-row";
 import { DateSeparator } from "../ui/inbox/date-separator";
 import { DetailHeader } from "../ui/inbox/detail-header";
 import { DetailLayout } from "../ui/inbox/detail-layout";
+import { DetailPaneContext } from "../ui/inbox/detail-pane-context";
 import { EmptySelection } from "../ui/inbox/empty-selection";
 import { FloatingActionBar } from "../ui/inbox/floating-action-bar";
 import { GroupedList } from "../ui/inbox/grouped-list";
 import { ListHeader } from "../ui/inbox/list-header";
 import { ListPane } from "../ui/inbox/list-pane";
+import { ListResizer } from "../ui/inbox/list-resizer";
 import { MessageBubble } from "../ui/inbox/message-bubble";
 import { PostStatusIcon } from "../ui/inbox/post-status-icon";
 import { PanelSection } from "../ui/inbox/panel-section";
@@ -68,6 +70,7 @@ import { RowBadge } from "../ui/inbox/row-badge";
 import { BoardDot } from "../ui/inbox/board-dot";
 import { EmojiMenu } from "../ui/inbox/emoji-menu";
 import { SearchField } from "../ui/inbox/search-field";
+import { ShowListButton } from "../ui/inbox/show-list-button";
 import { StatusTabs } from "../ui/inbox/status-tabs";
 import { SystemEvent } from "../ui/inbox/system-event";
 import { CopyField } from "../ui/copy-field";
@@ -127,6 +130,7 @@ export function KitGallery() {
   const [confirmed, setConfirmed] = useState(false);
   const [outcome, setOutcome] = useState<keyof typeof outcomes>("success");
   const [text, setText] = useState("");
+  const [listWidth, setListWidth] = useState(360);
   const [palette, setPalette] = useState(false);
   const [mode, setMode] = useState("reply");
   const [naming, setNaming] = useState(false);
@@ -745,6 +749,27 @@ export function KitGallery() {
               }
             />
             <RowBadge badge={{ id: "badge", label: demo, tone: "success" }} />
+            <DetailPaneContext.Provider
+              value={{
+                hideList: () => undefined,
+                showList: () => setVoted(!voted),
+                panel: null,
+              }}
+            >
+              <ShowListButton />
+            </DetailPaneContext.Provider>
+            <div
+              id="gallery-list"
+              className="relative h-10 w-full max-w-md rounded-lg border border-border px-3 py-2 text-sm"
+            >
+              {listWidth}
+              <ListResizer
+                label={t("inbox.resizeList")}
+                controls="gallery-list"
+                width={listWidth}
+                onResize={setListWidth}
+              />
+            </div>
             <PropertySelect
               ghost
               label={demo}

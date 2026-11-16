@@ -98,6 +98,8 @@ export const conversationItem = z.object({
   waitingSince: nullableResponseTimestamp,
   snoozedUntil: nullableResponseTimestamp,
   resolvedAt: nullableResponseTimestamp,
+  /** Set while archived: the conversation lists only in the archived view. */
+  archivedAt: nullableResponseTimestamp,
   endReason: z.string().nullable(),
   endNote: z.string().nullable(),
   spamReason: z.string().nullable(),
@@ -155,6 +157,7 @@ const columns = {
   waitingSince: conversations.waitingSince,
   snoozedUntil: conversations.snoozedUntil,
   resolvedAt: conversations.resolvedAt,
+  archivedAt: conversations.archivedAt,
   endReason: conversations.endReason,
   endNote: conversations.endNote,
   spamReason: conversations.spamReason,

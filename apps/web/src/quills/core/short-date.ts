@@ -21,6 +21,28 @@ export function shortDate(iso: string, locale: string, now = Date.now()) {
   });
 }
 
+// Largest first: the first unit that fits the age names it.
+const units = [
+  { unit: "day", size: DAY },
+  { unit: "hour", size: 3_600_000 },
+  { unit: "minute", size: 60_000 },
+] as const;
+
+/**
+ * The age of a conversation row: "now" under a minute, then "5m", "3h" and "6d", and the
+ * date of `shortDate` from seven days.
+ */
+export function compactTime(iso: string, locale: string, now = Date.now()) {
+  const age = now - Date.parse(iso);
+  if (age < 60_000 || age >= 7 * DAY) return shortDate(iso, locale, now);
+  const { unit, size } = units.find((item) => age >= item.size)!;
+  return new Intl.NumberFormat(locale, {
+    style: "unit",
+    unit,
+    unitDisplay: "narrow",
+  }).format(Math.floor(age / size));
+}
+
 // One formatter per locale: a long thread formats a time for every message on each render.
 const clockFormats = new Map<string, Intl.DateTimeFormat>();
 

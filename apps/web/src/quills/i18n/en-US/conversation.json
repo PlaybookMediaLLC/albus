@@ -12,5 +12,6 @@
 	"replyPlaceholder": "Write a reply",
 	"send": "Send reply",
 	"readOnly": "This conversation is read-only.",
-	"attachment": "Attachment: {{name}}"
+	"attachment": "Attachment: {{name}}",
+	"attachmentFailed": "The file could not be opened. Try again."
 }

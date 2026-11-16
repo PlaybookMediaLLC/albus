@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { clockTime, dayOf, shortDate } from "./short-date";
+import { clockTime, compactTime, dayOf, shortDate } from "./short-date";
 
 const at = (day: number, hour = 12, month = 10, year = 2026) =>
   new Date(year, month, day, hour).getTime();
@@ -16,6 +16,18 @@ describe("shortDate", () => {
     expect(shortDate(iso(at(31, 12, 9, 2025)), "en-US", now)).toBe(
       "Oct 31, 2025",
     );
+  });
+});
+
+describe("compactTime", () => {
+  const now = at(14);
+  it("shows now, minutes, hours and days, then the date from seven days", () => {
+    expect(compactTime(iso(now - 30_000), "en-US", now)).toBe("now");
+    expect(compactTime(iso(now - 5 * 60_000), "en-US", now)).toBe("5m");
+    expect(compactTime(iso(now - 3 * 3_600_000 - 1), "en-US", now)).toBe("3h");
+    expect(compactTime(iso(at(13, 11)), "en-US", now)).toBe("1d");
+    expect(compactTime(iso(at(8, 11)), "en-US", now)).toBe("6d");
+    expect(compactTime(iso(at(7, 12)), "en-US", now)).toBe("Nov 7");
   });
 });
 

@@ -1,8 +1,10 @@
 {
 	"addTag": "Add a tag",
+	"archive": "Archive",
 	"assign": "Assign",
 	"assignee": "Assignee: {{name}}",
 	"attachment": "Attachment: {{name}}",
+	"attachmentFailed": "The file could not be opened. Try again.",
 	"block": "Block sender",
 	"cancel": "Cancel",
 	"conversation": "Conversation",
@@ -30,14 +32,28 @@
 		"copyFailed": "The email could not be copied.",
 		"profile": "Open the customer profile"
 	},
+	"emailSecurity": {
+		"fail": "Failed",
+		"none": "No result",
+		"pass": "Passed",
+		"title": "Email security"
+	},
 	"empty": {
 		"text": "Pick a thread from the list to read it and reply.",
 		"title": "Select a conversation"
 	},
+	"events": {
+		"reopenedBy": "{{name}} reopened this conversation",
+		"reopenedByYou": "You reopened this conversation",
+		"resolvedBy": "{{name}} resolved this conversation",
+		"resolvedByYou": "You resolved this conversation"
+	},
 	"filters": {
+		"archived": "Archived",
 		"resolved": "Resolved",
 		"snoozed": "Snoozed",
-		"spam": "Spam"
+		"spam": "Spam",
+		"unread": "Unread"
 	},
 	"links": {
 		"board": "Board",
@@ -68,6 +84,7 @@
 	},
 	"loadMore": "Load more conversations",
 	"markSpam": "Mark as spam",
+	"me": "Me",
 	"more": "More actions",
 	"newMessage": {
 		"compose": "Write a message…",
@@ -83,7 +100,7 @@
 	"noMessages": "No messages yet.",
 	"noTeam": "No team",
 	"notSpam": "Not spam",
-	"note": "Note",
+	"note": "Internal note",
 	"noteLabel": "Write a note for the team…",
 	"priority": {
 		"high": "High",
@@ -135,6 +152,7 @@
 	"thread": "Messages",
 	"title": "Conversations",
 	"typing": "{{name}} is typing…",
+	"unarchive": "Unarchive",
 	"unassigned": "Unassigned",
 	"unblock": "Unblock sender",
 	"unknown": "Unknown",
@@ -148,7 +166,6 @@
 	},
 	"yes": "Yes",
 	"you": "You",
-	"youName": "{{name}} (you)",
 	"facts": {
 		"channel": "Channel",
 		"started": "Started",

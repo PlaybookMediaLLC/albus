@@ -119,6 +119,22 @@ export const [
   listQuillsWidgetConversationMessages,
   listQuillsMyConversationMessages,
 ] = both((audience) => onConversation(audience));
+export const [getQuillsWidgetConversationFile, getQuillsMyConversationFile] =
+  both((audience) =>
+    customerFixture(
+      audience,
+      (w) => ({
+        params: {
+          conversationId: w.mine.conversationId,
+          fileId: w.mine.fileId,
+        },
+      }),
+      (w) => ({
+        conversationId: w.foreign.conversationId,
+        fileId: w.foreign.fileId,
+      }),
+    ),
+  );
 export const [
   sendQuillsWidgetConversationMessage,
   sendQuillsMyConversationMessage,

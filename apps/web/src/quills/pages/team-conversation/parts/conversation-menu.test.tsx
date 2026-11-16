@@ -13,6 +13,8 @@ function renderMenu(props: Partial<ConversationMenuProps>) {
     onUnsnooze: vi.fn(),
     onSpam: vi.fn(),
     onNotSpam: vi.fn(),
+    onArchive: vi.fn(),
+    onUnarchive: vi.fn(),
     onBlock: vi.fn(),
     onUnblock: vi.fn(),
   };
@@ -20,6 +22,7 @@ function renderMenu(props: Partial<ConversationMenuProps>) {
     <ConversationMenu
       status="open"
       spam={false}
+      archived={false}
       blocked={false}
       {...handlers}
       {...props}
@@ -58,6 +61,22 @@ describe("ConversationMenu", () => {
     expect(view.queryByRole("menuitem", { name: "Snooze" })).toBeNull();
     fireEvent.click(view.getByRole("menuitem", { name: "Unblock sender" }));
     expect(handlers.onUnblock).toHaveBeenCalledTimes(1);
+  });
+
+  it("archives, and unarchives an archived conversation", async () => {
+    const { view, handlers } = renderMenu({});
+    fireEvent.click(await view.findByRole("menuitem", { name: "Archive" }));
+    expect(handlers.onArchive).toHaveBeenCalledTimes(1);
+    view.unmount();
+    const archived = renderMenu({ archived: true });
+    expect(
+      await archived.view.findByRole("menuitem", { name: "Unarchive" }),
+    ).toBeVisible();
+    expect(
+      archived.view.queryByRole("menuitem", { name: "Archive" }),
+    ).toBeNull();
+    fireEvent.click(archived.view.getByRole("menuitem", { name: "Unarchive" }));
+    expect(archived.handlers.onUnarchive).toHaveBeenCalledTimes(1);
   });
 
   it("unsnoozes a snoozed conversation", async () => {

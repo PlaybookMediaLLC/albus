@@ -7,6 +7,12 @@ const spam = fixture({
   foreign: (ids: Ids) => ({ conversationId: ids.b.spamId }),
 });
 
+const archived = fixture({
+  seed: seeded("archived"),
+  valid: (ids: Ids) => ({ params: { conversationId: ids.a.archivedId } }),
+  foreign: (ids: Ids) => ({ conversationId: ids.b.archivedId }),
+});
+
 export const setQuillsConversationStatus = onConversation(() => ({
   body: { status: "closed" },
 }));
@@ -17,6 +23,8 @@ export const endQuillsConversation = onConversation(() => ({
   body: { reason: "resolved", note: "Answered" },
 }));
 export const restoreQuillsConversationFromSpam = spam;
+export const archiveQuillsConversation = onConversation();
+export const unarchiveQuillsConversation = archived;
 export const setQuillsConversationPriority = onConversation(() => ({
   body: { priority: "high" },
 }));

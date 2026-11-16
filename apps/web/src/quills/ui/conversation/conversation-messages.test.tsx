@@ -96,4 +96,32 @@ describe("ConversationMessages", () => {
     );
     expect(view.getAllByText(/Jan [13]\b/)).toHaveLength(2);
   });
+
+  it("renders a file with an ID through renderAttachment", () => {
+    const view = renderComponent(
+      <ConversationMessages
+        messages={[
+          {
+            id: "message_test_1",
+            fromVisitor: false,
+            senderType: "agent",
+            author: { name: "Sam" },
+            content: "Here it is",
+            attachments: [
+              { fileId: "file_test_1", name: "invoice.pdf" },
+              { fileId: null, name: "old.pdf" },
+            ],
+            createdAt: "2026-01-01T00:00:00.000Z",
+          },
+        ]}
+        renderAttachment={(file) => <a href={`#${file.fileId}`}>{file.name}</a>}
+      />,
+    );
+    expect(view.getByRole("link", { name: "invoice.pdf" })).toHaveAttribute(
+      "href",
+      "#file_test_1",
+    );
+    expect(view.queryByRole("link", { name: /old/ })).toBeNull();
+    expect(view.getByText(/old\.pdf/)).toBeInTheDocument();
+  });
 });

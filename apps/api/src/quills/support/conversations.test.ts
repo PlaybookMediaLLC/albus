@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vite-plus/test";
 import { and, eq, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { toUuid } from "@kaneo/ids";
+import { createId, toUuid } from "@kaneo/ids";
 import { boards } from "../../database/quills/schema/boards";
 import {
   conversationMessages,
@@ -12,6 +12,7 @@ import {
 } from "../../database/quills/schema/conversation";
 import { conversationAttributeDefinitions } from "../../database/quills/schema/conversation-attributes";
 import { events } from "../../database/quills/schema/events";
+import { files } from "../../database/quills/schema/files";
 import { boardProjects } from "../../database/quills/schema/platform-links";
 import { postComments, posts } from "../../database/quills/schema/posts";
 import { segments, userSegments } from "../../database/quills/schema/segments";
@@ -20,6 +21,7 @@ import { teams } from "../../database/quills/schema/teams";
 import * as kaneo from "../../database/schema";
 import { startFeature } from "../feedback/harness.fixture";
 import { conversation, customer } from "./conversation-seed.fixture";
+import { insertVisitorMessage } from "./customer/model";
 
 let pool: Pool;
 vi.mock("../../database/index", () => ({
@@ -584,6 +586,221 @@ describe.skipIf(!url)("Support conversations", () => {
     expect(listed.body.items.map((item: { id: string }) => item.id)).toContain(
       junk,
     );
+  });
+
+  it("names the teammate who resolved or reopened in the notice", async () => {
+    const thread = () =>
+      world.scoped(world.a, world.users.owner, (db) =>
+        conversation(db, ids.ownerId, ids.visitor),
+      );
+    const c = (await thread()).conversationId;
+    expect(
+      (await member("POST", `/conversations/${c}/status`, { status: "closed" }))
+        .status,
+    ).toBe(200);
+    await owner("POST", `/conversations/${c}/status`, { status: "open" });
+    const bulk = (await thread()).conversationId;
+    await owner("POST", "/conversations/bulk", {
+      conversationIds: [bulk],
+      action: { type: "close" },
+    });
+    const spam = (await thread()).conversationId;
+    await owner("POST", `/conversations/${spam}/end`, { reason: "spam" });
+    const notices = async (id: string) =>
+      (await owner("GET", `/conversations/${id}/messages?limit=100`)).body.items
+        .filter((m: { senderType: string }) => m.senderType === "system")
+        .map((m: { systemKind: string; systemActorPrincipalId: string }) => [
+          m.systemKind,
+          m.systemActorPrincipalId,
+        ]);
+    expect(await notices(c)).toEqual([
+      ["chat_reopened", ids.ownerId],
+      ["chat_ended", ids.memberId],
+    ]);
+    expect(await notices(bulk)).toEqual([["chat_ended", ids.ownerId]]);
+    // Filing spam is not a resolve: its notice names nobody.
+    expect(await notices(spam)).toEqual([["chat_ended", null]]);
+  });
+
+  it("lists only conversations with customer messages the team has not read", async () => {
+    const { read, later, neverRead, who } = await world.scoped(
+      world.a,
+      world.users.owner,
+      async (db) => {
+        const who = await customer(db, `${unique("unread")}@example.test`);
+        const make = async () =>
+          (await conversation(db, ids.ownerId, who)).conversationId;
+        const neverRead = await make();
+        // The seed marks a thread read; this one the team never opened.
+        await db
+          .update(conversations)
+          .set({ agentLastReadAt: null })
+          .where(eq(conversations.id, neverRead as never));
+        return { read: await make(), later: await make(), neverRead, who };
+      },
+    );
+    for (const id of [read, later])
+      expect((await owner("POST", `/conversations/${id}/read`)).status).toBe(
+        200,
+      );
+    // A customer message after the read makes the conversation unread again.
+    await world.scoped(world.a, world.users.owner, (db) =>
+      db.insert(conversationMessages).values({
+        conversationId: later as never,
+        principalId: who as never,
+        senderType: "visitor",
+        content: "One more thing",
+        createdAt: new Date(Date.now() + 60_000),
+      }),
+    );
+    const listed = await owner(
+      "GET",
+      `/conversations?unreadOnly=true&visitorPrincipalId=${who}&limit=100`,
+    );
+    expect(listed.status).toBe(200);
+    expect(
+      listed.body.items.map((item: { id: string }) => item.id).sort(),
+    ).toEqual([later, neverRead].sort());
+    expect(
+      listed.body.items.every(
+        (item: { unreadCount: number }) => item.unreadCount > 0,
+      ),
+    ).toBe(true);
+    // A foreign workspace's conversation never lists, unread or not.
+    const scoped = await owner(
+      "GET",
+      `/conversations?unreadOnly=true&visitorPrincipalId=${foreign.visitor}&limit=100`,
+    );
+    expect(scoped.body.items).toEqual([]);
+  });
+
+  it("archives apart from the status and lists an archived thread only in the archived view", async () => {
+    const { c, who } = await world.scoped(
+      world.a,
+      world.users.owner,
+      async (db) => {
+        const who = await customer(db, `${unique("archive")}@example.test`);
+        return {
+          c: (await conversation(db, ids.ownerId, who)).conversationId,
+          who,
+        };
+      },
+    );
+    const listed = async (query: string) =>
+      (
+        await owner("GET", `/conversations?visitorPrincipalId=${who}&${query}`)
+      ).body.items.map((item: { id: string }) => item.id);
+    const counts = async () =>
+      (await owner("GET", "/reporting/team-counts")).body;
+    const before = await counts();
+    const updated = await eventCount("conversation.updated", c);
+    const archived = await owner("POST", `/conversations/${c}/archive`);
+    expect(archived.status).toBe(200);
+    expect(archived.body).toMatchObject({ status: "open", changed: true });
+    expect(archived.body.archivedAt).not.toBeNull();
+    expect(await eventCount("conversation.updated", c)).toBe(updated + 1);
+    expect(
+      (await owner("POST", `/conversations/${c}/archive`)).body.changed,
+    ).toBe(false);
+    expect(await listed("status=open")).toEqual([]);
+    expect(await listed("view=archived")).toEqual([c]);
+    const after = await counts();
+    expect(after.openConversations).toBe(before.openConversations - 1);
+    // Another workspace's thread cannot be archived through this one.
+    expect(
+      (await owner("POST", `/conversations/${foreign.conversationId}/archive`))
+        .status,
+    ).toBe(404);
+    const back = await owner("POST", `/conversations/${c}/unarchive`);
+    expect(back.body).toMatchObject({ archivedAt: null, changed: true });
+    expect(await listed("status=open")).toEqual([c]);
+    // A new customer message brings an archived thread back.
+    await owner("POST", `/conversations/${c}/archive`);
+    await world.scoped(world.a, world.users.owner, (db) =>
+      insertVisitorMessage(
+        db,
+        who as never,
+        { id: c, status: "open", endReason: null } as never,
+        createId("conversation_message") as never,
+        "Still there?",
+      ),
+    );
+    expect((await row(c))!.archivedAt).toBeNull();
+    expect(await listed("view=archived")).toEqual([]);
+  });
+
+  it("attaches only the caller's own unattached uploads to a reply, or nothing", async () => {
+    const file = (workspace: string, user: string, source = "agent") =>
+      world.scoped(workspace, user, async (db, actor) => {
+        const [row] = await db
+          .insert(files)
+          .values({
+            storageKey: `quills/file/${unique("key")}.pdf`,
+            name: "invoice.pdf",
+            contentType: "application/pdf",
+            family: "pdf",
+            size: 1200,
+            sha256: unique("sha"),
+            source,
+            uploadedById: actor.principalId,
+            previewStatus: "none",
+          })
+          .returning({ id: files.id });
+        return row!.id;
+      });
+    const c = (
+      await world.scoped(world.a, world.users.owner, (db) =>
+        conversation(db, ids.ownerId, ids.visitor),
+      )
+    ).conversationId;
+    const messages = async () =>
+      (await owner("GET", `/conversations/${c}/messages?limit=100`)).body.items
+        .length;
+    const before = await messages();
+    const others = await file(world.a, world.users.member);
+    const customerUpload = await file(world.a, world.users.owner, "portal");
+    const foreignFile = await file(world.b, world.users.outsider);
+    const mine = await file(world.a, world.users.owner);
+    for (const refused of [others, customerUpload, foreignFile])
+      expect(
+        (
+          await owner("POST", `/conversations/${c}/reply`, {
+            content: "Here it is",
+            attachmentIds: [mine, refused],
+          })
+        ).status,
+      ).toBe(404);
+    // A refused attachment rolls the whole reply back.
+    expect(await messages()).toBe(before);
+    const sent = await owner("POST", `/conversations/${c}/reply`, {
+      content: "Here it is",
+      attachmentIds: [mine],
+    });
+    expect(sent.status).toBe(200);
+    expect(sent.body.message.attachments).toEqual([
+      {
+        fileId: mine,
+        name: "invoice.pdf",
+        contentType: "application/pdf",
+        size: 1200,
+      },
+    ]);
+    // An attached file cannot ride on a second message.
+    expect(
+      (
+        await owner("POST", `/conversations/${c}/note`, {
+          content: "Again",
+          attachmentIds: [mine],
+        })
+      ).status,
+    ).toBe(404);
+    const [stored] = await world.scoped(world.a, world.users.owner, (db) =>
+      db
+        .select({ messageId: files.messageId })
+        .from(files)
+        .where(eq(files.id, mine)),
+    );
+    expect(stored!.messageId).toBe(sent.body.message.id);
   });
 
   it("lets only the author edit a message and keeps note events team-only", async () => {

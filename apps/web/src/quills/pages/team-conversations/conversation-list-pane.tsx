@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Bookmark, BookmarkPlus, SquarePen, Zap } from "lucide-react";
+import { Bookmark, BookmarkPlus, MessageSquarePlus, Zap } from "lucide-react";
 import { Fragment, type ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTeamRuntime } from "../../team/runtime";
@@ -115,17 +115,20 @@ export function ConversationListPane(props: ConversationListPaneProps) {
       filters={filters}
       actions={
         <>
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-full"
-            onClick={() =>
-              go(listHref(props.workspaceId, QUEUE, { next: "true" }))
-            }
-          >
-            <Zap aria-hidden="true" />
-            {t("team-conversations.views.queue")}
-          </Button>
+          {/* The Queue view is the queue already. */}
+          {props.context.view === "queue" ? null : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full"
+              onClick={() =>
+                go(listHref(props.workspaceId, QUEUE, { next: "true" }))
+              }
+            >
+              <Zap aria-hidden="true" />
+              {t("team-conversations.views.queue")}
+            </Button>
+          )}
           <Tooltip>
             <TooltipTrigger
               render={
@@ -144,7 +147,7 @@ export function ConversationListPane(props: ConversationListPaneProps) {
                 />
               }
             >
-              <SquarePen aria-hidden="true" />
+              <MessageSquarePlus aria-hidden="true" />
             </TooltipTrigger>
             <TooltipContent>{newMessage}</TooltipContent>
           </Tooltip>
