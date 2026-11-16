@@ -16,6 +16,8 @@ concurrency:
 
 jobs:
   moderate:
+    # Upstream's contributor moderation; skipped on this fork.
+    if: github.repository == 'usekaneo/kaneo'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
