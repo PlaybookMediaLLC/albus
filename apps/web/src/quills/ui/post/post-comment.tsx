@@ -68,7 +68,7 @@ export function PostComment({ comment, ...props }: PostCommentProps) {
         // A team reply stands out, so customers see the official answer.
         comment.author.isTeamMember &&
           !comment.deleted &&
-          "-mx-3 rounded-xl bg-primary/5 p-3 ring-1 ring-primary/15 ring-inset",
+          "-ms-3 rounded-xl bg-primary/5 p-3 ring-1 ring-primary/15 ring-inset",
       )}
     >
       <PersonAvatar
