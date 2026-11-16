@@ -79,6 +79,7 @@ describe("list filters", () => {
       { field: "waiting", value: true },
     ]);
     expect(viewRules({ view: "all", status: "spam" })).toBeNull();
+    expect(viewRules({ view: "all", status: "unread" })).toBeNull();
     expect(
       viewRules({ view: "all", status: "any", search: "refund" }),
     ).toBeNull();

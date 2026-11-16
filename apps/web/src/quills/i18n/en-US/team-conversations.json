@@ -26,7 +26,8 @@
 	"filters": {
 		"resolved": "Resolved",
 		"snoozed": "Snoozed",
-		"spam": "Spam"
+		"spam": "Spam",
+		"unread": "Unread"
 	},
 	"links": {
 		"board": "Board",

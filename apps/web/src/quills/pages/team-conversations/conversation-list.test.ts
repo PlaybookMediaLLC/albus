@@ -78,6 +78,14 @@ describe("conversation list", () => {
     });
   });
 
+  it("lists unread conversations of any status through unreadOnly", () => {
+    expect(listQuery({ view: "all", status: "unread" })).toEqual({
+      limit: "50",
+      sort: "recent",
+      unreadOnly: "true",
+    });
+  });
+
   it("lists the open conversations that wait for a team reply in the queue", () => {
     expect(listQuery({ view: "queue", status: "closed" })).toEqual({
       sort: "waiting",
