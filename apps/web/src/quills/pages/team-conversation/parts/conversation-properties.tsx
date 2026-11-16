@@ -18,7 +18,8 @@ export interface ConversationPropertiesProps {
 /**
  * The right panel (design section 2): who the customer is, the email security checks of an
  * email conversation, then the conversation's properties, its AI summary, its links, the
- * customer's details and their other conversations. The header holds the status and the assignee.
+ * customer's details and their other conversations. The header holds the status and the
+ * assignee.
  */
 export function ConversationProperties({
   workspaceId,

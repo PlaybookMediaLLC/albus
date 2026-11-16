@@ -1,7 +1,8 @@
-import { ChevronDown, CircleCheck, CircleMinus, CircleX } from "lucide-react";
+import { CircleCheck, CircleMinus, CircleX } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ListConversationMessagesResponse } from "../../../api/team/list-conversation-messages";
 import { relativeTime } from "../../../core/relative-time";
+import { PanelSection } from "../../../ui/inbox/panel-section";
 import { cn } from "../../../ui/upstream";
 
 export type EmailAuth = NonNullable<
@@ -37,8 +38,8 @@ const looks: Record<
 };
 
 /**
- * The receiving server's SPF, DKIM and DMARC results of the newest inbound mail, in the right
- * panel. The section folds; the API sends results only from a trusted receiving server.
+ * The receiving server's SPF, DKIM and DMARC results of the newest inbound mail, as a right-panel
+ * section. The API sends results only from a trusted receiving server.
  */
 export function EmailSecuritySection({
   auth,
@@ -52,18 +53,15 @@ export function EmailSecuritySection({
     ["DMARC", auth.dmarc],
   ] as const;
   return (
-    <details open className="group">
-      <summary className="flex cursor-pointer list-none items-center gap-1 rounded-md text-xs font-medium text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-        {t("team-conversations.emailSecurity.title")}
-        <ChevronDown
-          aria-hidden="true"
-          className="size-3.5 -rotate-90 transition-transform group-open:rotate-0"
-        />
-        <time dateTime={receivedAt} className="ms-auto font-normal">
+    <PanelSection
+      title={t("team-conversations.emailSecurity.title")}
+      action={
+        <time dateTime={receivedAt} className="text-xs text-muted-foreground">
           {relativeTime(receivedAt, i18n.language)}
         </time>
-      </summary>
-      <ul className="mt-2 grid grid-cols-3 divide-x divide-border rounded-full border border-border text-sm">
+      }
+    >
+      <ul className="grid grid-cols-3 divide-x divide-border rounded-full border border-border text-sm">
         {checks.map(([name, result]) => {
           const { icon: Icon, tone, key } = looks[result];
           return (
@@ -78,6 +76,6 @@ export function EmailSecuritySection({
           );
         })}
       </ul>
-    </details>
+    </PanelSection>
   );
 }
