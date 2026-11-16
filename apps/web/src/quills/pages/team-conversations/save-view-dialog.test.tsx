@@ -1,11 +1,12 @@
 import { waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vite-plus/test";
-import { createConversationViewFixture } from "../../../api/team/create-conversation-view.fixture";
-import { fill, press } from "../../../test/actions";
-import { mockApi } from "../../../test/mock-api";
-import { TeamRuntimeProvider } from "../../../team/runtime";
-import { renderComponent } from "../../../test/render";
-import type { ListContext } from "../conversation-list";
+import { createConversationViewFixture } from "../../api/team/create-conversation-view.fixture";
+import { fill, press } from "../../test/actions";
+import { useCreateConversationView } from "../../hooks/team/use-create-conversation-view";
+import { mockApi } from "../../test/mock-api";
+import { TeamRuntimeProvider } from "../../team/runtime";
+import { renderComponent } from "../../test/render";
+import type { ListContext } from "./conversation-list";
 import { SaveViewDialog } from "./save-view-dialog";
 
 const team = {
@@ -20,17 +21,25 @@ const team = {
   },
 };
 
+function Harness(props: { context: ListContext; onSaved: () => void }) {
+  const create = useCreateConversationView(team.viewer);
+  return (
+    <SaveViewDialog
+      workspaceId="workspace_test_1"
+      context={props.context}
+      open
+      onOpenChange={() => undefined}
+      onSaved={props.onSaved}
+      create={create}
+    />
+  );
+}
+
 function renderForm(context: ListContext) {
   const onSaved = vi.fn();
   const view = renderComponent(
     <TeamRuntimeProvider value={team}>
-      <SaveViewDialog
-        workspaceId="workspace_test_1"
-        context={context}
-        open
-        onOpenChange={() => undefined}
-        onSaved={onSaved}
-      />
+      <Harness context={context} onSaved={onSaved} />
     </TeamRuntimeProvider>,
   );
   return { view, onSaved };

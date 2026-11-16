@@ -3,6 +3,7 @@ import { MessagesSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchPatch } from "../../core/use-search-patch";
+import { useCreateConversationView } from "../../hooks/team/use-create-conversation-view";
 import { useListConversationViews } from "../../hooks/team/use-list-conversation-views";
 import { useListConversations } from "../../hooks/team/use-list-conversations";
 import { useListPrincipals } from "../../hooks/team/use-list-principals";
@@ -22,7 +23,7 @@ import { ConversationListPane } from "./conversation-list-pane";
 import { ConversationRows } from "./conversation-rows";
 import { listTitle } from "./list-filters";
 import { NewMessage } from "./parts/new-message";
-import { SaveViewDialog } from "./parts/save-view-dialog";
+import { SaveViewDialog } from "./save-view-dialog";
 
 export interface TeamConversationsPageProps {
   workspaceId: string;
@@ -47,6 +48,7 @@ export function TeamConversationsPage(props: TeamConversationsPageProps) {
   const [saving, setSaving] = useState(false);
   const param = { workspaceId };
   const views = useListConversationViews({ param }, team.viewer);
+  const createView = useCreateConversationView(team.viewer);
   const saved = views.data?.items.find((view) => view.id === context.savedView);
   // A saved view in the address waits for its rules, so the list loads once.
   const waiting = Boolean(context.savedView) && views.isLoading;
@@ -151,6 +153,7 @@ export function TeamConversationsPage(props: TeamConversationsPageProps) {
         context={context}
         open={saving}
         onOpenChange={setSaving}
+        create={createView}
         onSaved={(id) => {
           setSaving(false);
           void navigate({

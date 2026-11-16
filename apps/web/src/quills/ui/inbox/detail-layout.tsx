@@ -71,6 +71,7 @@ export function DetailLayout({
       <div data-slot="detail-layout" className="flex h-full min-h-0">
         {/* A hidden list comes back from ShowListButton in the DetailHeader or EmptySelection. */}
         {listOpen ? (
+          // quills-web-allow C19: the dragged list width is a runtime value; no token can hold it.
           <section
             id={listId}
             aria-label={listLabel}

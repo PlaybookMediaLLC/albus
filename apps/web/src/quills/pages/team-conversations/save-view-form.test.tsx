@@ -1,6 +1,6 @@
 import { describe } from "vite-plus/test";
-import { describeFormContract } from "../../../test/contracts";
-import { renderComponent } from "../../../test/render";
+import { describeFormContract } from "../../test/contracts";
+import { renderComponent } from "../../test/render";
 import { SaveViewForm } from "./save-view-form";
 
 describe("SaveViewForm", () => {

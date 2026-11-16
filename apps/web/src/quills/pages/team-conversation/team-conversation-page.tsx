@@ -20,13 +20,14 @@ import {
   readContext,
 } from "../team-conversations/conversation-list";
 import { ConversationListPane } from "../team-conversations/conversation-list-pane";
-import { ConversationRows } from "../team-conversations/conversation-rows";
 import { listTitle } from "../team-conversations/list-filters";
-import { SaveViewDialog } from "../team-conversations/parts/save-view-dialog";
 import { ConversationComposer } from "./parts/conversation-composer";
 import { ConversationHeader } from "./parts/conversation-header";
+import { emailSecurityOf } from "./email-security";
+import { ConversationListRows } from "./parts/conversation-list-rows";
 import { ConversationProperties } from "./parts/conversation-properties";
 import { MessageList } from "./parts/message-list";
+import { SaveCurrentView } from "./parts/save-current-view";
 
 export interface TeamConversationPageProps {
   workspaceId: string;
@@ -68,12 +69,10 @@ export function TeamConversationPage(props: TeamConversationPageProps) {
     { param: { workspaceId }, query: { limit: "100" } },
     team.viewer,
   );
-  const { mutate: markRead } = useMarkConversationRead(team.viewer);
   const people = principals.data?.items ?? [];
   const items = list.data?.pages.flatMap((page) => page.items) ?? [];
   const data = conversation.data;
-  // Newest first: the newest inbound mail with checks.
-  const checked = messages.data?.items.find((message) => message.emailAuth);
+  const { mutate: markRead } = useMarkConversationRead(team.viewer);
 
   // An open conversation is read: one request each time it gets unread messages.
   // The read route needs the update permission.
@@ -121,30 +120,16 @@ export function TeamConversationPage(props: TeamConversationPageProps) {
               team.permissions.create ? () => setSaving(true) : undefined
             }
           >
-            {/* The main pane shows a failure, so the list shows one only when the conversation loads. */}
-            <TeamStateView
+            <ConversationListRows
+              workspaceId={workspaceId}
+              context={context}
+              list={list}
               loading={waiting || list.isLoading}
-              problem={problem ? null : (list.error ?? null)}
-              empty={!items.length}
-              onRetry={() => void list.refetch()}
-            >
-              <ConversationRows
-                workspaceId={workspaceId}
-                context={context}
-                items={items}
-                people={people}
-                activeId={conversationId}
-                onOpen={go}
-                more={
-                  list.hasNextPage
-                    ? {
-                        loading: list.isFetchingNextPage,
-                        load: () => void list.fetchNextPage(),
-                      }
-                    : undefined
-                }
-              />
-            </TeamStateView>
+              quiet={Boolean(problem)}
+              people={people}
+              activeId={conversationId}
+              onOpen={go}
+            />
           </ConversationListPane>
         }
         propertiesLabel={t("team-conversations.properties.panel")}
@@ -154,11 +139,7 @@ export function TeamConversationPage(props: TeamConversationPageProps) {
               key={conversationId}
               workspaceId={workspaceId}
               conversation={data}
-              emailSecurity={
-                checked?.emailAuth
-                  ? { auth: checked.emailAuth, receivedAt: checked.createdAt }
-                  : null
-              }
+              emailSecurity={emailSecurityOf(messages.data?.items)}
             />
           ) : null
         }
@@ -204,20 +185,12 @@ export function TeamConversationPage(props: TeamConversationPageProps) {
           />
         ) : null}
       </DetailLayout>
-      <SaveViewDialog
+      <SaveCurrentView
         workspaceId={workspaceId}
+        conversationId={conversationId}
         context={context}
         open={saving}
         onOpenChange={setSaving}
-        onSaved={(id) => {
-          setSaving(false);
-          void navigate({
-            href: conversationHref(workspaceId, conversationId, {
-              ...context,
-              savedView: id,
-            }),
-          });
-        }}
       />
     </PageFrame>
   );

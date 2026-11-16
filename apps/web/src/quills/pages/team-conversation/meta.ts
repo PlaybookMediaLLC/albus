@@ -13,6 +13,7 @@ export const meta = {
     "listQuillsConversations",
     "listQuillsPrincipals",
     "listQuillsConversationViews",
+    "createQuillsConversationView",
     "markQuillsConversationRead",
     "setQuillsConversationStatus",
     "assignQuillsConversation",
