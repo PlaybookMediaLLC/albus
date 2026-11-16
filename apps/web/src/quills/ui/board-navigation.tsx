@@ -78,7 +78,8 @@ export function BoardNavigation({
               <li key={option.value}>
                 <button
                   type="button"
-                  className={item}
+                  // Links get the portal shell's focus outline; a button draws its own ring.
+                  className={`${item} outline-none focus-visible:ring-2 focus-visible:ring-ring`}
                   aria-pressed={option.value === stage}
                   onClick={() =>
                     onStageChange(option.value === stage ? "" : option.value)

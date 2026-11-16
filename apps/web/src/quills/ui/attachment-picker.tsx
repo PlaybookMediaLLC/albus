@@ -51,7 +51,7 @@ export function AttachmentPicker(props: AttachmentPickerProps) {
     <div className="portal-attachments flex min-w-0 flex-wrap items-center gap-1.5">
       <label
         title={t("feedback.attachHint")}
-        className="flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors focus-within:ring-2 focus-within:ring-ring hover:bg-muted hover:text-foreground has-disabled:pointer-events-none has-disabled:opacity-50"
+        className="relative flex size-7 cursor-pointer touch-hitbox items-center justify-center rounded-md text-muted-foreground transition-colors focus-within:ring-2 focus-within:ring-ring hover:bg-muted hover:text-foreground has-disabled:pointer-events-none has-disabled:opacity-50"
       >
         <IconPaperclipOutline18 aria-hidden="true" className="size-4" />
         <input
@@ -82,7 +82,7 @@ export function AttachmentPicker(props: AttachmentPickerProps) {
             type="button"
             disabled={props.disabled}
             aria-label={t("feedback.removeFile", { name: chip.name })}
-            className="grid size-6 place-items-center rounded text-muted-foreground hover:text-foreground"
+            className="relative grid size-6 touch-hitbox place-items-center rounded text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring hover:text-foreground"
             onClick={() => {
               setTooMany(false);
               chip.remove();

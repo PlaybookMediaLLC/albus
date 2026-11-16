@@ -45,8 +45,9 @@ export interface PostCommentProps {
   children?: ReactNode;
 }
 
+// A small text action: the touch hitbox gives it a 44 px target on touch screens.
 const action =
-  "text-xs text-muted-foreground transition-colors hover:text-foreground";
+  "relative touch-hitbox rounded-sm text-xs text-muted-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring hover:text-foreground";
 /** The style of a comment's text, for a `body` that replaces it. */
 export const commentText =
   "mt-1 text-sm leading-relaxed [&>*+*]:mt-2 [&_p]:whitespace-pre-line";
