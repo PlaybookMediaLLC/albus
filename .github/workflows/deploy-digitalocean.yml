@@ -1,9 +1,8 @@
 name: Deploy DigitalOcean
 
 on:
+  # CI starts this for each push to main, after its gate passes.
   workflow_dispatch:
-  # CI calls this for each push to main, after its gate passes.
-  workflow_call:
 
 permissions:
   contents: read

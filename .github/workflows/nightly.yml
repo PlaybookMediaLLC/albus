@@ -195,8 +195,7 @@ jobs:
       contents: read
       pull-requests: read
       security-events: write
-      packages: write
-      id-token: write
+      actions: write
 
     uses: ./.github/workflows/ci.yml # zizmor: ignore[self-repository] $/-syntax not parsed by pinned actionlint v1.7.12; revisit when supported
 
