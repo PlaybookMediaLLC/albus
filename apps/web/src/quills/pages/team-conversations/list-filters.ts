@@ -144,13 +144,11 @@ export function viewRules(context: ListContext): Rules | null {
     ];
   const rules: Rules = [];
   if (context.view === "mine") rules.push({ field: "assignee", value: "me" });
-  if (context.status === "unread")
-    return [...rules, { field: "unread", value: true }];
-  if (context.status === "archived")
-    return [...rules, { field: "archived", value: true }];
   if (context.view === "unassigned")
     rules.push({ field: "assignee", value: "unassigned" });
-  if (context.status !== "any")
+  if (context.status === "unread" || context.status === "archived")
+    rules.push({ field: context.status, value: true });
+  else if (context.status !== "any")
     rules.push({ field: "status", value: context.status });
   return rules;
 }
