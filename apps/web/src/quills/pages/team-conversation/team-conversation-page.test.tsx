@@ -123,6 +123,7 @@ describe("TeamConversationPage", () => {
                 authorName: null,
                 content: "The export button does nothing.",
                 systemKind: null,
+                widgetMetadata: null,
                 embeds: [],
                 attachments: [],
                 reactions: [],

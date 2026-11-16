@@ -12,6 +12,7 @@ export const addConversationNoteFixture = {
           authorName: null,
           content: "value",
           systemKind: null,
+          widgetMetadata: null,
           embeds: [],
           attachments: [],
           reactions: [],

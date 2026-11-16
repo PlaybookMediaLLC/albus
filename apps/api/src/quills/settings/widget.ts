@@ -236,7 +236,7 @@ const randomHex = (bytes: number) =>
   Array.from(crypto.getRandomValues(new Uint8Array(bytes)), (b) =>
     b.toString(16).padStart(2, "0"),
   ).join("");
-const newSecret = () => `wgt_${randomHex(32)}`;
+export const newSecret = () => `wgt_${randomHex(32)}`;
 const secretResponse = z.object({ secret: z.string().nullable() });
 
 async function lockedSettings(db: Db) {

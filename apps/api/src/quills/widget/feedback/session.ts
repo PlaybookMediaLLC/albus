@@ -1,3 +1,4 @@
+import { eq, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { apiRouter, z } from "../../../openapi";
 import {
@@ -7,6 +8,7 @@ import {
 } from "../../../database/quills/schema/auth";
 import { mintWidgetSession, widgetEnabled } from "../../framework/audience";
 import { defineQuillsRoute } from "../../framework/define-route";
+import { newSecret } from "../../settings/widget";
 
 // An anonymous widget visitor (packages/widget RFC 0001): an unguessable server-issued session
 // for a new anonymous principal. The session is an identity for reading and an author for
@@ -20,12 +22,12 @@ const anonymousSession = defineQuillsRoute({
   operationId: "createQuillsWidgetAnonymousSession",
   summary: "Start an anonymous widget session",
   description:
-    "Needs the widget on and a widget secret. Each call creates a new anonymous person. Identify with this token as previousToken (and as the Bearer token) moves its activity to the identified person.",
+    "Needs the widget on; creates the widget secret when it is missing. Each call creates a new anonymous person. Identify with this token as previousToken (and as the Bearer token) moves its activity to the identified person.",
   action: "create",
   rateLimit: { limit: 10, windowSeconds: 3600 },
   response: z.object({ sessionToken: z.string(), principalId: z.string() }),
   responseDescription: "The anonymous widget session",
-  errors: { 404: "Widget off or without a secret" },
+  errors: { 404: "Widget off" },
   allowKeys: ["sessionToken"],
   event: (_input, result) => ({
     type: "user.created",
@@ -36,13 +38,27 @@ const anonymousSession = defineQuillsRoute({
   handler: async ({ db }) => {
     const [config] = await db
       .select({
+        id: settings.id,
         widgetConfig: settings.widgetConfig,
         widgetSecret: settings.widgetSecret,
       })
       .from(settings)
       .limit(1);
-    if (!config?.widgetSecret || !widgetEnabled(config.widgetConfig))
+    if (!config || !widgetEnabled(config.widgetConfig))
       throw new HTTPException(404, { message: "Workspace not found" });
+    // A widget turned on before enabling created the secret has none: create it once. coalesce keeps
+    // the secret of a concurrent request, so both sessions bind to the same one.
+    const secret =
+      config.widgetSecret ??
+      (
+        await db
+          .update(settings)
+          .set({
+            widgetSecret: sql`coalesce(${settings.widgetSecret}, ${newSecret()})`,
+          })
+          .where(eq(settings.id, config.id))
+          .returning({ secret: settings.widgetSecret })
+      )[0]!.secret!;
     const [identity] = await db
       .insert(customer)
       .values({ name: "Anonymous", isAnonymous: true })
@@ -59,7 +75,7 @@ const anonymousSession = defineQuillsRoute({
     const session = await mintWidgetSession(
       db,
       { principalId: person!.id, customerId: identity!.id },
-      config.widgetSecret,
+      secret,
     );
     return { sessionToken: session.token, principalId: person!.id };
   },

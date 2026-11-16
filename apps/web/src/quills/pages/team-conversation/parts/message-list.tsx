@@ -17,6 +17,7 @@ import { DateSeparator } from "../../../ui/inbox/date-separator";
 import { MessageBubble } from "../../../ui/inbox/message-bubble";
 import { SystemEvent } from "../../../ui/inbox/system-event";
 import { arrivedClass, useArrived } from "../../../ui/inbox/use-arrived";
+import { PageContext } from "../../../ui/page-context";
 import { cn } from "../../../ui/upstream";
 import type { Teammate } from "../../team-conversations/conversation-list";
 
@@ -135,6 +136,12 @@ export function MessageList(props: MessageListProps) {
                     {t("team-conversations.attachment", { name: file.name })}
                   </p>
                 ))}
+                {message.senderType === "visitor" ? (
+                  <PageContext
+                    context={message.widgetMetadata}
+                    className="mt-1 opacity-80"
+                  />
+                ) : null}
               </MessageBubble>
             )}
           </li>

@@ -20484,7 +20484,7 @@
           "Quills"
         ],
         "summary": "Start an anonymous widget session",
-        "description": "Needs the widget on and a widget secret. Each call creates a new anonymous person. Identify with this token as previousToken (and as the Bearer token) moves its activity to the identified person.",
+        "description": "Needs the widget on; creates the widget secret when it is missing. Each call creates a new anonymous person. Identify with this token as previousToken (and as the Bearer token) moves its activity to the identified person.",
         "security": [],
         "parameters": [
           {
@@ -20524,7 +20524,7 @@
             }
           },
           "404": {
-            "description": "Widget off or without a secret; Workspace not found or archived",
+            "description": "Widget off; Workspace not found or archived",
             "content": {
               "application/json": {
                 "schema": {
@@ -109571,6 +109571,15 @@
                             "null"
                           ]
                         },
+                        "widgetMetadata": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
                         "embeds": {
                           "type": "array",
                           "items": {
@@ -109668,6 +109677,7 @@
                         "authorName",
                         "content",
                         "systemKind",
+                        "widgetMetadata",
                         "embeds",
                         "attachments",
                         "reactions",
@@ -110459,6 +110469,15 @@
                               "null"
                             ]
                           },
+                          "widgetMetadata": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          },
                           "embeds": {
                             "type": "array",
                             "items": {
@@ -110556,6 +110575,7 @@
                           "authorName",
                           "content",
                           "systemKind",
+                          "widgetMetadata",
                           "embeds",
                           "attachments",
                           "reactions",
@@ -110726,6 +110746,15 @@
                             "null"
                           ]
                         },
+                        "widgetMetadata": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
                         "embeds": {
                           "type": "array",
                           "items": {
@@ -110823,6 +110852,7 @@
                         "authorName",
                         "content",
                         "systemKind",
+                        "widgetMetadata",
                         "embeds",
                         "attachments",
                         "reactions",
@@ -111192,6 +111222,15 @@
                             "null"
                           ]
                         },
+                        "widgetMetadata": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
                         "embeds": {
                           "type": "array",
                           "items": {
@@ -111289,6 +111328,7 @@
                         "authorName",
                         "content",
                         "systemKind",
+                        "widgetMetadata",
                         "embeds",
                         "attachments",
                         "reactions",
@@ -111575,6 +111615,15 @@
                         "null"
                       ]
                     },
+                    "widgetMetadata": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
                     "embeds": {
                       "type": "array",
                       "items": {
@@ -111672,6 +111721,7 @@
                     "authorName",
                     "content",
                     "systemKind",
+                    "widgetMetadata",
                     "embeds",
                     "attachments",
                     "reactions",
