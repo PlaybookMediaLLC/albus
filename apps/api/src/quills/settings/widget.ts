@@ -6,6 +6,7 @@ import {
   type BaseVariables,
 } from "../../openapi";
 import { settings } from "../../database/quills/schema/auth";
+import { widgetEnabled } from "../framework/audience";
 import { kvStore } from "../../database/quills/schema/kv";
 import {
   defineQuillsRoute,
@@ -112,7 +113,7 @@ export function readConfig(row: SettingsRow) {
   const storedHome = record(stored.home);
   const gradient = record(storedHome.gradient);
   return {
-    enabled: bool(stored.enabled, false),
+    enabled: widgetEnabled(row.widgetConfig),
     defaultBoard: str(stored.defaultBoard) ?? null,
     position: str(stored.position) ?? "bottom-right",
     launcherGreeting: str(stored.launcherGreeting) ?? "",
@@ -189,7 +190,7 @@ const area = settingsArea({
   apply: (row, patch) => {
     const stored = parseJson(row.widgetConfig);
     const storedHome = record(stored.home);
-    const enabled = patch.enabled ?? bool(stored.enabled, false);
+    const enabled = patch.enabled ?? widgetEnabled(row.widgetConfig);
     return {
       // Anonymous widget sessions are bound to the secret: an enabled widget without one serves no visitor.
       ...(enabled && !row.widgetSecret && { widgetSecret: newSecret() }),

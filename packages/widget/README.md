@@ -162,7 +162,7 @@ Quills.open({ articleId: 'article_01h...' }) // help article TypeID or slug
 
 `postId` and `articleId` win over `view` if both are set. `board` on `open` only applies to `view: 'new-post'`. Home / Popular Ideas filtering uses `init({ defaultBoard })` or the iframe `?board=` param.
 
-Every `open` field is live. A disabled surface or an unseen board fails closed — the panel still opens, but the widget does not invent access. The widget shows only the tabs that the workspace turned on, and a request for another tab opens the first tab that is on. While the workspace has the widget off, or the workspace does not exist, the SDK shows no launcher, and `open()` shows that the widget is unavailable.
+Every `open` field is live. A disabled surface or an unseen board fails closed — the panel still opens, but the widget does not invent access. The widget shows only the tabs that the workspace turned on, and a request for another tab opens the first tab that is on. A workspace has the widget on until a teammate turns it off. While the workspace has the widget off, or the workspace does not exist, the SDK shows no launcher, and `open()` shows that the widget is unavailable.
 
 ### Events
 

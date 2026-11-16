@@ -19,6 +19,7 @@ import {
   startContract,
   stopContract,
 } from "./contract";
+import { widgetEnabled } from "./audience";
 
 let pool: Pool;
 vi.mock("../../database/index", () => ({
@@ -95,6 +96,17 @@ async function teammate(method: string, path: string, body?: unknown) {
     throw new Error(`${path}: ${res.status} ${JSON.stringify(json)}`);
   return json;
 }
+
+describe("widgetEnabled", () => {
+  it("is on unless the workspace turned it off, and fails closed on unreadable JSON", () => {
+    expect(widgetEnabled(null)).toBe(true);
+    expect(widgetEnabled("{}")).toBe(true);
+    expect(widgetEnabled('{"position":"bottom-left"}')).toBe(true);
+    expect(widgetEnabled('{"enabled":true}')).toBe(true);
+    expect(widgetEnabled('{"enabled":false}')).toBe(false);
+    expect(widgetEnabled("{not json")).toBe(false);
+  });
+});
 
 describe.skipIf(!url)("Quills audiences", () => {
   beforeAll(async () => {

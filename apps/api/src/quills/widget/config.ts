@@ -1,5 +1,6 @@
 import { apiRouter, z } from "../../openapi";
 import { settings } from "../../database/quills/schema/auth";
+import { widgetEnabled } from "../framework/audience";
 import { defineQuillsRoute } from "../framework/define-route";
 import { bool, parseJson, record, str } from "../settings/area";
 import { widgetTabs } from "../settings/widget-tabs";
@@ -58,8 +59,9 @@ const widgetConfig = defineQuillsRoute({
       })
       .from(settings)
       .limit(1);
+    if (!widgetEnabled(row?.widgetConfig ?? null))
+      return { enabled: false, config: null };
     const stored = parseJson(row?.widgetConfig ?? null);
-    if (stored.enabled !== true) return { enabled: false, config: null };
     const branding = parseJson(row?.brandingConfig ?? null);
     const mode = branding.themeMode;
     return {

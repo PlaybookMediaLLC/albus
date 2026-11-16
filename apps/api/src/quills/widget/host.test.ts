@@ -415,6 +415,31 @@ describe.skipIf(!url)("widget adapter against the real API", () => {
       `/quills-public/${env.b}`,
       (path: string, init: RequestInit) => app.request(path, init),
     );
+    // B turned the widget off: no session there.
+    await env.scoped(env.b, (db) =>
+      db
+        .update(settings)
+        .set({ widgetConfig: JSON.stringify({ enabled: false }) }),
+    );
     await expect(other.mintAnonymous()).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("serves a workspace that never set the widget: it is on by default", async () => {
+    const env = contractEnv();
+    const { createApi } = await adapter("api");
+    const { loadConversations } = await adapter("load");
+    await env.scoped(env.b, (db) =>
+      db.update(settings).set({ widgetConfig: null, widgetSecret: null }),
+    );
+    const config = await app.request(
+      `/quills-public/${env.b}/widget/config.json`,
+    );
+    expect((await config.json()).enabled).toBe(true);
+    const api = createApi(
+      `/quills-public/${env.b}`,
+      (path: string, init: RequestInit) => app.request(path, init),
+    );
+    api.setToken(await api.mintAnonymous());
+    expect(await loadConversations(api)).toEqual([]);
   });
 });

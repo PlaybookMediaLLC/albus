@@ -110,16 +110,25 @@ describe.skipIf(!url)("Quills settings", () => {
       expect((await call(method, path, member)).status).toBe(403);
   });
 
-  it("creates a missing secret when the widget is turned on, and keeps it out of the audit", async () => {
+  it("defaults the widget to on, creates a missing secret when it is on, and keeps it out of the audit", async () => {
     const env = contractEnv();
     const secretOf = async () =>
       JSON.parse((await call("GET", "/settings/widget/secret")).text).secret as
         | string
         | null;
-    await env.scoped(env.a, (db) =>
-      db.update(settings).set({ widgetSecret: null, widgetConfig: null }),
-    );
-    // A save while the widget is off creates nothing; a member cannot turn it on.
+    const reset = (widgetConfig: string | null) =>
+      env.scoped(env.a, (db) =>
+        db.update(settings).set({ widgetSecret: null, widgetConfig }),
+      );
+    // A workspace that never set the widget has it on, and its first save creates the secret.
+    await reset(null);
+    const fresh = JSON.parse((await call("GET", "/settings/widget")).text);
+    expect(fresh.enabled).toBe(true);
+    await call("PUT", "/settings/widget", undefined, { launcherLabel: "Hi" });
+    expect(await secretOf()).toMatch(/^wgt_[0-9a-f]{64}$/);
+
+    // A save while the widget is turned off creates nothing; a member cannot turn it on.
+    await reset(JSON.stringify({ enabled: false }));
     const off = { launcherLabel: "Help" };
     expect((await call("PUT", "/settings/widget", undefined, off)).status).toBe(
       200,
