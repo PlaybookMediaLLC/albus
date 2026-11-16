@@ -65,8 +65,8 @@ Merged: 6. `listQuillsConversationsIndex` (v1, shape) + `listQuillsConversations
 | operationId | Route | Action | Tables | Event | Tests |
 |---|---|---|---|---|---|
 | `listQuillsConversationMessages` | `GET /conversations/{conversationId}/messages` (`includeInternal`, `before`; `limit` ≤ 100) | read | `conversation_messages`, reactions, flags, `principal` | - | contract, read-leak |
-| `replyQuillsConversation` | `POST /conversations/{conversationId}/reply` | update | `conversation_messages`, `conversations` | `message.created` | contract, rollback |
-| `addQuillsConversationNote` | `POST /conversations/{conversationId}/note` (`mentionPrincipalIds` ≤ 20, current members) | create | `conversation_messages`, `conversation_message_mentions`, `conversations` | `message.note_created` | contract, rollback |
+| `replyQuillsConversation` | `POST /conversations/{conversationId}/reply` (`attachmentIds` ≤ 10: the caller's unattached teammate uploads) | update | `conversation_messages`, `conversations`, `files` | `message.created` | contract, rollback |
+| `addQuillsConversationNote` | `POST /conversations/{conversationId}/note` (`mentionPrincipalIds` ≤ 20, current members; `attachmentIds` as for a reply) | create | `conversation_messages`, `conversation_message_mentions`, `conversations`, `files` | `message.note_created` | contract, rollback |
 | `updateQuillsConversationMessage` | `PATCH /conversation-messages/{messageId}` (the caller's own agent message) | update | `conversation_messages`, `conversations` | `message.updated`, `message.note_updated` | contract, rollback |
 | `deleteQuillsConversationMessage` | `DELETE /conversation-messages/{messageId}` (soft delete) | delete | `conversation_messages` | `message.deleted`, `message.note_deleted` | contract, rollback |
 | `setQuillsMessageReaction`, `removeQuillsMessageReaction` | `PUT` and `DELETE /conversation-messages/{messageId}/reactions?emoji=` | update | `conversation_message_reactions` | `message.reacted`, `message.unreacted` | contract, rollback |

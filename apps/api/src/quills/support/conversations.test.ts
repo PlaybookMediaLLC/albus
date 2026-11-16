@@ -12,6 +12,7 @@ import {
 } from "../../database/quills/schema/conversation";
 import { conversationAttributeDefinitions } from "../../database/quills/schema/conversation-attributes";
 import { events } from "../../database/quills/schema/events";
+import { files } from "../../database/quills/schema/files";
 import { boardProjects } from "../../database/quills/schema/platform-links";
 import { postComments, posts } from "../../database/quills/schema/posts";
 import { segments, userSegments } from "../../database/quills/schema/segments";
@@ -726,6 +727,80 @@ describe.skipIf(!url)("Support conversations", () => {
     );
     expect((await row(c))!.archivedAt).toBeNull();
     expect(await listed("view=archived")).toEqual([]);
+  });
+
+  it("attaches only the caller's own unattached uploads to a reply, or nothing", async () => {
+    const file = (workspace: string, user: string, source = "agent") =>
+      world.scoped(workspace, user, async (db, actor) => {
+        const [row] = await db
+          .insert(files)
+          .values({
+            storageKey: `quills/file/${unique("key")}.pdf`,
+            name: "invoice.pdf",
+            contentType: "application/pdf",
+            family: "pdf",
+            size: 1200,
+            sha256: unique("sha"),
+            source,
+            uploadedById: actor.principalId,
+            previewStatus: "none",
+          })
+          .returning({ id: files.id });
+        return row!.id;
+      });
+    const c = (
+      await world.scoped(world.a, world.users.owner, (db) =>
+        conversation(db, ids.ownerId, ids.visitor),
+      )
+    ).conversationId;
+    const messages = async () =>
+      (await owner("GET", `/conversations/${c}/messages?limit=100`)).body.items
+        .length;
+    const before = await messages();
+    const others = await file(world.a, world.users.member);
+    const customerUpload = await file(world.a, world.users.owner, "portal");
+    const foreignFile = await file(world.b, world.users.outsider);
+    const mine = await file(world.a, world.users.owner);
+    for (const refused of [others, customerUpload, foreignFile])
+      expect(
+        (
+          await owner("POST", `/conversations/${c}/reply`, {
+            content: "Here it is",
+            attachmentIds: [mine, refused],
+          })
+        ).status,
+      ).toBe(404);
+    // A refused attachment rolls the whole reply back.
+    expect(await messages()).toBe(before);
+    const sent = await owner("POST", `/conversations/${c}/reply`, {
+      content: "Here it is",
+      attachmentIds: [mine],
+    });
+    expect(sent.status).toBe(200);
+    expect(sent.body.message.attachments).toEqual([
+      {
+        fileId: mine,
+        name: "invoice.pdf",
+        contentType: "application/pdf",
+        size: 1200,
+      },
+    ]);
+    // An attached file cannot ride on a second message.
+    expect(
+      (
+        await owner("POST", `/conversations/${c}/note`, {
+          content: "Again",
+          attachmentIds: [mine],
+        })
+      ).status,
+    ).toBe(404);
+    const [stored] = await world.scoped(world.a, world.users.owner, (db) =>
+      db
+        .select({ messageId: files.messageId })
+        .from(files)
+        .where(eq(files.id, mine)),
+    );
+    expect(stored!.messageId).toBe(sent.body.message.id);
   });
 
   it("lets only the author edit a message and keeps note events team-only", async () => {

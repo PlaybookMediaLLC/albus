@@ -110510,7 +110510,7 @@
           "Quills"
         ],
         "summary": "Reply to the customer",
-        "description": "Plain text. Reopens a closed conversation and assigns an unassigned one to the caller. The reply reaches the customer through the delivery worker, never in the request.",
+        "description": "Plain text, with up to 10 of the caller's registered uploads (createQuillsFiles) as attachments. Reopens a closed conversation and assigns an unassigned one to the caller. The reply reaches the customer through the delivery worker, never in the request.",
         "parameters": [
           {
             "schema": {
@@ -110541,6 +110541,14 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 10000
+                  },
+                  "attachmentIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "maxItems": 10,
+                    "default": []
                   }
                 },
                 "required": [
@@ -111021,7 +111029,7 @@
           "Quills"
         ],
         "summary": "Add an internal note",
-        "description": "Team-only: never sent to the customer and never changes the customer-facing preview. Each mentioned principal must be a teammate of a current workspace member.",
+        "description": "Team-only: never sent to the customer and never changes the customer-facing preview. Each mentioned principal must be a teammate of a current workspace member. Up to 10 of the caller's registered uploads can ride along as attachments.",
         "parameters": [
           {
             "schema": {
@@ -111052,6 +111060,14 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 10000
+                  },
+                  "attachmentIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "maxItems": 10,
+                    "default": []
                   },
                   "mentionPrincipalIds": {
                     "type": "array",

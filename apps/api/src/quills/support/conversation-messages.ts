@@ -33,6 +33,7 @@ import {
   type ConversationId,
 } from "./conversation-model";
 import { insertReply } from "./conversation-ops";
+import { attachmentIds, attachMessageFiles } from "./message-attachments";
 import {
   findContentMessage,
   findMessage,
@@ -116,10 +117,10 @@ const reply = defineQuillsRoute({
   operationId: "replyQuillsConversation",
   summary: "Reply to the customer",
   description:
-    "Plain text. Reopens a closed conversation and assigns an unassigned one to the caller. The reply reaches the customer through the delivery worker, never in the request.",
+    "Plain text, with up to 10 of the caller's registered uploads (createQuillsFiles) as attachments. Reopens a closed conversation and assigns an unassigned one to the caller. The reply reaches the customer through the delivery worker, never in the request.",
   action: "update",
   params: conversationParams,
-  body: z.object({ content: messageText }),
+  body: z.object({ content: messageText, attachmentIds }),
   response: z.object({
     message: messageSchema,
     conversation: conversationItem,
@@ -139,6 +140,7 @@ const reply = defineQuillsRoute({
       true,
     );
     const id = await insertReply(db, actor, conversation, body.content);
+    await attachMessageFiles(db, actor, id, body.attachmentIds);
     return {
       message: await loadMessage(db, actor, id),
       conversation: await loadConversation(db, conversation.id),
@@ -152,11 +154,12 @@ const note = defineQuillsRoute({
   operationId: "addQuillsConversationNote",
   summary: "Add an internal note",
   description:
-    "Team-only: never sent to the customer and never changes the customer-facing preview. Each mentioned principal must be a teammate of a current workspace member.",
+    "Team-only: never sent to the customer and never changes the customer-facing preview. Each mentioned principal must be a teammate of a current workspace member. Up to 10 of the caller's registered uploads can ride along as attachments.",
   action: "create",
   params: conversationParams,
   body: z.object({
     content: messageText,
+    attachmentIds,
     mentionPrincipalIds: z
       .array(flexibleToTypeIdSchema("principal"))
       .max(20)
@@ -202,6 +205,7 @@ const note = defineQuillsRoute({
         id: conversationMessages.id,
         createdAt: conversationMessages.createdAt,
       });
+    await attachMessageFiles(db, actor, message!.id, body.attachmentIds);
     if (mentioned.length)
       await db.insert(conversationMessageMentions).values(
         mentioned.map((teammate) => ({
