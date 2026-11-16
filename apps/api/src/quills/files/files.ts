@@ -126,7 +126,7 @@ const createFile = defineQuillsRoute({
   operationId: "createQuillsFiles",
   summary: "Register an uploaded file",
   description:
-    "Verifies an object uploaded with a URL from POST /files/uploads or POST /files/settings-uploads (assistant avatar) and registers it in the workspace's files.",
+    "Verifies an object uploaded with a URL from POST /files/uploads or POST /files/settings-uploads (assistant avatar) and registers it in the workspace's files. A file of the `file` purpose that no reply or note attaches within a day is removed.",
   action: "create",
   body: fileBody,
   response: registeredFile,

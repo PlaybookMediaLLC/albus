@@ -41,7 +41,7 @@ Completion checks:             authenticated endpoint, tenant/object access, mut
 | `checkQuillsS3Configured` | `GET /storage` | read | - | - | contract |
 | `createQuillsUpload` | `POST /files/uploads` (purpose `file`, `post_image`, `changelog_image`) | create | - (signs a URL) | none | contract, storage-lifecycle |
 | `createQuillsSettingsUpload` | `POST /files/settings-uploads` (purpose `logo`, `favicon`, `header_logo`, `assistant_avatar`) | manage_settings | - (signs a URL) | none | contract, storage-lifecycle |
-| `createQuillsFiles` | `POST /files` (registers an upload of purpose `file`, `post_image`, `changelog_image`, `assistant_avatar`; idempotent per key) | create | `files` | `file.created` (new file only) | contract, rollback, storage-lifecycle |
+| `createQuillsFiles` | `POST /files` (registers an upload of purpose `file`, `post_image`, `changelog_image`, `assistant_avatar`; idempotent per key; a `file` that no reply or note attaches within a day is swept) | create | `files` | `file.created` (new file only) | contract, rollback, storage-lifecycle |
 | `getQuillsFile` | `GET /files/{fileId}` (metadata and a short-lived download URL) | read | `files` | - | contract, two-workspace |
 | `createQuillsFilesOpened` | `POST /files/{fileId}/opened` | read | `files` (`open_count`) | none (usage counter) | contract, two-workspace |
 
