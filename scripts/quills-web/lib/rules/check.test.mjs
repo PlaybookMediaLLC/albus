@@ -114,6 +114,11 @@ const fixtures = [
     "quills/ui/not-in-gallery.tsx",
     `export interface NotInGalleryProps {} export function NotInGallery() { return <div/>; }`,
   ],
+  [
+    "C24",
+    "quills/ui/px-text.tsx",
+    `export function PxText() { return <p className="!text-[11px] bg-blue-600 prose before:hidden"/>; }`,
+  ],
 ];
 
 async function write(file, text) {
@@ -317,6 +322,10 @@ export function TeamReadyPage() { const items = useTeamItems(); return <PageFram
     `${team}/ready/index.test.tsx`,
     'import { Route } from "./index"; export const route = Route;',
   );
+  await write(
+    "apps/web/src/quills/ui/token-classes.tsx",
+    `export function TokenClasses() { return <div className={\`kaneo-comment-editor-prose text-xs text-warning-foreground sm:inline \${tone}\`}/>; }`,
+  );
   documents = await readDocuments(root);
 });
 after(async () => {
@@ -379,6 +388,7 @@ describe("conformance negative cases", () => {
     ["C15", "quills/ui/actions.test.tsx"],
     ["C13", "quills/ui/translated.tsx"],
     ["C17", "quills/api/client.ts"],
+    ["C24", "quills/ui/token-classes.tsx"],
   ])
     it(`accepts the valid ${rule} framework shape`, async () => {
       const selected = documents.filter((d) => d.file.endsWith(suffix));

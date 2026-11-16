@@ -9,5 +9,6 @@
 	"submit": "Send message",
 	"tickets": "View support tickets",
 	"title": "Support conversations",
-	"unread": "{{count}} unread messages"
+	"unread_one": "{{count}} unread message",
+	"unread_other": "{{count}} unread messages"
 }

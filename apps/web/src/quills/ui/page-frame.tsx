@@ -20,6 +20,8 @@ export interface PageFrameProps {
   actions?: ReactNode;
   /** Use the full portal width for boards, lists and grids. */
   wide?: boolean;
+  /** A hub page (feedback, help, roadmap, updates) gets the large title; others a smaller one. */
+  hub?: boolean;
   /** Set false inside the app shell, which already has the main landmark. */
   landmark?: boolean;
   /**
@@ -41,6 +43,7 @@ export function PageFrame({
   description,
   actions,
   wide = false,
+  hub = false,
   landmark = true,
   variant = "portal",
 }: PageFrameProps) {
@@ -73,7 +76,10 @@ export function PageFrame({
         <h1
           ref={heading}
           tabIndex={-1}
-          className="portal-page-title text-3xl font-semibold leading-tight tracking-tight outline-none md:text-4xl"
+          className={cn(
+            "portal-page-title font-semibold leading-tight tracking-tight outline-none",
+            hub ? "text-3xl md:text-4xl" : "text-2xl md:text-3xl",
+          )}
         >
           {title}
         </h1>
@@ -106,7 +112,7 @@ export function PageFrame({
   return (
     <Root
       className={cn(
-        "portal-page mx-auto w-full flex-1 px-5 pb-16 pt-8 md:pt-12 [&_h2]:tracking-tight [&_h3]:font-semibold [&_time]:text-xs [&_time]:text-muted-foreground",
+        "portal-page mx-auto w-full flex-1 px-5 pb-16 pt-8 md:pt-12",
         wide || aside ? "max-w-5xl" : "max-w-3xl",
       )}
       data-page={titleKey}

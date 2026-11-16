@@ -113,9 +113,9 @@ export function RoadmapColumn(props: RoadmapColumnProps) {
             ))}
           </ul>
         ) : (
-          <p className="rounded-xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-            {t("roadmap.empty")}
-          </p>
+          <StateView empty emptyDescription={t("roadmap.empty")}>
+            {null}
+          </StateView>
         )}
       </StateView>
       {offset > 0 || posts.data?.hasMore ? (

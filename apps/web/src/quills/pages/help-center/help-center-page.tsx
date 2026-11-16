@@ -36,6 +36,7 @@ export function HelpCenterPage(props: HelpCenterPageProps) {
 
   return (
     <PageFrame
+      hub
       titleKey="help-center.title"
       displayTitle={home.data?.homepageTitle}
       description={home.data?.homepageDescription}

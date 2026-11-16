@@ -31,7 +31,7 @@ export function DeletedRequest({ post, context }: DeletedRequestProps) {
       <PostStatusIcon {...statusIcon(post, context.statuses)} />
       <span className="min-w-0 flex-1 truncate font-medium">{row.title}</span>
       {row.board ? (
-        <span className="hidden max-w-32 truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:inline">
+        <span className="hidden max-w-32 truncate text-xs font-medium uppercase tracking-wide text-muted-foreground sm:inline">
           {row.board}
         </span>
       ) : null}

@@ -797,14 +797,14 @@ export function KitGallery() {
                     <div className="grid flex-1 content-start gap-3 overflow-y-auto p-4">
                       <DateSeparator date="2026-01-01T00:00:00.000Z" />
                       <MessageBubble
-                        kind="customer"
+                        kind="other"
                         author={{ name: demo }}
                         time="2026-01-01T00:00:00.000Z"
                       >
                         {demo}
                       </MessageBubble>
                       <MessageBubble
-                        kind="team"
+                        kind="self"
                         author={{ name: demo }}
                         time="2026-01-01T00:00:00.000Z"
                         failure={pending ? demo : null}

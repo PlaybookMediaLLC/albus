@@ -1,51 +1,61 @@
 import { useTranslation } from "react-i18next";
 import type { ListMyConversationsResponse } from "../../../api/support/list-my-conversations";
 import { portalHref } from "../../../core/portal-href";
-import { Card, CardContent, CardHeader, CardTitle } from "../../../ui/upstream";
+import { relativeTime } from "../../../core/relative-time";
+import { Badge } from "../../../ui/upstream";
 
 type Conversation = ListMyConversationsResponse["items"][number];
 export interface ConversationListProps {
   workspaceId: string;
   conversations: Conversation[];
 }
+
+/** The customer's conversations as rows. The subject link covers the whole row. */
 export function ConversationList({
   workspaceId,
   conversations,
 }: ConversationListProps) {
-  const { t } = useTranslation("quills");
+  const { t, i18n } = useTranslation("quills");
   return (
-    <div className="portal-conversation-list my-5 grid gap-3 [&_[data-slot=card]]:shadow-none [&_[data-slot=card]:hover]:border-ring">
+    <ul className="portal-conversation-list -mx-3 my-5 grid gap-1">
       {conversations.map((conversation) => {
         const subject =
           conversation.subject?.trim() || t("support.subjectMissing");
+        const time = conversation.lastMessageAt ?? conversation.createdAt;
         return (
-          <Card key={conversation.id}>
-            <CardHeader>
-              <CardTitle>
-                <a
-                  href={portalHref(
-                    workspaceId,
-                    `conversations/${conversation.id}`,
-                  )}
-                  aria-label={t("support.openConversation", { subject })}
-                >
-                  {subject}
-                </a>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>
-                {conversation.preview?.trim() || t("support.previewMissing")}
-              </p>
+          <li
+            key={conversation.id}
+            className="relative rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/60"
+          >
+            <div className="flex items-baseline gap-3">
+              <a
+                href={portalHref(
+                  workspaceId,
+                  `conversations/${conversation.id}`,
+                )}
+                aria-label={t("support.openConversation", { subject })}
+                className="min-w-0 flex-1 truncate font-medium after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
+              >
+                {subject}
+              </a>
               {conversation.unreadCount ? (
-                <p>
+                <Badge variant="info" size="sm">
                   {t("support.unread", { count: conversation.unreadCount })}
-                </p>
+                </Badge>
               ) : null}
-            </CardContent>
-          </Card>
+              <time
+                dateTime={time}
+                className="shrink-0 text-xs text-muted-foreground"
+              >
+                {relativeTime(time, i18n.language)}
+              </time>
+            </div>
+            <p className="mt-0.5 truncate text-sm text-muted-foreground">
+              {conversation.preview?.trim() || t("support.previewMissing")}
+            </p>
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }

@@ -77,7 +77,8 @@ export function ConversationRow(props: ConversationRowProps) {
                 colored
                 name={props.assignee.name}
                 avatarUrl={props.assignee.avatarUrl}
-                className="size-4 text-[8px]"
+                initials={false}
+                className="size-4"
               />
               <span className="sr-only">
                 {t("inbox.assignedTo", { name: props.assignee.name ?? "" })}

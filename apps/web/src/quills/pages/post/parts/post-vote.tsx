@@ -55,7 +55,7 @@ export function PostVote(props: PostVoteProps) {
               labelKey={level.labelKey}
               pressed={props.importance === level.value}
               disabled={props.loading}
-              className="h-7 rounded-full px-3 text-xs shadow-none sm:h-7 sm:text-xs"
+              variant="pill"
               onConfirm={() => props.onVote(true, level.value)}
             />
           ))}

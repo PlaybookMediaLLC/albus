@@ -7,11 +7,7 @@ const time = "2026-10-31T13:18:00.000Z";
 describe("MessageBubble", () => {
   it("puts a customer message on the left in gray, with the author and time", () => {
     const view = renderComponent(
-      <MessageBubble
-        kind="customer"
-        author={{ name: "Ada Customer" }}
-        time={time}
-      >
+      <MessageBubble kind="other" author={{ name: "Ada Customer" }} time={time}>
         <p>Export fails</p>
       </MessageBubble>,
     );
@@ -25,10 +21,10 @@ describe("MessageBubble", () => {
     );
   });
 
-  it("puts a team reply on the right in blue and shows a delivery failure", () => {
+  it("puts a team reply on the right in the primary color and shows a delivery failure", () => {
     const view = renderComponent(
       <MessageBubble
-        kind="team"
+        kind="self"
         author={{ name: "Grace" }}
         time={time}
         failure="Email failed"
@@ -37,7 +33,7 @@ describe("MessageBubble", () => {
       </MessageBubble>,
     );
     const body = view.getByText("Fixed").parentElement!;
-    expect(body).toHaveClass("bg-info-foreground");
+    expect(body).toHaveClass("bg-primary");
     expect(body.closest(".flex-row-reverse")).not.toBeNull();
     expect(view.getByRole("status")).toHaveTextContent("Email failed");
   });

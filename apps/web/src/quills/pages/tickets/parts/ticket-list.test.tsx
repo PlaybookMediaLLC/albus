@@ -33,5 +33,8 @@ describe("TicketList", () => {
       "href",
       "/portal/workspace_test_1/conversations/conversation_test_1",
     );
+    expect(view.getByText("Received")).toBeVisible();
+    expect(view.getByText("Ticket SUP-1")).toBeVisible();
+    expect(view.getAllByRole("link")).toHaveLength(1);
   });
 });

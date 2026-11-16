@@ -114,7 +114,7 @@ export async function inspectDocuments(root, documents, onlyRule) {
       if (!commentLines.has(index + 1)) continue;
       if (!line.includes("quills-web-allow")) continue;
       const match =
-        /^\s*\/\/ quills-web-allow (C(?:[1-9]|1[0-9]|2[0-3])):\s*(\S.*)$/.exec(
+        /^\s*\/\/ quills-web-allow (C(?:[1-9]|1[0-9]|2[0-4])):\s*(\S.*)$/.exec(
           line,
         );
       if (!match || protectedRules.has(match[1])) {
@@ -172,7 +172,7 @@ export async function inspectDocuments(root, documents, onlyRule) {
     report,
     files: new Set(documents.map((d) => d.file)),
   };
-  for (let id = 1; id <= 23; id++) {
+  for (let id = 1; id <= 24; id++) {
     const rule = `C${id}`;
     if (onlyRule && rule !== onlyRule) continue;
     const module = await import(
@@ -189,7 +189,7 @@ export async function inspectDocuments(root, documents, onlyRule) {
 }
 
 export async function checkConformance(root, onlyRule) {
-  if (onlyRule && !/^C(?:[1-9]|1[0-9]|2[0-3])$/.test(onlyRule))
+  if (onlyRule && !/^C(?:[1-9]|1[0-9]|2[0-4])$/.test(onlyRule))
     throw new Error("Unknown conformance rule");
   return inspectDocuments(root, await readDocuments(root), onlyRule);
 }

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { portalHref } from "../core/portal-href";
 import type { PortalNav } from "../core/portal-nav";
@@ -17,9 +18,17 @@ export function PortalNavigation({
   const { t } = useTranslation("quills");
   const root = portalHref(workspaceId);
   const section = currentPath.slice(root.length).split("/")[1] || "";
+  const navRef = useRef<HTMLElement>(null);
+  // Below lg the tabs scroll sideways; the current one may start off screen.
+  useEffect(() => {
+    navRef.current
+      ?.querySelector("[aria-current]")
+      ?.scrollIntoView?.({ block: "nearest", inline: "center" });
+  }, [section]);
   return (
     <nav
-      className="portal-navigation order-3 -mx-1 flex w-full items-center gap-0.5 overflow-x-auto pb-1 lg:order-none lg:mx-0 lg:w-auto lg:flex-1 lg:pb-0 [&_a]:whitespace-nowrap [&_a]:rounded-full [&_a]:px-2.5 [&_a]:py-1 [&_a]:text-sm [&_a]:text-muted-foreground [&_a[aria-current]]:font-medium [&_a:hover]:bg-muted [&_a:hover]:text-foreground [&_a[aria-current]]:bg-muted [&_a[aria-current]]:text-foreground"
+      ref={navRef}
+      className="portal-navigation order-3 -mx-1 flex w-full items-center gap-0.5 overflow-x-auto pb-1 max-sm:pe-8 max-sm:mask-r-from-[calc(100%-2rem)] lg:order-none lg:mx-0 lg:w-auto lg:flex-1 lg:pb-0 [&_a]:whitespace-nowrap [&_a]:rounded-full [&_a]:px-2.5 [&_a]:py-1 [&_a]:text-sm [&_a]:text-muted-foreground [&_a[aria-current]]:font-medium [&_a:hover]:bg-muted [&_a:hover]:text-foreground [&_a[aria-current]]:bg-muted [&_a[aria-current]]:text-foreground"
       aria-label={t("core.navigation")}
     >
       {[

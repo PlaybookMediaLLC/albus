@@ -65,6 +65,7 @@ export function ListPane(props: ListPaneProps) {
           problem={props.problem}
           empty={props.empty}
           onRetry={props.onRetry}
+          rows={8}
         >
           {props.children}
         </TeamStateView>

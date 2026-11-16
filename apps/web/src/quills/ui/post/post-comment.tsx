@@ -49,8 +49,9 @@ export interface PostCommentProps {
   reactions?: ReactNode;
 }
 
+// A small text action: the touch hitbox gives it a 44 px target on touch screens.
 const action =
-  "text-xs text-muted-foreground transition-colors hover:text-foreground";
+  "relative touch-hitbox rounded-sm text-xs text-muted-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring hover:text-foreground";
 /** The style of a comment's text, for a `body` that replaces it. */
 export const commentText =
   "mt-1 text-sm leading-relaxed [&>*+*]:mt-2 [&_p]:whitespace-pre-line";
@@ -79,11 +80,12 @@ export function PostComment({ comment, ...props }: PostCommentProps) {
         <p className="flex flex-wrap items-baseline gap-x-2 text-sm">
           <span className="font-medium">{author}</span>
           {comment.author.isTeamMember ? (
-            <span className="rounded bg-muted px-1.5 text-[11px] text-muted-foreground">
+            <span className="rounded bg-muted px-1.5 text-xs text-muted-foreground">
               {t("post.team")}
             </span>
           ) : null}
           <time
+            className="text-xs text-muted-foreground"
             dateTime={comment.createdAt}
             title={new Date(comment.createdAt).toLocaleString(i18n.language)}
           >

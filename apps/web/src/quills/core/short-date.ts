@@ -21,12 +21,21 @@ export function shortDate(iso: string, locale: string, now = Date.now()) {
   });
 }
 
+// One formatter per locale: a long thread formats a time for every message on each render.
+const clockFormats = new Map<string, Intl.DateTimeFormat>();
+
 /** The time of day, such as "1:18 PM", for a message or an event. */
-export const clockTime = (iso: string, locale: string) =>
-  new Date(iso).toLocaleTimeString(locale, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
+export function clockTime(iso: string, locale: string) {
+  let format = clockFormats.get(locale);
+  if (!format) {
+    format = new Intl.DateTimeFormat(locale, {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    clockFormats.set(locale, format);
+  }
+  return format.format(new Date(iso));
+}
 
 /** The day of a thread separator: 0 is today, 1 is yesterday, else the long date. */
 export function dayOf(iso: string, locale: string, now = Date.now()) {
