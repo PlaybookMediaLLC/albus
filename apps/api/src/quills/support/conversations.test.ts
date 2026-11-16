@@ -846,6 +846,25 @@ describe.skipIf(!url)("Support conversations", () => {
     ).toBe(409);
   });
 
+  it("saves the unread and archived lists as views", async () => {
+    for (const field of ["unread", "archived"]) {
+      const saved = await owner("POST", "/conversation-views", {
+        name: unique(field),
+        filters: { rules: [{ field, value: true }] },
+      });
+      expect(saved.status).toBe(200);
+      expect(saved.body.filters.rules).toEqual([{ field, value: true }]);
+      expect(
+        (
+          await owner("POST", "/conversation-views", {
+            name: unique(field),
+            filters: { rules: [{ field, value: false }] },
+          })
+        ).status,
+      ).toBe(400);
+    }
+  });
+
   it("keeps a private view to its creator", async () => {
     const created = await member("POST", "/conversation-views", {
       name: "Mine only",
