@@ -1,5 +1,7 @@
+import { feedbackStages } from "../../../core/feedback-stages";
 import type { Viewer } from "../../../core/types";
 import { useFindPortalSimilarPosts } from "../../../hooks/feedback/use-find-portal-similar-posts";
+import { useListPortalStatuses } from "../../../hooks/feedback/use-list-portal-statuses";
 import { SimilarPosts } from "../../../ui/post/similar-posts";
 
 export interface RelatedRequestsProps {
@@ -19,10 +21,17 @@ export function RelatedRequests(props: RelatedRequestsProps) {
     },
     props.viewer,
   );
+  const statuses = useListPortalStatuses(
+    {
+      param: { workspace: related.data?.items.length ? props.workspaceId : "" },
+    },
+    props.viewer,
+  );
   return (
     <SimilarPosts
       workspaceId={props.workspaceId}
       titleKey="post.related"
+      stages={feedbackStages(statuses.data?.items ?? [])}
       posts={
         related.data?.items
           .filter((item) => item.id !== props.postId)

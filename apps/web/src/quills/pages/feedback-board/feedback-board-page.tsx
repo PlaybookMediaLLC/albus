@@ -139,6 +139,7 @@ export function FeedbackBoardPage(props: FeedbackBoardPageProps) {
               workspaceId={props.workspaceId}
               title={title}
               posts={similar.data?.items ?? []}
+              stages={rail?.stages}
               canVote={(id) =>
                 Boolean(
                   boards.data?.items.some(

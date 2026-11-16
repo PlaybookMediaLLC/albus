@@ -72,7 +72,6 @@ export function FeedbackHomePage(props: FeedbackHomePageProps) {
   );
   const vote = useSetPortalVote(viewer);
   const remember = useSearchPatch();
-  // The board rail on wide screens and the filter row on small ones take the same props.
   const rail = boards.data && {
     boards: boards.data.items,
     workspaceId: props.workspaceId,
@@ -138,6 +137,7 @@ export function FeedbackHomePage(props: FeedbackHomePageProps) {
               workspaceId={props.workspaceId}
               title={title}
               posts={similar.data?.items ?? []}
+              stages={rail?.stages}
               canVote={(id) =>
                 Boolean(
                   boards.data?.items.some(

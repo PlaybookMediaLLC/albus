@@ -16,6 +16,8 @@ export interface SimilarPostsProps {
     voteCount?: number;
     stage: string | null;
   }>;
+  /** The public stages with their status name and color; without them no status shows. */
+  stages?: Array<{ value: string; label: string; color: string | null }>;
   /** Posts the viewer voted for get a mark. */
   votedIds?: ReadonlySet<string>;
   /** Posts that offer a vote instead of a new post, unless the viewer voted for them. */
@@ -28,6 +30,7 @@ export function SimilarPosts({
   workspaceId,
   titleKey = "feedback.similar",
   posts,
+  stages,
   votedIds,
   voteIds,
   onVote,
@@ -39,58 +42,73 @@ export function SimilarPosts({
     <section aria-labelledby={headingId} className="portal-similar-posts">
       <h2
         id={headingId}
-        className="mb-1 text-xs font-normal text-muted-foreground"
+        className="mb-1 text-xs font-medium text-muted-foreground"
       >
         {t(titleKey)}
       </h2>
       <ul className="-mx-3">
-        {posts.map((post) => (
-          <li key={post.id} className="flex items-center gap-2">
-            <a
-              id={`${headingId}-${post.id}`}
-              className="flex min-w-0 flex-1 items-center gap-4 rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/60"
-              href={portalHref(workspaceId, `posts/${post.id}`)}
-            >
-              <span className="inline-flex h-9 min-w-13 items-center justify-center gap-1.5 rounded-full border border-input px-2.5 text-base text-muted-foreground tabular-nums sm:h-8 sm:text-sm">
-                <ArrowUpIcon className="size-3" />
-                {post.voteCount === undefined ? null : (
-                  <>
-                    <span className="sr-only">
-                      {t("post.votes", { count: post.voteCount })}
-                    </span>
-                    <span aria-hidden="true">{post.voteCount}</span>
-                  </>
-                )}
-              </span>
-              <span className="min-w-0 flex-1 truncate font-medium tracking-tight">
-                {post.title}
-              </span>
-              {votedIds?.has(post.id) ? (
-                <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                  {t("feedback.youVoted")}
-                </span>
-              ) : null}
-              {post.stage && post.stage !== "open" ? (
-                <StatusIcon stage={post.stage} className="size-3.5" />
-              ) : null}
-            </a>
-            {onVote && voteIds?.has(post.id) && !votedIds?.has(post.id) ? (
-              <ConfirmAction
-                labelKey="duplicates.voteInsteadFor"
-                labelValues={{ title: post.title }}
-                size="xs"
-                className="rounded-full before:rounded-full"
-                onConfirm={async () => {
-                  await onVote(post.id);
-                  // The button leaves once the vote counts, so focus moves to the post.
-                  document.getElementById(`${headingId}-${post.id}`)?.focus();
-                }}
+        {posts.map((post) => {
+          const status =
+            post.stage === "open"
+              ? undefined
+              : stages?.find((item) => item.value === post.stage);
+          return (
+            <li key={post.id} className="flex items-center gap-2">
+              <a
+                id={`${headingId}-${post.id}`}
+                className="flex min-w-0 flex-1 items-center gap-4 rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/60"
+                href={portalHref(workspaceId, `posts/${post.id}`)}
               >
-                {t("duplicates.voteInstead")}
-              </ConfirmAction>
-            ) : null}
-          </li>
-        ))}
+                <span className="inline-flex h-9 min-w-13 items-center justify-center gap-1.5 rounded-full border border-input px-2.5 text-base text-muted-foreground tabular-nums sm:h-8 sm:text-sm">
+                  <ArrowUpIcon className="size-3" />
+                  {post.voteCount === undefined ? null : (
+                    <>
+                      <span className="sr-only">
+                        {t("post.votes", { count: post.voteCount })}
+                      </span>
+                      <span aria-hidden="true">{post.voteCount}</span>
+                    </>
+                  )}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">
+                    {post.title}
+                  </span>
+                  {status ? (
+                    <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <StatusIcon
+                        stage={status.value}
+                        color={status.color}
+                        className="size-3"
+                      />
+                      {status.label}
+                    </span>
+                  ) : null}
+                </span>
+                {votedIds?.has(post.id) ? (
+                  <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                    {t("feedback.youVoted")}
+                  </span>
+                ) : null}
+              </a>
+              {onVote && voteIds?.has(post.id) && !votedIds?.has(post.id) ? (
+                <ConfirmAction
+                  labelKey="duplicates.voteInsteadFor"
+                  labelValues={{ title: post.title }}
+                  size="xs"
+                  className="rounded-full before:rounded-full"
+                  onConfirm={async () => {
+                    await onVote(post.id);
+                    // The button leaves once the vote counts, so focus moves to the post.
+                    document.getElementById(`${headingId}-${post.id}`)?.focus();
+                  }}
+                >
+                  {t("duplicates.voteInstead")}
+                </ConfirmAction>
+              ) : null}
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
