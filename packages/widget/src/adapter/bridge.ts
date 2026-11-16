@@ -10,7 +10,7 @@ export type ParentMessage =
     }
   | { type: "open"; target: z.infer<typeof openSchema> }
   | { type: "locale"; locale: string }
-  /** The host app's metadata and the page URL, for the next feedback post. */
+  /** The host app's metadata and the page URL, for the next feedback post or message. */
   | { type: "metadata"; metadata: Record<string, string> }
   /** The answer to a capture request: a PNG of the host page, or null. */
   | { type: "capture"; id: string; image: Blob | null };

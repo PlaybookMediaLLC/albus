@@ -14,6 +14,7 @@ export const addConversationNoteFixture = {
           systemKind: null,
           systemActorPrincipalId: null,
           emailAuth: null,
+          widgetMetadata: null,
           embeds: [],
           attachments: [],
           reactions: [],

@@ -60,5 +60,10 @@
 	"signInRequired": "Sign in to continue.",
 	"breadcrumb": "Breadcrumb",
 	"breadcrumbSeparator": "/",
-	"submitAsFeedback": "Submit “{{query}}” as feedback"
+	"submitAsFeedback": "Submit “{{query}}” as feedback",
+	"pageContext": {
+		"browser": "Browser",
+		"page": "Page",
+		"title": "Page context"
+	}
 }

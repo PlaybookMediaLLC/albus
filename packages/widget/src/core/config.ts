@@ -35,18 +35,24 @@ export type ServerConfig = z.infer<typeof serverConfigSchema>;
 export const widgetBase = (instanceUrl: string, workspace: string) =>
   `${instanceUrl}/api/quills-public/${encodeURIComponent(workspace)}/widget`;
 
-/** The version query keeps this cross-origin GET free of custom-header preflights. */
+/**
+ * Null when the instance says the widget is off or the workspace does not exist; `{}` when the
+ * config could not be read, so a transient failure still shows the launcher. The version query
+ * keeps this cross-origin GET free of custom-header preflights.
+ */
 export async function fetchServerConfig(
   instanceUrl: string,
   workspace: string,
   signal?: AbortSignal,
-): Promise<ServerConfig> {
+): Promise<ServerConfig | null> {
   try {
     const url = `${widgetBase(instanceUrl, workspace)}/config.json?sdk=${encodeURIComponent(SDK_VERSION)}`;
     const res = await fetch(url, { signal });
+    if (res.status === 404) return null;
     if (!res.ok) return {};
     // The Quills API wraps the config as { enabled, config }; config is null while the widget is off.
     const body: unknown = await res.json();
+    if ((body as { enabled?: unknown } | null)?.enabled === false) return null;
     const parsed = serverConfigSchema.safeParse(
       body && typeof body === "object"
         ? (body as { config?: unknown }).config

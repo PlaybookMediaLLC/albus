@@ -471,7 +471,12 @@ export function useWidgetData({
         run(async (signal) =>
           sent(
             signal,
-            await send.startConversation(body, options.idempotencyKey, signal),
+            await send.startConversation(
+              body,
+              options.idempotencyKey,
+              signal,
+              postMetadata(page.current, navigator.userAgent),
+            ),
           ),
         ),
       onReplyMessage: (
@@ -487,6 +492,7 @@ export function useWidgetData({
               body,
               options.idempotencyKey,
               signal,
+              postMetadata(page.current, navigator.userAgent),
             ),
           ),
         ),

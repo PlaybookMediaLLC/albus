@@ -42,10 +42,13 @@ export function findWidgetDist(
 
 type Asset = { body: string; version: string; mtimeMs: number };
 
-export function widgetHost(dist: string | null) {
+/** `findDist` runs until it finds the bundles, so a widget built after the API started is served. */
+export function widgetHost(findDist: () => string | null) {
   const cache = new Map<string, Asset>();
+  let dist: string | null = null;
   /** A built file with its content hash; read again after a rebuild. */
   const asset = (name: string) => {
+    dist ??= findDist();
     if (!dist) return null;
     const file = join(dist, name);
     let mtimeMs: number;
@@ -122,4 +125,4 @@ export function widgetHost(dist: string | null) {
   );
 }
 
-export default widgetHost(findWidgetDist());
+export default widgetHost(() => findWidgetDist());

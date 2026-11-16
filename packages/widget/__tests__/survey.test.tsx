@@ -198,10 +198,11 @@ describe("widget host survey", () => {
       "GET /widget/config.json": () => ({
         body: {
           config: {
+            // Help is on, so the visitor can leave Home and come back.
             tabs: {
               feedback: false,
               changelog: false,
-              help: false,
+              help: true,
               messenger: false,
             },
             theme: { themeMode: "user" },

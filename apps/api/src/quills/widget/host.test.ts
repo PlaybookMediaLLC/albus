@@ -3,10 +3,12 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Hono } from "hono";
 import { Pool } from "pg";
 import { settings } from "../../database/quills/schema/auth";
+import { conversationMessages } from "../../database/quills/schema/conversation";
 import * as kaneo from "../../database/schema";
 import quillsRouter from "../index";
 import publicRouter from "../public";
@@ -48,7 +50,10 @@ describe("widget host page and bundles", () => {
   writeFileSync(join(dist, "host.js"), "console.log('host')");
   writeFileSync(join(dist, "host.css"), "body{}");
   writeFileSync(join(dist, "browser.js"), "window.QuillsBundle=1");
-  const app = new Hono().route("/quills-public", widgetHost(dist));
+  const app = new Hono().route(
+    "/quills-public",
+    widgetHost(() => dist),
+  );
   afterAll(() => rmSync(dist, { recursive: true, force: true }));
 
   it("serves the iframe page with a strict policy that any web origin may frame", async () => {
@@ -92,11 +97,25 @@ describe("widget host page and bundles", () => {
   });
 
   it("answers 503 while the widget is not built", async () => {
-    const empty = new Hono().route("/quills-public", widgetHost(null));
+    const empty = new Hono().route(
+      "/quills-public",
+      widgetHost(() => null),
+    );
     for (const path of ["", "/host.js", "/host.css", "/sdk.js"])
       expect(
         (await empty.request(`/quills-public/acme/widget${path}`)).status,
       ).toBe(503);
+  });
+
+  it("serves a widget that was built after the API started", async () => {
+    let built: string | null = null;
+    const late = new Hono().route(
+      "/quills-public",
+      widgetHost(() => built),
+    );
+    expect((await late.request("/quills-public/acme/widget")).status).toBe(503);
+    built = dist;
+    expect((await late.request("/quills-public/acme/widget")).status).toBe(200);
   });
 });
 
@@ -227,16 +246,47 @@ describe.skipIf(!url)("widget adapter against the real API", () => {
     );
     expect(created).toMatchObject({ title: "A widget idea", stage: "open" });
 
-    const started = await send.startConversation("I need help", `${key}conv`);
+    const page = { pageUrl: "https://host.example/pricing", browser: "Chrome" };
+    const started = await send.startConversation(
+      "I need help",
+      `${key}conv`,
+      undefined,
+      page,
+    );
     const again = await send.startConversation("I need help", `${key}conv`);
     expect(again.message.id).toBe(started.message.id);
-    await send.reply(started.conversation.id, "More detail", `${key}reply`);
+    await send.reply(
+      started.conversation.id,
+      "More detail",
+      `${key}reply`,
+      undefined,
+      { ...page, pageUrl: "https://host.example/checkout" },
+    );
     const threads = await loadConversations(api);
     expect(threads).toHaveLength(1);
     expect(threads[0].messages.map((m: { body: string }) => m.body)).toEqual([
       "I need help",
       "More detail",
     ]);
+    // Each message keeps the page it was sent from, for the team; the visitor never reads it back.
+    expect(JSON.stringify(threads)).not.toContain("host.example");
+    const stored = await env.scoped(env.a, (db) =>
+      db
+        .select({ metadata: conversationMessages.metadata })
+        .from(conversationMessages)
+        .where(eq(conversationMessages.conversationId, started.conversation.id))
+        .orderBy(conversationMessages.createdAt),
+    );
+    expect(stored.map((row) => row.metadata?.widgetMetadata)).toEqual([
+      page,
+      { ...page, pageUrl: "https://host.example/checkout" },
+    ]);
+    const tooMany = Object.fromEntries(
+      Array.from({ length: 21 }, (_, i) => [`k${i}`, "v"]),
+    );
+    await expect(
+      send.startConversation("Too much", `${key}big`, undefined, tooMany),
+    ).rejects.toMatchObject({ status: 400 });
     expect(
       await send.markRead(started.conversation.id, threads[0].messages[1].id),
     ).toMatchObject({ unreadCount: 0 });
@@ -255,6 +305,102 @@ describe.skipIf(!url)("widget adapter against the real API", () => {
     ).rejects.toMatchObject({ status: 401 });
   });
 
+  it("shows a visitor message's page context to the workspace's teammates only", async () => {
+    const env = contractEnv();
+    const { createApi } = await adapter("api");
+    const { writes } = await adapter("writes");
+    const api = createApi(
+      `/quills-public/${env.a}`,
+      (path: string, init: RequestInit) => app.request(path, init),
+    );
+    const sub = env.id("context");
+    const { token } = await api.identify(
+      signIdentity(
+        {
+          sub,
+          email: `${sub}@example.test`,
+          exp: Math.floor(Date.now() / 1000) + 300,
+        },
+        secret,
+      ),
+    );
+    api.setToken(token);
+    const page = {
+      pageUrl: "https://host.example/billing",
+      browser: "Firefox 140 on Linux",
+    };
+    const { conversation, message } = await writes(api).startConversation(
+      "Where is my invoice?",
+      `${sub}conv`.replace(/[^A-Za-z0-9_-]/g, ""),
+      undefined,
+      page,
+    );
+    const teammate = (workspace: string, user: string) =>
+      app.request(
+        `/quills/${workspace}/conversations/${conversation.id}/messages`,
+        { headers: { "x-test-user": user } },
+      );
+    const own = await teammate(env.a, env.owner);
+    expect(own.status).toBe(200);
+    const items = (await own.json()).items as {
+      id: string;
+      widgetMetadata: unknown;
+    }[];
+    expect(
+      items.find((item) => item.id === message.id)?.widgetMetadata,
+    ).toEqual(page);
+    // Workspace B's owner reaches it neither through B nor through A (non-disclosing 404s), and B's
+    // scope has no such row.
+    const inOwnWorkspace = await app.request(`/quills/${env.b}/conversations`, {
+      headers: { "x-test-user": env.outsider },
+    });
+    expect(inOwnWorkspace.status).toBe(200);
+    expect((await teammate(env.b, env.outsider)).status).toBe(404);
+    expect((await teammate(env.a, env.outsider)).status).toBe(404);
+    const inB = await env.scoped(env.b, (db) =>
+      db
+        .select({ id: conversationMessages.id })
+        .from(conversationMessages)
+        .where(eq(conversationMessages.id, message.id)),
+    );
+    expect(inB).toEqual([]);
+  });
+
+  it("creates the secret of a widget that was turned on without one, once for concurrent visitors", async () => {
+    const env = contractEnv();
+    const { createApi } = await adapter("api");
+    const { loadConversations } = await adapter("load");
+    const secretOf = async () =>
+      (
+        await env.scoped(env.a, (db) =>
+          db.select({ secret: settings.widgetSecret }).from(settings),
+        )
+      )[0]!.secret;
+    const before = await secretOf();
+    await env.scoped(env.a, (db) =>
+      db.update(settings).set({ widgetSecret: null }),
+    );
+    try {
+      const apis = [0, 1].map(() =>
+        createApi(
+          `/quills-public/${env.a}`,
+          (path: string, init: RequestInit) => app.request(path, init),
+        ),
+      );
+      const tokens = await Promise.all(apis.map((api) => api.mintAnonymous()));
+      expect(await secretOf()).toMatch(/^wgt_[0-9a-f]{64}$/);
+      // Both sessions are bound to the one secret that was kept.
+      for (const [i, api] of apis.entries()) {
+        api.setToken(tokens[i]);
+        expect(await loadConversations(api)).toEqual([]);
+      }
+    } finally {
+      await env.scoped(env.a, (db) =>
+        db.update(settings).set({ widgetSecret: before }),
+      );
+    }
+  });
+
   it("starts an anonymous session that reads but cannot read another visitor's thread", async () => {
     const env = contractEnv();
     const { createApi } = await adapter("api");
@@ -269,6 +415,31 @@ describe.skipIf(!url)("widget adapter against the real API", () => {
       `/quills-public/${env.b}`,
       (path: string, init: RequestInit) => app.request(path, init),
     );
+    // B turned the widget off: no session there.
+    await env.scoped(env.b, (db) =>
+      db
+        .update(settings)
+        .set({ widgetConfig: JSON.stringify({ enabled: false }) }),
+    );
     await expect(other.mintAnonymous()).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("serves a workspace that never set the widget: it is on by default", async () => {
+    const env = contractEnv();
+    const { createApi } = await adapter("api");
+    const { loadConversations } = await adapter("load");
+    await env.scoped(env.b, (db) =>
+      db.update(settings).set({ widgetConfig: null, widgetSecret: null }),
+    );
+    const config = await app.request(
+      `/quills-public/${env.b}/widget/config.json`,
+    );
+    expect((await config.json()).enabled).toBe(true);
+    const api = createApi(
+      `/quills-public/${env.b}`,
+      (path: string, init: RequestInit) => app.request(path, init),
+    );
+    api.setToken(await api.mintAnonymous());
+    expect(await loadConversations(api)).toEqual([]);
   });
 });

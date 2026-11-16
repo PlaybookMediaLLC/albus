@@ -2,6 +2,7 @@ import type { GetPostResponse } from "../../../api/team/get-post";
 import { PostDemand } from "./post-demand";
 import { PostLinks } from "./post-links";
 import { PostMerge } from "./post-merge";
+import { PostPageContext } from "./post-page-context";
 import { PostScore } from "./post-score";
 
 export interface PostPropertiesProps {
@@ -10,7 +11,7 @@ export interface PostPropertiesProps {
   onScoreSaved: () => void;
 }
 
-/** The right panel of a request: demand, RICE score, links and merges. Each section loads its own data. */
+/** The right panel of a request: demand, RICE score, links, merges and the page it came from. Each section loads its own data. */
 export function PostProperties(props: PostPropertiesProps) {
   const { workspaceId, post } = props;
   return (
@@ -23,6 +24,7 @@ export function PostProperties(props: PostPropertiesProps) {
       />
       <PostLinks workspaceId={workspaceId} postId={post.id} />
       <PostMerge workspaceId={workspaceId} post={post} />
+      <PostPageContext post={post} />
     </div>
   );
 }
