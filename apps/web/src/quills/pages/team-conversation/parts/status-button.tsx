@@ -15,8 +15,9 @@ export function StatusButton(props: StatusButtonProps) {
   const { t } = useTranslation("quills");
   return props.status === "closed" ? (
     <Button
+      variant="outline"
       size="sm"
-      className="rounded-full border-success bg-success text-white hover:bg-success/90"
+      className="rounded-full border-success/40 bg-success/10 text-success-foreground hover:bg-success/15 dark:bg-success/10 dark:hover:bg-success/15"
       disabled={props.disabled}
       aria-label={t("team-conversations.reopenResolved")}
       onClick={props.onReopen}

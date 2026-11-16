@@ -66,13 +66,13 @@ export function PostTags({ workspaceId, post }: PostTagsProps) {
         .map((tag) => (
           <span
             key={tag.id}
-            className="inline-flex h-7 items-center gap-1 rounded-full bg-secondary px-2.5 text-xs font-medium text-secondary-foreground has-[button]:pe-1"
+            className="inline-flex h-8 items-center gap-1 rounded-full bg-secondary px-2.5 text-base font-medium text-secondary-foreground has-[button]:pe-1 sm:h-7 sm:text-sm"
           >
             {tag.name}
             {locked ? null : (
               <button
                 type="button"
-                className="rounded-full p-0.5 text-muted-foreground hover:bg-background hover:text-foreground disabled:opacity-64"
+                className="relative touch-hitbox rounded-full p-0.5 text-muted-foreground outline-none hover:bg-background hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-64"
                 aria-label={t("team-post.removeTag", { tag: tag.name })}
                 disabled={setTags.isPending}
                 onClick={() => toggle(tag.id)}
@@ -88,7 +88,7 @@ export function PostTags({ workspaceId, post }: PostTagsProps) {
             render={
               <IconButton
                 variant="secondary"
-                className="size-7 rounded-full"
+                className="rounded-full"
                 label={t("team-post.editTags")}
                 disabled={setTags.isPending}
               />

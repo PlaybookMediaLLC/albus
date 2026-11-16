@@ -1,4 +1,5 @@
 import { ConfirmAction } from "../../../ui/confirm-action";
+import { Card } from "../../../ui/upstream";
 
 export interface PreferenceToggleProps {
   labelKey: string;
@@ -9,7 +10,7 @@ export interface PreferenceToggleProps {
 
 export function PreferenceToggle(props: PreferenceToggleProps) {
   return (
-    <div className="rounded-xl border border-border p-4">
+    <Card className="p-4">
       <ConfirmAction
         labelKey={props.labelKey}
         role="switch"
@@ -17,6 +18,6 @@ export function PreferenceToggle(props: PreferenceToggleProps) {
         disabled={props.disabled}
         onConfirm={() => props.onChange(!props.checked)}
       />
-    </div>
+    </Card>
   );
 }

@@ -16,6 +16,8 @@ import { useTeamRuntime } from "../../../team/runtime";
 import { DateSeparator } from "../../../ui/inbox/date-separator";
 import { MessageBubble } from "../../../ui/inbox/message-bubble";
 import { SystemEvent } from "../../../ui/inbox/system-event";
+import { arrivedClass, useArrived } from "../../../ui/inbox/use-arrived";
+import { cn } from "../../../ui/upstream";
 import type { Teammate } from "../../team-conversations/conversation-list";
 import { AttachmentLink } from "./attachment-link";
 
@@ -80,6 +82,10 @@ export function MessageList(props: MessageListProps) {
     if (newest) end.current?.scrollIntoView?.({ block: "end" });
   }, [newest]);
   const messages = [...props.messages].reverse();
+  const arrived = useArrived(
+    messages.map((message) => message.id),
+    props.conversationId,
+  );
   const avatar = (id: string | null) =>
     props.people.find((person) => person.id === id)?.avatarUrl;
   const me = props.people.find((person) => person.userId === team.viewer.id);
@@ -95,7 +101,7 @@ export function MessageList(props: MessageListProps) {
   return (
     <section
       aria-labelledby="conversation-thread"
-      className="mx-auto grid w-full max-w-205 gap-3"
+      className="mx-auto grid w-full max-w-200 gap-3"
     >
       <h2 id="conversation-thread" className="sr-only">
         {t("team-conversations.thread")}
@@ -107,7 +113,10 @@ export function MessageList(props: MessageListProps) {
       )}
       <ol className="grid gap-3">
         {messages.map((message, index) => (
-          <li key={message.id} className="grid gap-3">
+          <li
+            key={message.id}
+            className={cn("grid gap-3", arrived(message.id) && arrivedClass)}
+          >
             {index === 0 ||
             day(messages[index - 1]!.createdAt) !== day(message.createdAt) ? (
               <DateSeparator date={message.createdAt} />
@@ -125,8 +134,8 @@ export function MessageList(props: MessageListProps) {
                   message.isInternal
                     ? "note"
                     : message.senderType === "agent"
-                      ? "team"
-                      : "customer"
+                      ? "self"
+                      : "other"
                 }
                 author={
                   message.senderType === "visitor"

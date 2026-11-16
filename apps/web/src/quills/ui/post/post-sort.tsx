@@ -41,7 +41,8 @@ export function PostSort(props: PostSortProps) {
       >
         <SelectTrigger
           aria-label={t("feedback.sort")}
-          className="min-h-7 w-auto min-w-0 gap-1 border-0 bg-transparent px-1.5 text-xs shadow-none before:hidden sm:min-h-7 sm:text-xs dark:bg-transparent [&_svg]:size-3"
+          size="sm"
+          className="w-auto min-w-0"
         >
           <SelectValue />
         </SelectTrigger>

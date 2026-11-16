@@ -77,6 +77,7 @@ export function FeedbackBoardPage(props: FeedbackBoardPageProps) {
   const remember = useSearchPatch();
   return (
     <PageFrame
+      hub
       titleKey="feedback.title"
       displayTitle={canLoad ? board?.name : undefined}
       description={board?.description || undefined}
@@ -160,6 +161,7 @@ export function FeedbackBoardPage(props: FeedbackBoardPageProps) {
               loading={posts.isLoading}
               problem={posts.error ?? null}
               onRetry={() => void posts.refetch()}
+              rows={5}
             >
               <PostList
                 posts={posts.data?.pages.flatMap((page) => page.items) ?? []}

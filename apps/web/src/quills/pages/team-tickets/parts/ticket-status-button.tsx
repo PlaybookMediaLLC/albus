@@ -31,11 +31,12 @@ export function TicketStatusButton({
   return (
     <>
       <Button
-        variant={closed ? "default" : "outline"}
+        variant="outline"
         size="sm"
         className={cn(
           "rounded-full",
-          closed && "border-success bg-success text-white hover:bg-success/90",
+          closed &&
+            "border-success/40 bg-success/10 text-success-foreground hover:bg-success/15 dark:bg-success/10 dark:hover:bg-success/15",
         )}
         aria-label={
           closed

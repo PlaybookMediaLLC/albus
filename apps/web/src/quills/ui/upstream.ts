@@ -50,7 +50,12 @@ export {
 export { Fieldset } from "@/components/ui/fieldset";
 export { cn } from "@/lib/cn";
 
-export { Empty, EmptyHeader, EmptyDescription } from "@/components/ui/empty";
+export {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+} from "@/components/ui/empty";
 export { Spinner } from "@/components/ui/spinner";
 
 export { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

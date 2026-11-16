@@ -49,7 +49,7 @@ export function TranslatedText(props: TranslatedTextProps) {
       {locale ? (
         <button
           type="button"
-          className="justify-self-start text-xs text-muted-foreground transition-colors hover:text-foreground"
+          className="relative touch-hitbox justify-self-start rounded-sm text-xs text-muted-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring hover:text-foreground"
           onClick={() => setTranslatedFor(on ? null : props.content)}
         >
           {t(on ? "assist.showOriginal" : "assist.translate")}

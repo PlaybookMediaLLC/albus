@@ -41,4 +41,32 @@ describe("StateView", () => {
     press("Try again");
     expect(retry).toHaveBeenCalledOnce();
   });
+
+  it("delays the spinner and shows placeholder rows for a list", () => {
+    const spinner = renderComponent(<StateView loading>{null}</StateView>);
+    expect(spinner.container.firstElementChild).toHaveClass("delayed-reveal");
+    spinner.unmount();
+    const rows = renderComponent(
+      <StateView loading rows={3}>
+        {null}
+      </StateView>,
+    );
+    const status = rows.getByRole("status");
+    expect(status.querySelectorAll("[data-slot=skeleton]")).toHaveLength(3);
+    expect(status).toHaveTextContent("Loading…");
+  });
+
+  it("shows the empty icon and line", () => {
+    const view = renderComponent(
+      <StateView
+        empty
+        emptyIcon={<svg aria-hidden="true" data-icon="empty" />}
+        emptyDescription="Submit the first one."
+      >
+        {null}
+      </StateView>,
+    );
+    expect(view.getByText("Submit the first one.")).toBeVisible();
+    expect(view.container.querySelector("[data-icon=empty]")).not.toBeNull();
+  });
 });

@@ -63,11 +63,7 @@ export function SurveyCard({
     </Button>
   );
   return (
-    <Card
-      render={<section />}
-      aria-labelledby={`${id}-question`}
-      className="shadow-none"
-    >
+    <Card render={<section />} aria-labelledby={`${id}-question`}>
       <CardHeader>
         <h2 id={`${id}-question`} className="text-lg font-semibold">
           {survey.question}

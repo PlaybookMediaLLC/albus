@@ -37,7 +37,8 @@ export function BoardSelect(props: BoardSelectProps) {
       <SelectTrigger
         ref={props.triggerRef}
         aria-label={t("feedback.board")}
-        className="min-h-7 w-auto min-w-0 gap-1 rounded-md border-0 bg-muted/60 px-2 text-xs shadow-none before:hidden sm:min-h-7 sm:text-xs dark:bg-muted/60 [&_svg]:size-3"
+        size="sm"
+        className="w-auto min-w-0"
       >
         <IconCircleHashtagOutline18 aria-hidden="true" />
         <SelectValue />

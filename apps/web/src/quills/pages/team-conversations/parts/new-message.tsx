@@ -67,7 +67,7 @@ export function NewMessage(props: NewMessageProps) {
           {t("team-conversations.newMessage.title")}
         </h2>
       </DetailHeader>
-      <div className="mx-auto grid w-full max-w-205 flex-1 content-start gap-2 p-4">
+      <div className="mx-auto grid w-full max-w-200 flex-1 content-start gap-2 p-4">
         {/* An inline combobox: the results show in the card, under the To row. */}
         <Combobox<Customer>
           inline
@@ -80,8 +80,8 @@ export function NewMessage(props: NewMessageProps) {
           value={to}
           onValueChange={setTo}
         >
-          <div className="rounded-2xl border border-border">
-            <div className="flex min-h-11 items-center gap-2 px-4 text-sm">
+          <div className="grid gap-2">
+            <div className="flex min-h-9 items-center gap-2 text-sm">
               <span className="text-muted-foreground">
                 {t("team-conversations.newMessage.to")}
               </span>
@@ -106,12 +106,11 @@ export function NewMessage(props: NewMessageProps) {
                   autoFocus
                   aria-label={t("team-conversations.newMessage.to")}
                   placeholder={t("team-conversations.newMessage.toHint")}
-                  className="border-transparent! bg-transparent! shadow-none before:hidden has-focus-visible:ring-0"
                 />
               )}
             </div>
             {to || !search ? null : (
-              <div className="border-t border-border p-1">
+              <div className="rounded-2xl border border-border p-1">
                 <ComboboxEmpty className="text-start">
                   {users.isSuccess
                     ? t("team-conversations.newMessage.none")
@@ -150,7 +149,7 @@ export function NewMessage(props: NewMessageProps) {
           </p>
         ) : null}
       </div>
-      <div className="mx-auto w-full max-w-205 px-4 pb-4">
+      <div className="mx-auto w-full max-w-200 px-4 pb-4">
         <Composer
           label={t("team-conversations.newMessage.compose")}
           value={text}

@@ -51,8 +51,8 @@ export function SimilarPosts({
               className="flex min-w-0 flex-1 items-center gap-4 rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/60"
               href={portalHref(workspaceId, `posts/${post.id}`)}
             >
-              <span className="inline-flex h-7 min-w-13 items-center justify-center gap-1.5 rounded-full border border-border px-2.5 text-xs tabular-nums">
-                <ArrowUpIcon className="size-[11px]" />
+              <span className="inline-flex h-8 min-w-13 items-center justify-center gap-1.5 rounded-full border border-input px-2.5 text-base tabular-nums sm:h-7 sm:text-sm">
+                <ArrowUpIcon className="size-3" />
                 {post.voteCount === undefined ? null : (
                   <>
                     <span className="sr-only">
@@ -66,7 +66,7 @@ export function SimilarPosts({
                 {post.title}
               </span>
               {votedIds?.has(post.id) ? (
-                <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                   {t("feedback.youVoted")}
                 </span>
               ) : null}
@@ -78,7 +78,8 @@ export function SimilarPosts({
               <ConfirmAction
                 labelKey="duplicates.voteInsteadFor"
                 labelValues={{ title: post.title }}
-                className="h-7 rounded-full px-3 text-xs"
+                size="xs"
+                className="rounded-full before:rounded-full"
                 onConfirm={async () => {
                   await onVote(post.id);
                   // The button leaves once the vote counts, so focus moves to the post.

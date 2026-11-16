@@ -150,7 +150,7 @@ export function ConversationComposer(props: ConversationComposerProps) {
     else note.mutate(request, options);
   };
   return (
-    <div className="mx-auto w-full max-w-205 px-4 pb-4">
+    <div className="mx-auto w-full max-w-200 px-4 pb-4">
       <Composer
         label={
           mode === "reply"

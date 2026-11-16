@@ -13,9 +13,6 @@ export interface ArticleFeedbackProps {
   viewer: Viewer;
 }
 
-const choice =
-  "h-7 rounded-full border-transparent bg-transparent px-3 text-xs text-foreground shadow-none hover:bg-muted sm:h-7 sm:text-xs";
-
 /** "Did this answer your question?" with a yes or no vote. */
 export function ArticleFeedback(props: ArticleFeedbackProps) {
   const { t } = useTranslation("quills");
@@ -66,12 +63,16 @@ export function ArticleFeedback(props: ArticleFeedbackProps) {
           <div className="flex gap-1 rounded-full border border-border p-1">
             <ConfirmAction
               labelKey="help-center.helpfulYes"
-              className={choice}
+              variant="ghost"
+              size="xs"
+              className="rounded-full before:rounded-full"
               onConfirm={() => send(true)}
             />
             <ConfirmAction
               labelKey="help-center.helpfulNo"
-              className={choice}
+              variant="ghost"
+              size="xs"
+              className="rounded-full before:rounded-full"
               onConfirm={() => send(false)}
             />
           </div>

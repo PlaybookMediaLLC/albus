@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { reactionEmoji } from "../../core/reactions";
 import { ConfirmAction } from "../confirm-action";
+import { Button } from "../upstream";
 
 export interface CommentReactionsProps {
   reactions: Array<{ emoji: string; count: number; reacted: boolean }>;
@@ -15,11 +16,7 @@ export interface CommentReactionsProps {
 
 // The heart is the like.
 const LIKE = "❤️";
-// Resets the upstream button so a reaction looks like the other comment actions.
-const reset =
-  "h-auto border-0 bg-transparent px-0 font-normal shadow-none before:hidden hover:bg-transparent aria-pressed:bg-transparent sm:h-auto sm:text-xs dark:bg-transparent";
-const like = `${reset} gap-1 text-xs text-muted-foreground hover:text-foreground aria-pressed:text-foreground aria-pressed:[&_path]:fill-current [&_svg]:size-3.5`;
-const chip = `${reset} h-6 gap-1 rounded-full border border-border px-2 text-xs tabular-nums hover:bg-muted aria-pressed:border-primary/40 aria-pressed:bg-primary/10 aria-pressed:text-primary sm:h-6`;
+const round = "rounded-full before:rounded-full";
 
 /** The like, the other reactions as toggles, and a picker for a new reaction. */
 export function CommentReactions({
@@ -45,10 +42,12 @@ export function CommentReactions({
           labelKey="post.like"
           pressed={Boolean(liked?.reacted)}
           disabled={!onReact}
-          className={like}
+          variant="ghost"
+          size="icon-xs"
+          className={`${round} text-muted-foreground hover:text-foreground aria-pressed:text-foreground aria-pressed:[&_path]:fill-current`}
           onConfirm={() => toggle(LIKE)}
         >
-          <IconHeartOutline18 aria-hidden="true" />
+          <IconHeartOutline18 aria-hidden="true" className="size-3.5" />
         </ConfirmAction>
         {liked?.count ? <span>{liked.count}</span> : null}
       </span>
@@ -61,7 +60,7 @@ export function CommentReactions({
             labelValues={{ emoji: reaction.emoji, count: reaction.count }}
             pressed={reaction.reacted}
             disabled={!onReact}
-            className={chip}
+            variant="pill"
             onConfirm={() => toggle(reaction.emoji)}
           >
             <span aria-hidden="true">{reaction.emoji}</span>
@@ -76,16 +75,18 @@ export function CommentReactions({
             if (event.key === "Escape" && picking) close();
           }}
         >
-          <button
+          <Button
             ref={toggleRef}
             type="button"
+            variant="ghost"
+            size="icon-xs"
             aria-expanded={picking}
             aria-label={t("post.addReaction")}
-            className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground [&_svg]:size-3.5"
+            className={`${round} text-muted-foreground hover:text-foreground`}
             onClick={() => setPicking(!picking)}
           >
-            <IconFacePlusOutline18 aria-hidden="true" />
-          </button>
+            <IconFacePlusOutline18 aria-hidden="true" className="size-3.5" />
+          </Button>
           {picking
             ? reactionEmoji
                 .filter((emoji) => emoji !== LIKE)
@@ -95,7 +96,9 @@ export function CommentReactions({
                     labelKey="post.reactWith"
                     labelValues={{ emoji }}
                     pressed={Boolean(find(emoji)?.reacted)}
-                    className={`${reset} size-7 justify-center rounded-full text-sm hover:bg-muted aria-pressed:bg-muted sm:size-7`}
+                    variant="ghost"
+                    size="icon-xs"
+                    className={`${round} text-sm aria-pressed:bg-accent`}
                     onConfirm={async () => {
                       await toggle(emoji);
                       close();

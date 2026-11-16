@@ -51,7 +51,7 @@ export function TeamMemberPage({ workspaceId, params }: TeamMemberPageProps) {
               />
             ) : null}
           </div>
-          <div className="mx-auto w-full max-w-195 px-6 pb-10 pt-6 md:pt-10">
+          <div className="mx-auto w-full max-w-200 px-6 pb-10 pt-6 md:pt-10">
             {member ? (
               <PersonAvatar
                 name={member.name}

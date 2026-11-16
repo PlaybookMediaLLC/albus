@@ -14,7 +14,7 @@ export function ProfileSummary({
 }: ProfileSummaryProps) {
   const { t } = useTranslation("quills");
   return (
-    <Card className="rounded-2xl shadow-none">
+    <Card>
       <CardHeader>
         <CardTitle>{account.name}</CardTitle>
       </CardHeader>
