@@ -4,6 +4,7 @@ import {
 } from "nucleo-ui-essential-outline-18";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { reactionEmoji } from "../../core/reactions";
 import { ConfirmAction } from "../confirm-action";
 
 export interface CommentReactionsProps {
@@ -12,8 +13,7 @@ export interface CommentReactionsProps {
   onReact?: (emoji: string, reacted: boolean) => Promise<void>;
 }
 
-// The reactions that the API accepts. The heart is the like.
-const EMOJI = ["👍", "❤️", "🎉", "😄", "😕", "👀", "🚀"];
+// The heart is the like.
 const LIKE = "❤️";
 // Resets the upstream button so a reaction looks like the other comment actions.
 const reset =
@@ -87,21 +87,23 @@ export function CommentReactions({
             <IconFacePlusOutline18 aria-hidden="true" />
           </button>
           {picking
-            ? EMOJI.filter((emoji) => emoji !== LIKE).map((emoji) => (
-                <ConfirmAction
-                  key={emoji}
-                  labelKey="post.reactWith"
-                  labelValues={{ emoji }}
-                  pressed={Boolean(find(emoji)?.reacted)}
-                  className={`${reset} size-7 justify-center rounded-full text-sm hover:bg-muted aria-pressed:bg-muted sm:size-7`}
-                  onConfirm={async () => {
-                    await toggle(emoji);
-                    close();
-                  }}
-                >
-                  <span aria-hidden="true">{emoji}</span>
-                </ConfirmAction>
-              ))
+            ? reactionEmoji
+                .filter((emoji) => emoji !== LIKE)
+                .map((emoji) => (
+                  <ConfirmAction
+                    key={emoji}
+                    labelKey="post.reactWith"
+                    labelValues={{ emoji }}
+                    pressed={Boolean(find(emoji)?.reacted)}
+                    className={`${reset} size-7 justify-center rounded-full text-sm hover:bg-muted aria-pressed:bg-muted sm:size-7`}
+                    onConfirm={async () => {
+                      await toggle(emoji);
+                      close();
+                    }}
+                  >
+                    <span aria-hidden="true">{emoji}</span>
+                  </ConfirmAction>
+                ))
             : null}
         </span>
       ) : null}
