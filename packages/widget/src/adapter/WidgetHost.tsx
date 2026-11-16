@@ -13,11 +13,12 @@ import { useWidgetData } from "./useWidgetData.js";
 import { useWidgetSession } from "./useWidgetSession.js";
 import { useHostCapture } from "./useHostCapture.js";
 import type { OutboundMessage } from "../core/protocol.js";
-import type { WidgetViewProps } from "../ui/types.js";
+import type { WidgetTab, WidgetViewProps } from "../ui/types.js";
 
 type Config = {
   theme: "light" | "dark" | "auto";
   surfaces: Surfaces;
+  tabs: WidgetTab[];
   pollIntervalMs: number;
 };
 type Target = Extract<ParentMessage, { type: "open" }>["target"];
@@ -79,7 +80,7 @@ export function WidgetHost({
       const [{ config: stored }, capabilities] = await Promise.all([
         api.request<{
           config: {
-            tabs: Surfaces;
+            tabs: Surfaces & { home?: boolean };
             theme: { themeMode: "light" | "dark" | "user" };
           } | null;
         }>("GET", "/widget/config.json"),
@@ -89,11 +90,19 @@ export function WidgetHost({
         ),
       ]);
       if (!stored) return setConfig("off");
-      const { feedback, changelog, help, messenger } = stored.tabs;
+      const { feedback, changelog, help, messenger, home } = stored.tabs;
       const mode = stored.theme.themeMode;
+      const on: Record<WidgetTab, boolean> = {
+        home: home !== false,
+        messages: messenger,
+        help,
+        feedback,
+        updates: changelog,
+      };
       setConfig({
         theme: mode === "user" ? "auto" : mode,
         surfaces: { feedback, changelog, help, messenger },
+        tabs: (Object.keys(on) as WidgetTab[]).filter((tab) => on[tab]),
         pollIntervalMs: Math.max(5000, capabilities.chat.pollIntervalMs),
       });
     } catch (error) {
@@ -177,6 +186,8 @@ export function WidgetHost({
     <WidgetView
       key={visitor.visitor}
       theme={ready ? config.theme : "auto"}
+      // Until the config arrives no tab is known to be on.
+      tabs={ready ? config.tabs : []}
       onClose={close}
       onExpandedChange={(expanded) =>
         bridge.current?.post({ type: "quackback:expand", expanded })

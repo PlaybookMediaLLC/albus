@@ -44,6 +44,7 @@ const message = (
     content: string;
     systemKind: string | null;
     systemActorPrincipalId: string | null;
+    widgetMetadata: Record<string, string> | null;
     createdAt: string;
     embeds: { kind: string; id: string }[];
   }>,
@@ -58,6 +59,7 @@ const message = (
   systemKind: null,
   systemActorPrincipalId: null,
   emailAuth: null,
+  widgetMetadata: null,
   embeds: [],
   attachments: [],
   reactions: [],
@@ -94,7 +96,13 @@ describe("MessageList", () => {
             authorName: "Ada",
             content: "On it",
           }),
-          message("m1", { content: "Export fails" }),
+          message("m1", {
+            content: "Export fails",
+            widgetMetadata: {
+              pageUrl: "https://app.example/export",
+              browser: "Firefox 140 on Linux",
+            },
+          }),
         ]}
         people={[]}
       />,
@@ -102,6 +110,10 @@ describe("MessageList", () => {
     const items = view.getAllByRole("listitem");
     expect(items[0]).toHaveTextContent("Grace");
     expect(items[0]).toHaveTextContent("Export fails");
+    // The customer's message shows the page and the browser it came from.
+    expect(items[0]).toHaveTextContent("https://app.example/export");
+    expect(items[0]).toHaveTextContent("Firefox 140 on Linux");
+    expect(items[1]).not.toHaveTextContent("Page");
     // A day line starts the thread and each new day.
     expect(items[0]!.querySelector("time")).toHaveAttribute(
       "datetime",

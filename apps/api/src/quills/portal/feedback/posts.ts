@@ -77,7 +77,7 @@ const voteCount = z.number().optional().openapi({
   description: "Left out when the post's board hides vote counts",
 });
 /** Host-page context from the widget (RFC 0003 feature 6), kept with the post for the team. */
-const widgetMetadata = z
+export const widgetMetadata = z
   .record(z.string().trim().min(1).max(64), z.string().max(500))
   .refine((map) => Object.keys(map).length <= 20, "At most 20 metadata keys")
   .optional()

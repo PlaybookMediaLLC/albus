@@ -14,6 +14,7 @@ import {
 import { files } from "../../../database/quills/schema/files";
 import { defineQuillsRoute } from "../../framework/define-route";
 import { createDownload } from "../../framework/files";
+import { widgetMetadata } from "../../portal/feedback/posts";
 import {
   claimReceipt,
   conversationParams,
@@ -52,6 +53,12 @@ const sent = z.object({
   replayed: z.boolean(),
 });
 const PAGE = 30;
+/** The widget's host-page context, kept with the visitor's message. */
+const messageMetadata = widgetMetadata.describe(
+  "Context from the host page, such as pageUrl and browser, and keys that the host app set with the widget's metadata command. Stored with the message for the team; never returned to the visitor.",
+);
+const metadataOf = (body: object) =>
+  (body as { metadata?: Record<string, string> }).metadata;
 
 /** Builds the conversation routes of one customer audience. */
 export function conversationRoutes(audience: Customer) {
@@ -323,7 +330,11 @@ export function conversationRoutes(audience: Customer) {
       "Creates the conversation and its first message. A retry with the same idempotencyKey and text returns the first result; other text with that key is 409.",
     action: "create",
     rateLimit: { limit: 20, windowSeconds: 600 },
-    body: z.object({ content: messageText, idempotencyKey }),
+    body: z.object({
+      content: messageText,
+      idempotencyKey,
+      ...(widget && { metadata: messageMetadata }),
+    }),
     response: sent,
     responseDescription: "The new conversation and its first message",
     errors: sendErrors,
@@ -366,6 +377,7 @@ export function conversationRoutes(audience: Customer) {
           created!,
           receipt.messageId,
           body.content,
+          metadataOf(body),
         );
       }
       return loadSent(
@@ -393,7 +405,11 @@ export function conversationRoutes(audience: Customer) {
     action: "update",
     rateLimit: { limit: 60, windowSeconds: 600 },
     params: conversationParams,
-    body: z.object({ content: messageText, idempotencyKey }),
+    body: z.object({
+      content: messageText,
+      idempotencyKey,
+      ...(widget && { metadata: messageMetadata }),
+    }),
     response: sent,
     responseDescription: "The message and the updated conversation",
     errors: sendErrors,
@@ -431,6 +447,7 @@ export function conversationRoutes(audience: Customer) {
           conversation,
           receipt.messageId,
           body.content,
+          metadataOf(body),
         );
       return loadSent(
         db,

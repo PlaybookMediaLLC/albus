@@ -44,6 +44,7 @@ export const startAgentConversationFixture = {
           systemKind: null,
           systemActorPrincipalId: null,
           emailAuth: null,
+          widgetMetadata: null,
           embeds: [],
           attachments: [],
           reactions: [],

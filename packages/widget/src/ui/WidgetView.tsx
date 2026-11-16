@@ -15,7 +15,10 @@ import { ArticleView } from "./ArticleView.js";
 import { ConnectionStatus } from "./ConnectionStatus.js";
 import { SurveyPrompt } from "./SurveyPrompt.js";
 import { useDrafts, emptyDraft } from "./useDrafts.js";
-import { useWidgetNavigation } from "./useWidgetNavigation.js";
+import {
+  useWidgetNavigation,
+  type WidgetRoute,
+} from "./useWidgetNavigation.js";
 import { useAction } from "./useAction.js";
 import type {
   WidgetTab,
@@ -36,6 +39,7 @@ export function WidgetView({
   brandName = "Quills",
   theme = "auto",
   initialTab = "home",
+  tabs: enabledTabs,
   feedback = [],
   articles = [],
   updates = [],
@@ -79,13 +83,16 @@ export function WidgetView({
     onClose();
   };
   const nav = useWidgetNavigation(initialTab);
-  const { tab, detail: selected, composer } = nav.route;
-  const composeKey = nav.route.articleId
-    ? `message:article:${nav.route.articleId}`
+  const has = (id: WidgetTab) => !enabledTabs || enabledTabs.includes(id);
+  const shownTabs = tabs.filter((item) => has(item.id));
+  // A tab that the workspace turned off (an initial tab, a deep link, history) shows the first one that is on.
+  const route: WidgetRoute =
+    has(nav.route.tab) || !shownTabs[0] ? nav.route : { tab: shownTabs[0].id };
+  const { tab, detail: selected, composer } = route;
+  const composeKey = route.articleId
+    ? `message:article:${route.articleId}`
     : (composer ?? "");
-  const contextArticle = articles.find(
-    (item) => item.id === nav.route.articleId,
-  );
+  const contextArticle = articles.find((item) => item.id === route.articleId);
   const expanded = !!selected && (tab === "help" || tab === "updates");
   const expansionCallback = useRef(onExpandedChange);
   useEffect(() => {
@@ -173,7 +180,7 @@ export function WidgetView({
       (body, options) =>
         submission(body, {
           ...options,
-          ...(nav.route.articleId ? { articleId: nav.route.articleId } : {}),
+          ...(route.articleId ? { articleId: route.articleId } : {}),
         }),
       () => {
         if (nav.currentKey.current !== origin) return;
@@ -275,7 +282,7 @@ export function WidgetView({
             {notice}
           </p>
         )}
-        {nav.route.activity ? (
+        {route.activity ? (
           <ActivityView
             activities={activities}
             onRead={onReadActivity}
@@ -423,6 +430,7 @@ export function WidgetView({
             latest={updates.find((item) => item.unread) ?? updates[0]}
             navigate={navigate}
             compose={compose}
+            has={has}
             openUpdate={(id) => open("updates", id)}
             conversations={conversations}
             openConversation={(id) => open("messages", id)}
@@ -481,10 +489,10 @@ export function WidgetView({
           />
         )}
       </div>
-      {!composer && !selected && !nav.route.activity && (
+      {!composer && !selected && !route.activity && (
         <>
           <nav className="qb-nav" aria-label="Widget navigation">
-            {tabs.map((item) => {
+            {shownTabs.map((item) => {
               const unread =
                 item.id === "messages"
                   ? unreadMessages

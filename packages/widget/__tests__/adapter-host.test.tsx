@@ -13,6 +13,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { WidgetHost } from "../src/adapter/WidgetHost";
 
@@ -361,6 +362,24 @@ describe("widget host page", () => {
     expect(requested("PUT /widget/conversations/c1/read")[0]!.init.body).toBe(
       '{"throughMessageId":"m2"}',
     );
+  });
+
+  it("shows only the tabs that the workspace turned on, and opens Home for a tab that is off", async () => {
+    // The default config here: feedback on; messages, help and updates off; home on.
+    mount();
+    fromParent({ type: "quackback:identify", data: null });
+    fromParent({ type: "quackback:open", data: { view: "messages" } });
+    // Home, after the data loads: the messages deep link cannot open an off tab.
+    expect(await screen.findByText("Submit a request")).toBeTruthy();
+    const nav = screen.getByRole("navigation", { name: "Widget navigation" });
+    expect(
+      within(nav)
+        .getAllByRole("button")
+        .map((button) => button.textContent?.trim()),
+    ).toEqual(["Home", "Feedback"]);
+    expect(screen.queryByRole("heading", { name: "Messages" })).toBeNull();
+    expect(screen.queryByText("Send us a message")).toBeNull();
+    expect(screen.queryByText("Search for help")).toBeNull();
   });
 
   it("shows an unavailable state while the workspace has the widget off", async () => {
