@@ -148,6 +148,13 @@ export const CONCURRENT_INDEX_SPECS: readonly ConcurrentIndexSpec[] = [
     ddl: "CREATE INDEX CONCURRENTLY IF NOT EXISTS posts_workspace_vote_count_idx ON quills.posts (workspace_id, vote_count, created_at, id)",
   },
   {
+    // The post list's Trending sort counts the voters of the last 7 days per post. post_votes is a
+    // large table, so it is built here.
+    name: "post_votes_workspace_post_created_idx",
+    concurrent: true,
+    ddl: "CREATE INDEX CONCURRENTLY IF NOT EXISTS post_votes_workspace_post_created_idx ON quills.post_votes (workspace_id, post_id, created_at, principal_id)",
+  },
+  {
     name: "user_name_trgm_idx",
     concurrent: true,
     ddl: "CREATE INDEX CONCURRENTLY IF NOT EXISTS user_name_trgm_idx ON quills.customer_identity USING gin (name gin_trgm_ops)",

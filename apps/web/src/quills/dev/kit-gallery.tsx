@@ -61,6 +61,8 @@ import { PropertyRow } from "../ui/inbox/property-row";
 import { RequestFilters } from "../ui/inbox/request-filters";
 import { RequestRow } from "../ui/inbox/request-row";
 import { RowBadge } from "../ui/inbox/row-badge";
+import { BoardDot } from "../ui/inbox/board-dot";
+import { EmojiMenu } from "../ui/inbox/emoji-menu";
 import { SearchField } from "../ui/inbox/search-field";
 import { StatusTabs } from "../ui/inbox/status-tabs";
 import { SystemEvent } from "../ui/inbox/system-event";
@@ -709,6 +711,7 @@ export function KitGallery() {
                   votes={3}
                   comments={1}
                   board={demo}
+                  boardId="board_demo"
                   time="2026-01-01T00:00:00.000Z"
                   person={{ name: demo }}
                 />
@@ -719,15 +722,22 @@ export function KitGallery() {
               headingLevel={2}
               filters={
                 <RequestFilters
-                  status="active"
-                  board=""
+                  boards={[{ id: "board_demo", label: demo }]}
+                  statuses={[{ id: "status_demo", label: demo }]}
+                  tags={[]}
+                  checked={{ board: [], status: ["status_demo"], tags: [] }}
                   sort="newest"
-                  boards={[{ id: "board_demo", name: demo }]}
-                  onChange={() => setEmpty(!empty)}
+                  onFacet={() => setEmpty(!empty)}
+                  onSort={() => setEmpty(!empty)}
+                  onClear={() => setEmpty(!empty)}
                 />
               }
             />
             <RowBadge badge={{ id: "badge", label: demo, tone: "success" }} />
+            <span className="inline-flex items-center gap-1.5 text-xs">
+              <BoardDot boardId="board_demo" />
+              {demo}
+            </span>
             <CommandPalette
               open={palette}
               onOpenChange={setPalette}
@@ -828,6 +838,11 @@ export function KitGallery() {
                         ]}
                         mode={mode}
                         onModeChange={setMode}
+                        tools={
+                          <EmojiMenu
+                            onPick={(emoji) => setText(text + emoji)}
+                          />
+                        }
                       />
                     </div>
                     <FloatingActionBar

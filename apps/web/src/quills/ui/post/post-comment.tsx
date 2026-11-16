@@ -43,6 +43,10 @@ export interface PostCommentProps {
   attachments?: ReactNode;
   /** Replies, shown under the comment. */
   children?: ReactNode;
+  /** Controls at the end of the author line, such as the team's comment menu. */
+  menu?: ReactNode;
+  /** Replaces the like and the reactions, such as the team's vote pill. */
+  reactions?: ReactNode;
 }
 
 const action =
@@ -90,6 +94,7 @@ export function PostComment({ comment, ...props }: PostCommentProps) {
               {t("post.edited")}
             </span>
           ) : null}
+          {props.menu ? <span className="ms-auto">{props.menu}</span> : null}
         </p>
         {comment.deleted ? (
           <p className="mt-1 text-sm italic text-muted-foreground">
@@ -118,15 +123,17 @@ export function PostComment({ comment, ...props }: PostCommentProps) {
             role="group"
             className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1"
           >
-            <CommentReactions
-              reactions={comment.reactions}
-              onReact={
-                props.onReact
-                  ? (emoji, reacted) =>
-                      props.onReact!(comment.id, emoji, reacted)
-                  : undefined
-              }
-            />
+            {props.reactions ?? (
+              <CommentReactions
+                reactions={comment.reactions}
+                onReact={
+                  props.onReact
+                    ? (emoji, reacted) =>
+                        props.onReact!(comment.id, emoji, reacted)
+                    : undefined
+                }
+              />
+            )}
             {props.replyForm ? (
               <button
                 type="button"
