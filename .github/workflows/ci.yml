@@ -594,14 +594,28 @@ jobs:
         run: node scripts/ci/pr-change-classification.mjs
 
   deploy:
-    name: Deploy to production
+    name: Start the production deploy
     # Each merge to main deploys after the full CI gate passes. A failed gate skips the deploy.
     # Check the gate result itself: the implicit success() also fails on the jobs that the gate
     # allows to skip on a push (the Chromium smoke tests), which skipped the deploy.
+    # The deploy runs as its own workflow run: a called workflow did not get the
+    # digitalocean-production environment secrets.
     needs: ci-result
     if: ${{ !cancelled() && needs.ci-result.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     permissions:
-      contents: read
-      packages: write
-      id-token: write
-    uses: ./.github/workflows/deploy-digitalocean.yml # zizmor: ignore[self-repository] $/-syntax not parsed by pinned actionlint v1.7.12; revisit when supported
+      actions: write
+    steps:
+      - name: Start Deploy DigitalOcean for the tested commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The dispatch deploys the head of main. Deploy only when that is the commit CI tested;
+          # a newer commit deploys from its own CI run.
+          head="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)"
+          if [ "$head" != "$GITHUB_SHA" ]; then
+            echo "main moved to $head; its own CI run deploys it."
+            exit 0
+          fi
+          gh workflow run deploy-digitalocean.yml --repo "$GITHUB_REPOSITORY" --ref main
