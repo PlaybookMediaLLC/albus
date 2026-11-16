@@ -102,8 +102,8 @@ export function MessageList(props: MessageListProps) {
                   message.isInternal
                     ? "note"
                     : message.senderType === "agent"
-                      ? "team"
-                      : "customer"
+                      ? "self"
+                      : "other"
                 }
                 author={
                   message.senderType === "visitor"
