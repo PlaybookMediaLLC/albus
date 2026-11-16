@@ -17,11 +17,12 @@ describe("EmailSecuritySection", () => {
       "DKIMFailed",
       "DMARCNo result",
     ]);
-    const summary = view.getByText("Email security");
-    expect(summary).toHaveTextContent("16d ago");
-    const details = summary.closest("details")!;
-    expect(details.open).toBe(true);
-    fireEvent.click(summary);
-    expect(details.open).toBe(false);
+    const toggle = view.getByRole("button", { name: "Email security" });
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(checks[0]).not.toBeVisible();
+    // The time sits beside the heading, outside the toggle, so it stays in view.
+    expect(view.getByText("16d ago")).toBeVisible();
   });
 });
