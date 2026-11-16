@@ -18,8 +18,6 @@ describe("WeeklyTrend", () => {
     expect(
       view.getByRole("columnheader", { name: "New votes" }),
     ).toBeInTheDocument();
-    expect(
-      view.getByRole("row", { name: "2026-11-09 4 6" }),
-    ).toBeInTheDocument();
+    expect(view.getByRole("row", { name: "Nov 9 4 6" })).toBeInTheDocument();
   });
 });

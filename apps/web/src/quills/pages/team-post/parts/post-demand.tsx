@@ -1,8 +1,8 @@
-import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { useGetPostDemand } from "../../../hooks/team/use-get-post-demand";
 import { useTeamRuntime } from "../../../team/runtime";
 import { TeamStateView } from "../../../team/team-state-view";
+import { PanelSection } from "../../../ui/inbox/panel-section";
 import { PropertyRow } from "../../../ui/inbox/property-row";
 
 export interface PostDemandProps {
@@ -14,7 +14,6 @@ export interface PostDemandProps {
 export function PostDemand({ workspaceId, postId }: PostDemandProps) {
   const { t, i18n } = useTranslation("quills");
   const team = useTeamRuntime();
-  const heading = useId();
   const demand = useGetPostDemand(
     { param: { workspaceId, postId } },
     team.viewer,
@@ -24,13 +23,7 @@ export function PostDemand({ workspaceId, postId }: PostDemandProps) {
     maximumFractionDigits: 0,
   });
   return (
-    <section aria-labelledby={heading} className="py-3">
-      <h3
-        id={heading}
-        className="pb-1 text-xs font-medium text-muted-foreground"
-      >
-        {t("team-post.demand")}
-      </h3>
+    <PanelSection title={t("team-post.demand")}>
       <TeamStateView
         loading={demand.isLoading}
         problem={demand.error}
@@ -45,7 +38,21 @@ export function PostDemand({ workspaceId, postId }: PostDemandProps) {
               {money.format(data.mrrCents / 100)}
             </PropertyRow>
             <PropertyRow label={t("team-post.importance")}>
-              {t("team-post.importanceCounts", data.importance)}
+              {/* Three short counts read better than one sentence that wraps. */}
+              <span className="flex flex-wrap gap-x-3 gap-y-0.5">
+                {(
+                  [
+                    ["team-post.nice", data.importance.nice],
+                    ["team-post.important", data.importance.important],
+                    ["team-post.critical", data.importance.critical],
+                  ] as const
+                ).map(([key, count]) => (
+                  <span key={key}>
+                    <span className="font-medium tabular-nums">{count}</span>{" "}
+                    <span className="text-muted-foreground">{t(key)}</span>
+                  </span>
+                ))}
+              </span>
             </PropertyRow>
             <PropertyRow label={t("team-post.segments")}>
               {data.segments.length
@@ -62,6 +69,6 @@ export function PostDemand({ workspaceId, postId }: PostDemandProps) {
           </>
         ) : null}
       </TeamStateView>
-    </section>
+    </PanelSection>
   );
 }

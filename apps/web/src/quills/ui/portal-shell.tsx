@@ -63,7 +63,7 @@ export function PortalShell({
         </div>
       </header>
       {children}
-      <footer className="portal-footer mx-auto w-full max-w-5xl px-5 py-6 text-xs text-muted-foreground">
+      <footer className="portal-footer mx-auto w-full max-w-5xl px-5 py-6 text-xs text-muted-foreground max-sm:pb-24">
         {t("core.poweredBy")} {brand.name}
       </footer>
     </div>

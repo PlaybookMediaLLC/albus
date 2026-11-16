@@ -126,6 +126,7 @@ export const conversationDetail = conversationItem.extend({
     dismissedAt: nullableResponseTimestamp,
   }),
   summary: z.string().nullable(),
+  summaryUpdatedAt: nullableResponseTimestamp,
   csatComment: z.string().nullable(),
 });
 export const changedConversation = conversationDetail.extend({
@@ -306,6 +307,7 @@ export async function loadConversation(db: Database, id: ConversationId) {
       dismissedAt: conversations.translationDismissedAt,
       csatComment: conversations.csatComment,
       summary: conversationSummaries.summary,
+      summaryUpdatedAt: conversationSummaries.updatedAt,
     })
     .from(conversations)
     .leftJoin(
@@ -322,6 +324,7 @@ export async function loadConversation(db: Database, id: ConversationId) {
       dismissedAt: extra!.dismissedAt,
     },
     summary: extra!.summary,
+    summaryUpdatedAt: extra!.summaryUpdatedAt,
     csatComment: extra!.csatComment,
   };
 }

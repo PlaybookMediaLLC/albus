@@ -37,7 +37,7 @@ export function BoardNavigation({
       <section aria-labelledby="feedback-boards">
         <h2 id="feedback-boards">{t("feedback.boards")}</h2>
         {boards.length ? (
-          <ul className="flex gap-4 overflow-x-auto md:grid md:gap-0.5">
+          <ul className="grid gap-0.5">
             <li>
               <a
                 className={item}
@@ -73,7 +73,7 @@ export function BoardNavigation({
       {stages.length && onStageChange ? (
         <section aria-labelledby="feedback-statuses">
           <h2 id="feedback-statuses">{t("feedback.stage")}</h2>
-          <ul className="flex gap-4 overflow-x-auto md:grid md:gap-0.5">
+          <ul className="grid gap-0.5">
             {stages.map((option) => (
               <li key={option.value}>
                 <button

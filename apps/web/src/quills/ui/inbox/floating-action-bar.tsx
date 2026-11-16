@@ -56,7 +56,10 @@ export function FloatingActionBar({
         onClick={action.onSelect}
       >
         {Icon ? <Icon aria-hidden="true" /> : null}
-        {action.label}
+        {/* A phone keeps the bar narrow: the icon shows and the label stays for screen readers. */}
+        <span className={Icon && !main ? "max-sm:sr-only" : undefined}>
+          {action.label}
+        </span>
         {action.shortcut ? (
           <Kbd aria-hidden="true" tone={main ? "tooltip" : "muted"}>
             {action.shortcut.toUpperCase()}

@@ -104,6 +104,7 @@ export function ChangelogEntry({
             <PersonAvatar
               name={entry.author.name}
               avatarUrl={entry.author.avatarUrl}
+              colored
               className="size-6"
             />
             {entry.author.name}

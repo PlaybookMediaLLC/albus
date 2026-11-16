@@ -39,7 +39,7 @@ export function PostList(props: PostListProps) {
         {props.posts.map((post) => (
           <li
             key={post.id}
-            className="portal-post-row relative flex items-center gap-4 rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/60"
+            className="portal-post-row relative flex items-center gap-4 rounded-xl px-3 py-3 transition-colors hover:bg-muted/60"
           >
             <PostVoteButton
               voted={post.voted}
@@ -56,7 +56,7 @@ export function PostList(props: PostListProps) {
             />
             <div className="min-w-0 flex-1">
               <a
-                className="block truncate font-medium tracking-tight after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
+                className="block truncate font-medium after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
                 href={portalHref(props.workspaceId, `posts/${post.id}`)}
               >
                 {post.title}
@@ -88,6 +88,7 @@ export function PostList(props: PostListProps) {
             <PersonAvatar
               name={post.author.name}
               avatarUrl={post.author.avatarUrl}
+              colored
               className="hidden size-6 sm:inline-flex"
             />
           </li>

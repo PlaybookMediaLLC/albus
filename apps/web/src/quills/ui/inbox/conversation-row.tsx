@@ -68,18 +68,23 @@ export function ConversationRow(props: ConversationRowProps) {
         <span className="mt-0.5 flex items-center gap-2">
           <span className="min-w-0 flex-1 truncate text-muted-foreground">
             {props.title ? (
-              <span className="text-foreground">{props.title} </span>
+              <>
+                <span className="text-foreground">{props.title}</span>{" "}
+                <span
+                  aria-hidden="true"
+                  className="me-1 before:content-['·']"
+                />
+              </>
             ) : null}
             {props.preview}
           </span>
           {props.assignee ? (
-            <span className="flex shrink-0">
+            <span className="flex shrink-0" title={props.assignee.name ?? ""}>
               <PersonAvatar
                 colored
                 name={props.assignee.name}
                 avatarUrl={props.assignee.avatarUrl}
-                initials={false}
-                className="size-4"
+                className="size-5"
               />
               <span className="sr-only">
                 {t("inbox.assignedTo", { name: props.assignee.name ?? "" })}

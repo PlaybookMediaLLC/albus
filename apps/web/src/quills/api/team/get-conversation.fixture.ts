@@ -38,6 +38,7 @@ export const getConversationFixture = {
           dismissedAt: null,
         },
         summary: null,
+        summaryUpdatedAt: null,
         csatComment: null,
       },
       ...overrides,

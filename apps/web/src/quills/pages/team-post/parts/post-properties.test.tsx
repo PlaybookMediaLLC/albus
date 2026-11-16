@@ -37,7 +37,8 @@ describe("PostProperties", () => {
       </RouterContextProvider>,
     );
     expect(await view.findByText("Enterprise (2 voters)")).toBeVisible();
-    for (const name of ["Demand", "0 merged requests"])
+    // Each part of the panel is a collapsible section with a heading.
+    for (const name of ["Demand", "RICE score", "Links", "Requests merged"])
       expect(view.getByRole("heading", { name })).toBeVisible();
     expect(view.getByText("RICE score")).toBeVisible();
     expect(view.getByText("Tasks")).toBeVisible();

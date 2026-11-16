@@ -142,7 +142,10 @@ export function TeamChangelogPage({ workspaceId }: TeamChangelogPageProps) {
             onRetry={() => void entries.refetch()}
           >
             {items.length ? (
-              <ul aria-label={t("team-changelog.tabs.entries")}>
+              <ul
+                aria-label={t("team-changelog.tabs.entries")}
+                className="grid grid-cols-1 gap-0.5 p-2"
+              >
                 {items.map((entry) => (
                   <li key={entry.id}>
                     <EntryRow

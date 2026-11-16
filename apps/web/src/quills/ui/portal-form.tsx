@@ -31,6 +31,8 @@ export interface PortalFormProps<T extends FieldValues> {
   footer?: (form: UseFormReturn<T>) => ReactNode;
   /** An icon-only submit button; the submit label becomes its accessible name. */
   submitIcon?: ReactNode;
+  /** The submit button look; "secondary" is a quiet button that still submits. */
+  submitVariant?: "default" | "secondary";
 }
 
 /** True when the form values hold the path of an API issue, such as "days.0.end". */
@@ -111,6 +113,7 @@ export function PortalForm<T extends FieldValues>(props: PortalFormProps<T>) {
   const submitButton = (
     <Button
       type="submit"
+      variant={props.submitVariant}
       size={props.submitIcon ? "icon-sm" : undefined}
       className={props.submitIcon ? "ml-auto rounded-full" : undefined}
       aria-label={props.submitIcon ? t(props.submitKey) : undefined}

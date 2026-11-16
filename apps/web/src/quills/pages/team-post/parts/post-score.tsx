@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { GetPostResponse } from "../../../api/team/get-post";
 import { useSetPostScore } from "../../../hooks/team/use-set-post-score";
 import { useTeamRuntime } from "../../../team/runtime";
-import { PropertyRow } from "../../../ui/inbox/property-row";
+import { PanelSection } from "../../../ui/inbox/panel-section";
 import { Button } from "../../../ui/upstream";
 import { ScoreForm, type ScoreValues } from "./score-form";
 
@@ -28,23 +28,21 @@ export function PostScore({ workspaceId, post, onSaved }: PostScoreProps) {
           maximumFractionDigits: 1,
         }).format(rice);
   return (
-    <div className="py-3">
-      <PropertyRow label={t("team-post.rice")}>
-        <span className="flex items-center justify-between gap-2">
-          {value}
-          {team.permissions.update ? (
-            <Button
-              variant="ghost"
-              size="xs"
-              className="text-muted-foreground"
-              aria-expanded={editing}
-              onClick={() => setEditing(!editing)}
-            >
-              {t("team-post.editScore")}
-            </Button>
-          ) : null}
-        </span>
-      </PropertyRow>
+    <PanelSection title={t("team-post.rice")}>
+      <span className="flex min-h-8 items-center justify-between gap-2 text-sm">
+        {value}
+        {team.permissions.update ? (
+          <Button
+            variant="ghost"
+            size="xs"
+            className="text-muted-foreground"
+            aria-expanded={editing}
+            onClick={() => setEditing(!editing)}
+          >
+            {t("team-post.editScore")}
+          </Button>
+        ) : null}
+      </span>
       {editing ? (
         <ScoreForm
           score={score as ScoreValues}
@@ -58,6 +56,6 @@ export function PostScore({ workspaceId, post, onSaved }: PostScoreProps) {
           }}
         />
       ) : null}
-    </div>
+    </PanelSection>
   );
 }

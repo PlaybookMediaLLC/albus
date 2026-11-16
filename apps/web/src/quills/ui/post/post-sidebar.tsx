@@ -48,6 +48,7 @@ export function PostSidebar(props: PostSidebarProps) {
           <PersonAvatar
             name={author}
             avatarUrl={props.author.avatarUrl}
+            colored
             className="size-7 text-xs"
           />
           <div className="min-w-0 text-sm">

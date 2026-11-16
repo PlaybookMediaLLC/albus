@@ -10,6 +10,8 @@ export interface SimilarRequestsProps {
   /** The title that the viewer types in the composer. */
   title: string;
   posts: FindPortalSimilarPostsResponse["items"];
+  /** The public stages, so each match shows its status. */
+  stages?: Array<{ value: string; label: string; color: string | null }>;
   /** True for a board where the viewer may vote. */
   canVote: (boardId: string) => boolean;
 }
@@ -42,6 +44,7 @@ export function SimilarRequests(props: SimilarRequestsProps) {
     <SimilarPosts
       workspaceId={props.workspaceId}
       posts={props.posts}
+      stages={props.stages}
       votedIds={new Set(voted.data?.postIds)}
       // Until the votes load, no offer shows, so a voted post never offers a second vote.
       voteIds={voted.data ? voteIds : undefined}
