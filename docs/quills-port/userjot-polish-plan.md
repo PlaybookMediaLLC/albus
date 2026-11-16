@@ -1,6 +1,7 @@
 # Feedback portal polish plan: the UserJot reference
 
-Status: draft, 2026-11-16. Not yet reviewed by the owner.
+Status: accepted, 2026-11-16. The owner accepted the recommendations D1 to D4, with every phase in
+one PR and one commit for each phase. Section 9 records how the build differs from this draft.
 Scope: the customer feedback portal (`/portal/{id}`): feedback board, post page, composer,
 roadmap and updates. The teammate app is out of scope (section 7).
 Baseline: `a8d4edc5` (`staging` after the CSS polish pass in PR #181).
@@ -235,3 +236,36 @@ largest visible change.
   custom-palette fixture from the parity pass.
 - `field-sizing-content` is not in every browser. Where it is missing, the field keeps its fixed
   minimum height. That is an acceptable fallback.
+
+## 9. Implementation notes
+
+All phases ship in one PR, one commit for each phase, and D1 in its own commit. These points differ
+from the draft above.
+
+1. **Mobile first post (Phase 1).** At 390 × 664 the first post moves from 513 px to 349 px for a
+   visitor, not to 300 px. The rest of the gap is the inline composer. The reference hides it on
+   phones; Kaneo keeps it, because typing a title is also how a customer finds similar posts. For a
+   customer with a pending survey it moves from 923 px to 497 px, within one screen.
+2. **Floating submit (Phase 1).** The pill shows on the feedback, board, post, roadmap and updates
+   pages while the feedback tab is on. Help, status and support pages do not get it, because their
+   reply boxes sit at the bottom.
+3. **Survey (Phase 1).** The scale keeps its native radio inputs in a grid of equal cells instead of
+   a `ToggleGroup`: the same semantics, and the existing tests still apply. "Not now" is a close
+   icon button with that name.
+4. **Hierarchy (Phase 2).** The row pitch is 65 px. Only an enabled pill shows its count in the
+   muted color: a disabled pill (a visitor's) keeps the foreground color, so the count stays
+   readable at the disabled opacity.
+5. **Composer (Phase 3).** The details field already grew with its text (`field-sizing-content`
+   in the Kaneo `Textarea`), so only the hint line went. `PortalForm` takes a `submitVariant`.
+6. **Status labels (Phase 3).** `SimilarPosts` shows a status only when it gets the stages. The
+   feedback pages pass the stages they already load, so the composer's similar posts cost no
+   extra request. The post page loads the statuses for its related requests. The linked requests
+   of an update get no stages, so they no longer show the bare icon.
+7. **Updates header (Phase 4).** The icon buttons use a native `title` tooltip. The Kaneo
+   `Tooltip` renders outside the portal shell, without the workspace theme.
+8. **D1.** The preferences store defaults to `system` on a `/portal/` path. This is the only Kaneo
+   file in the change (`apps/web/src/store/user-preferences.ts`), in its own commit.
+9. **Type check.** TypeScript 7 needs about 13 GB for `apps/web`. With the demo stack running in a
+   16 GB container, `tsc --noEmit -p tsconfig.app.json --checkers 1` is the run that fits.
+
+Verification evidence is in the pull request description.
