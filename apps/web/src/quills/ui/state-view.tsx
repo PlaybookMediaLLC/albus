@@ -11,6 +11,7 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
+  Skeleton,
   Spinner,
 } from "./upstream";
 
@@ -36,6 +37,8 @@ export interface StateViewProps {
   emptyTitle?: string;
   emptyDescription?: string;
   emptyAction?: ReactNode;
+  /** Placeholder rows for the first load of a list, so the rows do not jump in. */
+  rows?: number;
 }
 
 export function StateView({
@@ -48,6 +51,7 @@ export function StateView({
   emptyTitle,
   emptyDescription,
   emptyAction,
+  rows,
 }: StateViewProps) {
   const { t } = useTranslation("quills");
   const [now, setNow] = useState(Date.now);
@@ -58,9 +62,21 @@ export function StateView({
     return () => window.clearInterval(timer);
   }, [retryAt]);
   const seconds = Math.max(0, Math.ceil(((retryAt ?? now) - now) / 1000));
+  if (loading && rows)
+    return (
+      <div role="status" aria-label={t("core.loading")} className="grid gap-1">
+        {Array.from({ length: rows }, (_, index) => (
+          <Skeleton key={index} className="h-14 rounded-xl" />
+        ))}
+      </div>
+    );
+  // The spinner shows only after 250 ms (Kaneo's delayed-reveal), so a fast answer does not flash.
   if (loading)
     return (
-      <div className="flex items-center gap-3 py-8" role="status">
+      <div
+        className="delayed-reveal flex items-center gap-3 py-8"
+        role="status"
+      >
         <Spinner />
         <p>{t("core.loading")}</p>
       </div>

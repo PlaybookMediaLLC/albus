@@ -113,7 +113,8 @@ describe("TicketListPane", () => {
     const api = mockApi();
     api.reply(listTicketsFixture.ok());
     const { view, router } = render();
-    expect(await view.findByRole("status")).toHaveTextContent(/nothing/i);
+    expect(await view.findByText(/nothing/i)).toBeInTheDocument();
+    expect(view.getByRole("status")).toHaveTextContent(/nothing/i);
     press("Filters");
     fireEvent.click(await view.findByRole("menuitemradio", { name: "Doing" }));
     await waitFor(() =>

@@ -35,7 +35,7 @@ describe("ListPane", () => {
         {rows}
       </ListPane>,
     );
-    expect(view.getByText("Loading…")).toBeVisible();
+    expect(view.getByRole("status", { name: "Loading…" })).toBeVisible();
     view.rerender(
       <ListPane title="Open" empty>
         {rows}

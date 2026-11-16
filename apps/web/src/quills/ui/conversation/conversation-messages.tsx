@@ -2,6 +2,8 @@ import { useTranslation } from "react-i18next";
 import { DateSeparator } from "../inbox/date-separator";
 import { MessageBubble } from "../inbox/message-bubble";
 import { SystemEvent } from "../inbox/system-event";
+import { arrivedClass, useArrived } from "../inbox/use-arrived";
+import { cn } from "../upstream";
 
 export interface ConversationMessagesProps {
   messages: Array<{
@@ -20,6 +22,10 @@ const day = (iso: string) => new Date(iso).toDateString();
 /** The customer's thread, with the bubbles of the teammate inbox: the customer's own messages on the right. */
 export function ConversationMessages({ messages }: ConversationMessagesProps) {
   const { t } = useTranslation("quills");
+  const arrived = useArrived(
+    messages.map((message) => message.id),
+    "thread",
+  );
   return (
     <section
       className="portal-messages mt-8"
@@ -34,7 +40,10 @@ export function ConversationMessages({ messages }: ConversationMessagesProps) {
       {messages.length ? (
         <ol className="grid gap-3">
           {messages.map((message, index) => (
-            <li key={message.id} className="grid gap-3">
+            <li
+              key={message.id}
+              className={cn("grid gap-3", arrived(message.id) && arrivedClass)}
+            >
               {index === 0 ||
               day(messages[index - 1]!.createdAt) !== day(message.createdAt) ? (
                 <DateSeparator date={message.createdAt} />

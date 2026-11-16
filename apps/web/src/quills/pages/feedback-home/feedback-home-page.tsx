@@ -159,6 +159,7 @@ export function FeedbackHomePage(props: FeedbackHomePageProps) {
               loading={posts.isLoading}
               problem={posts.error ?? null}
               onRetry={() => void posts.refetch()}
+              rows={5}
             >
               <PostList
                 posts={posts.data?.pages.flatMap((page) => page.items) ?? []}

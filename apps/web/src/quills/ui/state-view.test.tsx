@@ -41,4 +41,34 @@ describe("StateView", () => {
     press("Try again");
     expect(retry).toHaveBeenCalledOnce();
   });
+
+  it("delays the spinner and shows placeholder rows for a list", () => {
+    const spinner = renderComponent(<StateView loading>{null}</StateView>);
+    expect(spinner.container.firstElementChild).toHaveClass("delayed-reveal");
+    spinner.unmount();
+    const rows = renderComponent(
+      <StateView loading rows={3}>
+        {null}
+      </StateView>,
+    );
+    expect(
+      rows.getByRole("status").querySelectorAll("[data-slot=skeleton]"),
+    ).toHaveLength(3);
+  });
+
+  it("shows the empty title, line and action", () => {
+    const view = renderComponent(
+      <StateView
+        empty
+        emptyTitle="No requests"
+        emptyDescription="Submit the first one."
+        emptyAction={<button type="button">Submit</button>}
+      >
+        {null}
+      </StateView>,
+    );
+    expect(view.getByText("No requests")).toBeVisible();
+    expect(view.getByText("Submit the first one.")).toBeVisible();
+    expect(view.getByRole("button", { name: "Submit" })).toBeVisible();
+  });
 });
