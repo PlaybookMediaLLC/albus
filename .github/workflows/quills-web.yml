@@ -18,6 +18,10 @@ jobs:
   framework:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    # TypeScript 7 (Go) needs about 13 GB for apps/web; a soft Go heap limit keeps the check under
+    # the 16 GB runner.
+    env:
+      GOMEMLIMIT: 12GiB
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
