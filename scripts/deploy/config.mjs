@@ -163,6 +163,16 @@ export function appSpec(config, runtime, probeSource) {
               kind: "POST_DEPLOY",
               run_command: `sh -c ${shellQuote(`cd /app/apps/api && node --input-type=module -e ${shellQuote(probeSource)}`)}`,
             },
+            // Migrate before the new service starts: a slow migration in the service's own
+            // startup failed its health check. If this job fails, the deploy stops and the
+            // running version stays.
+            {
+              ...component,
+              name: "migrate-database",
+              kind: "PRE_DEPLOY",
+              run_command:
+                "node --enable-source-maps /app/apps/api/dist/index.js --migrate",
+            },
           ],
         }
       : {}),

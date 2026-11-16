@@ -1031,7 +1031,7 @@ export function createApp() {
   };
 }
 
-export async function runStartupTasks() {
+export async function runDatabaseMigrations() {
   const currentDir = dirname(fileURLToPath(import.meta.url));
 
   await prepareDatabaseStartup({
@@ -1069,7 +1069,10 @@ export async function runStartupTasks() {
     `${currentDir}/../drizzle/quills`,
     quillsDatabase.username || undefined,
   );
+}
 
+export async function runStartupTasks() {
+  await runDatabaseMigrations();
   initializePlugins();
   initializeScheduler();
   await initializeWebSocketAdapter();
@@ -1180,7 +1183,18 @@ const isMainModule =
   entrypoint !== "" &&
   import.meta.url === pathToFileURL(entrypoint).href;
 
-if (isMainModule) {
+if (isMainModule && process.argv.includes("--migrate")) {
+  // Deploys run the migrations as their own step before the new server starts, so a slow
+  // migration does not fail the health check. The server still migrates on startup for
+  // installs that do not run this step.
+  runDatabaseMigrations().then(
+    () => process.exit(0),
+    (error) => {
+      console.error("❌ Database migration failed!", error);
+      process.exit(1);
+    },
+  );
+} else if (isMainModule) {
   void startServer(injectWebSocket, Number(process.env.KANEO_API_PORT) || 1337);
 }
 
