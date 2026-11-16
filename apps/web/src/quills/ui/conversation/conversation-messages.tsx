@@ -1,4 +1,7 @@
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+
+type Attachment = { fileId?: string | null; name: string };
 
 export interface ConversationMessagesProps {
   messages: Array<{
@@ -7,12 +10,17 @@ export interface ConversationMessagesProps {
     senderType: string;
     author: { name: string | null } | null;
     content: string;
-    attachments: Array<{ name: string }>;
+    attachments: Attachment[];
     createdAt: string;
   }>;
+  /** Renders a file that has an ID, such as a download link; otherwise its name shows. */
+  renderAttachment?: (attachment: Attachment & { fileId: string }) => ReactNode;
 }
 
-export function ConversationMessages({ messages }: ConversationMessagesProps) {
+export function ConversationMessages({
+  messages,
+  renderAttachment,
+}: ConversationMessagesProps) {
   const { t } = useTranslation("quills");
   return (
     <section
@@ -35,9 +43,11 @@ export function ConversationMessages({ messages }: ConversationMessagesProps) {
               >
                 <p>{sender}</p>
                 <p>{message.content}</p>
-                {message.attachments.map((attachment) => (
-                  <p key={`${message.id}:${attachment.name}`}>
-                    {t("conversation.attachment", { name: attachment.name })}
+                {message.attachments.map(({ fileId, name }, index) => (
+                  <p key={fileId ?? `${message.id}:${index}`}>
+                    {fileId && renderAttachment
+                      ? renderAttachment({ fileId, name })
+                      : t("conversation.attachment", { name })}
                   </p>
                 ))}
                 <time dateTime={message.createdAt}>

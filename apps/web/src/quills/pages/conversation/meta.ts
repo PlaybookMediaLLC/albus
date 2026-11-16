@@ -11,6 +11,7 @@ export const meta = {
     "listQuillsMyConversationMessages",
     "sendQuillsMyConversationMessage",
     "markQuillsMyConversationRead",
+    "getQuillsMyConversationFile",
   ],
   states: ["loading", "failed", "ready", "done"],
 } satisfies PageMeta;

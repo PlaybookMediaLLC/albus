@@ -15,6 +15,7 @@ import { PageFrame } from "../../ui/page-frame";
 import { PortalGate } from "../../ui/portal-gate";
 import { StateView } from "../../ui/state-view";
 import { meta } from "./meta";
+import { ConversationFileLink } from "./parts/conversation-file-link";
 export interface ConversationPageProps {
   workspaceId: string;
   params: Record<string, string>;
@@ -140,6 +141,13 @@ export function ConversationPage(props: ConversationPageProps) {
                   messages={[...messages.data.pages]
                     .reverse()
                     .flatMap((page) => page.items)}
+                  renderAttachment={(file) => (
+                    <ConversationFileLink
+                      workspaceId={props.workspaceId}
+                      conversationId={conversationId}
+                      {...file}
+                    />
+                  )}
                 />
                 {conversation.data.conversation.isReadOnly ? null : (
                   <ConversationReplyForm onSubmit={sendReply} />
