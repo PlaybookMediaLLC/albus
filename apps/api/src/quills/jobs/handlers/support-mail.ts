@@ -5,6 +5,7 @@ import {
   sendConversationMessageEmail,
   sendCsatRequestEmail,
   sendNoteMentionEmail,
+  type EmailAttachment,
   type SealedEmail,
   type SendingIdentity,
 } from "@kaneo/email/quills";
@@ -278,17 +279,21 @@ const replyMail: NonNullable<Subscribers["mail"]> = async (
   const from = await sendingIdentity(db, conversation);
   const thread = await threading(db, workspace, conversation.id, message);
   const stored = await messageFiles(db, message.id);
+  let attachments: EmailAttachment[] = [];
   return {
     type: "conversation_reply",
     emailType: "ConversationReplyEmail",
     to,
     conversationId: conversation.id,
-    send: async (address) =>
+    prepare: async () => {
+      attachments = await loadMailAttachments(stored);
+    },
+    send: (address) =>
       sendConversationMessageEmail({
         // Sealed: the address read from the conversation and its visitor at send time.
         to: address as SealedEmail,
         direction: "agent_reply",
-        attachments: await loadMailAttachments(stored),
+        attachments,
         senderName: message.author ?? workspace.name,
         messagePreview: clip(message.content, 500),
         ctaUrl: customerConversationUrl(workspace.id, conversation.id),

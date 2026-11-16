@@ -130,6 +130,7 @@ export async function runMailJob(workspaceId: string, job: JobQueueRow) {
   const key =
     prepared.content.ledgerKey ??
     `mail:${eventId}:${messageId ?? principalId ?? "direct"}`;
+  await prepared.content.prepare?.();
   const claim = await withQuillsSystemWorkspace(workspaceId, (db) =>
     claimDelivery(db, key, "mail"),
   );

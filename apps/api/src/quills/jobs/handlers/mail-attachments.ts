@@ -31,9 +31,10 @@ export const messageFiles = (db: Database, messageId: MessageId) =>
     .orderBy(asc(files.createdAt), asc(files.id));
 
 /**
- * The bytes of the files that fit one mail, read outside any transaction just before the send.
- * A file past the budget or gone from storage stays out; the mail's link opens the thread with
- * it. Another storage failure throws, so the job retries before anything is sent.
+ * The bytes of the files that fit one mail, read in the mail content's `prepare` step: outside any
+ * transaction and before the delivery claim. A file past the budget or gone from storage stays
+ * out; the mail's link opens the thread with it. Another storage failure throws, so the job fails
+ * and retries before anything is sent.
  */
 export async function loadMailAttachments(
   stored: readonly StoredFile[],
