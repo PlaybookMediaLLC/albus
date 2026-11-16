@@ -27,6 +27,14 @@ export function useApprovePost(viewer: Viewer) {
           "getModerationStatus",
         ),
       });
+      await queryClient.invalidateQueries({
+        queryKey: quillsOperationKey(
+          input.param.workspaceId,
+          viewer,
+          "team",
+          "getPost",
+        ),
+      });
     },
   });
 }
