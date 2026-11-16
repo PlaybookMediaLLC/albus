@@ -8,7 +8,15 @@ import { defineQuillsRoute } from "../framework/define-route";
 import { page, pageQuery } from "./schemas";
 
 // A saved view stores inbox filters; running it goes through the post list, which authorizes every post.
-const SORTS = ["newest", "oldest", "votes", "priority"] as const;
+const SORTS = [
+  "newest",
+  "oldest",
+  "votes",
+  "priority",
+  "rice",
+  "trending",
+  "stale",
+] as const;
 const values = z.array(z.string().min(1).max(100)).max(50).optional();
 const date = z.string().min(1).max(40).optional();
 const filtersInput = z

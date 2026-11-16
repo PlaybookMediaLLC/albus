@@ -30,7 +30,14 @@ export interface PostViewFilters {
   minComments?: number;
   hasDuplicates?: true;
   showDeleted?: true;
-  sort?: "newest" | "oldest" | "votes" | "priority";
+  sort?:
+    | "newest"
+    | "oldest"
+    | "votes"
+    | "priority"
+    | "rice"
+    | "trending"
+    | "stale";
   dateFrom?: string;
   dateTo?: string;
   updatedBefore?: string;

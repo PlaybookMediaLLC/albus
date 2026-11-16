@@ -115,11 +115,11 @@ const loadWithMembers = async (input: {
 
 const filterQuery = filters.extend({
   sort: z
-    .enum(["newest", "oldest", "votes", "rice", "mrr"])
+    .enum(["newest", "oldest", "votes", "rice", "mrr", "trending", "stale"])
     .default("newest")
     .openapi({
       description:
-        "rice: the RICE score, posts without one last. mrr: the monthly revenue of the voters' companies.",
+        "rice: the RICE score, posts without one last. mrr: the monthly revenue of the voters' companies. trending: the most votes in the last 7 days. stale: the least recently changed first.",
     }),
   cursor: flexibleToTypeIdSchema("post").optional(),
   limit: pagingNumber(1, 100, 20),
