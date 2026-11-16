@@ -15,7 +15,8 @@ describe("ConversationFileLink", () => {
         downloadUrl: "https://storage.example.test/a.pdf",
       }),
     );
-    const open = vi.spyOn(window, "open").mockReturnValue({} as Window);
+    const tab = { opener: null, location: { href: "" }, close: () => {} };
+    vi.spyOn(window, "open").mockReturnValue(tab as unknown as Window);
     renderComponent(
       <ConversationFileLink
         workspaceId="workspace_test_1"
@@ -26,10 +27,7 @@ describe("ConversationFileLink", () => {
     );
     press("Attachment: invoice.pdf");
     await vi.waitFor(() =>
-      expect(open).toHaveBeenCalledWith(
-        "https://storage.example.test/a.pdf",
-        "_blank",
-      ),
+      expect(tab.location.href).toBe("https://storage.example.test/a.pdf"),
     );
     expect(
       new URL(api.calls("getQuillsMyConversationFile")[0]!.url).pathname,

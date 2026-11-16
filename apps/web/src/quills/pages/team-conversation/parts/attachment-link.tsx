@@ -24,10 +24,14 @@ export function AttachmentLink(props: AttachmentLinkProps) {
   const open = async () => {
     setState("opening");
     try {
-      const file = await getFile({
-        param: { workspaceId: props.workspaceId, fileId },
-      });
-      openDownload(file.downloadUrl);
+      await openDownload(
+        async () =>
+          (
+            await getFile({
+              param: { workspaceId: props.workspaceId, fileId },
+            })
+          ).downloadUrl,
+      );
       setState("idle");
     } catch {
       setState("failed");

@@ -17,14 +17,18 @@ export function ConversationFileLink(props: ConversationFileLinkProps) {
   const open = async () => {
     setState("opening");
     try {
-      const file = await getMyConversationFile({
-        param: {
-          workspace: props.workspaceId,
-          conversationId: props.conversationId,
-          fileId: props.fileId,
-        },
-      });
-      openDownload(file.downloadUrl);
+      await openDownload(
+        async () =>
+          (
+            await getMyConversationFile({
+              param: {
+                workspace: props.workspaceId,
+                conversationId: props.conversationId,
+                fileId: props.fileId,
+              },
+            })
+          ).downloadUrl,
+      );
       setState("idle");
     } catch {
       setState("failed");

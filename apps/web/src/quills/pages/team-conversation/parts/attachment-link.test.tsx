@@ -14,7 +14,8 @@ describe("AttachmentLink", () => {
     api.reply(
       getFileFixture.ok({ downloadUrl: "https://storage.example.test/a.pdf" }),
     );
-    const open = vi.spyOn(window, "open").mockReturnValue({} as Window);
+    const tab = { opener: null, location: { href: "" }, close: () => {} };
+    vi.spyOn(window, "open").mockReturnValue(tab as unknown as Window);
     renderComponent(
       <AttachmentLink
         workspaceId="workspace_test_1"
@@ -26,10 +27,7 @@ describe("AttachmentLink", () => {
     expect(api.calls("getQuillsFile")).toHaveLength(0);
     press("Attachment: invoice.pdf");
     await vi.waitFor(() =>
-      expect(open).toHaveBeenCalledWith(
-        "https://storage.example.test/a.pdf",
-        "_blank",
-      ),
+      expect(tab.location.href).toBe("https://storage.example.test/a.pdf"),
     );
     expect(new URL(api.calls("getQuillsFile")[0]!.url).pathname).toBe(
       "/api/quills/workspace_test_1/files/file_test_1",
@@ -38,6 +36,12 @@ describe("AttachmentLink", () => {
 
   it("says when the file cannot be opened", async () => {
     mockApi().fail();
+    const close = vi.fn();
+    vi.spyOn(window, "open").mockReturnValue({
+      opener: null,
+      location: { href: "" },
+      close,
+    } as unknown as Window);
     const view = renderComponent(
       <AttachmentLink
         workspaceId="workspace_test_1"
@@ -49,6 +53,7 @@ describe("AttachmentLink", () => {
     expect(await view.findByRole("alert")).toHaveTextContent(
       "The file could not be opened.",
     );
+    expect(close).toHaveBeenCalledOnce();
   });
 
   it("shows only the name of a file without an ID", () => {
