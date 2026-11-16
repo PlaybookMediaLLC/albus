@@ -213,6 +213,9 @@ describe("Quills module boundaries", () => {
     ).toEqual([
       // Local-only portal demo seed closes the shared pool before its process exits.
       "dev/seed-portal.ts",
+      // Test-only setup: one disposable database for each Vitest worker.
+      "test/global-setup.ts",
+      "test/worker-database.ts",
       // Operator import: a read-only client on the original Quackback database.
       "transfer/legacy-archive.ts",
     ]);

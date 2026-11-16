@@ -171,8 +171,13 @@ jobs:
 
       - name: Run typecheck
         timeout-minutes: 15
+        # TypeScript 7 (Go) needs about 13 GB for apps/web and 11 GB for apps/api. Four checks at
+        # once ran the 16 GB runner out of memory ("runner has received a shutdown signal"), so
+        # run them one at a time and keep the Go heap under a soft limit.
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
-        run: pnpm typecheck
+        env:
+          GOMEMLIMIT: 12GiB
+        run: pnpm exec vp run -r --concurrency-limit 1 typecheck
 
   unit:
     runs-on: ubuntu-24.04

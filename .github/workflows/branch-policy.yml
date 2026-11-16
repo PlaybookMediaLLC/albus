@@ -5,6 +5,11 @@ on:
     types: [opened, synchronize, reopened, edited]
     branches: [staging, main]
 
+concurrency:
+  # A new commit on a pull request makes the older run useless; cancel it to free the runner.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 

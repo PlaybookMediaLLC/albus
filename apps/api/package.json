@@ -26,7 +26,7 @@
     "openapi:export": "tsx scripts/export-openapi.ts",
     "db:generate:quills": "tsx scripts/generate-quills.ts",
     "db:migrate:quills": "tsx scripts/migrate-quills.ts",
-    "test:quills": "vp test run --config vitest.config.ts --no-file-parallelism src/database/quills src/quills",
+    "test:quills": "vp test run --config src/quills/test/vitest.config.ts",
     "db:transfer:quills": "tsx scripts/transfer-quills.ts"
   },
   "dependencies": {
