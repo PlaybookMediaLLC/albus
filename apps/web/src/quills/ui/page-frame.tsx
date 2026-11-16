@@ -80,7 +80,7 @@ export function PageFrame({
           ref={heading}
           tabIndex={-1}
           className={cn(
-            "portal-page-title font-semibold leading-tight tracking-tight outline-none",
+            "portal-page-title font-medium leading-tight tracking-tight outline-none",
             hub ? "text-3xl md:text-4xl" : "text-2xl md:text-3xl",
           )}
         >

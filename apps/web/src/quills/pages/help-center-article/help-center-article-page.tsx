@@ -123,6 +123,7 @@ export function HelpCenterArticlePage(props: HelpCenterArticlePageProps) {
                     <>
                       <PersonAvatar
                         name={data.article.author.name}
+                        colored
                         className="size-7"
                       />
                       <span className="font-medium">

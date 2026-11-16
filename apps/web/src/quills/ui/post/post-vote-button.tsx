@@ -25,7 +25,7 @@ export function PostVoteButton(props: PostVoteButtonProps) {
           pressed={props.voted}
           disabled={props.disabled || props.loading}
           variant="pill"
-          size="sm"
+          size="default"
           className="min-w-13"
           onConfirm={() => props.onVote(!props.voted)}
         >

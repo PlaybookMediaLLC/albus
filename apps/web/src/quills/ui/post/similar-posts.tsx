@@ -51,7 +51,7 @@ export function SimilarPosts({
               className="flex min-w-0 flex-1 items-center gap-4 rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/60"
               href={portalHref(workspaceId, `posts/${post.id}`)}
             >
-              <span className="inline-flex h-8 min-w-13 items-center justify-center gap-1.5 rounded-full border border-input px-2.5 text-base tabular-nums sm:h-7 sm:text-sm">
+              <span className="inline-flex h-9 min-w-13 items-center justify-center gap-1.5 rounded-full border border-input px-2.5 text-base text-muted-foreground tabular-nums sm:h-8 sm:text-sm">
                 <ArrowUpIcon className="size-3" />
                 {post.voteCount === undefined ? null : (
                   <>

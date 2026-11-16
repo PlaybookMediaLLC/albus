@@ -74,6 +74,7 @@ export function PostComment({ comment, ...props }: PostCommentProps) {
       <PersonAvatar
         name={author}
         avatarUrl={comment.author.avatarUrl}
+        colored
         className="size-7 text-xs"
       />
       <div className="min-w-0">
