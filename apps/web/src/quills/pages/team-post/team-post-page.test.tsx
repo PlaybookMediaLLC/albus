@@ -166,9 +166,7 @@ describe("TeamPostPage", () => {
     const view = render();
     await loaded(view);
     expect(view.getByText(postDetail.content)).toBeVisible();
-    expect(
-      within(listPane(view)).getByRole("status", { name: "Loading…" }),
-    ).toBeVisible();
+    expect(within(listPane(view)).getByText("Loading…")).toBeVisible();
   });
 
   it("shows a list failure in the list pane, keeps the request and retries the list", async () => {

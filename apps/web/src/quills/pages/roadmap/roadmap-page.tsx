@@ -119,7 +119,7 @@ export function RoadmapPage(props: RoadmapPageProps) {
               {list.length > 1 ? (
                 <RoadmapPicker
                   roadmaps={list}
-                  selectedId={selected?.id}
+                  selected={selected?.slug}
                   onSelect={(slug) => change({ roadmap: slug })}
                 />
               ) : null}

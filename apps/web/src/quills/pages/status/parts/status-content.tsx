@@ -33,14 +33,16 @@ export function StatusContent(props: StatusContentProps) {
 
   const section = "gap-3 p-6 text-sm";
   const heading = "text-base font-semibold";
-  const link = "underline-offset-4 hover:underline";
   const incidentList = (
     items: ReadonlyArray<{ id: string; title: string }>,
   ) => (
     <ul className="grid gap-2">
       {items.map((incident) => (
         <li key={incident.id}>
-          <a className={link} href={incidentLink(incident.id)}>
+          <a
+            className="underline-offset-4 hover:underline"
+            href={incidentLink(incident.id)}
+          >
             {incident.title}
           </a>
         </li>

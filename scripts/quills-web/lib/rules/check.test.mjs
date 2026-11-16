@@ -117,7 +117,7 @@ const fixtures = [
   [
     "C24",
     "quills/ui/px-text.tsx",
-    `export function PxText() { return <p className="text-[11px] before:hidden"/>; }`,
+    `export function PxText() { return <p className="!text-[11px] bg-blue-600 prose before:hidden"/>; }`,
   ],
 ];
 

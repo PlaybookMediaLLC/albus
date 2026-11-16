@@ -51,24 +51,22 @@ describe("StateView", () => {
         {null}
       </StateView>,
     );
-    expect(
-      rows.getByRole("status").querySelectorAll("[data-slot=skeleton]"),
-    ).toHaveLength(3);
+    const status = rows.getByRole("status");
+    expect(status.querySelectorAll("[data-slot=skeleton]")).toHaveLength(3);
+    expect(status).toHaveTextContent("Loading…");
   });
 
-  it("shows the empty title, line and action", () => {
+  it("shows the empty icon and line", () => {
     const view = renderComponent(
       <StateView
         empty
-        emptyTitle="No requests"
+        emptyIcon={<svg aria-hidden="true" data-icon="empty" />}
         emptyDescription="Submit the first one."
-        emptyAction={<button type="button">Submit</button>}
       >
         {null}
       </StateView>,
     );
-    expect(view.getByText("No requests")).toBeVisible();
     expect(view.getByText("Submit the first one.")).toBeVisible();
-    expect(view.getByRole("button", { name: "Submit" })).toBeVisible();
+    expect(view.container.querySelector("[data-icon=empty]")).not.toBeNull();
   });
 });

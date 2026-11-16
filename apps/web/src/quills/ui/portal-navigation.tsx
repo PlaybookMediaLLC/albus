@@ -28,7 +28,7 @@ export function PortalNavigation({
   return (
     <nav
       ref={navRef}
-      className="portal-navigation order-3 -mx-1 flex w-full items-center gap-0.5 overflow-x-auto pb-1 max-lg:pe-8 max-lg:mask-r-from-85% lg:order-none lg:mx-0 lg:w-auto lg:flex-1 lg:pb-0 [&_a]:whitespace-nowrap [&_a]:rounded-full [&_a]:px-2.5 [&_a]:py-1 [&_a]:text-sm [&_a]:text-muted-foreground [&_a[aria-current]]:font-medium [&_a:hover]:bg-muted [&_a:hover]:text-foreground [&_a[aria-current]]:bg-muted [&_a[aria-current]]:text-foreground"
+      className="portal-navigation order-3 -mx-1 flex w-full items-center gap-0.5 overflow-x-auto pb-1 max-sm:pe-8 max-sm:mask-r-from-[calc(100%-2rem)] lg:order-none lg:mx-0 lg:w-auto lg:flex-1 lg:pb-0 [&_a]:whitespace-nowrap [&_a]:rounded-full [&_a]:px-2.5 [&_a]:py-1 [&_a]:text-sm [&_a]:text-muted-foreground [&_a[aria-current]]:font-medium [&_a:hover]:bg-muted [&_a:hover]:text-foreground [&_a[aria-current]]:bg-muted [&_a[aria-current]]:text-foreground"
       aria-label={t("core.navigation")}
     >
       {[

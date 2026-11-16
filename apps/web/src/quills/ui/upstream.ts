@@ -52,11 +52,9 @@ export { cn } from "@/lib/cn";
 
 export {
   Empty,
-  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
-  EmptyTitle,
 } from "@/components/ui/empty";
 export { Spinner } from "@/components/ui/spinner";
 

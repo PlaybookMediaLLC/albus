@@ -13,7 +13,7 @@ describe("RoadmapPicker", () => {
     const view = renderComponent(
       <RoadmapPicker
         roadmaps={roadmaps}
-        selectedId="roadmap_test_1"
+        selected="product"
         onSelect={vi.fn()}
       />,
     );
@@ -33,7 +33,7 @@ describe("RoadmapPicker", () => {
     renderComponent(
       <RoadmapPicker
         roadmaps={roadmaps}
-        selectedId="roadmap_test_1"
+        selected="product"
         onSelect={onSelect}
       />,
     );

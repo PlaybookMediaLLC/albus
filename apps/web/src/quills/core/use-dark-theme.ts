@@ -2,8 +2,7 @@ import { useSyncExternalStore } from "react";
 import { useUserPreferencesStore } from "../ui/upstream";
 
 const query = "(prefers-color-scheme: dark)";
-const media = () =>
-  typeof window.matchMedia === "function" ? window.matchMedia(query) : null;
+const media = () => window.matchMedia?.(query);
 const subscribe = (change: () => void) => {
   const list = media();
   list?.addEventListener("change", change);

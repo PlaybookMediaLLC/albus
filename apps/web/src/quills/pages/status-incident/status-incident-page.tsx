@@ -80,7 +80,10 @@ export function StatusIncidentPage(props: StatusIncidentPageProps) {
                   aria-labelledby="affected-components-heading"
                   className="space-y-4"
                 >
-                  <h3 id="affected-components-heading">
+                  <h3
+                    id="affected-components-heading"
+                    className="text-base font-semibold"
+                  >
                     {t("status-incident.affectedComponents")}
                   </h3>
                   {incident.data.affectedComponents.length ? (
@@ -102,7 +105,10 @@ export function StatusIncidentPage(props: StatusIncidentPageProps) {
                   aria-labelledby="incident-updates-heading"
                   className="space-y-4"
                 >
-                  <h3 id="incident-updates-heading">
+                  <h3
+                    id="incident-updates-heading"
+                    className="text-base font-semibold"
+                  >
                     {t("status-incident.updates")}
                   </h3>
                   {incident.data.updates.length ? (

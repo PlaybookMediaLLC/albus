@@ -342,14 +342,20 @@ differ from the draft above:
 4. **MessageBubble kinds (Phase 3.1).** The kinds are now `self`, `other` and `note`. "Self" is
    the viewer's side: the team in the teammate app, the customer in the portal. The portal hides
    the customer's own avatar, because the label "You" gives no useful initials.
-5. **Loading (Phase 4.1).** `StateView` takes `rows` for skeleton rows. Four tests had relied on
-   two `status` roles during a load. They now wait for the settled list.
+5. **Loading (Phase 4.1).** `StateView` takes `rows` for skeleton rows, with screen-reader text
+   "Loading…". One test had relied on two `status` roles during a load; it now waits for the list.
 6. **Hub titles (D6).** The feedback board page and the help locale page also count as hubs,
    because they are the same views as the feedback home and the help home.
 7. **Sticky header (Phase 6).** The shell also gets scroll padding, so anchors and focus do not
    land under the header.
-8. **Rule C24 (Phase 7).** C24 checks string literals and template parts in TSX files. A palette
-   class in a `.ts` data file, such as the branding swatches in `brand-colors.ts`, is out of its
-   scope. No template changed, so the framework needs no migration.
+8. **Rule C24 (Phase 7).** C24 checks string literals and template parts in TSX files, with any
+   variant, `!` mark or opacity. The draft's `sm:` height and size check is left out: it also
+   matched plain elements. A palette class in a `.ts` data file, such as the branding swatches in
+   `brand-colors.ts`, is out of its scope. No template changed, so the framework needs no
+   migration.
+9. **Empty states (Phase 2.5).** `StateView` takes an icon and a line. A title and an action are
+   left out until a page needs them.
+10. **Arrival fade (Phase 4.2).** Only messages after the newest message of the first render fade
+    in. Older history from "Load older" does not.
 
 Verification evidence is in the pull request description.

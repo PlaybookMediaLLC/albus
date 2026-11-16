@@ -33,4 +33,29 @@ describe("useDarkTheme", () => {
     });
     expect(result.current).toBe(true);
   });
+
+  it("follows a device theme change for the system theme", () => {
+    let dark = false;
+    let notify = () => {};
+    vi.stubGlobal("matchMedia", (media: string) => ({
+      get matches() {
+        return dark;
+      },
+      media,
+      addEventListener: (_: string, listener: () => void) => {
+        notify = listener;
+      },
+      removeEventListener: () => {},
+    }));
+    useUserPreferencesStore.setState({ theme: "system" });
+    const { result } = renderQuillsHook(() => useDarkTheme(), {
+      initialProps: {},
+    });
+    expect(result.current).toBe(false);
+    act(() => {
+      dark = true;
+      notify();
+    });
+    expect(result.current).toBe(true);
+  });
 });

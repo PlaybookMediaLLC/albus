@@ -36,7 +36,7 @@ export function TicketStatusButton({
         className={cn(
           "rounded-full",
           closed &&
-            "border-success/40 bg-success/10 text-success-foreground hover:bg-success/15",
+            "border-success/40 bg-success/10 text-success-foreground hover:bg-success/15 dark:bg-success/10 dark:hover:bg-success/15",
         )}
         aria-label={
           closed

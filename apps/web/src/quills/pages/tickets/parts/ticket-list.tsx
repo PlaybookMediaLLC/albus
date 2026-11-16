@@ -47,8 +47,11 @@ export function TicketList({ workspaceId, tickets }: TicketListProps) {
               <Badge
                 variant={ticket.resolvedAt ? "success" : "outline"}
                 size="sm"
+                className="min-w-0 max-w-1/2"
               >
-                {ticket.stageLabel?.trim() || t("tickets.stageMissing")}
+                <span className="truncate">
+                  {ticket.stageLabel?.trim() || t("tickets.stageMissing")}
+                </span>
               </Badge>
             </div>
             <p className="mt-0.5 flex flex-wrap gap-x-2 text-xs text-muted-foreground">

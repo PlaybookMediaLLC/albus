@@ -90,14 +90,14 @@ export function PostChips({ workspaceId, post, boards }: PostChipsProps) {
           </MenuRadioGroup>
         </MenuPopup>
       </Menu>
-      <span className="inline-flex h-7 items-center gap-1.5 rounded-full border border-border px-2.5 text-xs text-muted-foreground">
+      <span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border px-2.5 text-base text-muted-foreground sm:h-7 sm:text-sm">
         <Visibility aria-hidden="true" className="size-3.5" />
         {published ? t("team-post.onBoard") : t("team-post.notOnBoard")}
       </span>
       {post.tags.map((tag) => (
         <span
           key={tag.id}
-          className="inline-flex h-7 items-center rounded-full bg-muted px-2.5 text-xs"
+          className="inline-flex h-8 items-center rounded-full bg-muted px-2.5 text-base sm:h-7 sm:text-sm"
         >
           {tag.name}
         </span>
@@ -108,7 +108,7 @@ export function PostChips({ workspaceId, post, boards }: PostChipsProps) {
             render={
               <IconButton
                 variant="outline"
-                className="size-7 rounded-full"
+                className="rounded-full"
                 label={t("team-post.editTags")}
                 disabled={setTags.isPending}
               />

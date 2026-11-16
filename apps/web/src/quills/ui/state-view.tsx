@@ -6,11 +6,9 @@ import {
   Alert,
   AlertDescription,
   Empty,
-  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
-  EmptyTitle,
   Skeleton,
   Spinner,
 } from "./upstream";
@@ -32,11 +30,9 @@ export interface StateViewProps {
   problem?: PortalProblem | null;
   children: ReactNode;
   onRetry?: () => void;
-  /** The empty state: an icon, a title, a line (the generic line by default) and an action. */
+  /** The empty state: an icon and a line (the generic line by default). */
   emptyIcon?: ReactNode;
-  emptyTitle?: string;
   emptyDescription?: string;
-  emptyAction?: ReactNode;
   /** Placeholder rows for the first load of a list, so the rows do not jump in. */
   rows?: number;
 }
@@ -48,9 +44,7 @@ export function StateView({
   children,
   onRetry,
   emptyIcon,
-  emptyTitle,
   emptyDescription,
-  emptyAction,
   rows,
 }: StateViewProps) {
   const { t } = useTranslation("quills");
@@ -64,7 +58,8 @@ export function StateView({
   const seconds = Math.max(0, Math.ceil(((retryAt ?? now) - now) / 1000));
   if (loading && rows)
     return (
-      <div role="status" aria-label={t("core.loading")} className="grid gap-1">
+      <div role="status" className="grid gap-1">
+        <span className="sr-only">{t("core.loading")}</span>
         {Array.from({ length: rows }, (_, index) => (
           <Skeleton key={index} className="h-14 rounded-xl" />
         ))}
@@ -104,12 +99,10 @@ export function StateView({
           {emptyIcon ? (
             <EmptyMedia variant="icon">{emptyIcon}</EmptyMedia>
           ) : null}
-          {emptyTitle ? <EmptyTitle>{emptyTitle}</EmptyTitle> : null}
           <EmptyDescription>
             {emptyDescription ?? t("core.empty")}
           </EmptyDescription>
         </EmptyHeader>
-        {emptyAction ? <EmptyContent>{emptyAction}</EmptyContent> : null}
       </Empty>
     );
   return children;

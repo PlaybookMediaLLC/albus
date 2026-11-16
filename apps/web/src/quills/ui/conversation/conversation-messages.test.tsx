@@ -67,13 +67,33 @@ describe("ConversationMessages", () => {
       view.getByText("Export fails").closest(".flex-row-reverse"),
     ).not.toBeNull();
     expect(view.getByText("Fixed now").closest(".flex-row-reverse")).toBeNull();
+    // A system line is an event, not a bubble.
     expect(
-      view.getByText("Conversation resolved").closest(".bg-muted"),
+      view.getByText("Conversation resolved").closest(".rounded-2xl"),
     ).toBeNull();
-    expect(
-      view.container.querySelectorAll(
-        "time[datetime='2026-01-01T10:00:00.000Z']",
-      ).length,
-    ).toBeGreaterThan(0);
+    // Same-day messages share one date separator.
+    expect(view.getAllByText(/Jan 1/)).toHaveLength(1);
+  });
+
+  it("adds a date separator when the day changes", () => {
+    const message = (id: string, createdAt: string) => ({
+      id,
+      fromVisitor: true,
+      senderType: "visitor",
+      author: null,
+      content: id,
+      attachments: [],
+      createdAt,
+    });
+    const view = renderComponent(
+      <ConversationMessages
+        messages={[
+          message("message_test_1", "2026-01-01T10:00:00.000Z"),
+          message("message_test_2", "2026-01-01T11:00:00.000Z"),
+          message("message_test_3", "2026-01-03T10:00:00.000Z"),
+        ]}
+      />,
+    );
+    expect(view.getAllByText(/Jan [13]\b/)).toHaveLength(2);
   });
 });
