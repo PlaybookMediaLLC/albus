@@ -24,14 +24,20 @@ const render = (element: ReactElement) =>
   );
 
 describe("CustomerSection", () => {
-  it("shows the customer's profile and company", async () => {
+  it("shows the company, when the customer joined, their activity and attributes", async () => {
     const api = mockApi();
     api.reply(
       getUserFixture.ok({
-        name: "Grace Customer",
-        email: "grace@example.test",
         companyId: "company_test_1",
-        segments: [{ id: "s1", name: "Beta", color: "gray", type: "manual" }],
+        country: "France",
+        joinedAt: "2026-03-04T00:00:00.000Z",
+        postCount: 1,
+        voteCount: 8,
+        commentCount: 0,
+        attributes: [
+          { key: "seats", value: 300 },
+          { key: "beta", value: true },
+        ],
       }),
     );
     api.reply(
@@ -58,19 +64,23 @@ describe("CustomerSection", () => {
       <CustomerSection
         workspaceId="workspace_test_1"
         principalId="principal_test_9"
-        name={null}
-        email={null}
       />,
     );
     expect(await view.findByText("Acme")).toBeInTheDocument();
-    expect(view.getByText("Grace Customer")).toBeInTheDocument();
-    expect(view.getByText("grace@example.test")).toBeInTheDocument();
+    expect(
+      view.getByRole("heading", { level: 2, name: "Customer" }),
+    ).toBeInTheDocument();
     expect(view.getByText("Pro")).toBeInTheDocument();
     expect(view.getByText("1,200")).toBeInTheDocument();
-    expect(view.getByText("Beta")).toBeInTheDocument();
+    expect(view.getByText("France")).toBeInTheDocument();
+    expect(view.getByText("Mar 2026")).toBeInTheDocument();
+    // A zero count is left out.
+    expect(view.getByText("1 request · 8 votes")).toBeInTheDocument();
+    expect(view.getByText("300")).toBeInTheDocument();
+    expect(view.getByText("Yes")).toBeInTheDocument();
   });
 
-  it("falls back to the conversation's name and email without a profile", async () => {
+  it("is left out for a visitor without a profile", async () => {
     const api = mockApi();
     const missing = getUserFixture.problem(404);
     api.reply(missing.body, missing.status);
@@ -78,14 +88,10 @@ describe("CustomerSection", () => {
       <CustomerSection
         workspaceId="workspace_test_1"
         principalId="principal_test_9"
-        name="Visitor 12"
-        email="v12@example.test"
       />,
     );
     await vi.waitFor(() => expect(api.calls()).toHaveLength(1));
-    expect(view.getByText("Visitor 12")).toBeInTheDocument();
-    expect(view.getByText("v12@example.test")).toBeInTheDocument();
-    expect(view.queryByRole("alert")).not.toBeInTheDocument();
+    expect(view.container).toBeEmptyDOMElement();
     expect(api.calls("getQuillsUserCompany")).toHaveLength(0);
   });
 });

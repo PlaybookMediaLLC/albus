@@ -57,6 +57,7 @@ import { ListHeader } from "../ui/inbox/list-header";
 import { ListPane } from "../ui/inbox/list-pane";
 import { MessageBubble } from "../ui/inbox/message-bubble";
 import { PostStatusIcon } from "../ui/inbox/post-status-icon";
+import { PanelSection } from "../ui/inbox/panel-section";
 import { PropertyRow } from "../ui/inbox/property-row";
 import { RequestFilters } from "../ui/inbox/request-filters";
 import { RequestRow } from "../ui/inbox/request-row";
@@ -757,9 +758,11 @@ export function KitGallery() {
                 itemOpen={!empty}
                 propertiesLabel={demo}
                 properties={
-                  <PropertyRow label={demo}>
-                    {t("inbox.unassigned")}
-                  </PropertyRow>
+                  <PanelSection title={demo} count={1}>
+                    <PropertyRow label={demo}>
+                      {t("inbox.unassigned")}
+                    </PropertyRow>
+                  </PanelSection>
                 }
                 list={
                   <ListPane

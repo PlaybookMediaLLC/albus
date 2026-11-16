@@ -46,7 +46,7 @@ export function TagEditor({
         {tags.map((tag) => (
           <li
             key={tag.id}
-            className="flex items-center gap-0.5 rounded-md border border-border ps-1.5 text-xs"
+            className="flex items-center gap-0.5 rounded-full bg-muted ps-2 text-xs"
           >
             {tag.name}
             <IconButton
@@ -64,6 +64,7 @@ export function TagEditor({
       </ul>
       {free.length ? (
         <PropertySelect
+          ghost
           label={t("team-conversations.addTag")}
           value={ADD}
           disabled={locked}
