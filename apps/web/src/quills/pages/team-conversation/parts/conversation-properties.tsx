@@ -13,6 +13,7 @@ import {
 } from "../../team-conversations/conversation-list";
 import { ActionProblem } from "./action-problem";
 import { CustomerSection } from "./customer-section";
+import { type EmailAuth, EmailSecuritySection } from "./email-security-section";
 import { LinksSection } from "./links-section";
 import { PropertySelect } from "./property-select";
 import { SummarySection } from "./summary-section";
@@ -21,19 +22,22 @@ import { TagEditor } from "./tag-editor";
 export interface ConversationPropertiesProps {
   workspaceId: string;
   conversation: GetConversationResponse;
+  /** The checks of the newest inbound mail that has them. */
+  emailSecurity?: { auth: EmailAuth; receivedAt: string } | null;
 }
 
 const NONE = "none";
 type Value = GetConversationResponse["attributes"][number]["value"];
 
 /**
- * The right panel (design section 2): the customer, then team, priority, tags and attributes,
- * the links and the AI summary. The header holds the status and the assignee. The API has no
- * email security checks (SPF, DKIM, DMARC), so the panel has no such section.
+ * The right panel (design section 2): the customer, the email security checks of an email
+ * conversation, then team, priority, tags and attributes, the links and the AI summary. The
+ * header holds the status and the assignee.
  */
 export function ConversationProperties({
   workspaceId,
   conversation,
+  emailSecurity,
 }: ConversationPropertiesProps) {
   const { t } = useTranslation("quills");
   const team = useTeamRuntime();
@@ -60,6 +64,7 @@ export function ConversationProperties({
         name={conversation.visitorName}
         email={conversation.visitorEmail}
       />
+      {emailSecurity ? <EmailSecuritySection {...emailSecurity} /> : null}
       <section aria-labelledby="conversation-details">
         <h2
           id="conversation-details"

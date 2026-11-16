@@ -158,6 +158,41 @@ describe("TeamConversationPage", () => {
       expect(messages.get("includeInternal")).toBe("true");
     });
 
+    it("shows the email security checks of the newest checked mail", async () => {
+      const mail = (id: string, spf: "pass" | "fail") => ({
+        id,
+        conversationId: "conversation_test_1",
+        senderType: "visitor" as const,
+        isInternal: false,
+        authorPrincipalId: null,
+        authorName: null,
+        content: id,
+        systemKind: null,
+        systemActorPrincipalId: null,
+        emailAuth: { spf, dkim: "pass" as const, dmarc: "pass" as const },
+        embeds: [],
+        attachments: [],
+        reactions: [],
+        flaggedAt: null,
+        createdAt: "2026-11-01T10:00:00.000Z",
+        editedAt: null,
+      });
+      answer(
+        mockApi(),
+        reads({
+          listQuillsConversationMessages: listConversationMessagesFixture.ok({
+            items: [mail("newest", "fail"), mail("older", "pass")],
+          }),
+        }),
+      );
+      const view = renderPage(TeamConversationPage, meta, options);
+      const panel = await view.findByRole("complementary", {
+        name: "Customer and details",
+      });
+      await waitFor(() => expect(panel).toHaveTextContent("Email security"));
+      expect(panel).toHaveTextContent("SPFFailed");
+    });
+
     it("does not mark the conversation read without the update permission", async () => {
       const api = mockApi();
       answer(

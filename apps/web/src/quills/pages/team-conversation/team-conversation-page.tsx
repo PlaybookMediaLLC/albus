@@ -72,6 +72,8 @@ export function TeamConversationPage(props: TeamConversationPageProps) {
   const people = principals.data?.items ?? [];
   const items = list.data?.pages.flatMap((page) => page.items) ?? [];
   const data = conversation.data;
+  // Newest first: the newest inbound mail with checks.
+  const checked = messages.data?.items.find((message) => message.emailAuth);
 
   // An open conversation is read: one request each time it gets unread messages.
   // The read route needs the update permission.
@@ -152,6 +154,11 @@ export function TeamConversationPage(props: TeamConversationPageProps) {
               key={conversationId}
               workspaceId={workspaceId}
               conversation={data}
+              emailSecurity={
+                checked?.emailAuth
+                  ? { auth: checked.emailAuth, receivedAt: checked.createdAt }
+                  : null
+              }
             />
           ) : null
         }

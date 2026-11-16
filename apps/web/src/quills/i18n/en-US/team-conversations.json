@@ -13,6 +13,12 @@
 		"plan": "Plan",
 		"segments": "Segments"
 	},
+	"emailSecurity": {
+		"fail": "Failed",
+		"none": "No result",
+		"pass": "Passed",
+		"title": "Email security"
+	},
 	"empty": {
 		"text": "Pick a thread from the list to read it and reply.",
 		"title": "Select a conversation"
