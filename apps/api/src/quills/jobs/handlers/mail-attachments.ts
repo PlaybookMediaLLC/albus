@@ -10,12 +10,6 @@ import { isMissingObjectError } from "../../../storage/head-uploaded-object";
 import { readObject } from "../../framework/files";
 
 type MessageId = (typeof conversationMessages.$inferSelect)["id"];
-type StoredFile = {
-  storageKey: string;
-  name: string;
-  contentType: string;
-  size: number;
-};
 
 /** The live files of a message, in upload order. Read in the mail job's transaction. */
 export const messageFiles = (db: Database, messageId: MessageId) =>
@@ -36,6 +30,8 @@ export const messageFiles = (db: Database, messageId: MessageId) =>
  * out; the mail's link opens the thread with it. Another storage failure throws, so the job fails
  * and retries before anything is sent.
  */
+type StoredFile = Awaited<ReturnType<typeof messageFiles>>[number];
+
 export async function loadMailAttachments(
   stored: readonly StoredFile[],
   budget = MAX_EMAIL_ATTACHMENT_BYTES,
