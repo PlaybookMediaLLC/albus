@@ -1,6 +1,8 @@
-import { describe, expect, it } from "vite-plus/test";
+import { act } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vite-plus/test";
 import { PortalShell } from "./portal-shell";
 import { renderComponent } from "../test/render";
+import { useUserPreferencesStore } from "./upstream";
 
 const branding = {
   logoUrl: null,
@@ -10,6 +12,8 @@ const branding = {
 };
 
 describe("PortalShell", () => {
+  afterEach(() => useUserPreferencesStore.setState({ theme: "dark" }));
+
   it("shows the workspace name", () => {
     const view = renderComponent(
       <PortalShell workspaceName="Workspace" branding={branding}>
@@ -64,5 +68,28 @@ describe("PortalShell", () => {
     expect(document.documentElement).not.toHaveStyle(
       "--primary-foreground: oklch(1 0 0)",
     );
+  });
+
+  it("follows a change of the viewer's theme for the user theme mode", () => {
+    useUserPreferencesStore.setState({ theme: "light" });
+    const view = renderComponent(
+      <PortalShell
+        workspaceName="Workspace"
+        branding={{
+          ...branding,
+          theme: {
+            themeMode: "user",
+            light: { primary: "oklch(0.4 0 0)" },
+            dark: { primary: "oklch(0.9 0 0)" },
+          },
+        }}
+      >
+        {null}
+      </PortalShell>,
+    );
+    const container = view.getByRole("banner").parentElement;
+    expect(container).toHaveStyle("--primary: oklch(0.4 0 0)");
+    act(() => useUserPreferencesStore.setState({ theme: "dark" }));
+    expect(container).toHaveStyle("--primary: oklch(0.9 0 0)");
   });
 });

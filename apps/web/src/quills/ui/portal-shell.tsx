@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { brand } from "@kaneo/branding";
 import { useTranslation } from "react-i18next";
 import { PortalThemeContext } from "../core/portal-theme-context";
+import { useDarkTheme } from "../core/use-dark-theme";
 import type { PortalBranding } from "../core/types";
 
 export interface PortalShellProps {
@@ -21,10 +22,10 @@ export function PortalShell({
 }: PortalShellProps) {
   const { t } = useTranslation("quills");
   const displayName = branding.headerDisplayName?.trim() || workspaceName;
+  const dark = useDarkTheme();
   const theme =
     branding.theme.themeMode === "dark" ||
-    (branding.theme.themeMode === "user" &&
-      document.documentElement.classList.contains("dark"))
+    (branding.theme.themeMode === "user" && dark)
       ? branding.theme.dark
       : branding.theme.light;
   const themeVariables = Object.fromEntries(

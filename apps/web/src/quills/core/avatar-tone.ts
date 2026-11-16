@@ -1,9 +1,9 @@
-// Soft theme-token tones, so a name keeps its color in the light and dark themes.
+// Soft theme-token tones, so a name keeps its color in the light and dark themes. No
+// destructive tone: a red avatar reads as an error.
 const tones = [
   "bg-info/15 text-info-foreground",
   "bg-success/15 text-success-foreground",
   "bg-warning/20 text-warning-foreground",
-  "bg-destructive/15 text-destructive-foreground",
   "bg-primary/10 text-foreground",
 ] as const;
 

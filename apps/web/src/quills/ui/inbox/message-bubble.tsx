@@ -7,7 +7,7 @@ import { cn } from "../upstream";
 import type { InboxPerson } from "./inbox-types";
 
 export interface MessageBubbleProps {
-  /** customer: left and gray. team: right and blue. note: right, yellow, labelled "Note". */
+  /** customer: left and gray. team: right, in the primary color. note: right, yellow, labelled "Note". */
   kind: "customer" | "team" | "note";
   author: InboxPerson;
   /** The message body, such as MarkdownContent and attachments. */
@@ -20,7 +20,7 @@ export interface MessageBubbleProps {
 
 const bubbles = {
   customer: "rounded-bl-md bg-muted text-foreground",
-  team: "rounded-br-md bg-info-foreground text-background [&_a]:text-background",
+  team: "rounded-br-md bg-primary text-primary-foreground [&_a]:text-primary-foreground",
   note: "rounded-br-md border border-warning/30 bg-warning/10 text-foreground",
 } as const;
 
@@ -40,7 +40,7 @@ export function MessageBubble({
         colored
         name={author.name}
         avatarUrl={author.avatarUrl}
-        className="mb-5 size-7 text-[10px]"
+        className="mb-5 size-7 text-xs"
       />
       <div
         className={cn(

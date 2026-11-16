@@ -41,7 +41,7 @@ const item =
 /**
  * The thin column at the far left of the teammate app: the workspace, the Conversations,
  * Requests and Workspace sections, Settings, the bell, Support and the account. The sidebar
- * beside it lists the views of the current section. An orange dot marks a section with work.
+ * beside it lists the views of the current section. A warning dot marks a section with work.
  */
 export function TeamRail({
   workspaceId,
@@ -78,7 +78,7 @@ export function TeamRail({
         {waiting ? (
           <span
             aria-hidden="true"
-            className="absolute end-1.5 top-1.5 size-1.5 rounded-full bg-priority-high"
+            className="absolute end-1.5 top-1.5 size-1.5 rounded-full bg-warning"
           />
         ) : null}
       </IconButton>

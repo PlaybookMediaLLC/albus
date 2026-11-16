@@ -104,7 +104,7 @@ export function NotificationsButton({
         {count ? (
           <span
             aria-hidden="true"
-            className="absolute end-1 top-1 size-2 rounded-full bg-priority-high"
+            className="absolute end-1 top-1 size-2 rounded-full bg-warning"
           />
         ) : null}
       </PopoverTrigger>

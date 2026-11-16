@@ -12,6 +12,8 @@ export interface PersonAvatarProps {
   avatarUrl?: string | null;
   /** Two initials on a tone of the name, as in the teammate inbox. */
   colored?: boolean;
+  /** False shows only the photo or the tone, for an avatar too small for letters. */
+  initials?: boolean;
   className?: string;
 }
 
@@ -20,13 +22,14 @@ export function PersonAvatar({
   name,
   avatarUrl,
   colored = false,
+  initials = true,
   className,
 }: PersonAvatarProps) {
   return (
     <Avatar
       aria-hidden="true"
       className={cn(
-        "size-5 bg-muted text-[10px] text-muted-foreground",
+        "size-5 bg-muted text-xs text-muted-foreground",
         colored && cn("font-medium", avatarTone(name)),
         className,
       )}
@@ -36,7 +39,11 @@ export function PersonAvatar({
         <AvatarImage src={avatarUrl} alt="" />
       ) : null}
       <AvatarFallback className={colored ? "bg-transparent" : undefined}>
-        {colored ? getInitials(name, "") : name?.trim().charAt(0).toUpperCase()}
+        {!initials
+          ? null
+          : colored
+            ? getInitials(name, "")
+            : name?.trim().charAt(0).toUpperCase()}
       </AvatarFallback>
     </Avatar>
   );
