@@ -55,3 +55,14 @@ it("shows only the names without a way to open them", () => {
   expect(screen.getByText("invoice.pdf")).toBeTruthy();
   expect(screen.queryByRole("button")).toBeNull();
 });
+
+it("fails without moving the widget when the browser blocks the tab", async () => {
+  vi.spyOn(window, "open").mockReturnValue(null);
+  const onOpen = vi.fn(async () => "https://storage.example.test/a.png");
+  render(<MessageFiles files={files} onOpen={onOpen} />);
+  fireEvent.click(screen.getByRole("button", { name: "invoice.pdf" }));
+  expect((await screen.findByRole("alert")).textContent).toContain(
+    "Could not open the file.",
+  );
+  expect(onOpen).not.toHaveBeenCalled();
+});

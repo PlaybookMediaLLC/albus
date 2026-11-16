@@ -3,6 +3,7 @@ import { useState } from "react";
 /**
  * The files a teammate sent with a message. A click opens a tab while the click still counts (a
  * popup opened after an await can be blocked), then points it at the short-lived URL from `onOpen`.
+ * The widget frame never navigates: an image would replace the widget. A blocked tab is a failure.
  */
 export function MessageFiles({
   files = [],
@@ -11,19 +12,24 @@ export function MessageFiles({
   files?: ReadonlyArray<{ id: string; name: string }>;
   onOpen?: (fileId: string) => Promise<string>;
 }) {
-  const [failed, setFailed] = useState<string | null>(null);
+  // The file that could not open, and whether the browser blocked its tab.
+  const [failed, setFailed] = useState<{ id: string; blocked: boolean } | null>(
+    null,
+  );
   if (!files.length) return null;
   const open = async (fileId: string) => {
     setFailed(null);
     const tab = window.open("", "_blank");
-    if (tab) tab.opener = null;
+    if (!tab) {
+      setFailed({ id: fileId, blocked: true });
+      return;
+    }
+    tab.opener = null;
     try {
-      const url = await onOpen!(fileId);
-      if (tab) tab.location.href = url;
-      else window.location.assign(url);
+      tab.location.href = await onOpen!(fileId);
     } catch {
-      tab?.close();
-      setFailed(fileId);
+      tab.close();
+      setFailed({ id: fileId, blocked: false });
     }
   };
   return (
@@ -37,8 +43,12 @@ export function MessageFiles({
           ) : (
             <span>{file.name}</span>
           )}
-          {failed === file.id && (
-            <span role="alert"> Could not open the file. Try again.</span>
+          {failed?.id === file.id && (
+            <span role="alert">
+              {failed.blocked
+                ? " Could not open the file. Allow pop-ups for this page."
+                : " Could not open the file. Try again."}
+            </span>
           )}
         </li>
       ))}
