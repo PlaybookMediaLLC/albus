@@ -17,6 +17,7 @@ import { DateSeparator } from "../../../ui/inbox/date-separator";
 import { MessageBubble } from "../../../ui/inbox/message-bubble";
 import { SystemEvent } from "../../../ui/inbox/system-event";
 import type { Teammate } from "../../team-conversations/conversation-list";
+import { AttachmentLink } from "./attachment-link";
 
 type Message = ListConversationMessagesResponse["items"][number];
 
@@ -140,13 +141,13 @@ export function MessageList(props: MessageListProps) {
                 time={message.createdAt}
               >
                 <p className="whitespace-pre-wrap">{message.content}</p>
-                {message.attachments.map((file) => (
-                  <p
-                    key={`${message.id}:${file.name}`}
-                    className="mt-1 text-xs opacity-80"
-                  >
-                    {t("team-conversations.attachment", { name: file.name })}
-                  </p>
+                {message.attachments.map((file, index) => (
+                  <AttachmentLink
+                    key={file.fileId ?? `${message.id}:${index}`}
+                    workspaceId={props.workspaceId}
+                    fileId={file.fileId}
+                    name={file.name}
+                  />
                 ))}
               </MessageBubble>
             )}

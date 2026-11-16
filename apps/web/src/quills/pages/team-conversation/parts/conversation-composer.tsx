@@ -1,10 +1,15 @@
 import { Lock, MessageSquareReply } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { PortalProblem } from "../../../core/types";
+import { uploadObject } from "../../../core/upload-object";
 import { useAddConversationNote } from "../../../hooks/team/use-add-conversation-note";
+import { useCreateFiles } from "../../../hooks/team/use-create-files";
+import { useCreateUpload } from "../../../hooks/team/use-create-upload";
 import { useReplyConversation } from "../../../hooks/team/use-reply-conversation";
 import { useSendConversationTyping } from "../../../hooks/team/use-send-conversation-typing";
 import { useTeamRuntime } from "../../../team/runtime";
+import { AttachmentPicker } from "../../../ui/attachment-picker";
 import { Composer } from "../../../ui/inbox/composer";
 import type { ComposerMode } from "../../../ui/inbox/inbox-types";
 import { useKeyShortcuts } from "../../../ui/inbox/use-key-shortcuts";
@@ -23,8 +28,9 @@ type Mode = "reply" | "note";
 const TYPING_INTERVAL = 4000;
 
 /**
- * The composer at the bottom of the thread: a reply to the customer or an internal note.
- * R and N choose the mode and focus the box. A reply tells the customer that it is being typed.
+ * The composer at the bottom of the thread: a reply to the customer or an internal note, with
+ * files. R and N choose the mode and focus the box. A reply tells the customer that it is being
+ * typed. Files upload when the message is sent; a file keeps its upload if the send fails.
  */
 export function ConversationComposer(props: ConversationComposerProps) {
   const { t } = useTranslation("quills");
@@ -37,6 +43,15 @@ export function ConversationComposer(props: ConversationComposerProps) {
   const can = { reply: team.permissions.update, note: team.permissions.create };
   const [mode, setMode] = useState<Mode>(can.reply ? "reply" : "note");
   const [text, setText] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProblem, setUploadProblem] = useState<PortalProblem | null>(
+    null,
+  );
+  // A retry after a failed send reuses the files that already uploaded.
+  const uploaded = useRef(new Map<File, string>());
+  const sign = useCreateUpload();
+  const register = useCreateFiles();
   const param = {
     workspaceId: props.workspaceId,
     conversationId: props.conversationId,
@@ -71,9 +86,52 @@ export function ConversationComposer(props: ConversationComposerProps) {
       : []),
   ];
   const sending = mode === "reply" ? reply : note;
-  const send = () => {
-    const request = { param, json: { content: text.trim() } };
-    const options = { onSuccess: () => setText("") };
+  const upload = async (file: File) => {
+    const saved = uploaded.current.get(file);
+    if (saved) return saved;
+    const target = { param: { workspaceId: props.workspaceId } };
+    const contentType = file.type || "application/octet-stream";
+    const signed = await sign.mutateAsync({
+      ...target,
+      json: {
+        purpose: "file",
+        filename: file.name,
+        contentType,
+        size: file.size,
+      },
+    });
+    await uploadObject(file, signed);
+    const { id } = await register.mutateAsync({
+      ...target,
+      json: { key: signed.key, name: file.name, contentType, size: file.size },
+    });
+    uploaded.current.set(file, id);
+    return id;
+  };
+  const send = async () => {
+    setUploadProblem(null);
+    let attachmentIds: string[];
+    setUploading(true);
+    try {
+      attachmentIds = await Promise.all(files.map(upload));
+    } catch (problem) {
+      setUploadProblem(problem as PortalProblem);
+      return;
+    } finally {
+      setUploading(false);
+    }
+    const json = {
+      content: text.trim(),
+      ...(attachmentIds.length ? { attachmentIds } : {}),
+    };
+    const request = { param, json };
+    const options = {
+      onSuccess: () => {
+        setText("");
+        setFiles([]);
+        uploaded.current.clear();
+      },
+    };
     if (mode === "reply") reply.mutate(request, options);
     else note.mutate(request, options);
   };
@@ -93,15 +151,28 @@ export function ConversationComposer(props: ConversationComposerProps) {
           lastTyping.current = Date.now();
           typing.mutate({ param });
         }}
-        onSend={send}
+        onSend={() => void send()}
         modes={modes}
         mode={mode}
         onModeChange={(value) => setMode(value as Mode)}
-        sending={sending.isPending}
+        sending={uploading || sending.isPending}
         disabled={!modes.length}
         inputRef={input}
+        tools={
+          <AttachmentPicker
+            attachments={[]}
+            files={files}
+            disabled={uploading || sending.isPending || !modes.length}
+            onFilesChange={setFiles}
+            onRemove={() => undefined}
+            onRemoveFile={(file) => {
+              uploaded.current.delete(file);
+              setFiles((list) => list.filter((item) => item !== file));
+            }}
+          />
+        }
       />
-      <ActionProblem problem={sending.error} />
+      <ActionProblem problem={uploadProblem ?? sending.error} />
     </div>
   );
 }
