@@ -282,6 +282,8 @@ const getPost = defineQuillsRoute({
   params: postParams,
   response: postSchema.extend({
     hasVoted: z.boolean(),
+    /** The caller's principal, to remove the caller's vote and to find the caller's comments. */
+    viewerPrincipalId: z.string(),
     /** Host-page context that the widget sent with the post, such as pageUrl and browser. */
     widgetMetadata: z.record(z.string(), z.string()).nullable(),
   }),
@@ -311,6 +313,7 @@ const getPost = defineQuillsRoute({
     return {
       ...(await loadPost(db, params.postId)),
       hasVoted: voted.length > 0,
+      viewerPrincipalId: actor.principalId,
       // An imported row may hold other JSON: only string values are returned.
       widgetMetadata: context?.widgetMetadata
         ? Object.fromEntries(
