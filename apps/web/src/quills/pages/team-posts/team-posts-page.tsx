@@ -118,7 +118,9 @@ export function TeamPostsPage({
             {team.permissions.create ? (
               <Button size="sm" onClick={() => setSearch({ new: true })}>
                 <Plus aria-hidden="true" />
-                {t("team-posts.newRequest")}
+                <span className="max-sm:sr-only">
+                  {t("team-posts.newRequest")}
+                </span>
               </Button>
             ) : null}
           </>

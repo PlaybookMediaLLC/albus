@@ -132,9 +132,9 @@ export function RequestRow(props: RequestRowProps) {
         {votes}
         {comments}
         {props.board ? (
-          <span className="hidden max-w-32 items-center gap-1.5 truncate text-xs font-medium uppercase tracking-wide sm:inline-flex">
+          <span className="hidden max-w-32 items-center gap-1.5 text-xs font-medium uppercase tracking-wide sm:inline-flex">
             <BoardDot boardId={props.boardId} />
-            {props.board}
+            <span className="min-w-0 truncate">{props.board}</span>
           </span>
         ) : null}
         <span className="hidden sm:inline">{date}</span>

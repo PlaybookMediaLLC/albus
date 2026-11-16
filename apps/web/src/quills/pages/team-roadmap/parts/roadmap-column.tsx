@@ -72,12 +72,7 @@ export function RoadmapColumn({ status, ...props }: RoadmapColumnProps) {
       "bg-transparent outline-2 outline-dashed outline-ring/40 *:invisible",
   );
   const name = (
-    // quills-web-allow C19: the status name takes the workspace status color, a runtime value.
-    <h2
-      id={id}
-      className="truncate text-sm font-semibold"
-      style={{ color: status.color }}
-    >
+    <h2 id={id} className="truncate text-sm font-semibold">
       {status.name}
     </h2>
   );
