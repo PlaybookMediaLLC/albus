@@ -29,6 +29,7 @@ const message = (
     authorName: string | null;
     content: string;
     systemKind: string | null;
+    systemActorPrincipalId: string | null;
     createdAt: string;
   }>,
 ) => ({
@@ -40,6 +41,7 @@ const message = (
   authorName: null,
   content: "",
   systemKind: null,
+  systemActorPrincipalId: null,
   embeds: [],
   attachments: [],
   reactions: [],

@@ -66,11 +66,11 @@ const setStatusRoute = defineQuillsRoute({
       entityId: params.conversationId,
       payload: { status: body.status },
     },
-  handler: ({ db, params, body }) =>
+  handler: ({ db, actor, params, body }) =>
     apply(db, params.conversationId, async (conversation) => {
       if (body.status === "closed" && conversation.status !== "closed")
         await requireClosable(db, conversation);
-      return setStatus(db, conversation, body.status);
+      return setStatus(db, conversation, body.status, actor);
     }),
 });
 

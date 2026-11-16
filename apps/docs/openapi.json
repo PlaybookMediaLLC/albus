@@ -109317,6 +109317,12 @@
                             "null"
                           ]
                         },
+                        "systemActorPrincipalId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "embeds": {
                           "type": "array",
                           "items": {
@@ -109414,6 +109420,7 @@
                         "authorName",
                         "content",
                         "systemKind",
+                        "systemActorPrincipalId",
                         "embeds",
                         "attachments",
                         "reactions",
@@ -110205,6 +110212,12 @@
                               "null"
                             ]
                           },
+                          "systemActorPrincipalId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
                           "embeds": {
                             "type": "array",
                             "items": {
@@ -110302,6 +110315,7 @@
                           "authorName",
                           "content",
                           "systemKind",
+                          "systemActorPrincipalId",
                           "embeds",
                           "attachments",
                           "reactions",
@@ -110472,6 +110486,12 @@
                             "null"
                           ]
                         },
+                        "systemActorPrincipalId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "embeds": {
                           "type": "array",
                           "items": {
@@ -110569,6 +110589,7 @@
                         "authorName",
                         "content",
                         "systemKind",
+                        "systemActorPrincipalId",
                         "embeds",
                         "attachments",
                         "reactions",
@@ -110938,6 +110959,12 @@
                             "null"
                           ]
                         },
+                        "systemActorPrincipalId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "embeds": {
                           "type": "array",
                           "items": {
@@ -111035,6 +111062,7 @@
                         "authorName",
                         "content",
                         "systemKind",
+                        "systemActorPrincipalId",
                         "embeds",
                         "attachments",
                         "reactions",
@@ -111321,6 +111349,12 @@
                         "null"
                       ]
                     },
+                    "systemActorPrincipalId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "embeds": {
                       "type": "array",
                       "items": {
@@ -111418,6 +111452,7 @@
                     "authorName",
                     "content",
                     "systemKind",
+                    "systemActorPrincipalId",
                     "embeds",
                     "attachments",
                     "reactions",

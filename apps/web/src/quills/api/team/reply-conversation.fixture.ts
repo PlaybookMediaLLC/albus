@@ -12,6 +12,7 @@ export const replyConversationFixture = {
           authorName: null,
           content: "value",
           systemKind: null,
+          systemActorPrincipalId: null,
           embeds: [],
           attachments: [],
           reactions: [],

@@ -586,6 +586,40 @@ describe.skipIf(!url)("Support conversations", () => {
     );
   });
 
+  it("names the teammate who resolved or reopened in the notice", async () => {
+    const thread = () =>
+      world.scoped(world.a, world.users.owner, (db) =>
+        conversation(db, ids.ownerId, ids.visitor),
+      );
+    const c = (await thread()).conversationId;
+    expect(
+      (await member("POST", `/conversations/${c}/status`, { status: "closed" }))
+        .status,
+    ).toBe(200);
+    await owner("POST", `/conversations/${c}/status`, { status: "open" });
+    const bulk = (await thread()).conversationId;
+    await owner("POST", "/conversations/bulk", {
+      conversationIds: [bulk],
+      action: { type: "close" },
+    });
+    const spam = (await thread()).conversationId;
+    await owner("POST", `/conversations/${spam}/end`, { reason: "spam" });
+    const notices = async (id: string) =>
+      (await owner("GET", `/conversations/${id}/messages?limit=100`)).body.items
+        .filter((m: { senderType: string }) => m.senderType === "system")
+        .map((m: { systemKind: string; systemActorPrincipalId: string }) => [
+          m.systemKind,
+          m.systemActorPrincipalId,
+        ]);
+    expect(await notices(c)).toEqual([
+      ["chat_reopened", ids.ownerId],
+      ["chat_ended", ids.memberId],
+    ]);
+    expect(await notices(bulk)).toEqual([["chat_ended", ids.ownerId]]);
+    // Filing spam is not a resolve: its notice names nobody.
+    expect(await notices(spam)).toEqual([["chat_ended", null]]);
+  });
+
   it("lets only the author edit a message and keeps note events team-only", async () => {
     const edit = await member(
       "PATCH",

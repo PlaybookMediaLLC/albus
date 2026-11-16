@@ -39,6 +39,8 @@ export const messageSchema = z.object({
   authorName: z.string().nullable(),
   content: z.string(),
   systemKind: z.string().nullable(),
+  /** The teammate who resolved or reopened, on those notices; null otherwise and on older rows. */
+  systemActorPrincipalId: z.string().nullable(),
   embeds: z.array(z.object({ kind: z.string(), id: z.string() })),
   attachments: z.array(
     z.object({
@@ -148,6 +150,7 @@ export async function toMessages(
     ...row,
     conversationId: row.conversationId!,
     systemKind: metadata?.systemEvent?.kind ?? null,
+    systemActorPrincipalId: metadata?.systemEvent?.actorPrincipalId ?? null,
     embeds: embedsOf(contentJson),
     attachments: (attachments ?? []).map((file) => ({
       fileId: file.fileId ?? null,

@@ -41,6 +41,7 @@ export const startAgentConversationFixture = {
           authorName: null,
           content: "value",
           systemKind: null,
+          systemActorPrincipalId: null,
           embeds: [],
           attachments: [],
           reactions: [],

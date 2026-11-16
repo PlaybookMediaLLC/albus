@@ -1022,6 +1022,10 @@ export interface ConversationSystemEvent {
   kind: ConversationSystemEventKind;
   /** Assignee display name for 'assigned'. */
   agentName?: string;
+  /** The teammate principal whose action posted a 'chat_ended' or 'chat_reopened' notice, so
+   *  the inbox can say "You resolved this conversation". Absent for automation, the customer and
+   *  older rows. Team-only: surfaced only via the agent DTO. */
+  actorPrincipalId?: string;
   /** Customer-facing stage label for 'ticket_status_changed' (never the raw
    *  internal status name). Absent when `closed` is set. */
   stageLabel?: string;
