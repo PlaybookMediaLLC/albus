@@ -77,6 +77,12 @@
 			"plannedChange": "none. pnpm dev:demo (scripts/dev-demo) runs its API beside a dev API on 1337. Not PORT: hosting platforms set PORT, and the images expect 1337"
 		},
 		{
+			"file": "apps/api/src/index.ts",
+			"state": "existing",
+			"lines": "runDatabaseMigrations split out of runStartupTasks; `node dist/index.js --migrate` runs it and exits",
+			"plannedChange": "none. The DigitalOcean deploy runs it as a pre-deploy job (scripts/deploy/config.mjs); the server still migrates on startup for other installs"
+		},
+		{
 			"file": "package.json",
 			"state": "existing",
 			"lines": "1 script: dev:demo",

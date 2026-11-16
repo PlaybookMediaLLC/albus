@@ -142,6 +142,19 @@ test("real deployment includes a post-deploy probe using the same image, credent
   assert.equal(syntax.status, 0, syntax.stderr);
 });
 
+test("real deployment migrates in a pre-deploy job before the service starts", () => {
+  const config = configuration(env);
+  const spec = appSpec(config, config.runtime, "probe");
+  const migrate = spec.jobs.find((job) => job.kind === "PRE_DEPLOY");
+  assert.equal(migrate.name, "migrate-database");
+  assert.deepEqual(migrate.image, spec.services[0].image);
+  assert.equal(
+    migrate.run_command,
+    "node --enable-source-maps /app/apps/api/dist/index.js --migrate",
+  );
+  assert.equal(appSpec(config, undefined, "probe").jobs, undefined);
+});
+
 test("a prior green build or a failed probe cannot pass deployment validation", () => {
   const spec = appSpec(configuration(env), {}, "probe");
   const deployment = {
