@@ -1,4 +1,12 @@
-import type { EmailAuth, EmailAuthResult } from "../../database/quills/types";
+// Route-module helper: framework/boundaries.test.ts checks its imports like a module that uses ../framework/define-route.
+
+// The same shapes as EmailAuth in database/quills/types.ts, which a route helper cannot import.
+type EmailAuthResult = "pass" | "fail" | "none";
+type EmailAuth = {
+  spf: EmailAuthResult;
+  dkim: EmailAuthResult;
+  dmarc: EmailAuthResult;
+};
 
 // The SPF, DKIM and DMARC results of an inbound mail, read from the receiving server's
 // Authentication-Results header (RFC 8601). A sender can write its own Authentication-Results
