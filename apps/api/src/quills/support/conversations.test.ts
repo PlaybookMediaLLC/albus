@@ -761,7 +761,14 @@ describe.skipIf(!url)("Support conversations", () => {
     const customerUpload = await file(world.a, world.users.owner, "portal");
     const foreignFile = await file(world.b, world.users.outsider);
     const mine = await file(world.a, world.users.owner);
-    for (const refused of [others, customerUpload, foreignFile])
+    const removed = await file(world.a, world.users.owner);
+    await world.scoped(world.a, world.users.owner, (db) =>
+      db
+        .update(files)
+        .set({ deletedAt: new Date() })
+        .where(eq(files.id, removed)),
+    );
+    for (const refused of [others, customerUpload, foreignFile, removed])
       expect(
         (
           await owner("POST", `/conversations/${c}/reply`, {

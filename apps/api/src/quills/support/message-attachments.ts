@@ -1,5 +1,5 @@
 // Route-module helper: framework/boundaries.test.ts checks its imports like a module that uses ../framework/define-route.
-import { asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import type { FileId } from "@kaneo/ids";
 import { flexibleToTypeIdSchema } from "@kaneo/ids/zod";
@@ -8,6 +8,10 @@ import { conversationMessages } from "../../database/quills/schema/conversation"
 import { files } from "../../database/quills/schema/files";
 import type { Database, QuillsActor } from "../framework/define-route";
 import type { MessageId } from "./message-model";
+
+type Family = NonNullable<
+  (typeof conversationMessages.$inferInsert)["attachments"]
+>[number]["family"];
 
 /** Files that a teammate reply or note carries: the caller's own registered uploads. */
 export const attachmentIds = z
@@ -28,7 +32,9 @@ export async function attachMessageFiles(
   ids: readonly FileId[],
 ) {
   if (!ids.length) return;
-  // Locked in ID order, so two requests with the same files cannot deadlock.
+  // Locked in ID order, so two requests with the same files cannot deadlock. Under read committed
+  // a locked row is checked against the WHERE again, so a file that a concurrent request attached
+  // drops out and counts as missing.
   const rows = await db
     .select({
       id: files.id,
@@ -36,25 +42,20 @@ export async function attachMessageFiles(
       contentType: files.contentType,
       size: files.size,
       family: files.family,
-      source: files.source,
-      uploadedById: files.uploadedById,
-      attachedAt: files.attachedAt,
-      deletedAt: files.deletedAt,
     })
     .from(files)
-    .where(inArray(files.id, [...ids]))
+    .where(
+      and(
+        inArray(files.id, [...ids]),
+        eq(files.uploadedById, actor.principalId),
+        eq(files.source, "agent"),
+        isNull(files.attachedAt),
+        isNull(files.deletedAt),
+      ),
+    )
     .orderBy(asc(files.id))
     .for("update");
-  if (
-    rows.length !== ids.length ||
-    rows.some(
-      (row) =>
-        row.uploadedById !== actor.principalId ||
-        row.source !== "agent" ||
-        row.attachedAt ||
-        row.deletedAt,
-    )
-  )
+  if (rows.length !== ids.length)
     throw new HTTPException(404, { message: "Attachment not found" });
   await db
     .update(files)
@@ -73,7 +74,7 @@ export async function attachMessageFiles(
           name: row.name,
           contentType: row.contentType,
           size: row.size,
-          family: row.family as never,
+          family: row.family as Family,
         };
       }),
     })
