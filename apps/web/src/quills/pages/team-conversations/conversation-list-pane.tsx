@@ -115,17 +115,20 @@ export function ConversationListPane(props: ConversationListPaneProps) {
       filters={filters}
       actions={
         <>
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-full"
-            onClick={() =>
-              go(listHref(props.workspaceId, QUEUE, { next: "true" }))
-            }
-          >
-            <Zap aria-hidden="true" />
-            {t("team-conversations.views.queue")}
-          </Button>
+          {/* The Queue view is the queue already. */}
+          {props.context.view === "queue" ? null : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full"
+              onClick={() =>
+                go(listHref(props.workspaceId, QUEUE, { next: "true" }))
+              }
+            >
+              <Zap aria-hidden="true" />
+              {t("team-conversations.views.queue")}
+            </Button>
+          )}
           <Tooltip>
             <TooltipTrigger
               render={
