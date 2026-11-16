@@ -80,6 +80,7 @@ describe("list filters", () => {
     ]);
     expect(viewRules({ view: "all", status: "spam" })).toBeNull();
     expect(viewRules({ view: "all", status: "unread" })).toBeNull();
+    expect(viewRules({ view: "all", status: "archived" })).toBeNull();
     expect(
       viewRules({ view: "all", status: "any", search: "refund" }),
     ).toBeNull();

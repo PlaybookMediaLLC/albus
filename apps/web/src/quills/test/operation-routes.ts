@@ -96,6 +96,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/moderation/posts/{postId}/approve",
   },
   {
+    operationId: "archiveQuillsConversation",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/conversations/{conversationId}/archive",
+  },
+  {
     operationId: "archiveQuillsConversationAttribute",
     method: "POST",
     path: "/api/quills/{workspaceId}/conversation-attributes/{attributeId}/archive",
@@ -3499,6 +3504,11 @@ export const quillsOperationRoutes = [
     operationId: "translateQuillsPortalContent",
     method: "POST",
     path: "/api/quills-public/{workspace}/portal/translations",
+  },
+  {
+    operationId: "unarchiveQuillsConversation",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/conversations/{conversationId}/unarchive",
   },
   {
     operationId: "unblockQuillsUser",

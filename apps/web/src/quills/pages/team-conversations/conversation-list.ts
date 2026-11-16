@@ -21,12 +21,13 @@ export type InboxView = (typeof inboxViews)[number];
 export const conversationStatuses = ["open", "snoozed", "closed"] as const;
 export type ConversationStatus = (typeof conversationStatuses)[number];
 /**
- * The status filter of a list: a conversation status, the spam view, "unread" (any status with
- * customer messages the team has not read), or "any" for every status.
+ * The status filter of a list: a conversation status, the spam or archived view, "unread" (any
+ * status with customer messages the team has not read), or "any" for every status.
  */
 export const listStatuses = [
   ...conversationStatuses,
   "spam",
+  "archived",
   "unread",
   "any",
 ] as const;
@@ -129,6 +130,7 @@ export function listQuery(context: ListContext, saved?: SavedView): Query {
     );
   if (context.status === "any") return query;
   if (context.status === "spam") return { ...query, view: "spam" };
+  if (context.status === "archived") return { ...query, view: "archived" };
   if (context.status === "unread") return { ...query, unreadOnly: "true" };
   return { ...query, status: context.status };
 }

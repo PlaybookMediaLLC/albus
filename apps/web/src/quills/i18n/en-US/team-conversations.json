@@ -1,5 +1,6 @@
 {
 	"addTag": "Add a tag",
+	"archive": "Archive",
 	"assign": "Assign",
 	"assignee": "Assignee: {{name}}",
 	"attachment": "Attachment: {{name}}",
@@ -30,6 +31,7 @@
 		"resolvedByYou": "You resolved this conversation"
 	},
 	"filters": {
+		"archived": "Archived",
 		"resolved": "Resolved",
 		"snoozed": "Snoozed",
 		"spam": "Spam",
@@ -116,6 +118,7 @@
 	"thread": "Messages",
 	"title": "Conversations",
 	"typing": "{{name}} is typing…",
+	"unarchive": "Unarchive",
 	"unassigned": "Unassigned",
 	"unblock": "Unblock sender",
 	"unknown": "Unknown",

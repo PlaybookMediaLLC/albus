@@ -37,6 +37,8 @@ export const meta = {
     "requestQuillsConversationSummary",
     "endQuillsConversation",
     "restoreQuillsConversationFromSpam",
+    "archiveQuillsConversation",
+    "unarchiveQuillsConversation",
     "blockQuillsUser",
     "unblockQuillsUser",
   ],

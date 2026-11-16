@@ -1,5 +1,6 @@
 import {
   AlarmClock,
+  Archive,
   CircleCheck,
   Inbox,
   type LucideIcon,
@@ -27,7 +28,7 @@ export interface ListFilter {
   group?: boolean;
 }
 
-/** The filter menu of design section 2. Archived has no API filter, so it is left out. */
+/** The filter menu of design section 2. */
 export const listFilters: readonly ListFilter[] = [
   {
     id: "open",
@@ -79,6 +80,13 @@ export const listFilters: readonly ListFilter[] = [
     status: "spam",
     group: true,
   },
+  {
+    id: "archived",
+    labelKey: "team-conversations.filters.archived",
+    icon: Archive,
+    view: "all",
+    status: "archived",
+  },
 ];
 
 const SAVED = "view:";
@@ -123,12 +131,13 @@ export function listTitle(
 type Rules = CreateConversationViewRequest["json"]["filters"]["rules"];
 
 /**
- * The rules that save the current list as a view. Spam, unread, the search text and a saved view
+ * The rules that save the current list as a view. Spam, archived, unread, the search text and a saved view
  * have no rule, so those lists cannot be saved (null).
  */
 export function viewRules(context: ListContext): Rules | null {
   if (
     context.status === "spam" ||
+    context.status === "archived" ||
     context.status === "unread" ||
     context.savedView ||
     context.search

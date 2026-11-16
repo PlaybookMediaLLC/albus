@@ -1,11 +1,13 @@
 import { useTranslation } from "react-i18next";
 import type { GetConversationResponse } from "../../../api/team/get-conversation";
+import { useArchiveConversation } from "../../../hooks/team/use-archive-conversation";
 import { useAssignConversation } from "../../../hooks/team/use-assign-conversation";
 import { useBlockUser } from "../../../hooks/team/use-block-user";
 import { useEndConversation } from "../../../hooks/team/use-end-conversation";
 import { useGetUser } from "../../../hooks/team/use-get-user";
 import { useRestoreConversationFromSpam } from "../../../hooks/team/use-restore-conversation-from-spam";
 import { useSetConversationStatus } from "../../../hooks/team/use-set-conversation-status";
+import { useUnarchiveConversation } from "../../../hooks/team/use-unarchive-conversation";
 import { useUnblockUser } from "../../../hooks/team/use-unblock-user";
 import { useTeamRuntime } from "../../../team/runtime";
 import { DetailHeader } from "../../../ui/inbox/detail-header";
@@ -47,7 +49,18 @@ export function ConversationHeader({
   const restore = useRestoreConversationFromSpam(team.viewer);
   const block = useBlockUser(team.viewer);
   const unblock = useUnblockUser(team.viewer);
-  const changes = [status, assign, end, restore, block, unblock];
+  const archive = useArchiveConversation(team.viewer);
+  const unarchive = useUnarchiveConversation(team.viewer);
+  const changes = [
+    status,
+    assign,
+    end,
+    restore,
+    block,
+    unblock,
+    archive,
+    unarchive,
+  ];
   const sender = {
     workspaceId,
     principalId: conversation?.visitorPrincipalId ?? "",
@@ -100,6 +113,7 @@ export function ConversationHeader({
               <ConversationMenu
                 status={conversation.status}
                 spam={spam}
+                archived={Boolean(conversation.archivedAt)}
                 blocked={profile ? Boolean(profile.blockedAt) : null}
                 disabled={locked}
                 onSnooze={() => {
@@ -117,6 +131,14 @@ export function ConversationHeader({
                 onNotSpam={() => {
                   reset();
                   restore.mutate({ param });
+                }}
+                onArchive={() => {
+                  reset();
+                  archive.mutate({ param });
+                }}
+                onUnarchive={() => {
+                  reset();
+                  unarchive.mutate({ param });
                 }}
                 onBlock={() => {
                   reset();

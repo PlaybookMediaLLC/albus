@@ -78,6 +78,14 @@ describe("conversation list", () => {
     });
   });
 
+  it("lists archived conversations through the archived view of the API", () => {
+    expect(listQuery({ view: "all", status: "archived" })).toEqual({
+      limit: "50",
+      sort: "recent",
+      view: "archived",
+    });
+  });
+
   it("lists unread conversations of any status through unreadOnly", () => {
     expect(listQuery({ view: "all", status: "unread" })).toEqual({
       limit: "50",
