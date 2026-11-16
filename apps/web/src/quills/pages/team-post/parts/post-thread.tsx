@@ -1,3 +1,5 @@
+import { MapPin } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { GetPostResponse } from "../../../api/team/get-post";
 import type { ListPostCommentsResponse } from "../../../api/team/list-post-comments";
@@ -6,6 +8,9 @@ import { MarkdownContent } from "../../../ui/markdown-content";
 import { commentText, PostComment } from "../../../ui/post/post-comment";
 import { Button } from "../../../ui/upstream";
 import { CommentBox } from "./comment-box";
+import { CommentMenu } from "./comment-menu";
+import { CommentVote } from "./comment-vote";
+import { EditComment } from "./edit-comment";
 
 type Comment = ListPostCommentsResponse["items"][number];
 
@@ -18,10 +23,14 @@ export interface PostThreadProps {
   onLoadMore: () => void;
 }
 
-/** The comments of a request: customer comments, team replies and private notes, with replies. */
+/**
+ * The comments of a request: customer comments, team replies and private notes, with replies.
+ * The pinned comment, the official answer, comes first.
+ */
 export function PostThread(props: PostThreadProps) {
   const { t } = useTranslation("quills");
   const team = useTeamRuntime();
+  const [editing, setEditing] = useState<string | null>(null);
   const known = new Set(props.comments.map((comment) => comment.id));
   // A reply whose parent is not loaded shows at the top level.
   const childrenOf = (parentId: string | null) =>
@@ -30,8 +39,16 @@ export function PostThread(props: PostThreadProps) {
         ? comment.parentId === parentId
         : !comment.parentId || !known.has(comment.parentId),
     );
+  const pinnedId = props.post.pinnedCommentId;
+  const roots = childrenOf(null).sort(
+    (a, b) => Number(b.id === pinnedId) - Number(a.id === pinnedId),
+  );
   const render = (comment: Comment) => {
     const replies = childrenOf(comment.id);
+    const deleted = Boolean(comment.deletedAt) || comment.isRemovedByTeam;
+    const text = (
+      <MarkdownContent content={comment.content} className={commentText} />
+    );
     return (
       <PostComment
         key={comment.id}
@@ -41,18 +58,35 @@ export function PostThread(props: PostThreadProps) {
           content: comment.content,
           author: {
             name: comment.authorName,
-            avatarUrl: null,
+            avatarUrl: comment.authorAvatarUrl,
             isTeamMember: comment.isTeamMember,
           },
           createdAt: comment.createdAt,
           updatedAt: comment.updatedAt,
-          deleted: Boolean(comment.deletedAt) || comment.isRemovedByTeam,
+          deleted,
           isAuthor: false,
           canEdit: false,
           canDelete: false,
           pending: comment.moderationState === "pending",
           reactions: comment.reactions,
         }}
+        menu={
+          deleted || editing === comment.id ? undefined : (
+            <CommentMenu
+              workspaceId={props.workspaceId}
+              post={props.post}
+              comment={comment}
+              onEdit={() => setEditing(comment.id)}
+            />
+          )
+        }
+        reactions={
+          <CommentVote
+            workspaceId={props.workspaceId}
+            commentId={comment.id}
+            reactions={comment.reactions}
+          />
+        }
         replyForm={
           team.permissions.create
             ? (parentId, close) => (
@@ -69,16 +103,28 @@ export function PostThread(props: PostThreadProps) {
             : undefined
         }
         body={
-          comment.isPrivate ? (
+          editing === comment.id ? (
+            <EditComment
+              workspaceId={props.workspaceId}
+              commentId={comment.id}
+              content={comment.content}
+              onDone={() => setEditing(null)}
+            />
+          ) : comment.isPrivate ? (
             <div className="mt-1 rounded-lg border border-dashed border-border bg-muted/50 px-3 py-2">
               <p className="text-xs font-medium text-muted-foreground">
                 {t("team-post.note")}
               </p>
-              <MarkdownContent
-                content={comment.content}
-                className={commentText}
-              />
+              {text}
             </div>
+          ) : comment.id === pinnedId ? (
+            <>
+              <p className="mt-1 flex items-center gap-1 text-xs font-medium text-primary">
+                <MapPin aria-hidden="true" className="size-3" />
+                {t("team-post.pinned")}
+              </p>
+              {text}
+            </>
           ) : undefined
         }
       >
@@ -92,9 +138,7 @@ export function PostThread(props: PostThreadProps) {
         {t("team-post.thread", { count: props.post.commentCount })}
       </h2>
       {props.comments.length ? (
-        <ol className="grid grid-cols-1 gap-5">
-          {childrenOf(null).map(render)}
-        </ol>
+        <ol className="grid grid-cols-1 gap-5">{roots.map(render)}</ol>
       ) : (
         <p className="text-sm text-muted-foreground">
           {t("team-post.noReplies")}

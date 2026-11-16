@@ -1,92 +1,200 @@
-import { Fragment } from "react";
+import {
+  ArrowDownUp,
+  Bookmark,
+  BookmarkPlus,
+  Layers,
+  Loader,
+  type LucideIcon,
+  Tag,
+  X,
+} from "lucide-react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  MenuGroup,
-  MenuGroupLabel,
+  MenuCheckboxItem,
+  MenuItem,
   MenuRadioGroup,
   MenuRadioItem,
   MenuSeparator,
+  MenuSub,
+  MenuSubPopup,
+  MenuSubTrigger,
 } from "../upstream";
 
 export interface RequestFiltersProps {
-  /** The status group: active, complete, closed, all or deleted. Empty while one status is shown. */
-  status: string;
-  /** Offers the deleted requests, which only the requests list can show. */
-  withDeleted?: boolean;
-  /** The board ID, or "" for every board. */
-  board: string;
-  /** newest, votes or rice. */
+  boards: readonly FilterOption[];
+  statuses: readonly FilterOption[];
+  tags: readonly FilterOption[];
+  /** The checked IDs of each facet. */
+  checked: Record<RequestFacet, readonly string[]>;
+  /** newest, oldest, votes, trending, stale or rice. */
   sort: string;
-  boards: readonly { id: string; name: string }[];
-  onChange: (key: RequestFilterKey, value: string) => void;
+  onFacet: (key: RequestFacet, ids: string[]) => void;
+  onSort: (sort: string) => void;
+  /** Adds a Deleted item to the Status submenu, checked when true. Left out when undefined. */
+  deleted?: boolean;
+  onDeleted?: (deleted: boolean) => void;
+  /** The saved views. The Views submenu is left out when there is none. */
+  views?: readonly { id: string; name: string }[];
+  onView?: (viewId: string) => void;
+  /** Opens the Save as view dialog. The item is left out without it. */
+  onSaveView?: () => void;
+  onClear: () => void;
 }
 
-const statuses = [
-  { value: "active", labelKey: "team-posts.open" },
-  { value: "complete", labelKey: "team-posts.complete" },
-  { value: "closed", labelKey: "team-posts.closed" },
-  { value: "all", labelKey: "team-posts.all" },
-  { value: "deleted", labelKey: "team-posts.deleted" },
-] as const;
 const sorts = [
   { value: "newest", labelKey: "team-posts.sortNewest" },
-  { value: "votes", labelKey: "team-posts.sortVotes" },
+  { value: "oldest", labelKey: "team-posts.sortOldest" },
+  { value: "votes", labelKey: "team-posts.sortTop" },
+  { value: "trending", labelKey: "team-posts.sortTrending" },
+  { value: "stale", labelKey: "team-posts.sortStale" },
   { value: "rice", labelKey: "team-posts.sortRice" },
 ] as const;
+// The API takes at most 50 IDs in a list filter.
+const MAX_IDS = 50;
 
-/** The filter menu items of a request list: the status group, the board and the sort. */
+/** The request filter menu: Boards, Status, Tags and Sort submenus, saved views and Clear. */
 export function RequestFilters(props: RequestFiltersProps) {
   const { t } = useTranslation("quills");
-  const groups = [
-    {
-      key: "status",
-      labelKey: "team-posts.show",
-      value: props.status,
-      options: statuses
-        .filter((item) => props.withDeleted || item.value !== "deleted")
-        .map((item) => ({ value: item.value, label: t(item.labelKey) })),
-    },
-    {
-      key: "board",
-      labelKey: "team-posts.board",
-      value: props.board,
-      options: [
-        { value: "", label: t("team-posts.allBoards") },
-        ...props.boards.map((board) => ({
-          value: board.id,
-          label: board.name,
-        })),
-      ],
-    },
-    {
-      key: "sort",
-      labelKey: "team-posts.sort",
-      value: props.sort,
-      options: sorts.map((item) => ({
-        value: item.value,
-        label: t(item.labelKey),
-      })),
-    },
-  ] as const;
-  return groups.map((group, index) => (
-    <Fragment key={group.key}>
-      {index ? <MenuSeparator /> : null}
-      <MenuGroup>
-        <MenuGroupLabel>{t(group.labelKey)}</MenuGroupLabel>
-        <MenuRadioGroup
-          value={group.value}
-          onValueChange={(value) => props.onChange(group.key, String(value))}
-        >
-          {group.options.map((option) => (
-            <MenuRadioItem key={option.value} value={option.value}>
-              {option.label}
-            </MenuRadioItem>
-          ))}
-        </MenuRadioGroup>
-      </MenuGroup>
-    </Fragment>
-  ));
+  const facet = (
+    key: RequestFacet,
+    labelKey: string,
+    Icon: LucideIcon,
+    options: readonly FilterOption[],
+    extra?: ReactNode,
+  ) => {
+    const checked = props.checked[key];
+    const toggle = (id: string, on: boolean) =>
+      props.onFacet(
+        key,
+        on ? [...checked, id] : checked.filter((i) => i !== id),
+      );
+    return (
+      <MenuSub>
+        <MenuSubTrigger>
+          <Icon aria-hidden="true" />
+          {t(labelKey)}
+        </MenuSubTrigger>
+        <MenuSubPopup>
+          {options.length ? null : (
+            <p className="px-2 py-1.5 text-sm text-muted-foreground">
+              {t("team-posts.noOptions")}
+            </p>
+          )}
+          {options.map((option) => {
+            const on = checked.includes(option.id);
+            return (
+              <MenuCheckboxItem
+                key={option.id}
+                checked={on}
+                // A board or status list needs one item: the last checked one stays.
+                disabled={key !== "tags" && on && checked.length === 1}
+                onCheckedChange={(next) => toggle(option.id, next)}
+              >
+                <span className="flex items-center gap-2">
+                  {option.icon}
+                  {option.label}
+                </span>
+              </MenuCheckboxItem>
+            );
+          })}
+          {options.length > 1 && options.length <= MAX_IDS ? (
+            <>
+              <MenuSeparator />
+              <MenuItem
+                onClick={() =>
+                  props.onFacet(
+                    key,
+                    options.map((o) => o.id),
+                  )
+                }
+              >
+                {t("team-posts.selectAll")}
+              </MenuItem>
+            </>
+          ) : null}
+          {extra}
+        </MenuSubPopup>
+      </MenuSub>
+    );
+  };
+  return (
+    <>
+      {facet("board", "team-posts.boards", Layers, props.boards)}
+      {facet(
+        "status",
+        "team-posts.status",
+        Loader,
+        props.statuses,
+        props.deleted === undefined ? null : (
+          <>
+            <MenuSeparator />
+            <MenuCheckboxItem
+              checked={props.deleted}
+              onCheckedChange={(next) => props.onDeleted?.(next)}
+            >
+              {t("team-posts.deleted")}
+            </MenuCheckboxItem>
+          </>
+        ),
+      )}
+      {facet("tags", "team-posts.tags", Tag, props.tags)}
+      <MenuSeparator />
+      <MenuSub>
+        <MenuSubTrigger>
+          <ArrowDownUp aria-hidden="true" />
+          {t("team-posts.sort")}
+        </MenuSubTrigger>
+        <MenuSubPopup>
+          <MenuRadioGroup
+            value={props.sort}
+            onValueChange={(value) => props.onSort(String(value))}
+          >
+            {sorts.map((item) => (
+              <MenuRadioItem key={item.value} value={item.value}>
+                {t(item.labelKey)}
+              </MenuRadioItem>
+            ))}
+          </MenuRadioGroup>
+        </MenuSubPopup>
+      </MenuSub>
+      {props.views?.length || props.onSaveView ? <MenuSeparator /> : null}
+      {props.views?.length ? (
+        <MenuSub>
+          <MenuSubTrigger>
+            <Bookmark aria-hidden="true" />
+            {t("team-posts.views")}
+          </MenuSubTrigger>
+          <MenuSubPopup>
+            {props.views.map((view) => (
+              <MenuItem key={view.id} onClick={() => props.onView?.(view.id)}>
+                {view.name}
+              </MenuItem>
+            ))}
+          </MenuSubPopup>
+        </MenuSub>
+      ) : null}
+      {props.onSaveView ? (
+        <MenuItem onClick={props.onSaveView}>
+          <BookmarkPlus aria-hidden="true" />
+          {t("team-posts.saveView")}
+        </MenuItem>
+      ) : null}
+      <MenuSeparator />
+      <MenuItem variant="destructive" onClick={props.onClear}>
+        <X aria-hidden="true" />
+        {t("team-posts.clear")}
+      </MenuItem>
+    </>
+  );
 }
 
-/** The filter group of a menu choice. */
-export type RequestFilterKey = "status" | "board" | "sort";
+/** A multi-select group of the request filter menu. */
+export type RequestFacet = "board" | "status" | "tags";
+
+export interface FilterOption {
+  id: string;
+  label: string;
+  /** A leading mark, such as a board dot or a status icon. */
+  icon?: ReactNode;
+}

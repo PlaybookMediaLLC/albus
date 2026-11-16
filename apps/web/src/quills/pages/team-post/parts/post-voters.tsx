@@ -1,15 +1,14 @@
 import { X } from "lucide-react";
-import { useId, useState } from "react";
+import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import type { GetPostResponse } from "../../../api/team/get-post";
-import { useAddPostProxyVote } from "../../../hooks/team/use-add-post-proxy-vote";
+import { shortDate } from "../../../core/short-date";
 import { useListPostVoters } from "../../../hooks/team/use-list-post-voters";
-import { useListUsers } from "../../../hooks/team/use-list-users";
 import { useRemovePostVote } from "../../../hooks/team/use-remove-post-vote";
 import { useTeamRuntime } from "../../../team/runtime";
 import { PersonAvatar } from "../../../ui/person-avatar";
 import { IconButton } from "../../../ui/inbox/icon-button";
-import { Button, Input, useDebouncedValue } from "../../../ui/upstream";
+import { Button } from "../../../ui/upstream";
 
 export interface PostVotersProps {
   workspaceId: string;
@@ -22,9 +21,9 @@ const importance = {
   critical: "team-post.critical",
 } as const;
 
-/** The voters of a post, their importance, and the votes that the team adds for customers. */
+/** The voters of a post with their vote date and importance. A vote that the team added can be removed. */
 export function PostVoters({ workspaceId, post }: PostVotersProps) {
-  const { t } = useTranslation("quills");
+  const { t, i18n } = useTranslation("quills");
   const team = useTeamRuntime();
   const heading = useId();
   const param = { workspaceId, postId: post.id };
@@ -32,46 +31,45 @@ export function PostVoters({ workspaceId, post }: PostVotersProps) {
     { param, query: { offset: "0", limit: "50" } },
     team.viewer,
   );
-  const [text, setText] = useState("");
-  const search = useDebouncedValue(text.trim(), 300);
-  const users = useListUsers(
-    {
-      param: { workspaceId: search ? workspaceId : "" },
-      query: { search, limit: "5" },
-    },
-    team.viewer,
-  );
-  const add = useAddPostProxyVote(team.viewer);
   const remove = useRemovePostVote(team.viewer);
   const items = voters.data?.pages.flatMap((page) => page.items) ?? [];
-  const voted = new Set(items.map((voter) => voter.principalId));
   const locked = !team.permissions.update;
-  const failed = voters.error ?? users.error ?? add.error ?? remove.error;
+  const failed = voters.error ?? remove.error;
   return (
-    <section aria-labelledby={heading} className="grid gap-2 py-2">
+    <section aria-labelledby={heading} className="grid gap-2">
       <h3 id={heading} className="text-sm font-medium">
-        {t("team-post.votes", { count: post.voteCount })}
+        {t("team-post.voters")}
       </h3>
       {failed ? (
         <p role="alert" className="text-sm text-destructive-foreground">
           {t("core.problem.failed")}
         </p>
       ) : null}
-      <ul className="grid grid-cols-1 gap-1 text-sm">
+      <ul className="grid max-h-80 grid-cols-1 gap-1 overflow-y-auto text-sm">
         {items.map((voter) => {
           const name = voter.displayName ?? t("team-post.anonymous");
           return (
             <li
               key={voter.principalId}
-              className="flex min-h-7 items-center gap-2"
+              className="flex min-h-10 items-center gap-2.5"
             >
-              <PersonAvatar name={name} avatarUrl={voter.avatarUrl} />
-              <span className="min-w-0 flex-1 truncate">{name}</span>
-              {voter.importance ? (
-                <span className="text-xs text-muted-foreground">
-                  {t(importance[voter.importance])}
+              <PersonAvatar
+                colored
+                name={name}
+                avatarUrl={voter.avatarUrl}
+                className="size-8"
+              />
+              <span className="grid min-w-0 flex-1">
+                <span className="truncate font-medium">{name}</span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {t("team-post.votedOn", {
+                    date: shortDate(voter.createdAt, i18n.language),
+                  })}
+                  {voter.importance
+                    ? ` · ${t(importance[voter.importance])}`
+                    : null}
                 </span>
-              ) : null}
+              </span>
               {voter.addedByPrincipalId && !locked ? (
                 <IconButton
                   size="icon-xs"
@@ -99,41 +97,6 @@ export function PostVoters({ workspaceId, post }: PostVotersProps) {
         >
           {t("team-post.moreVoters")}
         </Button>
-      ) : null}
-      {locked ? null : (
-        <label className="grid gap-1 text-xs text-muted-foreground">
-          {t("team-post.addVote")}
-          <Input
-            type="search"
-            size="sm"
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-          />
-        </label>
-      )}
-      {!locked && search && users.data ? (
-        <ul className="grid grid-cols-1 gap-1">
-          {users.data.items
-            .filter((user) => !voted.has(user.principalId))
-            .map((user) => (
-              <li key={user.principalId}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start"
-                  disabled={add.isPending}
-                  onClick={() => {
-                    add.mutate({
-                      param: { ...param, principalId: user.principalId },
-                    });
-                    setText("");
-                  }}
-                >
-                  {t("team-post.addVoteFor", { name: user.name })}
-                </Button>
-              </li>
-            ))}
-        </ul>
       ) : null}
     </section>
   );

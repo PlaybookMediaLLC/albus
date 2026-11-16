@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router";
+import { Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ListBoardsResponse } from "../../../api/team/list-boards";
 import type { ListStatusesResponse } from "../../../api/team/list-statuses";
@@ -5,8 +7,8 @@ import type { PortalProblem } from "../../../core/types";
 import type { useListPosts } from "../../../hooks/team/use-list-posts";
 import { ListPane } from "../../../ui/inbox/list-pane";
 import { PostStatusIcon } from "../../../ui/inbox/post-status-icon";
-import { RequestFilters } from "../../../ui/inbox/request-filters";
 import { RequestRow } from "../../../ui/inbox/request-row";
+import { teamHref } from "../../../team/team-href";
 import { Button } from "../../../ui/upstream";
 import {
   postRow,
@@ -15,13 +17,14 @@ import {
   type ListedPost,
 } from "../../team-posts/post-list";
 import {
-  filterPatch,
   type PostSearch,
   requestListTitle,
 } from "../../team-posts/post-search";
+import { useRequestFilters } from "../../team-posts/use-request-filters";
 import { useRequestQuery } from "../../team-posts/use-request-query";
 
 export interface PostListPaneProps {
+  workspaceId: string;
   /** The posts of the request list, in its order. */
   posts: readonly ListedPost[];
   statuses: ListStatusesResponse["statuses"];
@@ -53,55 +56,68 @@ export function PostListPane({
   const { t } = useTranslation("quills");
   const [query, setQuery] = useRequestQuery(search.q, (q) => onSearch({ q }));
   const context = rowContext(props.statuses, props.boards, t);
+  const menu = useRequestFilters({
+    workspaceId: props.workspaceId,
+    search,
+    statuses: props.statuses,
+    boards: props.boards,
+    onSearch,
+  });
   return (
-    <ListPane
-      title={requestListTitle(search, props.statuses, t)}
-      headingLevel={2}
-      filters={
-        <RequestFilters
-          status={search.statusId ? "" : (search.status ?? "active")}
-          board={search.board ?? ""}
-          sort={search.sort ?? "newest"}
-          boards={props.boards}
-          onChange={(key, value) => onSearch(filterPatch(key, value))}
-        />
-      }
-      search={{
-        label: t("team-posts.search"),
-        value: query,
-        onChange: setQuery,
-      }}
-      loading={props.loading}
-      problem={props.problem}
-      onRetry={props.onRetry}
-      empty={!props.posts.length}
-    >
-      <ul className="grid grid-cols-1 gap-0.5">
-        {props.posts.map((post) => (
-          <li key={post.id}>
-            <RequestRow
-              {...postRow(post, context)}
-              icon={<PostStatusIcon {...statusIcon(post, props.statuses)} />}
-              compact
-              href={props.href(post.id)}
-              onOpen={() => props.onOpen(post.id)}
-              selected={post.id === props.activeId}
-            />
-          </li>
-        ))}
-      </ul>
-      {props.more?.hasNextPage ? (
-        <div className="p-2">
+    <>
+      {menu.dialog}
+      <ListPane
+        title={requestListTitle(search, props.statuses, t)}
+        headingLevel={2}
+        filters={menu.filters}
+        actions={
           <Button
             variant="outline"
-            className="w-full"
-            loading={props.more.isFetchingNextPage}
-            onClick={() => void props.more?.fetchNextPage()}
+            size="sm"
+            className="rounded-full"
+            render={<Link to={teamHref(props.workspaceId, "/triage")} />}
           >
-            {t("team-posts.loadMore")}
+            <Zap aria-hidden="true" />
+            {t("team-posts.triage")}
           </Button>
-        </div>
-      ) : null}
-    </ListPane>
+        }
+        search={{
+          label: t("team-posts.search"),
+          value: query,
+          onChange: setQuery,
+        }}
+        loading={props.loading}
+        problem={props.problem}
+        onRetry={props.onRetry}
+        empty={!props.posts.length}
+      >
+        <ul className="grid grid-cols-1 gap-0.5">
+          {props.posts.map((post) => (
+            <li key={post.id}>
+              <RequestRow
+                {...postRow(post, context)}
+                icon={<PostStatusIcon {...statusIcon(post, props.statuses)} />}
+                compact
+                href={props.href(post.id)}
+                onOpen={() => props.onOpen(post.id)}
+                selected={post.id === props.activeId}
+              />
+            </li>
+          ))}
+        </ul>
+        {props.more?.hasNextPage ? (
+          <div className="p-2">
+            <Button
+              variant="outline"
+              className="w-full"
+              loading={props.more.isFetchingNextPage}
+              onClick={() => void props.more?.fetchNextPage()}
+            >
+              {t("team-posts.loadMore")}
+            </Button>
+          </div>
+        ) : null}
+      </ListPane>
+    </>
   );
 }

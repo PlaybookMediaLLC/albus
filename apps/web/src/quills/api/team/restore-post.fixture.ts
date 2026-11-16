@@ -10,6 +10,7 @@ export const restorePostFixture = {
         statusId: null,
         principalId: "principal_id_test_1",
         authorName: null,
+        authorAvatarUrl: null,
         ownerPrincipalId: null,
         voteCount: 0,
         commentCount: 0,

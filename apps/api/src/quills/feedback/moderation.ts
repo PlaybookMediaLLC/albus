@@ -76,6 +76,58 @@ async function lockPendingPost(db: Db, id: PostId, projects: string[]) {
   if (post.state !== "pending") throw notPending("Post");
 }
 
+// The Requests parity plan, D2: a post hidden from its board is `archived`. The portal and the
+// widget show only published posts, so a hidden post stays in the team inbox only.
+const setPostVisibility = defineQuillsRoute({
+  method: "put",
+  path: "/posts/{postId}/visibility",
+  operationId: "setQuillsPostVisibility",
+  summary: "Show a post on its board or hide it",
+  description:
+    "Moves a published post to archived (hidden) or back. A post that waits for review uses approveQuillsPost. Sends no mail or notification.",
+  action: "update",
+  params: postParams,
+  body: z.object({ visible: z.boolean() }),
+  load: loadProjects,
+  response: z.object({ id: z.string(), moderationState: z.string() }),
+  responseDescription: "The post and its new moderation state",
+  errors: {
+    404: "Post not found",
+    409: "The post is neither published nor hidden",
+  },
+  event: ({ params }) => ({
+    type: "post.updated",
+    entityType: "post",
+    entityId: params.postId,
+    payload: { fields: "visibility" },
+  }),
+  handler: async ({ db, params: { postId }, body, loaded }) => {
+    const [post] = await db
+      .select({ state: posts.moderationState })
+      .from(posts)
+      .where(
+        and(
+          eq(posts.id, postId),
+          isNull(posts.deletedAt),
+          onVisibleBoard(loaded),
+        ),
+      )
+      .for("update");
+    if (!post) throw new HTTPException(404, { message: "Post not found" });
+    if (post.state !== "published" && post.state !== "archived")
+      throw new HTTPException(409, {
+        message: "The post is neither published nor hidden",
+      });
+    const moderationState = body.visible ? "published" : "archived";
+    if (post.state !== moderationState)
+      await db
+        .update(posts)
+        .set({ moderationState })
+        .where(eq(posts.id, postId));
+    return { id: postId, moderationState };
+  },
+});
+
 /** Locks a pending comment whose post is live and on a visible live board. */
 async function lockPendingComment(
   db: Db,
@@ -430,6 +482,7 @@ export default apiRouter<BaseVariables & { workspaceId: string }>()
   .openapi(...getStatus)
   .openapi(...approvePost)
   .openapi(...rejectPost)
+  .openapi(...setPostVisibility)
   .openapi(...approveComment)
   .openapi(...rejectComment)
   .openapi(...setDefault);
