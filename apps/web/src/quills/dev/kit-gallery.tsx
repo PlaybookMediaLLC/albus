@@ -4,6 +4,7 @@ import { CommentReactions } from "../ui/post/comment-reactions";
 import { ReactionBar } from "../ui/reaction-bar";
 import { ComposerDetails } from "../ui/post/composer-details";
 import { FeedbackEditor } from "../ui/feedback-editor";
+import { BoardFilters } from "../ui/board-filters";
 import { BoardNavigation } from "../ui/board-navigation";
 import { PortalSheetContent } from "../ui/portal-sheet-content";
 import { PortalSelectContent } from "../ui/portal-select-content";
@@ -58,9 +59,11 @@ import { ListHeader } from "../ui/inbox/list-header";
 import { ListPane } from "../ui/inbox/list-pane";
 import { MessageBubble } from "../ui/inbox/message-bubble";
 import { PostStatusIcon } from "../ui/inbox/post-status-icon";
+import { PanelSection } from "../ui/inbox/panel-section";
 import { PropertyRow } from "../ui/inbox/property-row";
 import { RequestFilters } from "../ui/inbox/request-filters";
 import { RequestRow } from "../ui/inbox/request-row";
+import { PropertySelect } from "../ui/inbox/property-select";
 import { RowBadge } from "../ui/inbox/row-badge";
 import { BoardDot } from "../ui/inbox/board-dot";
 import { EmojiMenu } from "../ui/inbox/emoji-menu";
@@ -405,6 +408,13 @@ export function KitGallery() {
               stage={pending ? "planned" : ""}
               onStageChange={() => setPending(!pending)}
             />
+            <BoardFilters
+              boards={empty ? [] : [{ id: "board_test_1", name: demo }]}
+              workspaceId="gallery"
+              stages={[{ value: "planned", label: demo, color: null }]}
+              stage={pending ? "planned" : ""}
+              onStageChange={() => setPending(!pending)}
+            />
             <BoardSelect
               name="gallery-board"
               boards={[{ id: "board_test_1", name: demo }]}
@@ -735,6 +745,16 @@ export function KitGallery() {
               }
             />
             <RowBadge badge={{ id: "badge", label: demo, tone: "success" }} />
+            <PropertySelect
+              ghost
+              label={demo}
+              value="one"
+              options={[
+                { value: "one", label: demo },
+                { value: "two", label: demo },
+              ]}
+              onChange={() => {}}
+            />
             <span className="inline-flex items-center gap-1.5 text-xs">
               <BoardDot boardId="board_demo" />
               {demo}
@@ -758,9 +778,11 @@ export function KitGallery() {
                 itemOpen={!empty}
                 propertiesLabel={demo}
                 properties={
-                  <PropertyRow label={demo}>
-                    {t("inbox.unassigned")}
-                  </PropertyRow>
+                  <PanelSection title={demo} count={1}>
+                    <PropertyRow label={demo}>
+                      {t("inbox.unassigned")}
+                    </PropertyRow>
+                  </PanelSection>
                 }
                 list={
                   <ListPane

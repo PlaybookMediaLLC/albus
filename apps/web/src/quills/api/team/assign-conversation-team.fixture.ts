@@ -37,6 +37,7 @@ export const assignConversationTeamFixture = {
           dismissedAt: null,
         },
         summary: null,
+        summaryUpdatedAt: null,
         csatComment: null,
         changed: false,
       },

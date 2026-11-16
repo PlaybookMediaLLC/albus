@@ -33,7 +33,7 @@ export interface ConfirmActionProps {
 
 // The dark: step wins over the outline variant's dark:bg-input/32 (same specificity, later).
 const pill =
-  "rounded-full tabular-nums before:rounded-full aria-pressed:border-primary/40 aria-pressed:bg-primary/10 aria-pressed:text-primary dark:aria-pressed:bg-primary/10";
+  "rounded-full tabular-nums before:rounded-full enabled:not-aria-pressed:text-muted-foreground enabled:not-aria-pressed:hover:text-foreground aria-pressed:border-primary/40 aria-pressed:bg-primary/10 aria-pressed:text-primary dark:aria-pressed:bg-primary/10";
 
 export function ConfirmAction({
   labelKey,

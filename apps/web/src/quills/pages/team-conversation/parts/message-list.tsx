@@ -8,11 +8,13 @@ import {
   Ticket,
   UserRound,
 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { ListConversationMessagesResponse } from "../../../api/team/list-conversation-messages";
 import { useGetConversationTyping } from "../../../hooks/team/use-get-conversation-typing";
 import { useTeamRuntime } from "../../../team/runtime";
+import { teamHref } from "../../../team/team-href";
 import { DateSeparator } from "../../../ui/inbox/date-separator";
 import { MessageBubble } from "../../../ui/inbox/message-bubble";
 import { SystemEvent } from "../../../ui/inbox/system-event";
@@ -127,7 +129,21 @@ export function MessageList(props: MessageListProps) {
                 }
                 time={message.createdAt}
               >
-                <p className="whitespace-pre-wrap">{message.content}</p>
+                {message.content ? (
+                  <p className="whitespace-pre-wrap">{message.content}</p>
+                ) : null}
+                {/* A request shared from the right panel is an embed with no text. */}
+                {message.embeds
+                  .filter((embed) => embed.kind === "post")
+                  .map((embed) => (
+                    <Link
+                      key={`${message.id}:${embed.id}`}
+                      to={teamHref(props.workspaceId, `/posts/${embed.id}`)}
+                      className="block underline underline-offset-4"
+                    >
+                      {t("team-conversations.sharedRequest")}
+                    </Link>
+                  ))}
                 {message.attachments.map((file) => (
                   <p
                     key={`${message.id}:${file.name}`}

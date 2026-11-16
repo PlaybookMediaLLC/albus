@@ -122,7 +122,7 @@ describe("TeamShell", () => {
     ).toHaveAttribute("aria-current", "page");
   });
 
-  it("marks html for the 90% scale only while the shell is open", () => {
+  it("marks html for the 95% scale only while the shell is open", () => {
     answer();
     const view = renderShell("/feedback/workspace_1");
     expect(document.documentElement).toHaveAttribute("data-quills-shell");

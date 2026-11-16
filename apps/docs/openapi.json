@@ -74689,6 +74689,7 @@
                         "post.tags_backfill_requested",
                         "conversation.summary_requested",
                         "conversation.summarized",
+                        "conversation.post_unlinked",
                         "ticket.summary_requested",
                         "ticket.summarized",
                         "help_center.article_translation_requested",
@@ -75256,6 +75257,7 @@
                         "post.tags_backfill_requested",
                         "conversation.summary_requested",
                         "conversation.summarized",
+                        "conversation.post_unlinked",
                         "ticket.summary_requested",
                         "ticket.summarized",
                         "help_center.article_translation_requested",
@@ -110028,6 +110030,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -110066,6 +110075,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment"
                   ]
                 }
@@ -112897,6 +112907,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -112938,6 +112955,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -113300,6 +113318,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -113341,6 +113366,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -113710,6 +113736,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -113751,6 +113784,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -114091,6 +114125,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -114132,6 +114173,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -114495,6 +114537,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -114536,6 +114585,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -114906,6 +114956,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -114947,6 +115004,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -115307,6 +115365,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -115348,6 +115413,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -115707,6 +115773,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -115748,6 +115821,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -116105,6 +116179,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -116146,6 +116227,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -116485,6 +116567,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -116526,6 +116615,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -122248,6 +122338,107 @@
                   "required": [
                     "messageId",
                     "conversationId"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation or related record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The conversation is not in the required state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
+    "/quills/{workspaceId}/conversations/{conversationId}/posts/{postId}": {
+      "delete": {
+        "operationId": "unlinkQuillsPostFromConversation",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Stop tracking a post from a conversation",
+        "description": "Idempotent. Removes only the link: the post, the visitor's vote and the shared message stay. The post must be on a board the caller can see.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "conversationId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Whether a link was removed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "changed": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "changed"
                   ]
                 }
               }
@@ -142186,6 +142377,7 @@
                             "post.tags_backfill_requested",
                             "conversation.summary_requested",
                             "conversation.summarized",
+                            "conversation.post_unlinked",
                             "ticket.summary_requested",
                             "ticket.summarized",
                             "help_center.article_translation_requested",

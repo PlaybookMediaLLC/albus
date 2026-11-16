@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronLeft, ChevronUp, PanelRight } from "lucide-react";
 import { type ReactNode, useContext } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "../upstream";
+import { Button, cn } from "../upstream";
 import { DetailPaneContext } from "./detail-pane-context";
 import { IconButton } from "./icon-button";
 
@@ -35,7 +35,7 @@ export function DetailHeader({
     { key: "J", label: t("inbox.next"), icon: ChevronDown, run: onNext },
   ];
   return (
-    <div className="flex min-h-14 shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-2">
+    <div className="flex min-h-14 shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-2 max-sm:px-2">
       {onBack ? (
         <Button
           variant="ghost"
@@ -44,14 +44,25 @@ export function DetailHeader({
             backLabel ? t("inbox.backTo", { name: backLabel }) : t("inbox.back")
           }
           aria-keyshortcuts="Escape"
+          className="min-w-0 shrink"
           onClick={onBack}
         >
           <ChevronLeft aria-hidden="true" />
-          {backLabel}
+          {backLabel ? (
+            <span className="min-w-0 truncate">{backLabel}</span>
+          ) : null}
         </Button>
       ) : null}
-      <div className="flex min-w-0 flex-1 items-center gap-2">{children}</div>
-      <div className="flex flex-wrap items-center gap-1.5">
+      {/* A title keeps at least 12rem: when it would get less, the actions wrap to a second row. */}
+      <div
+        className={cn(
+          "flex min-w-0 flex-1 items-center gap-2",
+          children && "basis-48",
+        )}
+      >
+        {children}
+      </div>
+      <div className="flex shrink-0 items-center gap-1.5 max-sm:gap-0.5">
         {actions}
         {onPrevious && onNext
           ? steps.map(({ key, label, icon: Icon, run }) => (
