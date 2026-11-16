@@ -306,8 +306,9 @@ largest visible change.
 ## 8. Success criteria
 
 1. Each finding F1 to F13 is fixed, or listed as skipped with its decision.
-2. These searches in `apps/web/src/quills` find nothing: `before:hidden`, `sm:h-7`,
-   `text-\[[0-9]+px\]`, `!text-`, `\bprose\b`, `orange-`, `bg-info-foreground`, `max-w-(205|195)`.
+2. These searches in `apps/web/src/quills` TSX find nothing: `before:hidden`, `sm:h-7`,
+   `text-\[[0-9]+px\]`, `!text-`, a bare `prose` class, `orange-`, `bg-info-foreground`,
+   `max-w-(205|195)`. Rule C24 now enforces most of them.
 3. Descendant rules (`[&_` and `[&>`) drop from 191 to under 40.
 4. `pnpm --filter @kaneo/web test`, `pnpm typecheck`, `pnpm lint` and
    `node scripts/quills-web/cli.mjs check` pass.
@@ -326,3 +327,29 @@ largest visible change.
   120-post demo board before the merge.
 - Branding: a workspace palette can make `bg-primary` bubbles (D1 a) too strong. Check with the
   custom-palette fixture from the parity pass.
+
+## 10. Implementation notes
+
+All phases ship in one branch, `feat/quills-css-polish`, one commit for each phase. These points
+differ from the draft above:
+
+1. **Similar posts (Phase 2.1).** The vote count stays a static badge, because a button cannot sit
+   inside the post link. It uses the same height, radius and border as the vote pill.
+2. **Sort and board selects (Phase 2.1).** They use the standard `SelectTrigger size="sm"` with its
+   border, not a borderless look that overrides the primitive.
+3. **New message "To" field (Phase 2).** The field is a standard bordered combobox input. The
+   results box keeps its border. The input no longer removes its own border with `!important`.
+4. **MessageBubble kinds (Phase 3.1).** The kinds are now `self`, `other` and `note`. "Self" is
+   the viewer's side: the team in the teammate app, the customer in the portal. The portal hides
+   the customer's own avatar, because the label "You" gives no useful initials.
+5. **Loading (Phase 4.1).** `StateView` takes `rows` for skeleton rows. Four tests had relied on
+   two `status` roles during a load. They now wait for the settled list.
+6. **Hub titles (D6).** The feedback board page and the help locale page also count as hubs,
+   because they are the same views as the feedback home and the help home.
+7. **Sticky header (Phase 6).** The shell also gets scroll padding, so anchors and focus do not
+   land under the header.
+8. **Rule C24 (Phase 7).** C24 checks string literals and template parts in TSX files. A palette
+   class in a `.ts` data file, such as the branding swatches in `brand-colors.ts`, is out of its
+   scope. No template changed, so the framework needs no migration.
+
+Verification evidence is in the pull request description.
