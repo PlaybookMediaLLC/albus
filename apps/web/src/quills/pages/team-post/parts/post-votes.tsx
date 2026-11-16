@@ -72,7 +72,7 @@ export function PostVotes({ workspaceId, post }: PostVotesProps) {
               />
             ))}
           </PopoverTrigger>
-          <PopoverPopup align="end" className="w-80 p-3">
+          <PopoverPopup align="end" className="w-80">
             <PostVoters workspaceId={workspaceId} post={post} />
           </PopoverPopup>
         </Popover>
@@ -108,7 +108,7 @@ export function PostVotes({ workspaceId, post }: PostVotesProps) {
             >
               <EllipsisVertical aria-hidden="true" />
             </PopoverTrigger>
-            <PopoverPopup align="end" className="w-80 p-0">
+            <PopoverPopup variant="menu" align="end" className="w-80">
               <AddVoter workspaceId={workspaceId} post={post} />
             </PopoverPopup>
           </Popover>

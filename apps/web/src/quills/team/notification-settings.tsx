@@ -71,7 +71,7 @@ export function NotificationSettings({
     },
   ];
   return (
-    <div className="grid gap-4 p-3">
+    <div className="grid gap-4">
       <div className="flex items-center gap-1">
         <IconButton
           label={t("team.notifications.back")}

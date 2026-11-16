@@ -122,7 +122,7 @@ export function NotificationsButton({
             onBack={() => setView("back")}
           />
         ) : (
-          <div className="p-3">
+          <>
             <div className="mb-2 flex items-center gap-1">
               <PopoverTitle className="flex-1 text-sm">
                 {t("team.notifications.activity")}
@@ -209,7 +209,7 @@ export function NotificationsButton({
                 </div>
               )}
             </TeamStateView>
-          </div>
+          </>
         )}
       </PopoverPopup>
     </Popover>
