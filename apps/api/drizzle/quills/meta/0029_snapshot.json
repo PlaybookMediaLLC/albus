@@ -1,5 +1,5 @@
 {
-	"id": "5c74cfa7-5030-4372-9609-893311d237ce",
+	"id": "b480e8e3-f491-4717-846f-6fd82ee1278a",
 	"prevId": "f9ae8168-3aeb-4407-82e0-0f3aa43f4919",
 	"version": "7",
 	"dialect": "postgresql",
@@ -3830,6 +3830,39 @@
 						},
 						{
 							"expression": "created_at",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"post_votes_workspace_post_created_idx": {
+					"name": "post_votes_workspace_post_created_idx",
+					"columns": [
+						{
+							"expression": "workspace_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						},
+						{
+							"expression": "post_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						},
+						{
+							"expression": "created_at",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						},
+						{
+							"expression": "principal_id",
 							"isExpression": false,
 							"asc": true,
 							"nulls": "last"
@@ -9208,12 +9241,6 @@
 				},
 				"resolved_at": {
 					"name": "resolved_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": false
-				},
-				"archived_at": {
-					"name": "archived_at",
 					"type": "timestamp with time zone",
 					"primaryKey": false,
 					"notNull": false

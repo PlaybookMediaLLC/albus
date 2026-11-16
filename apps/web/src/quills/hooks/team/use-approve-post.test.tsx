@@ -27,6 +27,12 @@ describe("useApprovePost", () => {
         "team",
         "getModerationStatus",
       ),
+      quillsOperationKey(
+        "workspace_test_1",
+        { kind: "anonymous" },
+        "team",
+        "getPost",
+      ),
     ],
   });
 });

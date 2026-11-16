@@ -3251,6 +3251,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/posts/{postId}/tags",
   },
   {
+    operationId: "setQuillsPostVisibility",
+    method: "PUT",
+    path: "/api/quills/{workspaceId}/posts/{postId}/visibility",
+  },
+  {
     operationId: "setQuillsPoweredBy",
     method: "PUT",
     path: "/api/quills/{workspaceId}/operations/powered-by",
