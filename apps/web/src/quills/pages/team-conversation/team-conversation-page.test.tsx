@@ -192,6 +192,19 @@ describe("TeamConversationPage", () => {
       );
     });
 
+    it("saves the list as a view beside the open conversation", async () => {
+      answer(mockApi());
+      const view = renderPage(TeamConversationPage, meta, options);
+      await view.findByRole("heading", { level: 1, name: "Grace" });
+      press("Filters");
+      fireEvent.click(
+        await view.findByRole("menuitem", { name: "Save as view…" }),
+      );
+      expect(
+        await view.findByRole("dialog", { name: "Save as view" }),
+      ).toBeInTheDocument();
+    });
+
     it("replies from the composer that R focuses", async () => {
       const api = mockApi();
       answer(api);

@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchPatch } from "../../core/use-search-patch";
 import { useGetConversation } from "../../hooks/team/use-get-conversation";
@@ -22,6 +22,7 @@ import {
 import { ConversationListPane } from "../team-conversations/conversation-list-pane";
 import { ConversationRows } from "../team-conversations/conversation-rows";
 import { listTitle } from "../team-conversations/list-filters";
+import { SaveViewDialog } from "../team-conversations/parts/save-view-dialog";
 import { ConversationComposer } from "./parts/conversation-composer";
 import { ConversationHeader } from "./parts/conversation-header";
 import { ConversationProperties } from "./parts/conversation-properties";
@@ -42,6 +43,7 @@ export function TeamConversationPage(props: TeamConversationPageProps) {
   const { workspaceId } = props;
   const conversationId = props.params.conversationId ?? "";
   const context = readContext(props.search);
+  const [saving, setSaving] = useState(false);
   const param = { workspaceId, conversationId };
   const conversation = useGetConversation({ param }, team.viewer);
   // ponytail: the newest 100 messages only; page with `before` when longer threads matter.
@@ -90,6 +92,7 @@ export function TeamConversationPage(props: TeamConversationPageProps) {
     activeId: conversationId,
     onMove: go,
     onBack: back,
+    enabled: !saving,
   });
   const customer =
     data?.visitorName ?? data?.visitorEmail ?? t("team-conversations.unknown");
@@ -112,6 +115,9 @@ export function TeamConversationPage(props: TeamConversationPageProps) {
             views={views.data?.items ?? []}
             headingLevel={2}
             onSearch={(q) => remember({ q })}
+            onSaveView={
+              team.permissions.create ? () => setSaving(true) : undefined
+            }
           >
             {/* The main pane shows a failure, so the list shows one only when the conversation loads. */}
             <TeamStateView
@@ -191,6 +197,21 @@ export function TeamConversationPage(props: TeamConversationPageProps) {
           />
         ) : null}
       </DetailLayout>
+      <SaveViewDialog
+        workspaceId={workspaceId}
+        context={context}
+        open={saving}
+        onOpenChange={setSaving}
+        onSaved={(id) => {
+          setSaving(false);
+          void navigate({
+            href: conversationHref(workspaceId, conversationId, {
+              ...context,
+              savedView: id,
+            }),
+          });
+        }}
+      />
     </PageFrame>
   );
 }
