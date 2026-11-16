@@ -12,6 +12,7 @@ import { FeedbackComposer } from "../../portal/feedback-composer";
 import { HelpSuggestions } from "../../portal/help-suggestions";
 import { usePortalRuntime } from "../../portal/runtime";
 import { SimilarRequests } from "../../portal/similar-requests";
+import { BoardFilters } from "../../ui/board-filters";
 import { BoardNavigation } from "../../ui/board-navigation";
 import { PageFrame } from "../../ui/page-frame";
 import { PortalGate } from "../../ui/portal-gate";
@@ -71,6 +72,17 @@ export function FeedbackHomePage(props: FeedbackHomePageProps) {
   );
   const vote = useSetPortalVote(viewer);
   const remember = useSearchPatch();
+  // The board rail on wide screens and the filter row on small ones take the same props.
+  const rail = boards.data && {
+    boards: boards.data.items,
+    workspaceId: props.workspaceId,
+    stages: feedbackStages(statuses.data?.items ?? []),
+    stage,
+    onStageChange: (value: string) => {
+      setStage(value);
+      remember({ stage: value });
+    },
+  };
   // The given title is a one-time start. After the composer has read it, the
   // address drops it, so a reload does not bring back a sent post or undo an edit.
   useEffect(() => {
@@ -84,21 +96,8 @@ export function FeedbackHomePage(props: FeedbackHomePageProps) {
     <PageFrame
       hub
       titleKey="feedback.title"
-      aside={
-        boards.data ? (
-          <BoardNavigation
-            boards={boards.data.items}
-            workspaceId={props.workspaceId}
-            stages={feedbackStages(statuses.data?.items ?? [])}
-            stage={stage}
-            stats={stats.data}
-            onStageChange={(value) => {
-              setStage(value);
-              remember({ stage: value });
-            }}
-          />
-        ) : null
-      }
+      mobileAside={false}
+      aside={rail ? <BoardNavigation {...rail} stats={stats.data} /> : null}
     >
       <StateView
         loading={portal.accessLoading}
@@ -151,6 +150,7 @@ export function FeedbackHomePage(props: FeedbackHomePageProps) {
             <SurveyPrompt workspaceId={workspace} viewer={viewer} />
             <PostSort
               sort={sort}
+              filters={rail ? <BoardFilters {...rail} /> : null}
               onSortChange={(value) => {
                 setSort(value);
                 remember({ sort: value === "votes" ? "" : value });

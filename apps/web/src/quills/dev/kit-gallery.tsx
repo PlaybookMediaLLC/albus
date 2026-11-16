@@ -4,6 +4,7 @@ import { CommentReactions } from "../ui/post/comment-reactions";
 import { ReactionBar } from "../ui/reaction-bar";
 import { ComposerDetails } from "../ui/post/composer-details";
 import { FeedbackEditor } from "../ui/feedback-editor";
+import { BoardFilters } from "../ui/board-filters";
 import { BoardNavigation } from "../ui/board-navigation";
 import { PortalSheetContent } from "../ui/portal-sheet-content";
 import { PortalSelectContent } from "../ui/portal-select-content";
@@ -399,6 +400,13 @@ export function KitGallery() {
               boards={
                 empty ? [] : [{ id: "board_test_1", name: demo, postCount: 3 }]
               }
+              workspaceId="gallery"
+              stages={[{ value: "planned", label: demo, color: null }]}
+              stage={pending ? "planned" : ""}
+              onStageChange={() => setPending(!pending)}
+            />
+            <BoardFilters
+              boards={empty ? [] : [{ id: "board_test_1", name: demo }]}
               workspaceId="gallery"
               stages={[{ value: "planned", label: demo, color: null }]}
               stage={pending ? "planned" : ""}
