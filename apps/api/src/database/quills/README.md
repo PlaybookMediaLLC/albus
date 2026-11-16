@@ -145,8 +145,10 @@ including board visibility, moderation and deleted comments. Draft downloads are
 uploader-only. Removing a file reference and hard-deleting its parent use the
 existing cleanup trigger; soft-deleted feedback is inaccessible but retains its
 references until deletion. Hourly retention removes registered unattached portal
-files older than one day. Uploads abandoned before registration are outside this
-reference retention path.
+and widget files, and teammate files of the `file` purpose (reply and note
+attachments that were never sent), older than one day. Teammate post and changelog
+images live only in content, so retention keeps them. Uploads abandoned before
+registration are outside this reference retention path.
 
 A restricted security-definer function exposes storage references to the platform
 credential only. Its owner has a SELECT policy on the seven storage-bearing tables;

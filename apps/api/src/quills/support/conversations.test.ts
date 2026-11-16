@@ -20,6 +20,7 @@ import { postStatuses } from "../../database/quills/schema/statuses";
 import { teams } from "../../database/quills/schema/teams";
 import * as kaneo from "../../database/schema";
 import { startFeature } from "../feedback/harness.fixture";
+import { pruneQuillsWorkspace } from "../jobs/retention";
 import { conversation, customer } from "./conversation-seed.fixture";
 import { insertVisitorMessage } from "./customer/model";
 
@@ -808,6 +809,61 @@ describe.skipIf(!url)("Support conversations", () => {
         .where(eq(files.id, mine)),
     );
     expect(stored!.messageId).toBe(sent.body.message.id);
+  });
+
+  it("sweeps a day-old teammate reply upload that never attached, and keeps the rest", async () => {
+    const stale = new Date(Date.now() - 2 * 86_400_000);
+    const kept = await world.scoped(
+      world.a,
+      world.users.owner,
+      async (db, actor) => {
+        const message = (await conversation(db, ids.ownerId, ids.visitor))
+          .agentMessageId;
+        const add = async (
+          purpose: string,
+          values: Partial<typeof files.$inferInsert> = {},
+        ) =>
+          (
+            await db
+              .insert(files)
+              .values({
+                storageKey: `workspace/${world.a}/quills/${purpose}/${unique("key")}.pdf`,
+                name: "a.pdf",
+                contentType: "application/pdf",
+                family: "pdf",
+                size: 10,
+                sha256: unique("sha"),
+                source: "agent",
+                uploadedById: actor.principalId,
+                previewStatus: "none",
+                createdAt: stale,
+                ...values,
+              })
+              .returning({ id: files.id })
+          )[0]!.id;
+        return {
+          abandoned: await add("file"),
+          sent: await add("file", {
+            messageId: message as never,
+            attachedAt: stale,
+          }),
+          image: await add("post_image"),
+          fresh: await add("file", { createdAt: new Date() }),
+        };
+      },
+    );
+    await world.scoped(world.a, world.users.owner, (db) =>
+      pruneQuillsWorkspace(db),
+    );
+    const left = await world.scoped(world.a, world.users.owner, (db) =>
+      db
+        .select({ id: files.id })
+        .from(files)
+        .where(inArray(files.id, Object.values(kept) as never[])),
+    );
+    expect(left.map((row) => row.id).sort()).toEqual(
+      [kept.sent, kept.image, kept.fresh].sort(),
+    );
   });
 
   it("lets only the author edit a message and keeps note events team-only", async () => {
