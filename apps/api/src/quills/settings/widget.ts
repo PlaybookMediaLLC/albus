@@ -189,7 +189,10 @@ const area = settingsArea({
   apply: (row, patch) => {
     const stored = parseJson(row.widgetConfig);
     const storedHome = record(stored.home);
+    const enabled = patch.enabled ?? bool(stored.enabled, false);
     return {
+      // Anonymous widget sessions are bound to the secret: an enabled widget without one serves no visitor.
+      ...(enabled && !row.widgetSecret && { widgetSecret: newSecret() }),
       widgetConfig: JSON.stringify({
         ...stored,
         ...defined({
@@ -252,7 +255,7 @@ const getSecret = defineQuillsRoute({
   operationId: "getQuillsWidgetSecret",
   summary: "Get the widget signing secret",
   description:
-    "Null until the secret is created with the rotate route. Requires quills:manage_settings.",
+    "Null until the secret is created: turning the widget on creates it, and the rotate route creates or replaces it. Requires quills:manage_settings.",
   action: "manage_settings",
   response: secretResponse,
   responseDescription: "The widget signing secret",

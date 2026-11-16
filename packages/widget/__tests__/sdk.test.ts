@@ -569,6 +569,45 @@ describe("sdk", () => {
     vi.useRealTimers();
   });
 
+  it.each([
+    [
+      "the widget is off",
+      {
+        ok: true,
+        status: 200,
+        json: async () => ({ enabled: false, config: null }),
+      },
+    ],
+    [
+      "the workspace does not exist",
+      { ok: false, status: 404, json: async () => ({}) },
+    ],
+  ])(
+    "shows no launcher when %s, even after the fallback reveal",
+    async (_case, reply) => {
+      vi.useFakeTimers();
+      stubIframe();
+      let resolveFetch!: (value: unknown) => void;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(() => new Promise((resolve) => (resolveFetch = resolve))),
+      );
+      sdk = createSDK();
+      sdk.dispatch("init", { instanceUrl: ORIGIN, workspace: WORKSPACE });
+      vi.advanceTimersByTime(1800);
+      expect(document.querySelector(".quackback-launcher")).not.toBeNull();
+      resolveFetch(reply);
+      await vi.runAllTimersAsync();
+      expect(document.querySelector(".quackback-launcher")).toBeNull();
+      // open() still answers the host app: the panel says the widget is unavailable.
+      sdk.dispatch("open");
+      expect(
+        document.querySelector("iframe.quackback-widget-iframe"),
+      ).not.toBeNull();
+      vi.useRealTimers();
+    },
+  );
+
   it("init throws on non-http(s) instanceUrl (javascript: scheme)", () => {
     sdk = createSDK();
     expect(() =>

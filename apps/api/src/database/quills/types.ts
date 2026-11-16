@@ -1259,6 +1259,8 @@ export interface ConversationMessageMetadata {
 
   /** The channel this message arrived through, when not the in-app messenger. */
   source?: "email" | "github";
+  /** Host-page context (pageUrl, browser, host keys) of a widget visitor's message. Never returned to the visitor. */
+  widgetMetadata?: Record<string, string>;
   /** GitHub issue comment REST id, used to dedupe webhook retries. */
   githubCommentId?: string;
   /** Live outbound status for a thread-addressed channel send. */

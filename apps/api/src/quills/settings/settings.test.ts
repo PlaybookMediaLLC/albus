@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vite-plus/test";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
+import { auditLog } from "../../database/quills/schema/audit-log";
 import { settings } from "../../database/quills/schema/auth";
 import * as kaneo from "../../database/schema";
 import quillsRouter from "../index";
@@ -107,6 +108,42 @@ describe.skipIf(!url)("Quills settings", () => {
       ["GET", "/settings/widget"],
     ] as const)
       expect((await call(method, path, member)).status).toBe(403);
+  });
+
+  it("creates a missing secret when the widget is turned on, and keeps it out of the audit", async () => {
+    const env = contractEnv();
+    const secretOf = async () =>
+      JSON.parse((await call("GET", "/settings/widget/secret")).text).secret as
+        | string
+        | null;
+    await env.scoped(env.a, (db) =>
+      db.update(settings).set({ widgetSecret: null, widgetConfig: null }),
+    );
+    // A save while the widget is off creates nothing; a member cannot turn it on.
+    const off = { launcherLabel: "Help" };
+    expect((await call("PUT", "/settings/widget", undefined, off)).status).toBe(
+      200,
+    );
+    expect(await secretOf()).toBeNull();
+    expect(
+      (await call("PUT", "/settings/widget", member, { enabled: true })).status,
+    ).toBe(403);
+    expect(await secretOf()).toBeNull();
+
+    const on = await call("PUT", "/settings/widget", undefined, {
+      enabled: true,
+    });
+    expect(on.status).toBe(200);
+    const secret = await secretOf();
+    expect(secret).toMatch(/^wgt_[0-9a-f]{64}$/);
+    expect(on.text).not.toContain(secret);
+    // A later save keeps the secret, so identify tokens and sessions stay valid.
+    await call("PUT", "/settings/widget", undefined, { launcherLabel: "Ask" });
+    expect(await secretOf()).toBe(secret);
+    const audit = await env.scoped(env.a, (db) =>
+      db.select({ metadata: auditLog.metadata }).from(auditLog),
+    );
+    expect(JSON.stringify(audit)).not.toContain(secret);
   });
 
   it("stores the install code hashed and never writes the name or slug", async () => {

@@ -137,6 +137,8 @@ export interface WidgetViewProps {
   brandName?: string;
   theme?: "light" | "dark" | "auto";
   initialTab?: WidgetTab;
+  /** The tabs that the workspace turned on; omit for all. A route to another tab shows the first of these. */
+  tabs?: readonly WidgetTab[];
   feedback?: readonly FeedbackPost[];
   articles?: readonly HelpArticle[];
   updates?: readonly UpdateEntry[];

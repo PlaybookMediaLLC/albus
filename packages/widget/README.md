@@ -83,7 +83,7 @@ The script reads the instance URL and the workspace (ID or slug) from its own UR
 | `Quills.open(options?)`                    | Open the panel; optional deep-link payload (see below).                        |
 | `Quills.close()`                           | Close the panel.                                                               |
 | `Quills.showLauncher()` / `hideLauncher()` | Toggle the floating button.                                                    |
-| `Quills.metadata(patch)`                   | Attach session context to submitted feedback. Pass `null` to remove a key. The SDK adds `pageUrl` and the widget adds `browser`. |
+| `Quills.metadata(patch)`                   | Attach session context to submitted feedback and support messages. Pass `null` to remove a key. The SDK adds `pageUrl` and the widget adds `browser`. |
 | `Quills.tracking(enabled)`                 | Allow or stop host-page visitor analytics. `false` also removes the device id. |
 | `Quills.on(event, handler)`                | Subscribe to a widget event. Returns an unsubscribe function.                  |
 | `Quills.off(event, handler?)`              | Remove a specific handler, or all listeners for the event.                     |
@@ -162,7 +162,7 @@ Quills.open({ articleId: 'article_01h...' }) // help article TypeID or slug
 
 `postId` and `articleId` win over `view` if both are set. `board` on `open` only applies to `view: 'new-post'`. Home / Popular Ideas filtering uses `init({ defaultBoard })` or the iframe `?board=` param.
 
-Every `open` field is live. A disabled surface or an unseen board fails closed — the panel still opens, but the widget does not invent access.
+Every `open` field is live. A disabled surface or an unseen board fails closed — the panel still opens, but the widget does not invent access. The widget shows only the tabs that the workspace turned on, and a request for another tab opens the first tab that is on. While the workspace has the widget off, or the workspace does not exist, the SDK shows no launcher, and `open()` shows that the widget is unavailable.
 
 ### Events
 
@@ -294,7 +294,7 @@ A visitor that the host app identified can attach images and a screenshot to a n
 3. These fields are left out of the image and covered with an opaque box: `input[type=password]`, any element with `data-private`, card fields (`autocomplete="cc-…"`, and names or IDs with `card`, `cvc` or `cvv`) and frames. Add `data-private` to any other element that must not appear, for example a field that shows a password as text.
 4. The visitor reviews the image, can draw boxes and arrows and blur or redact areas, and then attaches it. Nothing is sent before the visitor posts.
 5. The adapter uploads each image through `POST /widget/uploads`, the presigned PUT and `POST /widget/files`, and sends the file IDs with the post. A retry sends the same files.
-6. Each new post sends `metadata`: the keys from `Quills.metadata`, `pageUrl` (the page origin and path, without the query and the fragment) and `browser` (for example `Chrome 131 on macOS`). Teammates read it on the post; customers do not.
+6. Each new post sends `metadata`: the keys from `Quills.metadata`, `pageUrl` (the page origin and path, without the query and the fragment) and `browser` (for example `Chrome 131 on macOS`). Teammates read it on the post; customers do not. Each support message sends the same `metadata`; it is stored with the message for the team and never returned to the visitor.
 
 Limits: the copy shows a sticky element or an inner scroll area at its unscrolled position, and an image from another origin without CORS shows as blank. A host page with a Content-Security-Policy must allow `img-src data:` for the capture. An anonymous visitor gets no picker and no camera, because the upload routes need an identified visitor. The browser SDK grows by about 17 KB (6 KB gzip) for the capture; the ESM and CommonJS entries load html-to-image only when a capture starts.
 

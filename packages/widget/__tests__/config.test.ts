@@ -21,20 +21,31 @@ describe("config.fetchServerConfig", () => {
       `https://feedback.acme.com/api/quills-public/acme/widget/config.json?sdk=${SDK_VERSION}`,
       { signal: undefined },
     );
-    expect(cfg.theme?.lightPrimary).toBe("#ff0000");
+    expect(cfg?.theme?.lightPrimary).toBe("#ff0000");
   });
 
-  it("returns empty config while the widget is off", async () => {
+  it("returns null while the widget is off", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => ({
         ok: true,
+        status: 200,
         json: async () => ({ enabled: false, config: null }),
       })),
     );
     expect(
       await fetchServerConfig("https://feedback.acme.com", "acme"),
-    ).toEqual({});
+    ).toBeNull();
+  });
+
+  it("returns null for a workspace that does not exist", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: false, status: 404, json: async () => ({}) })),
+    );
+    expect(
+      await fetchServerConfig("https://feedback.acme.com", "acme"),
+    ).toBeNull();
   });
 
   it("keeps host analytics off: Kaneo has no pageview ingest route", async () => {

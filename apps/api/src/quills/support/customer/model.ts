@@ -341,6 +341,7 @@ export async function insertVisitorMessage(
   conversation: ConversationRow,
   messageId: MessageId,
   content: string,
+  widgetMetadata?: Record<string, string>,
 ) {
   await db.insert(conversationMessages).values({
     id: messageId,
@@ -348,6 +349,8 @@ export async function insertVisitorMessage(
     principalId: me,
     senderType: "visitor",
     content,
+    ...(widgetMetadata &&
+      Object.keys(widgetMetadata).length && { metadata: { widgetMetadata } }),
   });
   // The stored microsecond time: a millisecond JS Date would sort before the message itself.
   const at = sql`(select ${conversationMessages.createdAt} from ${conversationMessages} where ${eq(conversationMessages.id, messageId)})`;

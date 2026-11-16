@@ -30647,6 +30647,14 @@
                     "minLength": 8,
                     "maxLength": 128,
                     "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "description": "Context from the host page, such as pageUrl and browser, and keys that the host app set with the widget's metadata command. Stored with the message for the team; never returned to the visitor."
                   }
                 },
                 "required": [
@@ -31527,6 +31535,14 @@
                     "minLength": 8,
                     "maxLength": 128,
                     "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "description": "Context from the host page, such as pageUrl and browser, and keys that the host app set with the widget's metadata command. Stored with the message for the team; never returned to the visitor."
                   }
                 },
                 "required": [
@@ -64910,7 +64926,7 @@
           "Quills"
         ],
         "summary": "Get the widget signing secret",
-        "description": "Null until the secret is created with the rotate route. Requires quills:manage_settings.",
+        "description": "Null until the secret is created: turning the widget on creates it, and the rotate route creates or replaces it. Requires quills:manage_settings.",
         "parameters": [
           {
             "schema": {

@@ -3,10 +3,12 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Hono } from "hono";
 import { Pool } from "pg";
 import { settings } from "../../database/quills/schema/auth";
+import { conversationMessages } from "../../database/quills/schema/conversation";
 import * as kaneo from "../../database/schema";
 import quillsRouter from "../index";
 import publicRouter from "../public";
@@ -48,7 +50,10 @@ describe("widget host page and bundles", () => {
   writeFileSync(join(dist, "host.js"), "console.log('host')");
   writeFileSync(join(dist, "host.css"), "body{}");
   writeFileSync(join(dist, "browser.js"), "window.QuillsBundle=1");
-  const app = new Hono().route("/quills-public", widgetHost(dist));
+  const app = new Hono().route(
+    "/quills-public",
+    widgetHost(() => dist),
+  );
   afterAll(() => rmSync(dist, { recursive: true, force: true }));
 
   it("serves the iframe page with a strict policy that any web origin may frame", async () => {
@@ -92,11 +97,25 @@ describe("widget host page and bundles", () => {
   });
 
   it("answers 503 while the widget is not built", async () => {
-    const empty = new Hono().route("/quills-public", widgetHost(null));
+    const empty = new Hono().route(
+      "/quills-public",
+      widgetHost(() => null),
+    );
     for (const path of ["", "/host.js", "/host.css", "/sdk.js"])
       expect(
         (await empty.request(`/quills-public/acme/widget${path}`)).status,
       ).toBe(503);
+  });
+
+  it("serves a widget that was built after the API started", async () => {
+    let built: string | null = null;
+    const late = new Hono().route(
+      "/quills-public",
+      widgetHost(() => built),
+    );
+    expect((await late.request("/quills-public/acme/widget")).status).toBe(503);
+    built = dist;
+    expect((await late.request("/quills-public/acme/widget")).status).toBe(200);
   });
 });
 
@@ -227,16 +246,47 @@ describe.skipIf(!url)("widget adapter against the real API", () => {
     );
     expect(created).toMatchObject({ title: "A widget idea", stage: "open" });
 
-    const started = await send.startConversation("I need help", `${key}conv`);
+    const page = { pageUrl: "https://host.example/pricing", browser: "Chrome" };
+    const started = await send.startConversation(
+      "I need help",
+      `${key}conv`,
+      undefined,
+      page,
+    );
     const again = await send.startConversation("I need help", `${key}conv`);
     expect(again.message.id).toBe(started.message.id);
-    await send.reply(started.conversation.id, "More detail", `${key}reply`);
+    await send.reply(
+      started.conversation.id,
+      "More detail",
+      `${key}reply`,
+      undefined,
+      { ...page, pageUrl: "https://host.example/checkout" },
+    );
     const threads = await loadConversations(api);
     expect(threads).toHaveLength(1);
     expect(threads[0].messages.map((m: { body: string }) => m.body)).toEqual([
       "I need help",
       "More detail",
     ]);
+    // Each message keeps the page it was sent from, for the team; the visitor never reads it back.
+    expect(JSON.stringify(threads)).not.toContain("host.example");
+    const stored = await env.scoped(env.a, (db) =>
+      db
+        .select({ metadata: conversationMessages.metadata })
+        .from(conversationMessages)
+        .where(eq(conversationMessages.conversationId, started.conversation.id))
+        .orderBy(conversationMessages.createdAt),
+    );
+    expect(stored.map((row) => row.metadata?.widgetMetadata)).toEqual([
+      page,
+      { ...page, pageUrl: "https://host.example/checkout" },
+    ]);
+    const tooMany = Object.fromEntries(
+      Array.from({ length: 21 }, (_, i) => [`k${i}`, "v"]),
+    );
+    await expect(
+      send.startConversation("Too much", `${key}big`, undefined, tooMany),
+    ).rejects.toMatchObject({ status: 400 });
     expect(
       await send.markRead(started.conversation.id, threads[0].messages[1].id),
     ).toMatchObject({ unreadCount: 0 });
