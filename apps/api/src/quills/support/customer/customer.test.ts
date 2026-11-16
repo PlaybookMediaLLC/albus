@@ -375,8 +375,30 @@ describe.skipIf(!url)("Quills customer support routes and delivery", () => {
         size: 1200,
       },
     ]);
-    const get = (fileId: string, token = a.token) =>
-      call("GET", `/widget/conversations/${id}/files/${fileId}`, {
+    // B's own conversation: a file of A's conversation must not come through it.
+    const theirs = (
+      await call("POST", "/widget/conversations", {
+        bearer: b.token,
+        body: { content: "Mine too", idempotencyKey: key() },
+      })
+    ).body.conversation.id as string;
+    // A file on a deleted reply is gone for the customer.
+    const removed = await upload();
+    const gone = await call("POST", `/conversations/${id}/reply`, {
+      ...team,
+      body: { content: "Wrong file", attachmentIds: [removed] },
+    });
+    expect(
+      (
+        await call(
+          "DELETE",
+          `/conversation-messages/${gone.body.message.id}`,
+          team,
+        )
+      ).status,
+    ).toBe(200);
+    const get = (fileId: string, token = a.token, conversation = id) =>
+      call("GET", `/widget/conversations/${conversation}/files/${fileId}`, {
         bearer: token,
       });
     // Signing a download URL is local: no storage server runs.
@@ -394,7 +416,9 @@ describe.skipIf(!url)("Quills customer support routes and delivery", () => {
       expect(download.body).toMatchObject({ id: shared, name: "invoice.pdf" });
       expect(download.body.downloadUrl).toEqual(expect.any(String));
       expect((await get(secret)).status).toBe(404);
+      expect((await get(removed)).status).toBe(404);
       expect((await get(shared, b.token)).status).toBe(404);
+      expect((await get(shared, b.token, theirs)).status).toBe(404);
     } finally {
       for (const [name, value] of saved)
         if (value === undefined) delete process.env[name!];
