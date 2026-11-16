@@ -109335,6 +109335,43 @@
                             "null"
                           ]
                         },
+                        "emailAuth": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "spf": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "none"
+                              ]
+                            },
+                            "dkim": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "none"
+                              ]
+                            },
+                            "dmarc": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "none"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "spf",
+                            "dkim",
+                            "dmarc"
+                          ]
+                        },
                         "embeds": {
                           "type": "array",
                           "items": {
@@ -109433,6 +109470,7 @@
                         "content",
                         "systemKind",
                         "systemActorPrincipalId",
+                        "emailAuth",
                         "embeds",
                         "attachments",
                         "reactions",
@@ -110230,6 +110268,43 @@
                               "null"
                             ]
                           },
+                          "emailAuth": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "spf": {
+                                "type": "string",
+                                "enum": [
+                                  "pass",
+                                  "fail",
+                                  "none"
+                                ]
+                              },
+                              "dkim": {
+                                "type": "string",
+                                "enum": [
+                                  "pass",
+                                  "fail",
+                                  "none"
+                                ]
+                              },
+                              "dmarc": {
+                                "type": "string",
+                                "enum": [
+                                  "pass",
+                                  "fail",
+                                  "none"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "spf",
+                              "dkim",
+                              "dmarc"
+                            ]
+                          },
                           "embeds": {
                             "type": "array",
                             "items": {
@@ -110328,6 +110403,7 @@
                           "content",
                           "systemKind",
                           "systemActorPrincipalId",
+                          "emailAuth",
                           "embeds",
                           "attachments",
                           "reactions",
@@ -110504,6 +110580,43 @@
                             "null"
                           ]
                         },
+                        "emailAuth": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "spf": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "none"
+                              ]
+                            },
+                            "dkim": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "none"
+                              ]
+                            },
+                            "dmarc": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "none"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "spf",
+                            "dkim",
+                            "dmarc"
+                          ]
+                        },
                         "embeds": {
                           "type": "array",
                           "items": {
@@ -110602,6 +110715,7 @@
                         "content",
                         "systemKind",
                         "systemActorPrincipalId",
+                        "emailAuth",
                         "embeds",
                         "attachments",
                         "reactions",
@@ -110977,6 +111091,43 @@
                             "null"
                           ]
                         },
+                        "emailAuth": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "spf": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "none"
+                              ]
+                            },
+                            "dkim": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "none"
+                              ]
+                            },
+                            "dmarc": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "none"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "spf",
+                            "dkim",
+                            "dmarc"
+                          ]
+                        },
                         "embeds": {
                           "type": "array",
                           "items": {
@@ -111075,6 +111226,7 @@
                         "content",
                         "systemKind",
                         "systemActorPrincipalId",
+                        "emailAuth",
                         "embeds",
                         "attachments",
                         "reactions",
@@ -111367,6 +111519,43 @@
                         "null"
                       ]
                     },
+                    "emailAuth": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "spf": {
+                          "type": "string",
+                          "enum": [
+                            "pass",
+                            "fail",
+                            "none"
+                          ]
+                        },
+                        "dkim": {
+                          "type": "string",
+                          "enum": [
+                            "pass",
+                            "fail",
+                            "none"
+                          ]
+                        },
+                        "dmarc": {
+                          "type": "string",
+                          "enum": [
+                            "pass",
+                            "fail",
+                            "none"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "spf",
+                        "dkim",
+                        "dmarc"
+                      ]
+                    },
                     "embeds": {
                       "type": "array",
                       "items": {
@@ -111465,6 +111654,7 @@
                     "content",
                     "systemKind",
                     "systemActorPrincipalId",
+                    "emailAuth",
                     "embeds",
                     "attachments",
                     "reactions",

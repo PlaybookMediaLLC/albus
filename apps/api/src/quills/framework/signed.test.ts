@@ -312,6 +312,73 @@ describe.skipIf(!url)("signed audience with PostgreSQL", () => {
       messageId: null,
     });
   });
+  it("stores only the trusted receiver's SPF, DKIM and DMARC results", async () => {
+    const env = contractEnv();
+    const send = async (headers: unknown) => {
+      const messageId = `<${randomUUID()}@customer.test>`;
+      const raw = JSON.stringify({
+        type: "email.received",
+        data: {
+          from: `ada-${randomUUID()}@customer.test`,
+          to: [`${env.a}@in.example.test`],
+          subject: "Help",
+          text: "Hello",
+          headers: [
+            { name: "Message-ID", value: messageId },
+            ...(headers as []),
+          ],
+        },
+      });
+      const res = await app.request(
+        "/quills-public/signed/chat/email/inbound",
+        {
+          method: "POST",
+          headers: svix(raw),
+          body: raw,
+        },
+      );
+      expect(await res.json()).toMatchObject({ status: "received" });
+      const { rows } = await pool.query(
+        "SELECT metadata->'emailAuth' AS auth FROM quills.conversation_messages WHERE workspace_id=$1 AND metadata->>'emailMessageId'=$2",
+        [env.a, messageId],
+      );
+      return rows[0]?.auth ?? null;
+    };
+    const results = [
+      // The sender's own header comes below the receiver's and never counts.
+      {
+        name: "Authentication-Results",
+        value: "mx.receiver.test; spf=fail; dkim=pass; dmarc=fail",
+      },
+      {
+        name: "Authentication-Results",
+        value: "mx.receiver.test; spf=pass; dkim=pass; dmarc=pass",
+      },
+    ];
+    const trusted = process.env.EMAIL_INBOUND_AUTHSERV_ID;
+    try {
+      delete process.env.EMAIL_INBOUND_AUTHSERV_ID;
+      expect(await send(results)).toBeNull();
+      process.env.EMAIL_INBOUND_AUTHSERV_ID = "mx.receiver.test";
+      expect(await send(results)).toEqual({
+        spf: "fail",
+        dkim: "pass",
+        dmarc: "fail",
+      });
+      expect(
+        await send([
+          {
+            name: "Authentication-Results",
+            value: "attacker.test; spf=pass; dkim=pass; dmarc=pass",
+          },
+        ]),
+      ).toBeNull();
+    } finally {
+      if (trusted === undefined) delete process.env.EMAIL_INBOUND_AUTHSERV_ID;
+      else process.env.EMAIL_INBOUND_AUTHSERV_ID = trusted;
+    }
+  });
+
   it("records a bounce on the mail's own log row, once, and never for unsigned tags", async () => {
     const env = contractEnv();
     const [row] = await env.scoped(env.a, (db) =>

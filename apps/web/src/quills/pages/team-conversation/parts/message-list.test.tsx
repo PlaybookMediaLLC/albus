@@ -42,6 +42,7 @@ const message = (
   content: "",
   systemKind: null,
   systemActorPrincipalId: null,
+  emailAuth: null,
   embeds: [],
   attachments: [],
   reactions: [],

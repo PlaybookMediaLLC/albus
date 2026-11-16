@@ -14,6 +14,7 @@ import {
   resendInbound,
 } from "../framework/signed";
 import { preview } from "../support/conversation-model";
+import { trustedEmailAuth } from "./email-auth";
 import { reopened } from "../support/conversation-ops";
 
 // POST /quills-public/signed/chat/email/inbound: mail that Resend received for a workspace address
@@ -56,15 +57,18 @@ const received = z.object({
 });
 type Received = z.output<typeof received>["data"];
 
-/** A header value from Resend's map or list form, by case-insensitive name. */
-function readHeader(data: Received, name: string) {
+/** Every value of a header from Resend's map or list form, in order, by case-insensitive name. */
+function readHeaders(data: Received, name: string) {
   const headers = data.headers;
-  if (!headers) return undefined;
+  if (!headers) return [];
   const entries = Array.isArray(headers)
     ? headers.map((entry) => [entry.name, entry.value] as const)
     : Object.entries(headers);
-  return entries.find(([key]) => key.toLowerCase() === name)?.[1];
+  return entries
+    .filter(([key]) => key.toLowerCase() === name)
+    .map(([, value]) => value);
 }
+const readHeader = (data: Received, name: string) => readHeaders(data, name)[0];
 /** `Name <a@b.c>` or `a@b.c`, lower-cased. Null when it is not one plain address. */
 function mailbox(value: string | undefined) {
   const match = /^\s*(?:"?([^"<]*)"?\s*)?<([^<>\s]+@[^<>\s]+)>\s*$/.exec(
@@ -196,6 +200,10 @@ const inbound = defineQuillsRoute({
     }
     const visitor = await senderPrincipal(db, sender);
     if (!visitor) return answer("blocked");
+    const emailAuth = trustedEmailAuth(
+      readHeaders(data, "authentication-results"),
+      process.env.EMAIL_INBOUND_AUTHSERV_ID ?? "",
+    );
     const references = [
       ...messageIds(readHeader(data, "in-reply-to")),
       ...messageIds(readHeader(data, "references")),
@@ -287,6 +295,7 @@ const inbound = defineQuillsRoute({
         metadata: {
           source: "email",
           ...(emailMessageId && { emailMessageId }),
+          ...(emailAuth && { emailAuth }),
         },
       })
       // conversation_messages_email_message_id_idx: a concurrent copy of the same mail.

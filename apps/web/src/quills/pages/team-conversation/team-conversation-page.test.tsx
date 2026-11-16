@@ -124,6 +124,7 @@ describe("TeamConversationPage", () => {
                 content: "The export button does nothing.",
                 systemKind: null,
                 systemActorPrincipalId: null,
+                emailAuth: null,
                 embeds: [],
                 attachments: [],
                 reactions: [],
