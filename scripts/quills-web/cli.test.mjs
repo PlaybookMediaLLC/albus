@@ -42,8 +42,9 @@ async function fixtureRoot() {
     `${root}/apps/api/src/quills/portal/paths.ts`,
   );
   await mkdir(`${root}/apps/web/src/quills/i18n/en-US`, { recursive: true });
+  // A frozen copy: the live core.json changes with each new key and would break the golden.
   await cp(
-    `${sourceRoot}/apps/web/src/quills/i18n/en-US/core.json`,
+    `${sourceRoot}/scripts/quills-web/test/golden/core-input.json`,
     `${root}/apps/web/src/quills/i18n/en-US/core.json`,
   );
   return root;
