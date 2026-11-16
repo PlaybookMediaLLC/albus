@@ -446,13 +446,14 @@ input:-webkit-autofill:active {
   body {
     @apply bg-background font-sans text-foreground antialiased;
   }
-  /* The feedback app runs at 90% scale. A smaller root font scales the rem-based UI and
-     its menus and dialogs, and keeps 100svh and popover positions exact (CSS zoom does
-     not). Phones keep 16px, so iOS Safari does not zoom into focused fields. The team shell
-     sets the attribute on html; `html:has(...)` made every DOM insertion slow on all pages. */
+  /* The feedback app runs at 95% scale (90% made its meta text 10.8px). A smaller root
+     font scales the rem-based UI and its menus and dialogs, and keeps 100svh and popover
+     positions exact (CSS zoom does not). Phones keep 16px, so iOS Safari does not zoom
+     into focused fields. The team shell sets the attribute on html; `html:has(...)` made
+     every DOM insertion slow on all pages. */
   @media (min-width: 48rem) {
     html[data-quills-shell] {
-      font-size: 90%;
+      font-size: 95%;
     }
   }
   /* Lucide draws 2px strokes, heavier than the app's own 1.5px status icons and the small
