@@ -97,6 +97,35 @@ describe("ConversationComposer", () => {
     await vi.waitFor(() => expect(view.queryByText("invoice.pdf")).toBeNull());
   });
 
+  it("keeps text typed while the files uploaded", async () => {
+    const api = mockApi();
+    api.reply(sendConversationTypingFixture.ok());
+    api.reply(
+      createUploadFixture.ok({ uploadUrl: "https://storage.example.test/up" }),
+    );
+    api.reply({});
+    api.reply(createFilesFixture.ok({ id: "file_test_1" }));
+    let finish = () => {};
+    api.defer(({ resolve }) => {
+      finish = () => resolve(replyConversationFixture.ok());
+    });
+    const view = render(composer);
+    fireEvent.change(view.getByLabelText("Attach files"), {
+      target: {
+        files: [new File(["x"], "a.pdf", { type: "application/pdf" })],
+      },
+    });
+    fill("Reply to Grace…", "First");
+    press("Send");
+    await vi.waitFor(() =>
+      expect(api.calls("replyQuillsConversation")).toHaveLength(1),
+    );
+    fill("Reply to Grace…", "Next message");
+    finish();
+    await vi.waitFor(() => expect(view.queryByText("a.pdf")).toBeNull());
+    expect(view.getByLabelText("Reply to Grace…")).toHaveValue("Next message");
+  });
+
   it("signals typing once, sends the reply with Enter and clears the box", async () => {
     const api = mockApi();
     api.reply(sendConversationTypingFixture.ok());

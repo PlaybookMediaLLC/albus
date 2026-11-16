@@ -54,7 +54,11 @@ export function EmojiButton(props: EmojiButtonProps) {
       >
         <Smile aria-hidden="true" />
       </PopoverTrigger>
-      <PopoverPopup align="start" className="w-auto p-2">
+      <PopoverPopup
+        align="start"
+        className="w-auto p-2"
+        aria-label={t("team-conversations.emoji.open")}
+      >
         <div className="grid grid-cols-8 gap-0.5">
           {EMOJI.map((emoji) => (
             <button

@@ -137,9 +137,11 @@ export function ConversationComposer(props: ConversationComposerProps) {
       ...(attachmentIds.length ? { attachmentIds } : {}),
     };
     const request = { param, json };
+    const sent = text;
     const options = {
       onSuccess: () => {
-        setText("");
+        // Text typed while the files uploaded stays in the box.
+        setText((current) => (current === sent ? "" : current));
         setFiles([]);
         uploaded.current.clear();
       },
