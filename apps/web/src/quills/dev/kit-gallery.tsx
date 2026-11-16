@@ -62,6 +62,7 @@ import { PanelSection } from "../ui/inbox/panel-section";
 import { PropertyRow } from "../ui/inbox/property-row";
 import { RequestFilters } from "../ui/inbox/request-filters";
 import { RequestRow } from "../ui/inbox/request-row";
+import { PropertySelect } from "../ui/inbox/property-select";
 import { RowBadge } from "../ui/inbox/row-badge";
 import { BoardDot } from "../ui/inbox/board-dot";
 import { EmojiMenu } from "../ui/inbox/emoji-menu";
@@ -743,6 +744,16 @@ export function KitGallery() {
               }
             />
             <RowBadge badge={{ id: "badge", label: demo, tone: "success" }} />
+            <PropertySelect
+              ghost
+              label={demo}
+              value="one"
+              options={[
+                { value: "one", label: demo },
+                { value: "two", label: demo },
+              ]}
+              onChange={() => {}}
+            />
             <span className="inline-flex items-center gap-1.5 text-xs">
               <BoardDot boardId="board_demo" />
               {demo}

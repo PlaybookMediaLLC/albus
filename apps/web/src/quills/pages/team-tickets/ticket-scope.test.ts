@@ -114,7 +114,8 @@ describe("ticket scope", () => {
     expect(row.badge).toEqual({
       id: "status",
       label: "value",
-      tone: "neutral",
+      // An open ticket reads as information; pending is a warning, closed a success.
+      tone: "info",
     });
     expect(row.assignee).toEqual({ name: "Billing" });
     expect(ticketRow(getTicketFixture.ok(), "Nobody").assignee).toBeNull();

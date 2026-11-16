@@ -1,11 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import type { GetPostResponse } from "../../../api/team/get-post";
 import { useListMergedPosts } from "../../../hooks/team/use-list-merged-posts";
 import { useUnmergePost } from "../../../hooks/team/use-unmerge-post";
 import { useTeamRuntime } from "../../../team/runtime";
 import { teamHref } from "../../../team/team-href";
+import { PanelSection } from "../../../ui/inbox/panel-section";
 import { Button } from "../../../ui/upstream";
 
 export interface PostMergeProps {
@@ -17,7 +17,6 @@ export interface PostMergeProps {
 export function PostMerge({ workspaceId, post }: PostMergeProps) {
   const { t } = useTranslation("quills");
   const team = useTeamRuntime();
-  const heading = useId();
   const param = { workspaceId, postId: post.id };
   const merged = useListMergedPosts(
     { param, query: { limit: "50" } },
@@ -30,61 +29,63 @@ export function PostMerge({ workspaceId, post }: PostMergeProps) {
     teamHref(workspaceId, `/posts/${encodeURIComponent(postId)}`);
   const duplicates = merged.data?.posts ?? [];
   return (
-    <section aria-labelledby={heading} className="grid gap-2 py-3 text-sm">
-      {failed ? (
-        <p role="alert" className="text-destructive-foreground">
-          {t("core.problem.failed")}
-        </p>
-      ) : null}
-      {post.canonicalPostId ? (
-        <div className="grid justify-items-start gap-2">
-          <p>{t("team-post.mergedInto")}</p>
-          <Link to={href(post.canonicalPostId)} className="underline">
-            {t("team-post.openMain")}
-          </Link>
-          {locked ? null : (
-            <Button
-              variant="outline"
-              size="sm"
-              loading={unmerge.isPending}
-              onClick={() => unmerge.mutate({ param })}
-            >
-              {t("team-post.unmerge")}
-            </Button>
-          )}
-        </div>
-      ) : null}
-      <h3 id={heading} className="text-xs font-medium text-muted-foreground">
-        {t("team-post.duplicates", { count: duplicates.length })}
-      </h3>
-      <ul className="grid grid-cols-1 gap-1">
-        {duplicates.map((item) => (
-          <li key={item.id} className="flex items-center gap-2">
-            <Link
-              to={href(item.id)}
-              className="min-w-0 flex-1 truncate hover:underline"
-            >
-              {item.title}
+    <PanelSection title={t("team-post.merged")} count={duplicates.length}>
+      <div className="grid gap-2 text-sm">
+        {failed ? (
+          <p role="alert" className="text-destructive-foreground">
+            {t("core.problem.failed")}
+          </p>
+        ) : null}
+        {post.canonicalPostId ? (
+          <div className="grid justify-items-start gap-2">
+            <p>{t("team-post.mergedInto")}</p>
+            <Link to={href(post.canonicalPostId)} className="underline">
+              {t("team-post.openMain")}
             </Link>
-            <span className="text-xs text-muted-foreground">
-              {t("team-post.votes", { count: item.voteCount })}
-            </span>
             {locked ? null : (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                aria-label={t("team-post.unmergePost", { title: item.title })}
-                disabled={unmerge.isPending}
-                onClick={() =>
-                  unmerge.mutate({ param: { workspaceId, postId: item.id } })
-                }
+                loading={unmerge.isPending}
+                onClick={() => unmerge.mutate({ param })}
               >
                 {t("team-post.unmerge")}
               </Button>
             )}
-          </li>
-        ))}
-      </ul>
-    </section>
+          </div>
+        ) : null}
+        {duplicates.length ? null : (
+          <p className="text-muted-foreground">{t("team-post.none")}</p>
+        )}
+        <ul className="grid grid-cols-1 gap-1">
+          {duplicates.map((item) => (
+            <li key={item.id} className="flex items-center gap-2">
+              <Link
+                to={href(item.id)}
+                className="min-w-0 flex-1 truncate hover:underline"
+              >
+                {item.title}
+              </Link>
+              <span className="text-xs text-muted-foreground">
+                {t("team-post.votes", { count: item.voteCount })}
+              </span>
+              {locked ? null : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label={t("team-post.unmergePost", { title: item.title })}
+                  disabled={unmerge.isPending}
+                  onClick={() =>
+                    unmerge.mutate({ param: { workspaceId, postId: item.id } })
+                  }
+                >
+                  {t("team-post.unmerge")}
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </PanelSection>
   );
 }

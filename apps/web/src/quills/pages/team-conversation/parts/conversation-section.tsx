@@ -22,7 +22,7 @@ import {
 } from "../../team-conversations/conversation-list";
 import { ActionProblem } from "./action-problem";
 import { conversationFacts } from "../conversation-facts";
-import { PropertySelect } from "./property-select";
+import { PropertySelect } from "../../../ui/inbox/property-select";
 import { TagEditor } from "./tag-editor";
 
 export interface ConversationSectionProps {

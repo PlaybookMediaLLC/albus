@@ -111,7 +111,7 @@ export function RequestRow(props: RequestRowProps) {
           ) : null}
           {badges}
           {votes}
-          {comments}
+          {props.comments ? comments : null}
           {date}
         </span>
       </a>
@@ -127,17 +127,28 @@ export function RequestRow(props: RequestRowProps) {
         <span className="block truncate font-medium">{props.title}</span>
         {detail}
       </span>
+      {/* Fixed-width slots keep the counts, board and date in columns down the list. */}
       <span className="flex shrink-0 items-center gap-2.5 text-xs text-muted-foreground">
         {badges}
-        {votes}
-        {comments}
-        {props.board ? (
-          <span className="hidden max-w-32 items-center gap-1.5 truncate text-xs font-medium uppercase tracking-wide sm:inline-flex">
-            <BoardDot boardId={props.boardId} />
-            {props.board}
+        {votes ? <span className="flex w-14 justify-end">{votes}</span> : null}
+        {comments ? (
+          <span className="flex w-12 justify-end">
+            {props.comments ? comments : null}
           </span>
         ) : null}
-        <span className="hidden sm:inline">{date}</span>
+        {props.board === undefined ? null : (
+          <span className="hidden w-32 items-center gap-1.5 text-xs font-medium uppercase tracking-wide sm:inline-flex">
+            {props.board ? (
+              <>
+                <BoardDot boardId={props.boardId} />
+                <span className="min-w-0 truncate">{props.board}</span>
+              </>
+            ) : null}
+          </span>
+        )}
+        {date ? (
+          <span className="hidden w-16 text-end sm:inline">{date}</span>
+        ) : null}
         {avatar}
         {props.person ? (
           <span className="sr-only">{props.person.name}</span>

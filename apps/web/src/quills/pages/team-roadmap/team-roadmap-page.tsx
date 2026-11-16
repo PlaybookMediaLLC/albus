@@ -68,7 +68,8 @@ export function TeamRoadmapPage({ workspaceId }: TeamRoadmapPageProps) {
           </Button>
         }
       />
-      <div className="min-h-0 flex-1 overflow-x-auto px-4 pb-4">
+      {/* The right edge fades, so a cut column reads as "scroll for more". */}
+      <div className="min-h-0 flex-1 overflow-x-auto mask-r-from-[calc(100%-3rem)] px-4 pb-4">
         <TeamStateView
           loading={statuses.isLoading || boards.isLoading || counts.isLoading}
           problem={statuses.error ?? boards.error ?? counts.error}

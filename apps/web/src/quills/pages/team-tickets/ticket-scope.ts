@@ -9,6 +9,12 @@ import { teamHref } from "../../team/team-href";
 import type { ListGroup } from "../../ui/inbox/grouped-list";
 import type { ConversationRowProps } from "../../ui/inbox/conversation-row";
 
+// Open work reads as information, waiting as a warning and done as success.
+const stageTones = {
+  open: "info",
+  pending: "warning",
+  closed: "success",
+} as const;
 export type Ticket = ListTicketsResponse["items"][number];
 export type TicketStatus = ListTicketStatusesResponse["items"][number];
 export type Teammate = ListPrincipalsResponse["items"][number];
@@ -116,7 +122,7 @@ export const ticketRow = (
   badge: {
     id: "status",
     label: ticket.status.name,
-    tone: ticket.status.category === "closed" ? "success" : "neutral",
+    tone: stageTones[ticket.status.category],
   },
   time: ticket.updatedAt,
   assignee:

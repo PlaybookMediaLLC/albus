@@ -1,6 +1,7 @@
 import { CircleCheck, CircleDashed, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useRowLink } from "../../../ui/inbox/use-row-link";
+import { PersonAvatar } from "../../../ui/person-avatar";
 import { cn } from "../../../ui/upstream";
 
 export type EntryStatus = "draft" | "scheduled" | "published";
@@ -12,6 +13,7 @@ export interface EntryRowProps {
     displayDate: string | null;
     publishedAt: string | null;
     createdAt: string;
+    author?: { name: string; avatarUrl: string | null } | null;
   };
   href: string;
   onOpen: () => void;
@@ -35,7 +37,7 @@ export function entryDate(iso: string, locale: string, now = Date.now()) {
   });
 }
 
-/** One changelog entry: the status icon, the title and the date. A click opens the editor. */
+/** One changelog entry: the status icon, the title, the date and the author. A click opens the editor. */
 export function EntryRow({ entry, href, onOpen }: EntryRowProps) {
   const { t, i18n } = useTranslation("quills");
   const link = useRowLink(onOpen);
@@ -50,19 +52,32 @@ export function EntryRow({ entry, href, onOpen }: EntryRowProps) {
     <a
       {...link}
       href={href}
-      className="flex min-h-12.5 items-center gap-3 border-b border-border px-4 outline-none hover:bg-muted/60 focus-visible:bg-muted"
+      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring"
     >
       <Icon
         aria-label={status}
         role="img"
         className={cn("size-4 shrink-0", tone)}
       />
-      <span className="min-w-0 flex-1 truncate">
+      <span className="min-w-0 flex-1 truncate font-medium">
         {entry.title || t("team-changelog.untitled")}
       </span>
-      <time dateTime={date} className="shrink-0 text-sm text-muted-foreground">
+      <time
+        dateTime={date}
+        className="w-20 shrink-0 text-end text-xs text-muted-foreground"
+      >
         {entryDate(date, i18n.language)}
       </time>
+      {entry.author ? (
+        <>
+          <PersonAvatar
+            colored
+            name={entry.author.name}
+            avatarUrl={entry.author.avatarUrl}
+          />
+          <span className="sr-only">{entry.author.name}</span>
+        </>
+      ) : null}
     </a>
   );
 }

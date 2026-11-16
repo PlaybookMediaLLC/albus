@@ -35,6 +35,8 @@ describe("ConversationRow", () => {
       "Resolved",
     ])
       expect(link).toHaveTextContent(text);
+    // The assignee avatar shows its initials and names the person on hover.
+    expect(view.getByTitle("Grace")).toHaveTextContent(/^G/);
     expect(view.getByText("Ada Customer")).toHaveClass("font-semibold");
     expect(view.getByText("Oct 31")).toHaveAttribute("datetime", row.time);
   });

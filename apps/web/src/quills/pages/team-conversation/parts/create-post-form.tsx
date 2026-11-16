@@ -9,7 +9,7 @@ import {
   Input,
   Textarea,
 } from "../../../ui/upstream";
-import { PropertySelect } from "./property-select";
+import { PropertySelect } from "../../../ui/inbox/property-select";
 
 // The bounds of createQuillsPostFromConversation. The component gives the translated board message.
 const postSchema = (board: string) =>

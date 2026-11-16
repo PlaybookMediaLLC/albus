@@ -14,7 +14,7 @@ export interface PostPropertiesProps {
 export function PostProperties(props: PostPropertiesProps) {
   const { workspaceId, post } = props;
   return (
-    <div className="grid divide-y divide-border">
+    <div className="grid gap-3 *:first:border-t-0">
       <PostDemand workspaceId={workspaceId} postId={post.id} />
       <PostScore
         workspaceId={workspaceId}

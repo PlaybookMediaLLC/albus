@@ -5,6 +5,7 @@ import { useGetLinkedConversationsForPost } from "../../../hooks/team/use-get-li
 import { useListLinks } from "../../../hooks/team/use-list-links";
 import { useTeamRuntime } from "../../../team/runtime";
 import { teamHref } from "../../../team/team-href";
+import { PanelSection } from "../../../ui/inbox/panel-section";
 import { PropertyRow } from "../../../ui/inbox/property-row";
 import { LinkedTask } from "./linked-task";
 
@@ -31,7 +32,7 @@ export function PostLinks({ workspaceId, postId }: PostLinksProps) {
     links.data?.posts.filter((link) => link.postId === postId) ?? [];
   const failed = links.error ?? conversations.error;
   return (
-    <section aria-label={t("team-post.links")} className="py-3">
+    <PanelSection title={t("team-post.links")}>
       {failed ? (
         <p role="alert" className="text-sm text-destructive-foreground">
           {t("core.problem.failed")}
@@ -77,6 +78,6 @@ export function PostLinks({ workspaceId, postId }: PostLinksProps) {
           <span className="text-muted-foreground">{t("team-post.none")}</span>
         )}
       </PropertyRow>
-    </section>
+    </PanelSection>
   );
 }

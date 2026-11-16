@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { PortalSelectContent } from "../../../ui/portal-select-content";
+import { PortalSelectContent } from "../portal-select-content";
 import {
   cn,
   Select,
@@ -7,7 +7,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../../ui/upstream";
+} from "../upstream";
 
 export interface PropertySelectProps {
   /** The accessible name, such as "Status". */
@@ -20,7 +20,7 @@ export interface PropertySelectProps {
   ghost?: boolean;
 }
 
-/** A compact picker for one conversation property, such as the status or the assignee. */
+/** A compact picker for one property of a panel, such as a status, an assignee or a priority. */
 export function PropertySelect(props: PropertySelectProps) {
   const selected = props.options.find((option) => option.value === props.value);
   const content = (option: (typeof props.options)[number]) => (

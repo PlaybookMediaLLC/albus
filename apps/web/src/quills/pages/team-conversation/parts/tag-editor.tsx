@@ -6,7 +6,7 @@ import { useRemoveConversationTag } from "../../../hooks/team/use-remove-convers
 import { useTeamRuntime } from "../../../team/runtime";
 import { IconButton } from "../../../ui/inbox/icon-button";
 import { ActionProblem } from "./action-problem";
-import { PropertySelect } from "./property-select";
+import { PropertySelect } from "../../../ui/inbox/property-select";
 
 export interface TagEditorProps {
   workspaceId: string;
