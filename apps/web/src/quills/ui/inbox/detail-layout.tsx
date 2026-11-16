@@ -1,6 +1,4 @@
-import { PanelLeftOpen } from "lucide-react";
 import { type ReactNode, useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   cn,
   Sheet,
@@ -10,7 +8,6 @@ import {
   SheetTitle,
 } from "../upstream";
 import { DetailPaneContext } from "./detail-pane-context";
-import { IconButton } from "./icon-button";
 
 export interface DetailLayoutProps {
   /** The list pane (ListPane), about 360 px wide. Hidden below md while an item is open. */
@@ -39,7 +36,6 @@ export function DetailLayout({
   properties,
   propertiesLabel = "",
 }: DetailLayoutProps) {
-  const { t } = useTranslation("quills");
   const [listOpen, setListOpen] = useState(true);
   const [panelOpen, setPanelOpen] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -53,9 +49,14 @@ export function DetailLayout({
     : null;
   return (
     <DetailPaneContext.Provider
-      value={{ hideList: () => setListOpen(false), panel }}
+      value={{
+        hideList: () => setListOpen(false),
+        showList: listOpen ? null : () => setListOpen(true),
+        panel,
+      }}
     >
       <div data-slot="detail-layout" className="flex h-full min-h-0">
+        {/* A hidden list comes back from ShowListButton in the DetailHeader or EmptySelection. */}
         {listOpen ? (
           <section
             aria-label={listLabel}
@@ -66,16 +67,7 @@ export function DetailLayout({
           >
             {list}
           </section>
-        ) : (
-          <div className="hidden shrink-0 border-e border-border p-2 md:block">
-            <IconButton
-              label={t("inbox.showList")}
-              onClick={() => setListOpen(true)}
-            >
-              <PanelLeftOpen aria-hidden="true" />
-            </IconButton>
-          </div>
-        )}
+        ) : null}
         <div
           className={cn(
             "min-h-0 min-w-0 flex-1 flex-col",

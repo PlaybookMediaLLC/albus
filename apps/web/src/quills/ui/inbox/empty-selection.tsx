@@ -1,4 +1,5 @@
 import { Inbox, type LucideIcon } from "lucide-react";
+import { ShowListButton } from "./show-list-button";
 
 export interface EmptySelectionProps {
   /** The illustration icon. */
@@ -16,7 +17,8 @@ export function EmptySelection({
   text,
 }: EmptySelectionProps) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
+    <div className="relative flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
+      <ShowListButton className="absolute start-3 top-3 hidden md:inline-flex" />
       <span className="mb-2 flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
         <Icon aria-hidden="true" className="size-6" />
       </span>

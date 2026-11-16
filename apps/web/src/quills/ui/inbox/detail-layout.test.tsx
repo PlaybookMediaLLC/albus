@@ -3,6 +3,7 @@ import { press } from "../../test/actions";
 import { renderComponent } from "../../test/render";
 import { DetailHeader } from "./detail-header";
 import { DetailLayout } from "./detail-layout";
+import { EmptySelection } from "./empty-selection";
 import { ListPane } from "./list-pane";
 
 function renderDetail(itemOpen = true) {
@@ -37,10 +38,35 @@ describe("DetailLayout", () => {
     ).toHaveTextContent("Status: open");
   });
 
-  it("hides and shows the list pane", () => {
+  it("hides the list pane and shows it again from the item header", () => {
     const view = renderDetail();
+    expect(view.queryByRole("button", { name: "Show the list" })).toBeNull();
     press("Hide the list");
     expect(view.queryByRole("region", { name: "Conversations" })).toBeNull();
+    const header = view.getByRole("heading", { name: "Export fails" })
+      .parentElement!.parentElement!;
+    expect(header).toContainElement(
+      view.getByRole("button", { name: "Show the list" }),
+    );
+    press("Show the list");
+    expect(view.getByRole("region", { name: "Conversations" })).toBeVisible();
+  });
+
+  it("shows the hidden list again from the empty main pane", () => {
+    const view = renderComponent(
+      <DetailLayout
+        list={
+          <ListPane title="Open" headingLevel={2}>
+            <p>Compact list</p>
+          </ListPane>
+        }
+        listLabel="Conversations"
+        itemOpen={false}
+      >
+        <EmptySelection title="No conversation selected" />
+      </DetailLayout>,
+    );
+    press("Hide the list");
     press("Show the list");
     expect(view.getByRole("region", { name: "Conversations" })).toBeVisible();
   });
