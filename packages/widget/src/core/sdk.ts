@@ -414,7 +414,13 @@ export function createSDK(): SDK {
             next.workspace,
             controller.signal,
           )
-            .then((serverConfig) => applyServerConfig(serverConfig, next))
+            .then((serverConfig) => {
+              if (serverConfig) return applyServerConfig(serverConfig, next);
+              // The widget is off or the workspace does not exist: no launcher, even after the fallback reveal.
+              if (config !== next) return;
+              launcher?.remove();
+              launcher = null;
+            })
             .finally(() => {
               window.clearTimeout(fallback);
               if (config !== next) return;

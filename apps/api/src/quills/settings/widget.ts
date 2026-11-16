@@ -6,6 +6,7 @@ import {
   type BaseVariables,
 } from "../../openapi";
 import { settings } from "../../database/quills/schema/auth";
+import { widgetEnabled } from "../framework/audience";
 import { kvStore } from "../../database/quills/schema/kv";
 import {
   defineQuillsRoute,
@@ -112,7 +113,7 @@ export function readConfig(row: SettingsRow) {
   const storedHome = record(stored.home);
   const gradient = record(storedHome.gradient);
   return {
-    enabled: bool(stored.enabled, false),
+    enabled: widgetEnabled(row.widgetConfig),
     defaultBoard: str(stored.defaultBoard) ?? null,
     position: str(stored.position) ?? "bottom-right",
     launcherGreeting: str(stored.launcherGreeting) ?? "",
@@ -189,7 +190,10 @@ const area = settingsArea({
   apply: (row, patch) => {
     const stored = parseJson(row.widgetConfig);
     const storedHome = record(stored.home);
+    const enabled = patch.enabled ?? widgetEnabled(row.widgetConfig);
     return {
+      // Anonymous widget sessions are bound to the secret: an enabled widget without one serves no visitor.
+      ...(enabled && !row.widgetSecret && { widgetSecret: newSecret() }),
       widgetConfig: JSON.stringify({
         ...stored,
         ...defined({
@@ -233,7 +237,7 @@ const randomHex = (bytes: number) =>
   Array.from(crypto.getRandomValues(new Uint8Array(bytes)), (b) =>
     b.toString(16).padStart(2, "0"),
   ).join("");
-const newSecret = () => `wgt_${randomHex(32)}`;
+export const newSecret = () => `wgt_${randomHex(32)}`;
 const secretResponse = z.object({ secret: z.string().nullable() });
 
 async function lockedSettings(db: Db) {
@@ -252,7 +256,7 @@ const getSecret = defineQuillsRoute({
   operationId: "getQuillsWidgetSecret",
   summary: "Get the widget signing secret",
   description:
-    "Null until the secret is created with the rotate route. Requires quills:manage_settings.",
+    "Null until the secret is created: turning the widget on creates it, and the rotate route creates or replaces it. Requires quills:manage_settings.",
   action: "manage_settings",
   response: secretResponse,
   responseDescription: "The widget signing secret",

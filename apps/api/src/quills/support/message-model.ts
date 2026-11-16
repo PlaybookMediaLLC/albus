@@ -39,6 +39,8 @@ export const messageSchema = z.object({
   authorName: z.string().nullable(),
   content: z.string(),
   systemKind: z.string().nullable(),
+  /** Host-page context that the widget sent with a visitor's message, such as pageUrl and browser. */
+  widgetMetadata: z.record(z.string(), z.string()).nullable(),
   embeds: z.array(z.object({ kind: z.string(), id: z.string() })),
   attachments: z.array(
     z.object({
@@ -148,6 +150,14 @@ export async function toMessages(
     ...row,
     conversationId: row.conversationId!,
     systemKind: metadata?.systemEvent?.kind ?? null,
+    // Only string values: the column also holds other channels' structured metadata.
+    widgetMetadata: metadata?.widgetMetadata
+      ? Object.fromEntries(
+          Object.entries(metadata.widgetMetadata).filter(
+            (entry): entry is [string, string] => typeof entry[1] === "string",
+          ),
+        )
+      : null,
     embeds: embedsOf(contentJson),
     attachments: (attachments ?? []).map((file) => ({
       fileId: file.fileId ?? null,

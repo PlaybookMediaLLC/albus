@@ -86,15 +86,17 @@ export const writes = (api: Api) => ({
       { helpful },
       signal,
     ),
+  /** `metadata`: the host page context, kept with the message for the team. */
   startConversation: (
     content: string,
     idempotencyKey: string,
     signal?: AbortSignal,
+    metadata?: Record<string, string>,
   ) =>
     api.request<Sent>(
       "POST",
       "/widget/conversations",
-      { content, idempotencyKey },
+      { content, idempotencyKey, ...(metadata && { metadata }) },
       signal,
     ),
   reply: (
@@ -102,11 +104,12 @@ export const writes = (api: Api) => ({
     content: string,
     idempotencyKey: string,
     signal?: AbortSignal,
+    metadata?: Record<string, string>,
   ) =>
     api.request<Sent>(
       "POST",
       `/widget/conversations/${id(conversationId)}/messages`,
-      { content, idempotencyKey },
+      { content, idempotencyKey, ...(metadata && { metadata }) },
       signal,
     ),
   /** The watermark only moves forward on the server. */

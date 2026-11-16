@@ -32,7 +32,7 @@ export function browserLabel(userAgent: string): string {
 }
 
 /**
- * The metadata of a new feedback post: the host app's keys and the page URL from the SDK, and
+ * The metadata of a new feedback post or message: the host app's keys and the page URL from the SDK, and
  * the browser. The widget sets `browser`; the API bound of 20 keys always holds.
  */
 export function postMetadata(

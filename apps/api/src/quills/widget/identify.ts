@@ -7,9 +7,12 @@ import {
   user as customer,
 } from "../../database/quills/schema/auth";
 import { defineQuillsRoute } from "../framework/define-route";
-import { mintWidgetSession, verifyIdentityToken } from "../framework/audience";
+import {
+  mintWidgetSession,
+  verifyIdentityToken,
+  widgetEnabled,
+} from "../framework/audience";
 import { mergeMetadata } from "../directory/customer";
-import { parseJson } from "../settings/area";
 import { mergeAnonymousSession } from "./anonymous-merge";
 import {
   autoSubscribeChangelog,
@@ -102,7 +105,7 @@ const identify = defineQuillsRoute({
       })
       .from(settings)
       .limit(1);
-    if (parseJson(config?.widgetConfig ?? null).enabled !== true)
+    if (!widgetEnabled(config?.widgetConfig ?? null))
       throw new HTTPException(403, { message: "Widget is not enabled" });
     if (!config?.widgetSecret)
       throw new HTTPException(403, {

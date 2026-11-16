@@ -21,6 +21,7 @@ import { SimilarPosts } from "../ui/post/similar-posts";
 import { StatusIcon } from "../ui/post/status-icon";
 import { ArrowUpIcon } from "../ui/arrow-up-icon";
 import { PersonAvatar } from "../ui/person-avatar";
+import { PageContext } from "../ui/page-context";
 import { ShareActions } from "../ui/share-actions";
 import { PortalDialogContent } from "../ui/portal-dialog-content";
 import { ChangelogEntry } from "../ui/changelog-entry";
@@ -824,6 +825,17 @@ export function KitGallery() {
                         time="2026-01-01T00:00:00.000Z"
                       >
                         {demo}
+                        <PageContext
+                          context={
+                            empty
+                              ? null
+                              : {
+                                  pageUrl: "https://example.test/pricing",
+                                  browser: "Chrome 150 on macOS",
+                                }
+                          }
+                          className="mt-1 opacity-80"
+                        />
                       </MessageBubble>
                       <MessageBubble
                         kind="self"

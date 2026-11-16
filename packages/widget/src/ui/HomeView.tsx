@@ -7,6 +7,7 @@ export function HomeView({
   latest,
   navigate,
   compose,
+  has = () => true,
   openUpdate,
   conversations,
   openConversation,
@@ -16,6 +17,8 @@ export function HomeView({
   latest?: UpdateEntry;
   navigate: (tab: WidgetTab) => void;
   compose: (kind: "message" | "feedback") => void;
+  /** Whether the workspace turned a tab on: Home links only to those. */
+  has?: (tab: WidgetTab) => boolean;
   openUpdate: (id: string) => void;
   conversations: readonly Conversation[];
   openConversation: (id: string) => void;
@@ -23,9 +26,10 @@ export function HomeView({
   /** A waiting survey, shown under the greeting. */
   survey?: ReactNode;
 }) {
-  const recent =
-    conversations.find((item) => (item.unreadCount ?? 0) > 0) ??
-    conversations[conversations.length - 1];
+  const recent = has("messages")
+    ? (conversations.find((item) => (item.unreadCount ?? 0) > 0) ??
+      conversations[conversations.length - 1])
+    : undefined;
   return (
     <div className={`qb-home${recent ? " qb-home-returning" : ""}`}>
       <h1>
@@ -51,42 +55,48 @@ export function HomeView({
           <Icon name="chevron" />
         </button>
       )}
-      <div className="qb-contact-card">
-        <span className="qb-avatar qb-team-avatar">
-          <Icon name="messages" />
-        </span>
-        <h2>Send us a message</h2>
-        <p>{teamAvailability ?? "Ask a question or share what you need."}</p>
+      {has("messages") && (
+        <div className="qb-contact-card">
+          <span className="qb-avatar qb-team-avatar">
+            <Icon name="messages" />
+          </span>
+          <h2>Send us a message</h2>
+          <p>{teamAvailability ?? "Ask a question or share what you need."}</p>
+          <button
+            type="button"
+            className="qb-message-prompt"
+            onClick={() => compose("message")}
+          >
+            <span>Write a message…</span>
+            <span className="qb-send-icon">
+              <Icon name="arrow" />
+            </span>
+          </button>
+        </div>
+      )}
+      {has("help") && (
         <button
           type="button"
-          className="qb-message-prompt"
-          onClick={() => compose("message")}
+          className="qb-quick-link"
+          onClick={() => navigate("help")}
         >
-          <span>Write a message…</span>
-          <span className="qb-send-icon">
-            <Icon name="arrow" />
-          </span>
+          <Icon name="support" weight="fill" />
+          <span>Search for help</span>
+          <Icon name="chevron" />
         </button>
-      </div>
-      <button
-        type="button"
-        className="qb-quick-link"
-        onClick={() => navigate("help")}
-      >
-        <Icon name="support" weight="fill" />
-        <span>Search for help</span>
-        <Icon name="chevron" />
-      </button>
-      <button
-        type="button"
-        className="qb-quick-link"
-        onClick={() => compose("feedback")}
-      >
-        <Icon name="inbox" weight="fill" />
-        <span>Submit a request</span>
-        <Icon name="chevron" />
-      </button>
-      {latest && (
+      )}
+      {has("feedback") && (
+        <button
+          type="button"
+          className="qb-quick-link"
+          onClick={() => compose("feedback")}
+        >
+          <Icon name="inbox" weight="fill" />
+          <span>Submit a request</span>
+          <Icon name="chevron" />
+        </button>
+      )}
+      {latest && has("updates") && (
         <section className="qb-latest">
           <div className="qb-section-label">
             <span>
