@@ -82,6 +82,7 @@ export function FeedbackHomePage(props: FeedbackHomePageProps) {
 
   return (
     <PageFrame
+      hub
       titleKey="feedback.title"
       aside={
         boards.data ? (

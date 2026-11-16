@@ -40,7 +40,7 @@ export function PostSidebar(props: PostSidebarProps) {
   const author = props.author.name?.trim() || t("post.anonymousAuthor");
   return (
     <aside
-      className={`portal-post-sidebar flex min-w-0 flex-wrap gap-x-8 gap-y-4 max-md:border-b max-md:border-border max-md:pb-6 max-md:[&_h2]:sr-only md:sticky md:top-8 md:flex-col md:gap-7 ${section}`}
+      className={`portal-post-sidebar flex min-w-0 flex-wrap gap-x-8 gap-y-4 max-md:border-b max-md:border-border max-md:pb-6 max-md:[&_h2]:sr-only md:sticky md:top-32 lg:top-24 md:flex-col md:gap-7 ${section}`}
     >
       <section aria-labelledby="post-author">
         <h2 id="post-author">{t("post.authorHeading")}</h2>

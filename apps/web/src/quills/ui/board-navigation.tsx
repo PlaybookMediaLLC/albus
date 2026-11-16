@@ -32,7 +32,7 @@ export function BoardNavigation({
   const { t } = useTranslation("quills");
   return (
     <aside
-      className={`portal-board-sidebar flex min-w-0 flex-col gap-7 md:sticky md:top-8 ${section}`}
+      className={`portal-board-sidebar flex min-w-0 flex-col gap-7 md:sticky md:top-32 lg:top-24 ${section}`}
     >
       <section aria-labelledby="feedback-boards">
         <h2 id="feedback-boards">{t("feedback.boards")}</h2>

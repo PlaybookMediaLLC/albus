@@ -77,6 +77,7 @@ export function FeedbackBoardPage(props: FeedbackBoardPageProps) {
   const remember = useSearchPatch();
   return (
     <PageFrame
+      hub
       titleKey="feedback.title"
       displayTitle={canLoad ? board?.name : undefined}
       description={board?.description || undefined}

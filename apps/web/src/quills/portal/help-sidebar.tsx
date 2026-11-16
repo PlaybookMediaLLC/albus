@@ -32,7 +32,7 @@ export function HelpSidebar(props: HelpSidebarProps) {
   return (
     <nav
       aria-label={t("help-center.collections")}
-      className="portal-help-sidebar hidden flex-col gap-7 md:sticky md:top-8 md:flex"
+      className="portal-help-sidebar hidden flex-col gap-7 md:sticky md:top-32 lg:top-24 md:flex"
     >
       {props.categories
         .filter((category) => !category.parentId)

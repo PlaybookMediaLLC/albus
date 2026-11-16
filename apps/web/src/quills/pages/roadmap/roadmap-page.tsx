@@ -71,12 +71,13 @@ export function RoadmapPage(props: RoadmapPageProps) {
   // A tab that the portal settings turn off looks like a missing page.
   if (!shown)
     return (
-      <PageFrame titleKey="roadmap.title" wide>
+      <PageFrame titleKey="roadmap.title" wide hub>
         <StateView problem={{ kind: "notFound" }}>{null}</StateView>
       </PageFrame>
     );
   return (
     <PageFrame
+      hub
       titleKey="roadmap.title"
       description={selected?.description || t("roadmap.description")}
       actions={

@@ -67,12 +67,13 @@ export function ChangelogPage(props: ChangelogPageProps) {
   // A tab that the portal settings turn off looks like a missing page.
   if (!shown)
     return (
-      <PageFrame titleKey="changelog.title" wide>
+      <PageFrame titleKey="changelog.title" wide hub>
         <StateView problem={{ kind: "notFound" }}>{null}</StateView>
       </PageFrame>
     );
   return (
     <PageFrame
+      hub
       titleKey="changelog.title"
       description={t("changelog.description")}
       wide
