@@ -1,5 +1,5 @@
-import { renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vite-plus/test";
+import { renderQuillsHook } from "../../test/render";
 import { keepOpen, useKeptOpen } from "./keep-open";
 
 const rows = (...ids: string[]) => ids.map((id) => ({ id }));
@@ -29,9 +29,12 @@ describe("keepOpen", () => {
 describe("useKeptOpen", () => {
   it("keeps the open row through a refresh until another row opens", () => {
     const page = (...list: string[]) => [{ items: rows(...list) }];
-    const view = renderHook(({ pages, open }) => useKeptOpen(pages, open), {
-      initialProps: { pages: page("a", "b", "c"), open: "b" },
-    });
+    const view = renderQuillsHook(
+      ({ pages, open }) => useKeptOpen(pages, open),
+      {
+        initialProps: { pages: page("a", "b", "c"), open: "b" },
+      },
+    );
     view.rerender({ pages: page("a", "c"), open: "b" });
     expect(ids(view.result.current)).toEqual(["a", "b", "c"]);
     view.rerender({ pages: page("a", "c"), open: "c" });
