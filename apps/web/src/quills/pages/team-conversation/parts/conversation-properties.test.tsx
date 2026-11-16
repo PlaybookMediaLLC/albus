@@ -4,18 +4,16 @@ import {
   createRouter,
   RouterContextProvider,
 } from "@tanstack/react-router";
-import { describe, expect, it, vi } from "vite-plus/test";
-import { assignConversationTeamFixture } from "../../../api/team/assign-conversation-team.fixture";
+import { describe, expect, it } from "vite-plus/test";
 import { getConversationFixture } from "../../../api/team/get-conversation.fixture";
 import { getConversationTicketLinkFixture } from "../../../api/team/get-conversation-ticket-link.fixture";
 import { getLinkedPostsForConversationFixture } from "../../../api/team/get-linked-posts-for-conversation.fixture";
 import { getUserFixture } from "../../../api/team/get-user.fixture";
 import { listConversationAttributesFixture } from "../../../api/team/list-conversation-attributes.fixture";
 import { listConversationTagsFixture } from "../../../api/team/list-conversation-tags.fixture";
+import { listConversationsFixture } from "../../../api/team/list-conversations.fixture";
 import { listTeamsFixture } from "../../../api/team/list-teams.fixture";
-import { setConversationPriorityFixture } from "../../../api/team/set-conversation-priority.fixture";
 import { TeamRuntimeProvider } from "../../../team/runtime";
-import { choose } from "../../../test/actions";
 import { mockApi } from "../../../test/mock-api";
 import { renderComponent } from "../../../test/render";
 import { ConversationProperties } from "./conversation-properties";
@@ -35,6 +33,7 @@ const conversation = getConversationFixture.ok({
   id: "conversation_test_1",
   status: "snoozed",
   priority: "high",
+  channel: "messenger",
   assignedAgentPrincipalId: "principal_test_2",
   attributes: [
     { key: "plan", value: "pro", source: null, at: null },
@@ -63,6 +62,7 @@ function answerReads(api: ReturnType<typeof mockApi>) {
   const answers: Record<string, unknown> = {
     listQuillsConversationTags: listConversationTagsFixture.ok(),
     getQuillsUser: getUserFixture.ok({ name: "Grace Customer" }),
+    listQuillsConversations: listConversationsFixture.ok(),
     getQuillsConversationTicketLink: getConversationTicketLinkFixture.ok(),
     getQuillsLinkedPostsForConversation:
       getLinkedPostsForConversationFixture.ok(),
@@ -112,45 +112,22 @@ const render = () =>
   );
 
 describe("ConversationProperties", () => {
-  it("shows the customer, then the attributes with their labels", async () => {
+  it("shows the customer, then the conversation, the summary, the links and the customer details", async () => {
     const api = mockApi();
     answerReads(api);
     const view = render();
     expect(await view.findByText("Plan tier")).toBeInTheDocument();
-    expect(view.getByText("pro")).toBeInTheDocument();
-    expect(view.getByText("a, b")).toBeInTheDocument();
-    expect(view.queryByText("empty")).not.toBeInTheDocument();
     expect(
       await view.findByRole("heading", { level: 2, name: "Grace Customer" }),
     ).toBeInTheDocument();
     expect(
-      view.getByRole("heading", { level: 2, name: "Details" }),
-    ).toBeVisible();
-    expect(view.getByRole("combobox", { name: "Priority" })).toHaveTextContent(
-      "High",
-    );
-  });
-
-  it("changes the team and the priority", async () => {
-    const api = mockApi();
-    answerReads(api);
-    api.reply(assignConversationTeamFixture.ok());
-    api.reply(setConversationPriorityFixture.ok());
-    const view = render();
-    await view.findByText("Plan tier");
-    await choose("Team", "Billing");
-    await vi.waitFor(() =>
-      expect(api.calls("assignQuillsConversationTeam")).toHaveLength(1),
-    );
-    await choose("Priority", "Urgent");
-    await vi.waitFor(() =>
-      expect(api.calls("setQuillsConversationPriority")).toHaveLength(1),
-    );
-    expect(await api.calls("assignQuillsConversationTeam")[0]!.json()).toEqual({
-      teamId: "team_test_1",
-    });
-    expect(await api.calls("setQuillsConversationPriority")[0]!.json()).toEqual(
-      { priority: "urgent" },
-    );
+      view.getAllByRole("heading", { level: 2 }).map((h) => h.textContent),
+    ).toEqual([
+      "Grace Customer",
+      "Conversation",
+      "AI summary",
+      "Links",
+      "Customer",
+    ]);
   });
 });

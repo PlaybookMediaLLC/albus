@@ -143,7 +143,7 @@ describe("TeamConversationPage", () => {
       ).toBeInTheDocument();
       expect(
         view.getByRole("complementary", { name: "Customer and details" }),
-      ).toHaveTextContent("Details");
+      ).toHaveTextContent("Conversation");
       expect(
         view.getByRole("heading", { level: 2, name: "Mine" }),
       ).toBeInTheDocument();

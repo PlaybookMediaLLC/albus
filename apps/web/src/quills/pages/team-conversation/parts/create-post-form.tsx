@@ -22,6 +22,8 @@ export type CreatePostValues = z.infer<ReturnType<typeof postSchema>>;
 
 export interface CreatePostFormProps {
   boards: readonly { id: string; name: string }[];
+  /** The first title, such as the conversation subject. */
+  defaultTitle?: string;
   onSubmit: (values: CreatePostValues) => Promise<PortalProblem | void>;
   onCancel: () => void;
 }
@@ -29,6 +31,7 @@ export interface CreatePostFormProps {
 /** Tracks the conversation as a feedback post by its customer on a board. */
 export function CreatePostForm({
   boards,
+  defaultTitle = "",
   onSubmit,
   onCancel,
 }: CreatePostFormProps) {
@@ -42,7 +45,11 @@ export function CreatePostForm({
   return (
     <PortalForm
       schema={postSchema(t("team-conversations.links.noBoards"))}
-      defaultValues={{ boardId: boards[0]?.id ?? "", title: "", content: "" }}
+      defaultValues={{
+        boardId: boards[0]?.id ?? "",
+        title: defaultTitle.slice(0, 200),
+        content: "",
+      }}
       submitKey="team-conversations.links.create"
       onSubmit={onSubmit}
       className="max-w-none gap-3"

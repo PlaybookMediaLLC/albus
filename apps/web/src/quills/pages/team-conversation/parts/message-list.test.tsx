@@ -1,3 +1,9 @@
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRouter,
+  RouterContextProvider,
+} from "@tanstack/react-router";
 import type { ReactElement } from "react";
 import { describe, expect, it } from "vite-plus/test";
 import { getConversationTypingFixture } from "../../../api/team/get-conversation-typing.fixture";
@@ -17,9 +23,17 @@ const team = {
     manageSettings: true,
   },
 };
+// A shared request is a router link, so the list renders inside a router.
 const render = (element: ReactElement) =>
   renderComponent(
-    <TeamRuntimeProvider value={team}>{element}</TeamRuntimeProvider>,
+    <RouterContextProvider
+      router={createRouter({
+        routeTree: createRootRoute(),
+        history: createMemoryHistory(),
+      })}
+    >
+      <TeamRuntimeProvider value={team}>{element}</TeamRuntimeProvider>
+    </RouterContextProvider>,
   );
 const message = (
   id: string,
@@ -30,6 +44,7 @@ const message = (
     content: string;
     systemKind: string | null;
     createdAt: string;
+    embeds: { kind: string; id: string }[];
   }>,
 ) => ({
   id,
@@ -110,5 +125,28 @@ describe("MessageList", () => {
       />,
     );
     expect(view.getByText("No messages yet.")).toBeInTheDocument();
+  });
+
+  it("links a request that a teammate shared into the thread", async () => {
+    const api = mockApi();
+    api.reply(getConversationTypingFixture.ok());
+    const view = render(
+      <MessageList
+        workspaceId="workspace_test_1"
+        conversationId="conversation_test_1"
+        customerName="Grace"
+        messages={[
+          message("m1", {
+            senderType: "agent",
+            authorName: "Ada",
+            embeds: [{ kind: "post", id: "post_test_1" }],
+          }),
+        ]}
+        people={[]}
+      />,
+    );
+    expect(
+      await view.findByRole("link", { name: "Shared a request" }),
+    ).toHaveAttribute("href", "/feedback/workspace_test_1/posts/post_test_1");
   });
 });
