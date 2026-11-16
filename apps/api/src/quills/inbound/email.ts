@@ -200,10 +200,13 @@ const inbound = defineQuillsRoute({
     }
     const visitor = await senderPrincipal(db, sender);
     if (!visitor) return answer("blocked");
-    const emailAuth = trustedEmailAuth(
-      readHeaders(data, "authentication-results"),
-      process.env.EMAIL_INBOUND_AUTHSERV_ID ?? "",
-    );
+    // Only the list form keeps every header in order; a map keeps one copy, maybe the sender's.
+    const emailAuth = Array.isArray(data.headers)
+      ? trustedEmailAuth(
+          readHeaders(data, "authentication-results"),
+          process.env.EMAIL_INBOUND_AUTHSERV_ID ?? "",
+        )
+      : null;
     const references = [
       ...messageIds(readHeader(data, "in-reply-to")),
       ...messageIds(readHeader(data, "references")),

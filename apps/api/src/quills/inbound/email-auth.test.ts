@@ -37,6 +37,18 @@ describe("parseAuthenticationResults", () => {
       ).auth.dkim,
     ).toBe("pass");
   });
+
+  it("ignores results inside a quoted value and never upgrades SPF or DMARC", () => {
+    expect(
+      parseAuthenticationResults(
+        'mx.example; spf=fail smtp.mailfrom="x;dmarc=pass;spf=pass;dkim=pass"@evil.test; dkim=none; dmarc=fail',
+      ).auth,
+    ).toEqual({ spf: "fail", dkim: "none", dmarc: "fail" });
+    expect(
+      parseAuthenticationResults("mx.example; dmarc=fail; dmarc=pass").auth
+        .dmarc,
+    ).toBe("fail");
+  });
 });
 
 describe("trustedEmailAuth", () => {
