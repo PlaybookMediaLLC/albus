@@ -29,6 +29,7 @@ import {
   selectConversations,
   statuses,
   toItems,
+  unreadByTeam,
 } from "./conversation-model";
 
 // The teammate inbox list: filters, five sorts and a keyset cursor re-read from the database.
@@ -152,7 +153,6 @@ function conditions(
     filters.channel ? eq(conversations.channel, filters.channel) : undefined,
     filters.source ? eq(conversations.source, filters.source) : undefined,
     filters.waitingOnly ? isNotNull(conversations.waitingSince) : undefined,
-    // The same messages as the row's unreadCount: live customer messages after the team read.
     filters.unreadOnly
       ? exists(
           db
@@ -161,13 +161,7 @@ function conditions(
             .where(
               and(
                 sql`${conversationMessages.conversationId} = ${conversations.id}`,
-                eq(conversationMessages.senderType, "visitor"),
-                eq(conversationMessages.isInternal, false),
-                isNull(conversationMessages.deletedAt),
-                or(
-                  isNull(conversations.agentLastReadAt),
-                  sql`${conversationMessages.createdAt} > ${conversations.agentLastReadAt}`,
-                ),
+                unreadByTeam,
               ),
             ),
         )
