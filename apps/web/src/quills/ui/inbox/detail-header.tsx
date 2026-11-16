@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronLeft, ChevronUp, PanelRight } from "lucide-react";
 import { type ReactNode, useContext } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "../upstream";
+import { Button, cn } from "../upstream";
 import { DetailPaneContext } from "./detail-pane-context";
 import { IconButton } from "./icon-button";
 
@@ -53,7 +53,15 @@ export function DetailHeader({
           ) : null}
         </Button>
       ) : null}
-      <div className="flex min-w-0 flex-1 items-center gap-2">{children}</div>
+      {/* A title keeps at least 12rem: when it would get less, the actions wrap to a second row. */}
+      <div
+        className={cn(
+          "flex min-w-0 flex-1 items-center gap-2",
+          children && "basis-48",
+        )}
+      >
+        {children}
+      </div>
       <div className="flex shrink-0 items-center gap-1.5 max-sm:gap-0.5">
         {actions}
         {onPrevious && onNext
