@@ -67,6 +67,7 @@ const post = (id: string, title: string, statusId: string, votes: number) => ({
   statusId,
   principalId: "principal_author",
   authorName: "Ada",
+  authorAvatarUrl: null,
   ownerPrincipalId: null,
   voteCount: votes,
   commentCount: 0,
