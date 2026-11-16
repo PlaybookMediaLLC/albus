@@ -23,9 +23,6 @@ const direction = (element: Element) =>
  */
 export function ListResizer(props: ListResizerProps) {
   const drag = useRef<{ x: number; width: number; dir: number } | null>(null);
-  const end = () => {
-    drag.current = null;
-  };
   return (
     <div
       role="separator"
@@ -57,8 +54,10 @@ export function ListResizer(props: ListResizerProps) {
             clampListWidth(start.width + (event.clientX - start.x) * start.dir),
           );
       }}
-      onPointerUp={end}
-      onLostPointerCapture={end}
+      // The capture ends after pointerup, a cancel or a lost window, and then fires this.
+      onLostPointerCapture={() => {
+        drag.current = null;
+      }}
       onKeyDown={(event) => {
         const dir = direction(event.currentTarget);
         const next = {

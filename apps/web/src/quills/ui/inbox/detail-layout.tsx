@@ -1,10 +1,4 @@
-import {
-  type CSSProperties,
-  type ReactNode,
-  useEffect,
-  useId,
-  useState,
-} from "react";
+import { type CSSProperties, type ReactNode, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   cn,
@@ -13,10 +7,11 @@ import {
   SheetHeader,
   SheetPanel,
   SheetTitle,
+  useStoredState,
 } from "../upstream";
 import { DetailPaneContext } from "./detail-pane-context";
 import { ListResizer } from "./list-resizer";
-import { readListWidth, writeListWidth } from "./list-width";
+import { LIST_WIDTH, LIST_WIDTH_KEY, parseListWidth } from "./list-width";
 
 export interface DetailLayoutProps {
   /** The list pane (ListPane), 360 px wide until resized. Hidden below md while an item is open. */
@@ -48,8 +43,11 @@ export function DetailLayout({
   const { t } = useTranslation("quills");
   const listId = useId();
   const [listOpen, setListOpen] = useState(true);
-  const [listWidth, setListWidth] = useState(readListWidth);
-  useEffect(() => writeListWidth(listWidth), [listWidth]);
+  const [listWidth, setListWidth] = useStoredState(
+    LIST_WIDTH_KEY,
+    parseListWidth,
+    LIST_WIDTH.initial,
+  );
   const [panelOpen, setPanelOpen] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
   const panel = properties
