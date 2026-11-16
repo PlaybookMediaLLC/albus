@@ -42,6 +42,18 @@ const eventIcons: Record<string, LucideIcon> = {
   csat_submitted: Star,
 };
 
+// Resolve and reopen notices name the teammate who acted: "You resolved this conversation".
+const actorKeys: Record<string, { you: string; named: string }> = {
+  chat_ended: {
+    you: "team-conversations.events.resolvedByYou",
+    named: "team-conversations.events.resolvedBy",
+  },
+  chat_reopened: {
+    you: "team-conversations.events.reopenedByYou",
+    named: "team-conversations.events.reopenedBy",
+  },
+};
+
 const day = (iso: string) => new Date(iso).toDateString();
 
 /**
@@ -69,6 +81,16 @@ export function MessageList(props: MessageListProps) {
   const messages = [...props.messages].reverse();
   const avatar = (id: string | null) =>
     props.people.find((person) => person.id === id)?.avatarUrl;
+  const me = props.people.find((person) => person.userId === team.viewer.id);
+  // An unknown teammate, automation and older rows keep the stored text.
+  const eventText = (message: Message) => {
+    const keys = actorKeys[message.systemKind ?? ""];
+    const actor = message.systemActorPrincipalId;
+    if (!keys || !actor) return message.content;
+    if (actor === me?.id) return t(keys.you);
+    const name = props.people.find((person) => person.id === actor)?.name;
+    return name ? t(keys.named, { name }) : message.content;
+  };
   return (
     <section
       aria-labelledby="conversation-thread"
@@ -94,7 +116,7 @@ export function MessageList(props: MessageListProps) {
                 icon={eventIcons[message.systemKind ?? ""]}
                 time={message.createdAt}
               >
-                {message.content}
+                {eventText(message)}
               </SystemEvent>
             ) : (
               <MessageBubble
