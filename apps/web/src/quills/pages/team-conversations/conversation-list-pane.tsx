@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Bookmark, BookmarkPlus, SquarePen, Zap } from "lucide-react";
+import { Bookmark, BookmarkPlus, MessageSquarePlus, Zap } from "lucide-react";
 import { Fragment, type ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTeamRuntime } from "../../team/runtime";
@@ -147,7 +147,7 @@ export function ConversationListPane(props: ConversationListPaneProps) {
                 />
               }
             >
-              <SquarePen aria-hidden="true" />
+              <MessageSquarePlus aria-hidden="true" />
             </TooltipTrigger>
             <TooltipContent>{newMessage}</TooltipContent>
           </Tooltip>
