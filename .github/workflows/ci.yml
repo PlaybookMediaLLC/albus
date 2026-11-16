@@ -596,8 +596,10 @@ jobs:
   deploy:
     name: Deploy to production
     # Each merge to main deploys after the full CI gate passes. A failed gate skips the deploy.
+    # Check the gate result itself: the implicit success() also fails on the jobs that the gate
+    # allows to skip on a push (the Chromium smoke tests), which skipped the deploy.
     needs: ci-result
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && needs.ci-result.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     permissions:
       contents: read
       packages: write
