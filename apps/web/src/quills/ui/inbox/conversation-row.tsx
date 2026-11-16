@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { shortDate } from "../../core/short-date";
+import { compactTime, shortDate } from "../../core/short-date";
 import { PersonAvatar } from "../person-avatar";
 import { cn } from "../upstream";
 import type { InboxBadge, InboxPerson } from "./inbox-types";
@@ -59,9 +59,10 @@ export function ConversationRow(props: ConversationRowProps) {
           ) : null}
           <time
             dateTime={props.time}
+            title={shortDate(props.time, i18n.language)}
             className="shrink-0 text-xs text-muted-foreground"
           >
-            {shortDate(props.time, i18n.language)}
+            {compactTime(props.time, i18n.language)}
           </time>
         </span>
         <span className="mt-0.5 flex items-center gap-2">
