@@ -217,7 +217,7 @@ const inboxCounts = defineQuillsRoute({
   operationId: "fetchQuillsInboxCounts",
   summary: "Count the open inbox queues",
   description:
-    "Open conversations assigned to the caller and unassigned ones; open tickets by type, where the customer count includes open conversations paired with a customer ticket (a pair counts once, as in the list); and test conversations in any status. Test customers' threads and spam are not counted in the queues.",
+    "Open conversations assigned to the caller and unassigned ones; open tickets by type, where the customer count includes open conversations paired with a customer ticket (a pair counts once, as in the list); and test conversations in any status. Test customers' threads, spam and archived conversations are not counted in the queues.",
   action: "read",
   response: z.object({
     mine: z.number(),
@@ -276,7 +276,7 @@ const inboxSegments = defineQuillsRoute({
   operationId: "fetchQuillsInboxSegmentsWithCounts",
   summary: "List segments with their open conversation counts",
   description:
-    "Live segments by name, each with the open conversations whose visitor is a member (test and spam conversations not counted).",
+    "Live segments by name, each with the open conversations whose visitor is a member (test, spam and archived conversations not counted).",
   action: "read",
   response: z.object({
     items: z.array(
