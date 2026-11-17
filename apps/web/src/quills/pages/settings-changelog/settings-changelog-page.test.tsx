@@ -1,7 +1,9 @@
 import { fireEvent, waitFor, within } from "@testing-library/react";
 import { describe, expect, it } from "vite-plus/test";
 import { createChangelogCategoryFixture } from "../../api/team/create-changelog-category.fixture";
+import { getChangelogSettingsFixture } from "../../api/team/get-changelog-settings.fixture";
 import { getPortalSettingsFixture } from "../../api/team/get-portal-settings.fixture";
+import { updateChangelogSettingsFixture } from "../../api/team/update-changelog-settings.fixture";
 import { listChangelogCategoriesFixture } from "../../api/team/list-changelog-categories.fixture";
 import { updatePortalSettingsFixture } from "../../api/team/update-portal-settings.fixture";
 import { describePageContract } from "../../test/contracts";
@@ -28,6 +30,7 @@ const ready = () => {
   api = mockApi();
   api.reply(getPortalSettingsFixture.ok());
   api.reply(categories);
+  api.reply(getChangelogSettingsFixture.ok());
 };
 
 describe("SettingsChangelogPage", () => {
@@ -37,11 +40,13 @@ describe("SettingsChangelogPage", () => {
         const api = mockApi();
         api.defer(() => undefined);
         api.defer(() => undefined);
+        api.defer(() => undefined);
       },
     },
     failed: {
       prepare: () => {
         const api = mockApi();
+        api.fail();
         api.fail();
         api.fail();
       },
@@ -84,6 +89,36 @@ describe("SettingsChangelogPage", () => {
         });
       },
     },
+  });
+
+  it("turns the widget's automatic open on, off by default (#108)", async () => {
+    ready();
+    api.reply(updateChangelogSettingsFixture.ok({ widgetAutoOpen: true }));
+    api.reply(getChangelogSettingsFixture.ok({ widgetAutoOpen: true }));
+    const view = renderPage(SettingsChangelogPage, meta);
+    const toggle = await view.findByRole("switch", {
+      name: "Open new updates in the widget",
+    });
+    expect(toggle).not.toBeChecked();
+    fireEvent.click(toggle);
+    await waitFor(() =>
+      expect(api.calls("updateQuillsChangelogSettings")).toHaveLength(1),
+    );
+    expect(await api.calls("updateQuillsChangelogSettings")[0]!.json()).toEqual(
+      { widgetAutoOpen: true },
+    );
+  });
+
+  it("shows the switch read-only without manage_settings", async () => {
+    ready();
+    const view = renderPage(SettingsChangelogPage, meta, {
+      permissions: { manageSettings: false },
+    });
+    expect(
+      await view.findByRole("switch", {
+        name: "Open new updates in the widget",
+      }),
+    ).toHaveAttribute("aria-disabled", "true");
   });
 
   it("creates a changelog tag", async () => {

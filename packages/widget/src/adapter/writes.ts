@@ -206,13 +206,20 @@ export const writes = (api: Api) => ({
       undefined,
       signal,
     ),
-  updatesUnread: (signal?: AbortSignal) =>
-    api.request<{ count: number }>(
-      "GET",
-      "/widget/changelog/unread",
+  /** Moves the visitor's announced mark to now: the launcher showed the newest update (#108). */
+  announced: (signal?: AbortSignal) =>
+    api.request<{ announcedAt: string }>(
+      "PUT",
+      "/widget/changelog/announced",
       undefined,
       signal,
     ),
+  updatesUnread: (signal?: AbortSignal) =>
+    api.request<{
+      count: number;
+      announce: { id: string; title: string } | null;
+      autoOpen: boolean;
+    }>("GET", "/widget/changelog/unread", undefined, signal),
   unread: (signal?: AbortSignal) =>
     api.request<{ unreadCount: number }>(
       "GET",

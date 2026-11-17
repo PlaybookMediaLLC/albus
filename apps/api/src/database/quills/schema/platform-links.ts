@@ -1,4 +1,6 @@
+import { sql } from "drizzle-orm";
 import {
+  check,
   text,
   timestamp,
   primaryKey,
@@ -38,6 +40,8 @@ export const boardProjects = quillsSchema
   )
   .enableRLS();
 
+export const POST_TASK_SOURCES = ["manual", "rule", "import"] as const;
+
 export const postTasks = quillsSchema
   .table(
     "post_tasks",
@@ -47,6 +51,10 @@ export const postTasks = quillsSchema
       taskId: text("task_id")
         .notNull()
         .references(() => taskTable.id, { onDelete: "cascade" }),
+      /** How the link came: a teammate (manual), a board rule (rule) or an import (RFC 0005). */
+      source: text("source", { enum: POST_TASK_SOURCES })
+        .notNull()
+        .default("manual"),
       createdAt: timestamp("created_at", { withTimezone: true })
         .notNull()
         .defaultNow(),
@@ -58,6 +66,10 @@ export const postTasks = quillsSchema
         foreignColumns: [posts.workspaceId, posts.id],
       }).onDelete("cascade"),
       index("post_tasks_task_idx").on(t.taskId),
+      check(
+        "post_tasks_source_check",
+        sql`${t.source} IN ('manual', 'rule', 'import')`,
+      ),
       workspacePolicy(t.workspaceId),
     ],
   )

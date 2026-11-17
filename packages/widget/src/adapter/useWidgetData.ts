@@ -42,8 +42,8 @@ export interface HostEvents {
     payload: EventMap[K],
   ): void;
   unread(count: number): void;
-  /** The newest update is unread: the SDK may announce it on the launcher. */
-  announce(entryId: string, title: string): void;
+  /** A new update that the launcher has not shown this visitor: show its title, or open it (#108). */
+  announce(entry: { id: string; title: string }, open: boolean): void;
   /** The API answered 401: this session ended. */
   expired(session: number | null): void;
 }
@@ -120,7 +120,6 @@ export function useWidgetData({
   const unread = useRef(-1);
   /** Unread changelog updates; the launcher badge shows them with the unread replies. */
   const updatesUnread = useRef(0);
-  const announced = useRef(false);
   const badge = () =>
     events.current.unread(Math.max(0, unread.current) + updatesUnread.current);
   /** The threads are loaded; until then a poll only reports the unread count. */
@@ -180,20 +179,14 @@ export function useWidgetData({
   };
   // ponytail: read once per session and after a mark, not polled; updates ship rarely.
   const reportUpdatesUnread = async (signal: AbortSignal) => {
-    const { count } = await send.updatesUnread(signal);
-    if (!signal.aborted) {
-      updatesUnread.current = count;
-      badge();
-    }
-    // The newest entry is unread: hand it to the SDK once per session for the launcher.
-    if (count > 0 && !signal.aborted && !announced.current) {
-      announced.current = true;
-      const { entries } = await api.request<{
-        entries: Array<{ id: string; title: string }>;
-      }>("GET", "/widget/changelog?limit=1", undefined, signal);
-      const latest = entries[0];
-      if (latest && !signal.aborted)
-        events.current.announce(latest.id, latest.title);
+    const { count, announce, autoOpen } = await send.updatesUnread(signal);
+    if (signal.aborted) return;
+    updatesUnread.current = count;
+    badge();
+    // Once per visitor: the server's announced mark moves before the launcher shows the title.
+    if (announce) {
+      await send.announced(signal);
+      if (!signal.aborted) events.current.announce(announce, autoOpen);
     }
   };
   const load = (signal: AbortSignal) =>

@@ -451,6 +451,9 @@
 .qb-roadmap-item::after { content: ""; position: absolute; inset-inline: 16px 0; bottom: 0; border-bottom: 1px solid var(--qb-line); }
 .qb-roadmap-item .qb-feedback-copy > span { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .qb-roadmap-item small { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+/* #109: a shipped request that the signed-in customer voted for. */
+.qb-roadmap-item .qb-feedback-copy > span.qb-for-you { display: inline-flex; align-items: center; gap: 4px; width: fit-content; margin-top: 4px; padding: 1px 8px 1px 6px; border-radius: 999px; background: color-mix(in srgb, var(--qb-status-color) 14%, transparent); color: var(--qb-status-color); font-size: 12px; font-weight: 600; }
+.qb-for-you svg { width: 12px; height: 12px; }
 .qb-roadmap-item .qb-avatar { width: 16px; height: 16px; font-size: 8px; }
 .qb-widget .qb-roadmap-more { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--qb-muted); min-height: 40px; margin-inline-start: 22px; }
 .qb-roadmap-more svg { width: 12px; height: 12px; }

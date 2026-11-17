@@ -243,22 +243,43 @@
 		{
 			"idx": 34,
 			"version": "7",
-			"when": 1794909817143,
-			"tag": "0034_post_hidden",
+			"when": 1794909946146,
+			"tag": "0034_post_task_source",
 			"breakpoints": true
 		},
 		{
 			"idx": 35,
 			"version": "7",
-			"when": 1794909831800,
-			"tag": "0035_assistant_quiet_sweep",
+			"when": 1794909949536,
+			"tag": "0035_changelog_announced",
 			"breakpoints": true
 		},
 		{
 			"idx": 36,
 			"version": "7",
-			"when": 1794909835099,
-			"tag": "0036_portal_token_link",
+			"when": 1794910771728,
+			"tag": "0036_post_updates",
+			"breakpoints": true
+		},
+		{
+			"idx": 37,
+			"version": "7",
+			"when": 1794915878043,
+			"tag": "0037_post_hidden",
+			"breakpoints": true
+		},
+		{
+			"idx": 38,
+			"version": "7",
+			"when": 1794915889237,
+			"tag": "0038_assistant_quiet_sweep",
+			"breakpoints": true
+		},
+		{
+			"idx": 39,
+			"version": "7",
+			"when": 1794915893003,
+			"tag": "0039_portal_token_link",
 			"breakpoints": true
 		}
 	]

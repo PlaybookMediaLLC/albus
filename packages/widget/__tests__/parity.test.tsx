@@ -119,6 +119,7 @@ it("votes from the roadmap list and marks a shipped request the visitor voted fo
         },
       ]}
       onVoteFeedback={vote}
+      identified
     />,
   );
   fireEvent.change(screen.getByRole("combobox"), {

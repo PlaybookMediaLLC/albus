@@ -184,6 +184,8 @@ export interface WidgetViewProps {
   brandName?: string;
   /** Text direction of the panel; "rtl" for a right-to-left language. Default "ltr". */
   dir?: "ltr" | "rtl";
+  /** The host app identified the visitor (a signed token): the roadmap marks what they voted for. */
+  identified?: boolean;
   theme?: "light" | "dark" | "auto";
   /** A BCP-47 tag for the widget's language; unsupported tags show English. */
   locale?: string;

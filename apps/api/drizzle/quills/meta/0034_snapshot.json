@@ -1,5 +1,5 @@
 {
-	"id": "a9d6db1f-441f-4ae0-b54d-c9b2f2ac548b",
+	"id": "dd499087-279b-4c55-8e97-665da5a0801d",
 	"prevId": "b4e7eead-e202-4544-9f9f-cfa713991bf1",
 	"version": "7",
 	"dialect": "postgresql",
@@ -4091,13 +4091,6 @@
 				},
 				"is_comments_locked": {
 					"name": "is_comments_locked",
-					"type": "boolean",
-					"primaryKey": false,
-					"notNull": true,
-					"default": false
-				},
-				"is_hidden": {
-					"name": "is_hidden",
 					"type": "boolean",
 					"primaryKey": false,
 					"notNull": true,
@@ -25301,6 +25294,13 @@
 					"primaryKey": false,
 					"notNull": true
 				},
+				"source": {
+					"name": "source",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'manual'"
+				},
 				"created_at": {
 					"name": "created_at",
 					"type": "timestamp with time zone",
@@ -25373,7 +25373,12 @@
 					"withCheck": "\"quills\".\"post_tasks\".\"workspace_id\" = nullif(current_setting('quills.workspace_id', true), '')"
 				}
 			},
-			"checkConstraints": {},
+			"checkConstraints": {
+				"post_tasks_source_check": {
+					"name": "post_tasks_source_check",
+					"value": "\"quills\".\"post_tasks\".\"source\" IN ('manual', 'rule', 'import')"
+				}
+			},
 			"isRLSEnabled": true
 		},
 		"quills.custom_domains": {

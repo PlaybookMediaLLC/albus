@@ -55,7 +55,7 @@ All gaps were approved for one pull request. Each row names the proof: unit or i
 | G-15 | done | `audience.test.ts`. Host apps that sign tokens longer than 1 hour now get 403: needs a release note |
 | G-18 | done (widget) | `init({ container })` renders the widget inline in a host element: `sdk-control.test.ts`; E2E sdk-inline-embed. Portal pages are not framed; they wait for #130 |
 | G-19 | done | E2E sdk-locale (Arabic, `dir=rtl`) |
-| G-21 | done | migration `0034_post_hidden.sql`, `widget-records.test.ts`, web test; E2E teammate-hide-request |
+| G-21 | done | migration `0037_post_hidden.sql`, `widget-records.test.ts`, web test; E2E teammate-hide-request |
 | G-22 | done | text: `content-checks.test.ts`, E2E moderation-auto-hold. Images: `assistant/engine/post-images.ts`, `widget-records.test.ts` (fake AI). Needs a model that reads images |
 | G-23 | done | `content-checks.test.ts`, `widget-records.test.ts`; E2E moderation-auto-hold |
 | G-25 | done (generic) | Exports from other tools import as they are (header aliases, status words, plain dates): `csv.test.ts`, `transfer.test.ts`. Checked with Canny-shaped sample files only; Nolt and ProductRoad do not publish their headers. Votes are not imported |
@@ -63,9 +63,9 @@ All gaps were approved for one pull request. Each row names the proof: unit or i
 | G-27 | done | `signed.test.ts`. No browser run: inbound mail needs a signed webhook and domain |
 | G-28 | done | contract fixtures, `widget-records.test.ts`; E2E conversation-ip-block |
 | G-29 | done | `widget-records.test.ts`, contract |
-| G-31 | done | `assistant/engine/customer-agent.ts`, quiet-close sweep (migration `0035`), feedback-card route: `widget-records.test.ts` (fake AI), contract, widget `feedback-card.test.tsx`, web settings and portal tests |
+| G-31 | done | `assistant/engine/customer-agent.ts`, quiet-close sweep (migration `0038`), feedback-card route: `widget-records.test.ts` (fake AI), contract, widget `feedback-card.test.tsx`, web settings and portal tests |
 | G-32 | done | `widget-records.test.ts`; E2E conversation-away-reply |
-| G-17 | done | Decision #129, as chosen: Kaneo accounts stay the one login system, and the host token signs in only to a portal-only account that token sign-in created for that workspace's customer (an existing email gets the Kaneo sign-in page). `widget/portal-sign-in.ts`, `portal/token-sign-in.ts`, `utils/quills-portal-session.ts` (Kaneo), migration `0036`. Tests: `widget-records.test.ts`, contract, `quills-portal-session.test.ts`, `portal-sign-in.test.ts`, widget adapter-host; E2E portal-widget-sign-in (widget history shows on the portal). The widget's **Open in portal** on Home signs in directly when widget sign-in is on; otherwise it mails the Kaneo sign-in link from staging's flow. |
+| G-17 | done | Decision #129, as chosen: Kaneo accounts stay the one login system, and the host token signs in only to a portal-only account that token sign-in created for that workspace's customer (an existing email gets the Kaneo sign-in page). `widget/portal-sign-in.ts`, `portal/token-sign-in.ts`, `utils/quills-portal-session.ts` (Kaneo), migration `0039`. Tests: `widget-records.test.ts`, contract, `quills-portal-session.test.ts`, `portal-sign-in.test.ts`, widget adapter-host; E2E portal-widget-sign-in (widget history shows on the portal). The widget's **Open in portal** on Home signs in directly when widget sign-in is on; otherwise it mails the Kaneo sign-in link from staging's flow. |
 | G-24 | done | Login modes account (the Kaneo sign-in page), sso (the host app's login page returns a widget-secret token) and disabled, set in Settings → Privacy → Customer sign-in. Same account rule as G-17. Tests: `widget-records.test.ts` (SSO token once, disabled = signed out), web sign-in link and settings tests; E2E portal-sso-sign-in through the host app's `/sso` page |
 | G-30 | not done | A native iOS SDK (Swift, WKWebView/UIKit) cannot be compiled or run in this Linux environment, so it would ship untested. Needs a macOS run |
 

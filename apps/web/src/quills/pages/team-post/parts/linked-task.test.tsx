@@ -1,44 +1,53 @@
-import { describe, expect, it } from "vite-plus/test";
-import { mockApi } from "../../../test/mock-api";
-import { renderComponent } from "../../../test/render";
-import { LinkedTask } from "./linked-task";
+import { describe, expect, it, vi } from "vite-plus/test";
 import {
   createMemoryHistory,
   createRootRoute,
   createRouter,
   RouterContextProvider,
 } from "@tanstack/react-router";
+import { renderComponent } from "../../../test/render";
+import { LinkedTask, type LinkedTaskProps } from "./linked-task";
 
 const router = createRouter({
   routeTree: createRootRoute(),
   history: createMemoryHistory({ initialEntries: ["/"] }),
 });
-const render = () =>
+const task: LinkedTaskProps["task"] = {
+  taskId: "task_csv",
+  key: "WEB-12",
+  title: "Build the CSV export",
+  projectId: "project_web",
+  columnName: "In progress",
+  columnColor: "#f97316",
+  done: false,
+  assigneeName: "Ada",
+  source: "rule",
+};
+const render = (props: Partial<LinkedTaskProps> = {}) =>
   renderComponent(
     <RouterContextProvider router={router}>
-      <LinkedTask workspaceId="workspace_test_1" taskId="task_csv" />
+      <LinkedTask workspaceId="workspace_test_1" task={task} {...props} />
     </RouterContextProvider>,
   );
 
 describe("LinkedTask", () => {
-  it("links the task title to the Kaneo task", async () => {
-    mockApi().reply({
-      id: "task_csv",
-      projectId: "project_web",
-      title: "Build the CSV export",
-    });
+  it("links the key and title to the Kaneo task, with its column and assignee", () => {
     const view = render();
     expect(
-      await view.findByRole("link", { name: "Build the CSV export" }),
+      view.getByRole("link", { name: "WEB-12 Build the CSV export" }),
     ).toHaveAttribute(
       "href",
       "/dashboard/workspace/workspace_test_1/project/project_web/task/task_csv",
     );
+    expect(view.getByText("In progress")).toBeVisible();
+    expect(view.getByText("Assigned to Ada")).toBeVisible();
+    expect(view.queryByRole("button")).toBeNull();
   });
 
-  it("does not show a task that the viewer cannot open", async () => {
-    mockApi().reply({ message: "Forbidden" }, 403);
-    const view = render();
-    expect(await view.findByText("A task that you cannot open")).toBeVisible();
+  it("unlinks with the update permission", () => {
+    const onUnlink = vi.fn();
+    const view = render({ onUnlink });
+    view.getByRole("button", { name: "Unlink Build the CSV export" }).click();
+    expect(onUnlink).toHaveBeenCalledOnce();
   });
 });

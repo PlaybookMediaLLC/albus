@@ -261,7 +261,8 @@ export function createSDK(): SDK {
         const mode = config?.announcements ?? "whisper";
         const target = { view: "changelog" as const, entryId: msg.entryId };
         if (mode === "none" || panelOpen) break;
-        if (mode === "full") {
+        // The workspace may open each new update once (`open`); the host's `full` opens it too.
+        if (msg.open || mode === "full") {
           if (!announcedOpen && document.visibilityState === "visible") {
             announcedOpen = true;
             dispatch("open", target);
@@ -273,10 +274,7 @@ export function createSDK(): SDK {
             "{title}",
             msg.title,
           ),
-          () => {
-            launcher?.announce(null);
-            dispatch("open", target);
-          },
+          () => dispatch("open", target),
         );
         break;
       }

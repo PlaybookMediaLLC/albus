@@ -11,19 +11,11 @@ import { useTeamRuntime } from "../../team/runtime";
 import { TeamStateView } from "../../team/team-state-view";
 import { ListHeader } from "../../ui/inbox/list-header";
 import { PageFrame } from "../../ui/page-frame";
-import { PortalSelectContent } from "../../ui/portal-select-content";
-import {
-  Field,
-  FieldLabel,
-  Select,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../ui/upstream";
+import { BoardPicker } from "./parts/board-picker";
 import { BoardSegments } from "./parts/board-segments";
 import { BoardFieldsForm } from "./parts/board-fields-form";
 import { BoardVotingForm } from "./parts/board-voting-form";
+import { DeliverySection } from "./parts/delivery-section";
 import { TaskSyncForm } from "./parts/task-sync-form";
 
 export interface TeamBoardsPageProps {
@@ -34,7 +26,7 @@ export interface TeamBoardsPageProps {
 
 const heading = "text-sm font-semibold";
 
-// The settings of one board (RFC 0004 D4): who can see it, portal voting and task sync.
+// The settings of one board (RFC 0004 D4): who can see it, portal voting, task sync and delivery (RFC 0005).
 export function TeamBoardsPage({ workspaceId }: TeamBoardsPageProps) {
   const { t } = useTranslation("quills");
   const team = useTeamRuntime();
@@ -75,34 +67,7 @@ export function TeamBoardsPage({ workspaceId }: TeamBoardsPageProps) {
         title={t("boards.title")}
         actions={
           items.length ? (
-            <Field className="flex-row items-center">
-              <FieldLabel className="font-normal text-muted-foreground">
-                {t("team-triage.board")}
-              </FieldLabel>
-              <Select
-                items={items.map((item) => ({
-                  value: item.id,
-                  label: item.name,
-                }))}
-                value={boardId}
-                onValueChange={(value) => {
-                  if (value) setChosen(value);
-                }}
-              >
-                <SelectTrigger size="sm" className="w-auto min-w-28 max-w-56">
-                  <SelectValue />
-                </SelectTrigger>
-                <PortalSelectContent>
-                  <SelectGroup>
-                    {items.map((item) => (
-                      <SelectItem key={item.id} value={item.id}>
-                        {item.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </PortalSelectContent>
-              </Select>
-            </Field>
+            <BoardPicker boards={items} value={boardId} onChange={setChosen} />
           ) : null
         }
       />
@@ -181,6 +146,12 @@ export function TeamBoardsPage({ workspaceId }: TeamBoardsPageProps) {
                       onSubmit={(customFields) =>
                         saveSettings({ customFields })
                       }
+                    />
+                    <DeliverySection
+                      workspaceId={workspaceId}
+                      boardId={boardId}
+                      delivery={settings.data.delivery}
+                      statuses={statuses.data?.statuses ?? []}
                     />
                   </>
                 ) : null}

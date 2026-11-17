@@ -219,11 +219,12 @@ export function WidgetHost({
         unread.current.data = count;
         postUnread();
       },
-      announce: (entryId, title) =>
+      announce: (entry, open) =>
         bridge.current?.post({
           type: "quackback:announce",
-          entryId,
-          title: title.slice(0, 200),
+          entryId: entry.id,
+          title: entry.title,
+          open,
         }),
       expired: visitor.expire,
     },
@@ -298,6 +299,7 @@ export function WidgetHost({
       // Without a locale from the host page, the visitor's browser language.
       locale={locale ?? navigator.language}
       dir={dir}
+      identified={visitor.identified}
       theme={hostTheme ?? (ready ? config.theme : "auto")}
       // Until the config arrives no tab is known to be on.
       tabs={ready ? config.tabs : []}

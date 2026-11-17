@@ -11,6 +11,7 @@ import { useT } from "./i18n/useT.js";
  */
 export function RoadmapView({
   posts,
+  identified = false,
   onOpen,
   expanded,
   onExpanded,
@@ -18,6 +19,8 @@ export function RoadmapView({
   offline,
 }: {
   posts: readonly FeedbackPost[];
+  /** A signed-in customer: each shipped request that they voted for gets the "For you" mark (#109). */
+  identified?: boolean;
   onOpen: (id: string) => void;
   expanded: readonly FeedbackStatus[];
   onExpanded: (statuses: readonly FeedbackStatus[]) => void;
@@ -56,8 +59,11 @@ export function RoadmapView({
                       <small>
                         <Avatar name={post.author} avatarUrl={post.avatarUrl} />
                         {post.author}
-                        {status === "shipped" && post.voted && (
-                          <span className="qb-for-you">{t("For you")}</span>
+                        {identified && status === "shipped" && post.voted && (
+                          <span className="qb-for-you">
+                            <Icon name="check" />
+                            {t("For you")}
+                          </span>
                         )}
                       </small>
                     </span>

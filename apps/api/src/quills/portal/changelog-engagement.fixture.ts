@@ -67,6 +67,7 @@ function engagement(who: Customer): Record<string, Fixture> {
     ),
     [`markQuills${t}ChangelogRead`]: make(who, () => ({})),
     [`getQuills${t}ChangelogUnread`]: make(who, () => ({})),
+    [`markQuills${t}ChangelogAnnounced`]: make(who, () => ({})),
   };
 }
 
@@ -84,3 +85,7 @@ export const markQuillsWidgetChangelogRead =
   widget.markQuillsWidgetChangelogRead!;
 export const getQuillsWidgetChangelogUnread =
   widget.getQuillsWidgetChangelogUnread!;
+export const markQuillsPortalChangelogAnnounced =
+  portal.markQuillsPortalChangelogAnnounced!;
+export const markQuillsWidgetChangelogAnnounced =
+  widget.markQuillsWidgetChangelogAnnounced!;

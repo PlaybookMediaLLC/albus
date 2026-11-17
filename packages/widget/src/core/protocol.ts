@@ -143,10 +143,12 @@ export const outboundMessageSchema = z.union([
     user: z.nullable(widgetUserSchema),
   }),
   z.object({ type: z.literal("quackback:unread"), count: countSchema }),
+  // A new changelog entry for the launcher: its title, or open it (#108).
   z.object({
     type: z.literal("quackback:announce"),
-    entryId: z.string().check(z.regex(/^[A-Za-z0-9_-]{1,200}$/)),
-    title: z.string().check(z.maxLength(200)),
+    entryId: z.string().check(z.regex(/^[A-Za-z0-9_-]{1,64}$/)),
+    title: z.string().check(z.minLength(1), z.maxLength(300)),
+    open: z.boolean(),
   }),
   // The visitor pressed "Capture screenshot" in the open panel (RFC 0003 feature 6).
   z.object({

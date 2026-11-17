@@ -5720,13 +5720,18 @@
           },
           "emailsDisabled": {
             "type": "boolean"
+          },
+          "widgetAutoOpen": {
+            "type": "boolean",
+            "description": "The widget opens the newest unread entry on a customer's next visit, once. Off by default."
           }
         },
         "required": [
           "audience",
           "collaborationDisabled",
           "autoSubscribe",
-          "emailsDisabled"
+          "emailsDisabled",
+          "widgetAutoOpen"
         ]
       },
       "QuillsChangelogEntry": {
@@ -20593,7 +20598,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The unread count",
+            "description": "The unread count and the launcher announcement",
             "content": {
               "application/json": {
                 "schema": {
@@ -20601,10 +20606,35 @@
                   "properties": {
                     "count": {
                       "type": "number"
+                    },
+                    "announce": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "title"
+                      ],
+                      "description": "The newest unread entry that the caller may see and has not been shown on the launcher yet (#108). Null: none."
+                    },
+                    "autoOpen": {
+                      "type": "boolean",
+                      "description": "Open the widget to `announce` instead of showing its title (changelog setting widgetAutoOpen)."
                     }
                   },
                   "required": [
-                    "count"
+                    "count",
+                    "announce",
+                    "autoOpen"
                   ]
                 }
               }
@@ -20671,6 +20701,92 @@
                   },
                   "required": [
                     "lastReadAt"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This account is blocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found or archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quills-public/{workspace}/portal/changelog/announced": {
+      "put": {
+        "operationId": "markQuillsPortalChangelogAnnounced",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Record that the launcher showed the caller the newest entry",
+        "description": "Moves the caller's announced mark to now, so the launcher shows each entry's title once (#108). The read mark and the unread count do not change.",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Workspace ID or slug"
+            },
+            "required": true,
+            "description": "Workspace ID or slug",
+            "name": "workspace",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The caller's new announced mark",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "announcedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "announcedAt"
                   ]
                 }
               }
@@ -24118,7 +24234,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The unread count",
+            "description": "The unread count and the launcher announcement",
             "content": {
               "application/json": {
                 "schema": {
@@ -24126,10 +24242,35 @@
                   "properties": {
                     "count": {
                       "type": "number"
+                    },
+                    "announce": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "title"
+                      ],
+                      "description": "The newest unread entry that the caller may see and has not been shown on the launcher yet (#108). Null: none."
+                    },
+                    "autoOpen": {
+                      "type": "boolean",
+                      "description": "Open the widget to `announce` instead of showing its title (changelog setting widgetAutoOpen)."
                     }
                   },
                   "required": [
-                    "count"
+                    "count",
+                    "announce",
+                    "autoOpen"
                   ]
                 }
               }
@@ -24206,6 +24347,92 @@
                   },
                   "required": [
                     "lastReadAt"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Valid widget session required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This account is blocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found or archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quills-public/{workspace}/widget/changelog/announced": {
+      "put": {
+        "operationId": "markQuillsWidgetChangelogAnnounced",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Record that the launcher showed the caller the newest entry",
+        "description": "Moves the caller's announced mark to now, so the launcher shows each entry's title once (#108). The read mark and the unread count do not change.",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Workspace ID or slug"
+            },
+            "required": true,
+            "description": "Workspace ID or slug",
+            "name": "workspace",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The caller's new announced mark",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "announcedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "announcedAt"
                   ]
                 }
               }
@@ -75299,6 +75526,12 @@
                                   "string",
                                   "null"
                                 ]
+                              },
+                              "reason": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
                               }
                             }
                           },
@@ -78635,6 +78868,8 @@
                         "board.project_unlinked",
                         "post.task_linked",
                         "post.task_unlinked",
+                        "post.task_create_failed",
+                        "post.update_sent",
                         "team.bound",
                         "team.unbound",
                         "workspace.imported",
@@ -79211,6 +79446,8 @@
                         "board.project_unlinked",
                         "post.task_linked",
                         "post.task_unlinked",
+                        "post.task_create_failed",
+                        "post.update_sent",
                         "team.bound",
                         "team.unbound",
                         "workspace.imported",
@@ -84454,6 +84691,9 @@
                     "type": "boolean"
                   },
                   "emailsDisabled": {
+                    "type": "boolean"
+                  },
+                  "widgetAutoOpen": {
                     "type": "boolean"
                   }
                 }
@@ -148395,6 +148635,8 @@
                             "board.project_unlinked",
                             "post.task_linked",
                             "post.task_unlinked",
+                            "post.task_create_failed",
+                            "post.update_sent",
                             "team.bound",
                             "team.unbound",
                             "workspace.imported",
@@ -155775,6 +156017,46 @@
                           "type"
                         ]
                       }
+                    },
+                    "delivery": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "projectId": {
+                          "type": "string"
+                        },
+                        "columnId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "priority": {
+                          "type": "string",
+                          "enum": [
+                            "no-priority",
+                            "low",
+                            "medium",
+                            "high",
+                            "urgent"
+                          ]
+                        },
+                        "triggerStatusId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "projectId",
+                        "columnId",
+                        "priority",
+                        "triggerStatusId"
+                      ],
+                      "description": "Null: the board has no delivery project."
                     }
                   },
                   "required": [
@@ -155782,7 +156064,8 @@
                     "voteDisplay",
                     "defaultSort",
                     "taskSync",
-                    "customFields"
+                    "customFields",
+                    "delivery"
                   ]
                 }
               }
@@ -156045,6 +156328,46 @@
                           "type"
                         ]
                       }
+                    },
+                    "delivery": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "projectId": {
+                          "type": "string"
+                        },
+                        "columnId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "priority": {
+                          "type": "string",
+                          "enum": [
+                            "no-priority",
+                            "low",
+                            "medium",
+                            "high",
+                            "urgent"
+                          ]
+                        },
+                        "triggerStatusId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "projectId",
+                        "columnId",
+                        "priority",
+                        "triggerStatusId"
+                      ],
+                      "description": "Null: the board has no delivery project."
                     }
                   },
                   "required": [
@@ -156052,7 +156375,8 @@
                     "voteDisplay",
                     "defaultSort",
                     "taskSync",
-                    "customFields"
+                    "customFields",
+                    "delivery"
                   ]
                 }
               }
@@ -156080,6 +156404,937 @@
           },
           "404": {
             "description": "Board or status not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
+    "/quills/{workspaceId}/boards/{boardId}/delivery": {
+      "put": {
+        "operationId": "setQuillsBoardDelivery",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Set a board's delivery project and task rule",
+        "description": "The caller needs Quills manage_settings and task:create in the project, which must be a live project of this workspace. It does not change who sees the board. With a trigger status, a teammate who moves a request of the board to that status gets a task created as them.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "boardId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "projectId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "The project that receives the board's tasks. It does not change who sees the board."
+                  },
+                  "columnId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "The column of new tasks. Null: the project's first column that is not final."
+                  },
+                  "priority": {
+                    "type": "string",
+                    "enum": [
+                      "no-priority",
+                      "low",
+                      "medium",
+                      "high",
+                      "urgent"
+                    ],
+                    "description": "The priority of new tasks."
+                  },
+                  "triggerStatusId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When a teammate moves a request of this board to this status, a task is created as that teammate. Null: the rule is off."
+                  }
+                },
+                "required": [
+                  "projectId",
+                  "columnId",
+                  "priority",
+                  "triggerStatusId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The delivery settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "projectId": {
+                      "type": "string"
+                    },
+                    "columnId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "priority": {
+                      "type": "string",
+                      "enum": [
+                        "no-priority",
+                        "low",
+                        "medium",
+                        "high",
+                        "urgent"
+                      ]
+                    },
+                    "triggerStatusId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "projectId",
+                    "columnId",
+                    "priority",
+                    "triggerStatusId"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No task:create permission in the project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Board, project or status not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The project is archived, the column does not exist, or the plan does not include tasks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "clearQuillsBoardDelivery",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Remove a board's delivery project and task rule",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "boardId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Removed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "changed": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "changed"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Board not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
+    "/quills/{workspaceId}/posts/{postId}/tasks": {
+      "post": {
+        "operationId": "createQuillsPostTask",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Create a task from a post and link it",
+        "description": "Creates the task as the caller through the task controller, then links it to the post. The caller needs Quills update, task:create and access to the project. The task gets the post title, a description with the post text, a link back and the demand counts (no customer names), the post's target date, the post owner as assignee when the project allows it, and the board's delivery priority (default medium).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "projectId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "columnId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "The column of the task. Omitted or null: the project's first column that is not final."
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
+                    "description": "Omitted: the post title."
+                  }
+                },
+                "required": [
+                  "projectId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The created and linked task",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "taskId": {
+                      "type": "string"
+                    },
+                    "projectId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "taskId",
+                    "projectId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The task fields were refused",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Post or project not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The project is archived, the column does not exist, or the plan does not include it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      },
+      "get": {
+        "operationId": "listQuillsPostTasks",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "List the tasks linked to a post",
+        "description": "The linked tasks in projects that the caller can open, oldest link first, at most 100. `hidden` counts the linked tasks in projects that the caller cannot open; their fields are left out.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Linked tasks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "taskId": {
+                            "type": "string"
+                          },
+                          "key": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "description": "The task's ticket ID, such as APP-12."
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "projectId": {
+                            "type": "string"
+                          },
+                          "columnName": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "columnColor": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "done": {
+                            "type": "boolean",
+                            "description": "The task is in a final column."
+                          },
+                          "assigneeName": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "source": {
+                            "type": "string",
+                            "enum": [
+                              "manual",
+                              "rule",
+                              "import"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "taskId",
+                          "key",
+                          "title",
+                          "projectId",
+                          "columnName",
+                          "columnColor",
+                          "done",
+                          "assigneeName",
+                          "source"
+                        ]
+                      }
+                    },
+                    "hidden": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "hidden"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Post not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
+    "/quills/{workspaceId}/posts/{postId}/updates/preview": {
+      "post": {
+        "operationId": "previewQuillsPostUpdate",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Count who a post update reaches on each channel",
+        "description": "Writes nothing. The counts are what sendQuillsPostUpdate queues for the same channels and targets, unless followers or conversations change in between.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "segmentIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "maxItems": 20,
+                    "default": [],
+                    "description": "Only customers in one of these segments. Empty: everyone."
+                  },
+                  "languages": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-z]{2,3}(-[a-z0-9]{2,8})*$"
+                    },
+                    "maxItems": 10,
+                    "default": [],
+                    "description": "Only customers whose language (preferred language, else locale) is one of these or a region of one (fr matches fr-CA). Empty: everyone."
+                  },
+                  "channels": {
+                    "type": "object",
+                    "properties": {
+                      "page": {
+                        "type": "boolean",
+                        "description": "A public team comment on the request."
+                      },
+                      "email": {
+                        "type": "boolean",
+                        "description": "Mail to the request's followers."
+                      },
+                      "conversations": {
+                        "type": "boolean",
+                        "description": "A reply in each support conversation linked to the request."
+                      },
+                      "slack": {
+                        "type": "boolean",
+                        "description": "The page comment, posted by each Slack connection that sends comments of the request's board. Needs page."
+                      }
+                    },
+                    "required": [
+                      "page",
+                      "email",
+                      "conversations",
+                      "slack"
+                    ]
+                  }
+                },
+                "required": [
+                  "channels"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recipients per channel",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "counts": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "number"
+                        },
+                        "email": {
+                          "type": "number"
+                        },
+                        "conversations": {
+                          "type": "number"
+                        },
+                        "slack": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "page",
+                        "email",
+                        "conversations",
+                        "slack"
+                      ]
+                    },
+                    "slackConnected": {
+                      "type": "boolean",
+                      "description": "A Slack connection sends this board's comments."
+                    }
+                  },
+                  "required": [
+                    "counts",
+                    "slackConnected"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Post or segment not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
+    "/quills/{workspaceId}/posts/{postId}/updates": {
+      "post": {
+        "operationId": "sendQuillsPostUpdate",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Send an update about a post to its followers on every chosen channel",
+        "description": "Needs Quills update and manage_settings, and confirmRelease: true (no verified release record exists yet; a merged PR or a status change is not one). Page: a public team comment. Email: the followers that previewQuillsPostUpdate counts, each once. Conversations: a reply in each linked conversation, without reopening or claiming it; its customer gets no update mail. Slack: the page comment, through Slack connections that send the board's comments. A repeated idempotency key returns the first send.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "segmentIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "maxItems": 20,
+                    "default": [],
+                    "description": "Only customers in one of these segments. Empty: everyone."
+                  },
+                  "languages": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-z]{2,3}(-[a-z0-9]{2,8})*$"
+                    },
+                    "maxItems": 10,
+                    "default": [],
+                    "description": "Only customers whose language (preferred language, else locale) is one of these or a region of one (fr matches fr-CA). Empty: everyone."
+                  },
+                  "channels": {
+                    "type": "object",
+                    "properties": {
+                      "page": {
+                        "type": "boolean",
+                        "description": "A public team comment on the request."
+                      },
+                      "email": {
+                        "type": "boolean",
+                        "description": "Mail to the request's followers."
+                      },
+                      "conversations": {
+                        "type": "boolean",
+                        "description": "A reply in each support conversation linked to the request."
+                      },
+                      "slack": {
+                        "type": "boolean",
+                        "description": "The page comment, posted by each Slack connection that sends comments of the request's board. Needs page."
+                      }
+                    },
+                    "required": [
+                      "page",
+                      "email",
+                      "conversations",
+                      "slack"
+                    ]
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 5000
+                  },
+                  "confirmRelease": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "The sender confirms that the change shipped."
+                  },
+                  "idempotencyKey": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 100
+                  }
+                },
+                "required": [
+                  "channels",
+                  "body",
+                  "idempotencyKey"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The update and what it queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "updateId": {
+                      "type": "string"
+                    },
+                    "counts": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "number"
+                        },
+                        "email": {
+                          "type": "number"
+                        },
+                        "conversations": {
+                          "type": "number"
+                        },
+                        "slack": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "page",
+                        "email",
+                        "conversations",
+                        "slack"
+                      ]
+                    },
+                    "replayed": {
+                      "type": "boolean",
+                      "description": "The idempotency key named an earlier send: nothing was sent again."
+                    },
+                    "commentId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The page comment of this send; null on a replay or without the page channel."
+                    },
+                    "replies": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "messageId": {
+                            "type": "string"
+                          },
+                          "conversationId": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "messageId",
+                          "conversationId"
+                        ]
+                      },
+                      "description": "The reply of this send in each linked conversation; empty on a replay."
+                    }
+                  },
+                  "required": [
+                    "updateId",
+                    "counts",
+                    "replayed",
+                    "commentId",
+                    "replies"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Post or segment not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The release is not confirmed, or the idempotency key belongs to another post",
             "content": {
               "application/json": {
                 "schema": {

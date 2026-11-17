@@ -746,6 +746,44 @@ describe.skipIf(!url)("Quills integration delivery", () => {
     expect(hits).toHaveLength(1);
   });
 
+  it("sends an update's page comment to Slack only when the sender chose Slack (#92)", async () => {
+    const n8n = await connectN8n(["comment.created"]);
+    const slack = await stored("slack", { accessToken: "xoxb-test" });
+    await h.system(h.a, (db) =>
+      db.insert(integrationEventMappings).values({
+        integrationId: slack as TypeId<"integration">,
+        eventType: "comment.created",
+        actionType: "send_message",
+        targetKey: "C0123",
+        enabled: true,
+      }),
+    );
+    const { postId } = await makePost();
+    const commentId = await h.as(h.a, h.owner, async (db, actor) => {
+      const [row] = await db
+        .insert(postComments)
+        .values({ postId, principalId: actor.principalId, content: "Live" })
+        .returning({ id: postComments.id });
+      return row!.id;
+    });
+    const update = async (choice: string) =>
+      fanOutIntegrations(
+        h.a,
+        await h.emit(h.a, {
+          type: "comment.created",
+          entityType: "comment",
+          entityId: commentId,
+          payload: { postId, update: randomUUID(), slack: choice },
+        }),
+      );
+    await update("false");
+    expect(await ops(slack)).toHaveLength(0);
+    expect(await ops(n8n)).toHaveLength(1);
+    await update("true");
+    expect(await ops(slack)).toHaveLength(1);
+    expect(await ops(n8n)).toHaveLength(2);
+  });
+
   it("creates a Shortcut story, links it to the post and maps provider errors", async () => {
     respond = (req, res) =>
       req.url === "/api/v3/member"

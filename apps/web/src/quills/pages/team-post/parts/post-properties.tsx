@@ -25,7 +25,7 @@ export function PostProperties(props: PostPropertiesProps) {
         post={post}
         onSaved={props.onScoreSaved}
       />
-      <PostLinks workspaceId={workspaceId} postId={post.id} />
+      <PostLinks workspaceId={workspaceId} post={post} />
       <PostMerge workspaceId={workspaceId} post={post} />
       <PostAttachments workspaceId={workspaceId} post={post} />
       <PostPageContext post={post} />

@@ -10,6 +10,7 @@ export * from "./line-breaks";
 export * from "./magic-link";
 export * from "./messenger-install";
 export * from "./new-comment";
+export * from "./post-update";
 export * from "./new-sign-in";
 export * from "./note-mention";
 export * from "./onboarding-email";

@@ -12,6 +12,7 @@ import { useT } from "./i18n/useT.js";
 
 export function FeedbackView({
   posts,
+  identified = false,
   onOpen,
   onCompose,
   filters,
@@ -20,6 +21,7 @@ export function FeedbackView({
   offline,
 }: {
   posts: readonly FeedbackPost[];
+  identified?: boolean;
   onOpen: (id: string) => void;
   onCompose: () => void;
   filters: FeedbackFilters;
@@ -73,6 +75,7 @@ export function FeedbackView({
       {sort === "roadmap" ? (
         <RoadmapView
           posts={posts}
+          identified={identified}
           onOpen={onOpen}
           expanded={filters.roadmapExpanded ?? []}
           onVote={onVote}

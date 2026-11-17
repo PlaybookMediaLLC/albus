@@ -207,6 +207,7 @@ describe("sdk control surface", () => {
       type: "quackback:announce",
       entryId: "changelog_1",
       title: "Dark mode",
+      open: false,
     });
     const bubble = [...document.querySelectorAll("button")].find(
       (button) => button.textContent === "New: Dark mode",
@@ -229,6 +230,7 @@ describe("sdk control surface", () => {
       type: "quackback:announce",
       entryId: "changelog_2",
       title: "Exports",
+      open: false,
     });
     expect(sdk.isOpen()).toBe(true);
     sdk.dispatch("close");
@@ -237,6 +239,7 @@ describe("sdk control surface", () => {
       type: "quackback:announce",
       entryId: "changelog_2",
       title: "Exports",
+      open: false,
     });
     expect(sdk.isOpen()).toBe(false);
     sdk.dispatch("destroy");
@@ -247,13 +250,26 @@ describe("sdk control surface", () => {
       type: "quackback:announce",
       entryId: "changelog_3",
       title: "Quiet",
+      open: false,
     });
     expect(
       [...document.querySelectorAll("button")].some(
         (b) => b.textContent === "New: Quiet",
       ),
     ).toBe(false);
-    expect(announced).toHaveLength(4);
+    sdk.dispatch("destroy");
+
+    // The workspace opens each new update once for each visitor.
+    sdk.dispatch("init", init);
+    fromIframe({ type: "quackback:ready" });
+    fromIframe({
+      type: "quackback:announce",
+      entryId: "changelog_4",
+      title: "Opened",
+      open: true,
+    });
+    expect(sdk.isOpen()).toBe(true);
+    expect(announced).toHaveLength(5);
   });
   it("renders inline in a host element, always open, without a launcher or close", () => {
     stubIframe();

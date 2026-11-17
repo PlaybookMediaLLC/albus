@@ -706,15 +706,21 @@ describe("widget host page", () => {
     await screen.findByText("The team is away and replies soon.");
   });
 
-  it("announces the newest unread update to the SDK once", async () => {
+  it("announces a new update to the SDK once, after the server records it", async () => {
     const config = table["GET /widget/config.json"]!({}).body as {
       config: { tabs: Record<string, boolean> };
     };
     config.config.tabs.changelog = true;
     table["GET /widget/config.json"] = () => ({ body: config });
-    table["GET /widget/changelog/unread"] = () => ({ body: { count: 2 } });
-    table["GET /widget/changelog?limit=1"] = () => ({
-      body: { entries: [{ id: "changelog_1", title: "Dark mode" }] },
+    table["GET /widget/changelog/unread"] = () => ({
+      body: {
+        count: 2,
+        announce: { id: "changelog_1", title: "Dark mode" },
+        autoOpen: false,
+      },
+    });
+    table["PUT /widget/changelog/announced"] = () => ({
+      body: { announcedAt: "2026-11-17T00:00:00.000Z" },
     });
     mount();
     fromParent({ type: "quackback:identify", data: { ssoToken: "a.b.c" } });
@@ -724,9 +730,11 @@ describe("widget host page", () => {
           type: "quackback:announce",
           entryId: "changelog_1",
           title: "Dark mode",
+          open: false,
         },
       ]),
     );
+    expect(requested("PUT /widget/changelog/announced")).toHaveLength(1);
     expect(posted("quackback:unread").at(-1)?.[0]).toMatchObject({ count: 2 });
   });
 

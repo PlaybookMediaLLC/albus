@@ -51,6 +51,7 @@ export function WidgetView(props: WidgetViewProps) {
 function WidgetViewBody({
   brandName = "Quills",
   dir,
+  identified = false,
   theme = "auto",
   initialTab = "home",
   tabs: enabledTabs,
@@ -551,6 +552,7 @@ function WidgetViewBody({
         ) : tab === "feedback" ? (
           <FeedbackView
             posts={feedback}
+            identified={identified}
             onOpen={(id) => open("feedback", id)}
             onCompose={() => compose("feedback")}
             onVote={onVoteFeedback}

@@ -11,6 +11,7 @@ import {
 import {
   sendNewCommentEmail,
   sendPortalInviteEmail,
+  sendPostUpdateEmail,
   sendStatusChangeEmail,
   sendVerifyAddressEmail,
   type EmailResult,
@@ -26,6 +27,7 @@ import { boards } from "../../database/quills/schema/boards";
 import { events, type EventRow } from "../../database/quills/schema/events";
 import { postSubscriptions } from "../../database/quills/schema/notifications";
 import { boardProjects } from "../../database/quills/schema/platform-links";
+import { postUpdates } from "../../database/quills/schema/post-updates";
 import { postComments, posts } from "../../database/quills/schema/posts";
 import { postStatuses } from "../../database/quills/schema/statuses";
 import { webhooks } from "../../database/quills/schema/webhooks";
@@ -45,6 +47,9 @@ import {
   unsubscribeUrl,
 } from "../portal/unsubscribe-token";
 import { crmNoteDue } from "../integrations/crm-notes";
+import { taskRuleDue } from "../integrations/task-rule-job";
+import { taskFailureMessages } from "../integrations/post-task";
+import type { TaskFailure } from "../framework/platform-reads";
 import { githubCommentDue } from "./handlers/github-comment";
 import { shippedSubscribers } from "./handlers/shipped-mail";
 import { statusSubscribers } from "./handlers/status-mail";
@@ -348,6 +353,8 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
       };
     },
     mail: async (db, event, principalId) => {
+      // An update's page comment (#92): its own mail went to the followers that the sender chose.
+      if (payloadOf(event).update) return undefined;
       const comment = await liveComment(db, event);
       const post = comment && (await livePost(db, comment.postId));
       const workspace = await workspaceOf(db);
@@ -374,6 +381,75 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
             commenterName: comment.author ?? "Someone",
             commentPreview: clip(comment.content, 150),
             isTeamMember: comment.authorKaneoUserId !== null,
+            workspaceName: workspace.name,
+            unsubscribeUrl: unsubscribePageUrl(workspace.id, token),
+            oneClickUnsubscribeUrl: unsubscribeUrl(workspace.id, token),
+          }),
+      };
+    },
+  },
+  // RFC 0005, 5.2: only the teammate whose status change the board rule could not turn into a task.
+  "post.task_create_failed": {
+    recipients: async (_db, event) => {
+      const { principalId } = payloadOf(event);
+      return {
+        principalIds: principalId ? [principalId as PrincipalId] : [],
+        postId: postIdOf(event),
+      };
+    },
+    notification: async (db, event) => {
+      const post = await livePost(db, postIdOf(event));
+      const reason = payloadOf(event).reason as TaskFailure | undefined;
+      if (!post || !reason || !(reason in taskFailureMessages))
+        return undefined;
+      return {
+        type: "task_create_failed",
+        title: clip(`No task was created for "${post.title}"`, 255),
+        body: clip(taskFailureMessages[reason], 500),
+        postId: post.id,
+      };
+    },
+  },
+  // #92: the followers that the send decided, each once; the mail worker checks each again at send time.
+  "post.update_sent": {
+    recipients: async (db, event) => {
+      const [update] = await db
+        .select({
+          postId: postUpdates.postId,
+          recipientIds: postUpdates.recipientIds,
+        })
+        .from(postUpdates)
+        .where(eq(postUpdates.id, payloadOf(event).updateId ?? ""));
+      return {
+        principalIds: (update?.recipientIds ?? []) as PrincipalId[],
+        postId: update?.postId,
+      };
+    },
+    customers: true,
+    mail: async (db, event, principalId) => {
+      const [update] = await db
+        .select({ postId: postUpdates.postId, body: postUpdates.body })
+        .from(postUpdates)
+        .where(eq(postUpdates.id, payloadOf(event).updateId ?? ""));
+      const post = update && (await livePost(db, update.postId));
+      const workspace = await workspaceOf(db);
+      if (!update || !post || !workspace || !principalId) return undefined;
+      const token = await mintUnsubscribeToken(
+        db,
+        principalId,
+        "unsubscribe_post",
+        post.id,
+      );
+      return {
+        type: "post_update",
+        emailType: "PostUpdateEmail",
+        postId: post.id,
+        send: (to) =>
+          sendPostUpdateEmail({
+            to,
+            postTitle: post.title,
+            postUrl: postUrl(workspace.id, post.id),
+            body: update.body,
             workspaceName: workspace.name,
             unsubscribeUrl: unsubscribePageUrl(workspace.id, token),
             oneClickUnsubscribeUrl: unsubscribeUrl(workspace.id, token),
@@ -495,6 +571,8 @@ export async function fanOut(workspaceId: string, eventId: string) {
         5,
       );
     await enqueueWorkflowRuns(db, event);
+    // RFC 0005: a teammate's status change can create a Kaneo task or comment on the linked tasks.
+    await taskRuleDue(db, event);
     // Private comments stay inside the workspace. A board filter applies only to events about a board.
     const { boardId, isPrivate } = await placeOf(db, event);
     const hooks = isPrivate

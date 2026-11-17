@@ -44,6 +44,7 @@ export * from "./user-attributes";
 export * from "./user-tags";
 export * from "./merge-suggestions";
 export * from "./activity";
+export * from "./post-updates";
 export * from "./ai-usage-log";
 export * from "./email-log";
 export * from "./kb";

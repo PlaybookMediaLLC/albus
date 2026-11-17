@@ -59,9 +59,15 @@ test("demoEnv points every URL and the database at the demo stack", () => {
   assert.equal(env.SMTP_HOST, "127.0.0.1");
   assert.equal(env.SMTP_PORT, "4");
   assert.equal(env.SMTP_SECURE, "false");
+  // Quills mail goes to the same catcher, with no login.
+  assert.equal(env.EMAIL_SMTP_HOST, "127.0.0.1");
+  assert.equal(env.EMAIL_SMTP_PORT, "4");
+  assert.equal(env.EMAIL_SMTP_SECURE, "false");
+  assert.equal(env.EMAIL_FROM, "Kaneo demo <demo@example.test>");
   for (const key of [
     "SMTP_USER",
-    "EMAIL_SMTP_HOST",
+    "EMAIL_SMTP_USER",
+    "EMAIL_SMTP_PASS",
     "RESEND_API_KEY",
     "REDIS_URL",
   ])

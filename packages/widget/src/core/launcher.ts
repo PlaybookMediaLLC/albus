@@ -212,7 +212,14 @@ export function createLauncher(opts: LauncherOptions): LauncherHandle {
   });
   bubbleText.addEventListener(
     "click",
-    () => (announcement ? announcement.onClick() : opts.onClick()),
+    () => {
+      const open = announcement?.onClick;
+      if (!open) return opts.onClick();
+      // An update is announced once: the greeting comes back.
+      announcement = null;
+      renderGreeting();
+      open();
+    },
     listen,
   );
   const bubbleClose = document.createElement("button");
