@@ -2099,6 +2099,8 @@ const groups = {
         null,
         { timeout: 40000 },
       );
+      // Read before the thread opens: reading the reply clears the count.
+      const unread = (await log()).match(/unread \{"count":(\d+)\}/)?.[1];
       const badge = await page
         .locator(".quackback-launcher")
         .first()
@@ -2115,7 +2117,6 @@ const groups = {
         .first()
         .waitFor({ timeout: 15000 });
       const shotPath = await shot("28-team-reply");
-      const unread = (await log()).match(/unread \{"count":(\d+)\}/)?.[1];
       return {
         expected:
           "A teammate reply reaches the widget: the host gets unread {count:1} while the panel is closed, the launcher shows it, and the thread shows the reply",
