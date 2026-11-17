@@ -180,6 +180,7 @@
 			"guestError": "访客登录失败",
 			"errors": {
 				"account_not_linked": "该身份无法关联到现有账户。请先用邮箱登录以验证账户，然后再尝试 SSO。如果无法使用邮箱登录，请联系管理员。",
+				"invalid_token": "此登录链接已过期或已被使用。请重新登录以继续。",
 				"oauth_code_verification_failed": "OAuth 校验失败，请重试。",
 				"registration_is_currently_disabled_you_need_a_valid_invitation_to_create_an_account_": "已关闭注册。创建账户需要有效的邀请。",
 				"use_a_permanent_email_address_disposable_addresses_cannot_create_accounts_": "请使用长期有效的邮箱地址。一次性邮箱无法创建账户。"
