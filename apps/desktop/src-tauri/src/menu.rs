@@ -8,23 +8,28 @@ use tauri::{
 use crate::{text::t, updates, window};
 
 pub fn build(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
-    let mut app_menu = SubmenuBuilder::new(app, "Quills")
-        .about_with_text(t("menu.about"), None)
-        .separator();
+    // On Windows, muda shows these items but they do nothing, and Hide removes the window until
+    // the next start. So only macOS gets them.
+    let macos = cfg!(target_os = "macos");
+    let mut app_menu = SubmenuBuilder::new(app, "Quills");
+    if macos {
+        app_menu = app_menu.about_with_text(t("menu.about"), None).separator();
+    }
     if updates::enabled(app) {
         app_menu = app_menu
             .text("check-updates", t("menu.checkUpdates"))
             .separator();
     }
-    let app_menu = app_menu
-        .services_with_text(t("menu.services"))
-        .separator()
-        .hide_with_text(t("menu.hide"))
-        .hide_others_with_text(t("menu.hideOthers"))
-        .show_all_with_text(t("menu.showAll"))
-        .separator()
-        .quit_with_text(t("menu.quit"))
-        .build()?;
+    if macos {
+        app_menu = app_menu
+            .services_with_text(t("menu.services"))
+            .separator()
+            .hide_with_text(t("menu.hide"))
+            .hide_others_with_text(t("menu.hideOthers"))
+            .show_all_with_text(t("menu.showAll"))
+            .separator();
+    }
+    let app_menu = app_menu.quit_with_text(t("menu.quit")).build()?;
     let edit = SubmenuBuilder::new(app, t("menu.edit"))
         .undo_with_text(t("menu.undo"))
         .redo_with_text(t("menu.redo"))
@@ -39,13 +44,14 @@ pub fn build(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
             .accelerator(accelerator)
             .build(app)
     };
-    let view = SubmenuBuilder::new(app, t("menu.view"))
+    let mut view = SubmenuBuilder::new(app, t("menu.view"))
         .item(&item("reload", "menu.reload", "CmdOrCtrl+R")?)
         .item(&item("back", "menu.back", "CmdOrCtrl+[")?)
-        .item(&item("forward", "menu.forward", "CmdOrCtrl+]")?)
-        .separator()
-        .fullscreen_with_text(t("menu.fullScreen"))
-        .build()?;
+        .item(&item("forward", "menu.forward", "CmdOrCtrl+]")?);
+    if macos {
+        view = view.separator().fullscreen_with_text(t("menu.fullScreen"));
+    }
+    let view = view.build()?;
     let account = SubmenuBuilder::new(app, t("menu.account"))
         .text("sign-in", t("menu.signIn"))
         .text("change-server", t("menu.changeServer"))
