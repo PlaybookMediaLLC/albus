@@ -42,7 +42,7 @@ The URLs use `127.0.0.1`, not `localhost`. Thus the browser keeps the demo sessi
 ## Sign-in
 
 Sign-in uses email and password, or a sign-in link or code: Kaneo's mail goes to the local mail
-inbox, never out. The widget's "Open in portal" link lands there too. The accounts are local test
+inbox, never out. So does Quills mail: status changes, shipped notices and request updates. The widget's "Open in portal" link lands there too. The accounts are local test
 accounts only:
 
 - Teammate (workspace owner): `portal-demo@example.test`
@@ -64,9 +64,9 @@ Both use the password that the command prints at start.
   the key.
 
 The API loads a root `.env`, but values that the command sets win. The command points Kaneo's
-mail (`SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`, no TLS, no login) at the local Mailpit, and sets the
-other mail variables (`EMAIL_SMTP_HOST`, the Resend keys and `EMAIL_SES_ACCESS_KEY_ID`), the Redis
-variables and, when AI is off, `QUILLS_AI_API_KEY` to empty values. Thus no mail leaves the
+mail (`SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`) and Quills mail (`EMAIL_SMTP_HOST`,
+`EMAIL_SMTP_PORT`, `EMAIL_FROM`) at the local Mailpit, with no TLS and no login, and sets the
+other mail variables (the Resend keys and `EMAIL_SES_ACCESS_KEY_ID`), the Redis variables and, when AI is off, `QUILLS_AI_API_KEY` to empty values. Thus no mail leaves the
 machine, the demo uses no shared Redis, and AI stays off without the AI file. Only the API gets
 the AI key.
 

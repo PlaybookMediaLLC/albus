@@ -1,4 +1,4 @@
-import { and, eq, gt, sql } from "drizzle-orm";
+import { and, desc, eq, gt, sql } from "drizzle-orm";
 import type { ChangelogId } from "@kaneo/ids";
 import { flexibleToTypeIdSchema } from "@kaneo/ids/zod";
 import { apiRouter, responseTimestamp, z } from "../../openapi";
@@ -10,6 +10,8 @@ import { changelogEntries } from "../../database/quills/schema/changelog";
 import { FEEDBACK_REACTION_EMOJIS } from "../../database/quills/schema/posts";
 import { defineQuillsRoute, type Database } from "../framework/define-route";
 import { notFound } from "../feedback/visibility";
+import { widgetAutoOpen } from "../feedback/changelog-settings";
+import { principal } from "../../database/quills/schema/auth";
 import {
   entryVisible,
   reactionList,
@@ -160,11 +162,26 @@ export const getChangelogUnread = (audience: Customer) =>
     summary: "Count the changelog entries that the caller has not read",
     description: `Published entries that the caller may see, published after its read mark. At most ${UNREAD_CAP}. Zero without a customer profile.`,
     action: "read",
-    response: z.object({ count: z.number() }),
-    responseDescription: "The unread count",
+    response: z.object({
+      count: z.number(),
+      announce: z
+        .object({ id: z.string(), title: z.string() })
+        .nullable()
+        .openapi({
+          description:
+            "The newest unread entry that the caller may see and has not been shown on the launcher yet (#108). Null: none.",
+        }),
+      autoOpen: z.boolean().openapi({
+        description:
+          "Open the widget to `announce` instead of showing its title (changelog setting widgetAutoOpen).",
+      }),
+    }),
+    responseDescription: "The unread count and the launcher announcement",
     handler: async ({ db, caller }) => {
       const viewer = await viewerFor(db, audience, caller);
-      if (!viewer.principalId) return { count: 0 };
+      if (!viewer.principalId)
+        return { count: 0, announce: null, autoOpen: false };
+      const me = viewer.principalId;
       const unread = db
         .select({ id: changelogEntries.id })
         .from(changelogEntries)
@@ -179,7 +196,62 @@ export const getChangelogUnread = (audience: Customer) =>
       const [row] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(unread);
-      return { count: row?.count ?? 0 };
+      const [announce] = await db
+        .select({ id: changelogEntries.id, title: changelogEntries.title })
+        .from(changelogEntries)
+        .where(
+          and(
+            entryVisible(viewer),
+            gt(changelogEntries.publishedAt, readMark(me)),
+            gt(
+              changelogEntries.publishedAt,
+              sql`coalesce((select ${changelogReads.announcedAt} from ${changelogReads} where ${changelogReads.principalId} = ${sql.param(me, changelogReads.principalId)}), '-infinity'::timestamptz)`,
+            ),
+          ),
+        )
+        .orderBy(desc(changelogEntries.publishedAt), desc(changelogEntries.id))
+        .limit(1);
+      return {
+        count: row?.count ?? 0,
+        announce: announce ?? null,
+        autoOpen: Boolean(announce) && (await widgetAutoOpen(db)),
+      };
+    },
+  });
+
+export const markChangelogAnnounced = (audience: Customer) =>
+  defineQuillsRoute({
+    audience,
+    ensureCustomer: audience === "portal",
+    method: "put",
+    path: `/${audience}/changelog/announced`,
+    operationId: `markQuills${title(audience)}ChangelogAnnounced`,
+    summary: "Record that the launcher showed the caller the newest entry",
+    description:
+      "Moves the caller's announced mark to now, so the launcher shows each entry's title once (#108). The read mark and the unread count do not change.",
+    action: "update",
+    rateLimit: { limit: 120, windowSeconds: 600 },
+    response: z.object({ announcedAt: responseTimestamp }),
+    responseDescription: "The caller's new announced mark",
+    event: {
+      none: "The caller's own announced mark; no shared record changes.",
+    },
+    handler: async ({ db, caller }) => {
+      const me = principalOf(await viewerFor(db, audience, caller));
+      // A new row keeps the read mark where readMark starts it: the caller's creation time.
+      const [row] = await db
+        .insert(changelogReads)
+        .values({
+          principalId: me,
+          lastReadAt: sql`(select ${principal.createdAt} from ${principal} where ${principal.id} = ${sql.param(me, principal.id)})`,
+          announcedAt: sql`now()`,
+        })
+        .onConflictDoUpdate({
+          target: [changelogReads.workspaceId, changelogReads.principalId],
+          set: { announcedAt: sql`now()` },
+        })
+        .returning({ announcedAt: changelogReads.announcedAt });
+      return { announcedAt: row!.announcedAt! };
     },
   });
 
@@ -188,4 +260,5 @@ export const changelogEngagementRoutes = (audience: Customer) =>
   apiRouter()
     .openapi(...getChangelogUnread(audience))
     .openapi(...markChangelogRead(audience))
+    .openapi(...markChangelogAnnounced(audience))
     .openapi(...setChangelogReaction(audience));

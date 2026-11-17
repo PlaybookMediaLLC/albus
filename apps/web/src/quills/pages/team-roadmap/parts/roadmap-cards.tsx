@@ -26,6 +26,7 @@ export interface RoadmapCardsProps {
   onFocused?: () => void;
   /** Changes the status of a card. Left out without the update permission. */
   onMove?: (post: RoadmapPost, statusId: string, byMenu?: boolean) => void;
+  onTask?: (post: RoadmapPost, kind: "create" | "link") => void;
 }
 
 /**
@@ -78,6 +79,7 @@ export function RoadmapCards({ statusId, ...props }: RoadmapCardsProps) {
                 board={props.boards.get(post.boardId) ?? null}
                 statuses={props.statuses}
                 onMove={props.onMove}
+                onTask={props.onTask}
                 focus={post.id === props.focusId}
                 onFocused={props.onFocused}
               />

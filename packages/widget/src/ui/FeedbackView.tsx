@@ -7,12 +7,14 @@ import type { FeedbackPost, FeedbackFilters } from "./types.js";
 
 export function FeedbackView({
   posts,
+  identified = false,
   onOpen,
   onCompose,
   filters,
   onFilters,
 }: {
   posts: readonly FeedbackPost[];
+  identified?: boolean;
   onOpen: (id: string) => void;
   onCompose: () => void;
   filters: FeedbackFilters;
@@ -63,6 +65,7 @@ export function FeedbackView({
       {sort === "roadmap" ? (
         <RoadmapView
           posts={posts}
+          identified={identified}
           onOpen={onOpen}
           expanded={filters.roadmapExpanded ?? []}
           onExpanded={(roadmapExpanded) =>

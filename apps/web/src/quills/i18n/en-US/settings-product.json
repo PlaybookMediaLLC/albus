@@ -45,6 +45,8 @@
 		"title": "Tags"
 	},
 	"changelog": {
+		"autoOpen": "Open new updates in the widget",
+		"autoOpenText": "On a customer's next visit, the widget opens the newest update once. Off: the launcher shows its title once.",
 		"description": "Publish your product updates on the portal, in the widget and in an RSS feed.",
 		"public": "Public changelog",
 		"publicText": "Show the changelog on the portal, in the widget and in the RSS feed.",

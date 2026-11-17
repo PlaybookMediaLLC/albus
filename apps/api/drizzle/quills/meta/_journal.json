@@ -239,6 +239,27 @@
 			"when": 1794906174344,
 			"tag": "0033_quills_view_revenue",
 			"breakpoints": true
+		},
+		{
+			"idx": 34,
+			"version": "7",
+			"when": 1794909946146,
+			"tag": "0034_post_task_source",
+			"breakpoints": true
+		},
+		{
+			"idx": 35,
+			"version": "7",
+			"when": 1794909949536,
+			"tag": "0035_changelog_announced",
+			"breakpoints": true
+		},
+		{
+			"idx": 36,
+			"version": "7",
+			"when": 1794910771728,
+			"tag": "0036_post_updates",
+			"breakpoints": true
 		}
 	]
 }

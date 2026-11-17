@@ -55,6 +55,9 @@ export const portalPaths = {
   // The conversation in the teammate app (RFC 0004).
   teammateConversation: (workspaceId: string, conversationId: string) =>
     `${clientBase()}/feedback/${encodeURIComponent(workspaceId)}/conversations/${encodeURIComponent(conversationId)}`,
+  // The request in the teammate app: the link back from a Kaneo task (RFC 0005).
+  teammatePost: (workspaceId: string, postId: string) =>
+    `${clientBase()}/feedback/${encodeURIComponent(workspaceId)}/posts/${encodeURIComponent(postId)}`,
 } as const;
 
 export const portalPathPatterns = [

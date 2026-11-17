@@ -45,6 +45,7 @@ export interface RoadmapColumnProps {
   onFocused?: () => void;
   /** Changes the status of a card. Left out without the update permission. */
   onMove?: (post: RoadmapPost, statusId: string, byMenu?: boolean) => void;
+  onTask?: (post: RoadmapPost, kind: "create" | "link") => void;
 }
 
 /** A roadmap column of one status. A collapsed column is a narrow strip that loads nothing. */
@@ -158,6 +159,7 @@ export function RoadmapColumn({ status, ...props }: RoadmapColumnProps) {
           focusId={props.focusId}
           onFocused={props.onFocused}
           onMove={props.onMove}
+          onTask={props.onTask}
         />
         {props.onCreate ? (
           <Button

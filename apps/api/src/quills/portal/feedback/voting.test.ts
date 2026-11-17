@@ -226,6 +226,40 @@ describe.skipIf(!url)("Quills customer voting", () => {
     expect(row!.importance).toBeNull();
   });
 
+  it("tells each caller only about its own vote: the widget's For you mark (#109)", async () => {
+    const env = contractEnv();
+    const {
+      boardId,
+      postIds: [postId],
+    } = await board(1, "Roadmap CSV");
+    const voted = await request("PUT", `/portal/posts/${postId}/vote`, {
+      user: env.customerA,
+      body: { voted: true },
+    });
+    expect(voted.body).toMatchObject({ voted: true });
+    const listFor = async (options: { user?: string; bearer?: string }) =>
+      (
+        await request(
+          "GET",
+          `/${options.bearer ? "widget" : "portal"}/posts?boardId=${boardId}`,
+          options,
+        )
+      ).body.items.find((item: { id: string }) => item.id === postId);
+    expect(await listFor({ user: env.customerA })).toMatchObject({
+      voted: true,
+    });
+    const other = await listFor({ user: env.customerB });
+    expect(other).toMatchObject({ voted: false });
+    const visitor = await env.widgetVisitor(env.a);
+    const guest = await listFor({ bearer: visitor.token });
+    expect(guest).toMatchObject({ voted: false });
+    // An aggregate count only: no response names who voted.
+    for (const item of [other, guest]) {
+      expect(item).not.toHaveProperty("voters");
+      expect(JSON.stringify(item)).not.toContain(env.customerA);
+    }
+  });
+
   it("leaves vote counts out of every customer response when the board hides them", async () => {
     const env = contractEnv();
     const { boardId, postIds } = await board(2, "Zanzibar");

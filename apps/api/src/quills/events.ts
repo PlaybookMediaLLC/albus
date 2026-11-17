@@ -35,6 +35,10 @@ export const changeSchema = z.object({
     "board.project_unlinked",
     "post.task_linked",
     "post.task_unlinked",
+    // RFC 0005: the board rule made no task; the payload names the teammate to tell and the reason.
+    "post.task_create_failed",
+    // #92: one update to the request's followers on every chosen channel; the payload names the update.
+    "post.update_sent",
     "team.bound",
     "team.unbound",
     "workspace.imported",

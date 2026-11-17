@@ -201,6 +201,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/storage",
   },
   {
+    operationId: "clearQuillsBoardDelivery",
+    method: "DELETE",
+    path: "/api/quills/{workspaceId}/boards/{boardId}/delivery",
+  },
+  {
     operationId: "clearQuillsInboundForwarding",
     method: "DELETE",
     path: "/api/quills/{workspaceId}/support/email-channel/inbound/forwarding",
@@ -389,6 +394,11 @@ export const quillsOperationRoutes = [
     operationId: "createQuillsPostFromTicket",
     method: "POST",
     path: "/api/quills/{workspaceId}/tickets/{ticketId}/posts",
+  },
+  {
+    operationId: "createQuillsPostTask",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/posts/{postId}/tasks",
   },
   {
     operationId: "createQuillsPostView",
@@ -2171,6 +2181,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/posts",
   },
   {
+    operationId: "listQuillsPostTasks",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/posts/{postId}/tasks",
+  },
+  {
     operationId: "listQuillsPostViews",
     method: "GET",
     path: "/api/quills/{workspaceId}/post-views",
@@ -2496,6 +2511,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/notifications/{notificationId}/read",
   },
   {
+    operationId: "markQuillsPortalChangelogAnnounced",
+    method: "PUT",
+    path: "/api/quills-public/{workspace}/portal/changelog/announced",
+  },
+  {
     operationId: "markQuillsPortalChangelogRead",
     method: "PUT",
     path: "/api/quills-public/{workspace}/portal/changelog/read",
@@ -2509,6 +2529,11 @@ export const quillsOperationRoutes = [
     operationId: "markQuillsTicketUnread",
     method: "POST",
     path: "/api/quills/{workspaceId}/tickets/{ticketId}/unread",
+  },
+  {
+    operationId: "markQuillsWidgetChangelogAnnounced",
+    method: "PUT",
+    path: "/api/quills-public/{workspace}/widget/changelog/announced",
   },
   {
     operationId: "markQuillsWidgetChangelogRead",
@@ -2569,6 +2594,11 @@ export const quillsOperationRoutes = [
     operationId: "previewQuillsAttributeDetection",
     method: "POST",
     path: "/api/quills/{workspaceId}/conversation-attributes/{attributeId}/detection-preview",
+  },
+  {
+    operationId: "previewQuillsPostUpdate",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/posts/{postId}/updates/preview",
   },
   {
     operationId: "previewQuillsUnsubscribeToken",
@@ -3121,6 +3151,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/portal/invites",
   },
   {
+    operationId: "sendQuillsPostUpdate",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/posts/{postId}/updates",
+  },
+  {
     operationId: "sendQuillsWidgetConversationMessage",
     method: "POST",
     path: "/api/quills-public/{workspace}/widget/conversations/{conversationId}/messages",
@@ -3139,6 +3174,11 @@ export const quillsOperationRoutes = [
     operationId: "setQuillsAgentAvailability",
     method: "PUT",
     path: "/api/quills/{workspaceId}/support/availability",
+  },
+  {
+    operationId: "setQuillsBoardDelivery",
+    method: "PUT",
+    path: "/api/quills/{workspaceId}/boards/{boardId}/delivery",
   },
   {
     operationId: "setQuillsChangelogSubscriber",

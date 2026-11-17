@@ -168,6 +168,13 @@ export function WidgetHost({
         } as OutboundMessage),
       unread: (count) =>
         bridge.current?.post({ type: "quackback:unread", count }),
+      announce: (entry, open) =>
+        bridge.current?.post({
+          type: "quackback:announce",
+          entryId: entry.id,
+          title: entry.title,
+          open,
+        }),
       expired: visitor.expire,
     },
   });
@@ -197,6 +204,7 @@ export function WidgetHost({
     <WidgetView
       key={visitor.visitor}
       dir={dir}
+      identified={visitor.identified}
       theme={ready ? config.theme : "auto"}
       // Until the config arrives no tab is known to be on.
       tabs={ready ? config.tabs : []}

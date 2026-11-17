@@ -10,6 +10,7 @@ import { describePageContract } from "../../test/contracts";
 import { mockApi } from "../../test/mock-api";
 import { listBoardsFixture } from "../../api/team/list-boards.fixture";
 import { listSegmentsFixture } from "../../api/team/list-segments.fixture";
+import { setBoardDeliveryFixture } from "../../api/team/set-board-delivery.fixture";
 import { meta } from "./meta";
 import { TeamBoardsPage } from "./team-boards-page";
 const board = {
@@ -41,13 +42,16 @@ const complete = {
   isDefault: false,
   createdAt: "2026-01-01T00:00:00.000Z",
 };
-/** The four page queries: one board, one segment, its settings and the statuses. */
-const prepare = () => {
+const project = { id: "project_web", name: "Web", archivedAt: null };
+/** The page queries: one board, one segment, its settings, the statuses and Kaneo's projects. */
+const prepare = (projects: unknown[] = []) => {
   const api = mockApi();
   api.reply(listBoardsFixture.ok({ items: [board] }));
   api.reply(listSegmentsFixture.ok({ segments: [segment] }));
   api.reply(getBoardSettingsFixture.ok({ boardId: board.id }));
   api.reply(listStatusesFixture.ok({ statuses: [complete] }));
+  // The delivery form reads Kaneo's projects (RFC 0005).
+  api.reply(projects);
   return api;
 };
 let api: ReturnType<typeof mockApi>;
@@ -164,6 +168,8 @@ describe("TeamBoardsPage", () => {
       }),
     );
     api.reply(listStatusesFixture.ok({ statuses: [complete] }));
+    // The delivery form reads Kaneo's projects (RFC 0005).
+    api.reply([]);
     api.reply(updateBoardSettingsFixture.ok({ boardId: board.id }));
     api.reply(getBoardSettingsFixture.ok({ boardId: board.id }));
     const view = renderPage(TeamBoardsPage, meta);
@@ -205,6 +211,35 @@ describe("TeamBoardsPage", () => {
           internal: true,
         },
       ],
+    });
+  });
+
+  it("saves the board's delivery project and task rule", async () => {
+    const api = prepare([project]);
+    api.reply([{ id: "column_todo", name: "To do" }]);
+    api.reply(
+      setBoardDeliveryFixture.ok({
+        projectId: project.id,
+        columnId: null,
+        priority: "medium",
+        triggerStatusId: complete.id,
+      }),
+    );
+    api.reply(getBoardSettingsFixture.ok({ boardId: board.id }));
+    const view = renderPage(TeamBoardsPage, meta);
+    const trigger =
+      "When a teammate moves a request to this status, create a task as them";
+    await view.findByRole("combobox", { name: trigger });
+    await choose(trigger, "Complete");
+    press("Save delivery");
+    await waitFor(() =>
+      expect(api.calls("setQuillsBoardDelivery")).toHaveLength(1),
+    );
+    expect(await api.calls("setQuillsBoardDelivery")[0]!.json()).toEqual({
+      projectId: project.id,
+      columnId: null,
+      priority: "medium",
+      triggerStatusId: complete.id,
     });
   });
 

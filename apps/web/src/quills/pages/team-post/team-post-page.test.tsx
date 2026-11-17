@@ -3,7 +3,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { createCommentFixture } from "../../api/team/create-comment.fixture";
 import { deletePostFixture } from "../../api/team/delete-post.fixture";
 import { getLinkedConversationsForPostFixture } from "../../api/team/get-linked-conversations-for-post.fixture";
-import { listLinksFixture } from "../../api/team/list-links.fixture";
+import { listPostTasksFixture } from "../../api/team/list-post-tasks.fixture";
 import { listMergedPostsFixture } from "../../api/team/list-merged-posts.fixture";
 import { mergePostFixture } from "../../api/team/merge-post.fixture";
 import { setPostStatusFixture } from "../../api/team/set-post-status.fixture";
@@ -44,7 +44,7 @@ const reads = (overrides: Record<string, Answer> = {}) => ({
   listQuillsPosts: inboxPosts,
   listQuillsPostVoters: postVoters,
   getQuillsPostDemand: postDemand,
-  listQuillsLinks: listLinksFixture.ok(),
+  listQuillsPostTasks: listPostTasksFixture.ok(),
   getQuillsLinkedConversationsForPost:
     getLinkedConversationsForPostFixture.ok(),
   listQuillsMergedPosts: listMergedPostsFixture.ok(),

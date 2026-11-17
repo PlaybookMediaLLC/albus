@@ -671,12 +671,20 @@ const setStatus = defineQuillsRoute({
   response: postSchema,
   responseDescription: "Updated post",
   errors,
-  event: ({ params, body }) => ({
-    type: "post.status_changed",
-    entityType: "post",
-    entityId: params.postId,
-    payload: { statusId: body.statusId },
-  }),
+  // The previous status lets the board task rule tell a move back (RFC 0005, decision 3).
+  event: ({ params, body }, _result, raw) => {
+    const previous = (raw as { previousStatusId?: string | null })
+      .previousStatusId;
+    return {
+      type: "post.status_changed",
+      entityType: "post",
+      entityId: params.postId,
+      payload: {
+        statusId: body.statusId,
+        ...(previous && { previousStatusId: previous }),
+      },
+    };
+  },
   load: loadProjects,
   handler: async ({ db, actor, params, body, loaded: projects }) => {
     const post = await findPost(db, params.postId, projects);
@@ -703,7 +711,10 @@ const setStatus = defineQuillsRoute({
         },
       });
     }
-    return loadPost(db, post.id);
+    // The response schema leaves the extra key out; the event above reads it.
+    return Object.assign(await loadPost(db, post.id), {
+      previousStatusId: post.statusId,
+    });
   },
 });
 

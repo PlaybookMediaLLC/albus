@@ -164,7 +164,7 @@ const loadComment = async (
  * caller locked with lockMergeTarget before its first write. Private and held comments, and
  * comments by or on test customers, never count, as in the source.
  */
-async function countComment(
+export async function countComment(
   db: Database,
   comment: {
     postId: TypeId<"post">;

@@ -1,4 +1,23 @@
 {
+	"delivery": {
+		"column": "Column of new tasks",
+		"firstColumn": "First open column",
+		"note": "Tasks from this board's requests go to this project. It does not change who sees the board.",
+		"off": "Do not create tasks",
+		"priorities": {
+			"high": "High",
+			"low": "Low",
+			"medium": "Medium",
+			"no-priority": "No priority",
+			"urgent": "Urgent"
+		},
+		"priority": "Priority of new tasks",
+		"project": "Delivery project",
+		"remove": "Remove delivery project",
+		"save": "Save delivery",
+		"title": "Delivery",
+		"trigger": "When a teammate moves a request to this status, create a task as them"
+	},
 	"none": "Do not change the status",
 	"save": "Save task sync",
 	"statusOnTaskDone": "When a linked task is done, set the status to",

@@ -71,6 +71,8 @@ export const changelogReads = quillsSchema
       lastReadAt: timestamp("last_read_at", { withTimezone: true })
         .defaultNow()
         .notNull(),
+      /** The widget launcher showed the titles of entries published before this (#108). Null: none yet. */
+      announcedAt: timestamp("announced_at", { withTimezone: true }),
     },
     (table) => [
       primaryKey({ columns: [table.workspaceId, table.principalId] }),

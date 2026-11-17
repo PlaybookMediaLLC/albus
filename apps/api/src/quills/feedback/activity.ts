@@ -53,12 +53,16 @@ type Activity =
   | {
       type: "comment.deleted" | "comment.removed" | "comment.restored";
       metadata: { commentId: string; commentAuthorPrincipalId: string };
-    };
+    }
+  // RFC 0005: a Kaneo task made from the request, or why the board rule made none. No task fields:
+  // the request page shows the task only to teammates who can open its project.
+  | { type: "task.created"; metadata: { source: "manual" | "rule" } }
+  | { type: "task.create_failed"; metadata: { reason: string } };
 
 /** Records one post activity row in the request transaction. */
 export async function recordActivity(
   db: Database,
-  actor: QuillsActor,
+  actor: Pick<QuillsActor, "principalId">,
   postId: TypeId<"post">,
   activity: Activity,
 ) {
@@ -93,4 +97,5 @@ export const activityMetadata = z.object({
   source: text,
   commentId: text,
   commentAuthorPrincipalId: text,
+  reason: text,
 });
