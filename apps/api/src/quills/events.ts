@@ -129,6 +129,9 @@ export const changeSchema = z.object({
     "changelog.updated",
     "changelog.published",
     "changelog.deleted",
+    // Issue #76: a teammate wrote or removed an entry's version in one language.
+    "changelog.translation_saved",
+    "changelog.translation_deleted",
     "changelog.category_created",
     "changelog.category_updated",
     "changelog.category_deleted",

@@ -78,7 +78,10 @@ export function RoadmapBoard(props: RoadmapBoardProps) {
               disabled={start === 0}
               onClick={() => setOffset(start - 3)}
             >
-              <IconChevronLeftOutline18 aria-hidden="true" />
+              <IconChevronLeftOutline18
+                aria-hidden="true"
+                className="rtl:-scale-x-100"
+              />
             </Button>
             <Button
               variant="ghost"
@@ -87,7 +90,10 @@ export function RoadmapBoard(props: RoadmapBoardProps) {
               disabled={start + 3 >= columns.length}
               onClick={() => setOffset(start + 3)}
             >
-              <IconChevronRightOutline18 aria-hidden="true" />
+              <IconChevronRightOutline18
+                aria-hidden="true"
+                className="rtl:-scale-x-100"
+              />
             </Button>
           </div>
         ) : null}

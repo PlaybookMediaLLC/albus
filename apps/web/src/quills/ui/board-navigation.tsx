@@ -18,7 +18,7 @@ export interface BoardNavigationProps {
 const section =
   "[&_h2]:mb-2 [&_h2]:text-xs [&_h2]:font-medium [&_h2]:text-muted-foreground";
 const item =
-  "flex w-full items-center gap-2 whitespace-nowrap rounded-md py-1 text-left text-sm text-muted-foreground transition-colors hover:text-foreground aria-[current]:font-medium aria-[current]:text-foreground aria-pressed:font-medium aria-pressed:text-foreground";
+  "flex w-full items-center gap-2 whitespace-nowrap rounded-md py-1 text-start text-sm text-muted-foreground transition-colors hover:text-foreground aria-[current]:font-medium aria-[current]:text-foreground aria-pressed:font-medium aria-pressed:text-foreground";
 
 export function BoardNavigation({
   boards,

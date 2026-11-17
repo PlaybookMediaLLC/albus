@@ -5,6 +5,7 @@ import { principal } from "../../database/quills/schema/auth";
 import { boards, postTags } from "../../database/quills/schema/boards";
 import { posts, postTagAssignments } from "../../database/quills/schema/posts";
 import type { Database } from "../framework/define-route";
+import { fieldValueItem, teamItems } from "./custom-fields";
 
 export const postSchema = z.object({
   id: z.string(),
@@ -29,6 +30,10 @@ export const postSchema = z.object({
   tags: z.array(
     z.object({ id: z.string(), name: z.string(), color: z.string() }),
   ),
+  customFields: z.array(fieldValueItem).openapi({
+    description:
+      "The post's values of its board's custom fields, internal fields included, in the board's order",
+  }),
   score: z.object({
     reach: z.number().nullable(),
     impact: z.number().nullable(),
@@ -77,6 +82,8 @@ const fields = {
   createdAt: posts.createdAt,
   updatedAt: posts.updatedAt,
   deletedAt: posts.deletedAt,
+  customFieldValues: posts.customFieldValues,
+  boardSettings: boards.settings,
   score: {
     reach: posts.scoreReach,
     impact: posts.scoreImpact,
@@ -120,8 +127,9 @@ export async function withTags(db: Database, rows: Row[]) {
         )
         .orderBy(postTags.name)
     : [];
-  return rows.map((row) => ({
+  return rows.map(({ customFieldValues, boardSettings, ...row }) => ({
     ...row,
+    customFields: teamItems(boardSettings, customFieldValues),
     score: { ...row.score, rice: riceOf(row.score) },
     tags: tags
       .filter((tag) => tag.postId === row.id)

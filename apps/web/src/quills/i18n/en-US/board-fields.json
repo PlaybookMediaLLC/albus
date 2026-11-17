@@ -1,0 +1,28 @@
+{
+	"title": "Custom fields",
+	"description": "Ask for extra details when someone submits to this board. Customers see and fill in public fields; internal fields are for your team only.",
+	"add": "Add field",
+	"remove": "Remove field {{label}}",
+	"label": "Label",
+	"key": "Key",
+	"keyHint": "Lowercase letters, digits and underscores. Left empty, it is made from the label. Changing it hides values that posts already hold.",
+	"type": "Type",
+	"types": {
+		"text": "Text",
+		"number": "Number",
+		"select": "Select",
+		"multi_select": "Multi-select",
+		"checkbox": "Checkbox",
+		"date": "Date"
+	},
+	"required": "Required",
+	"internal": "Internal",
+	"options": "Options",
+	"optionsHint": "One option per line.",
+	"save": "Save fields",
+	"none": "This board asks for no custom fields.",
+	"yes": "Yes",
+	"no": "No",
+	"chooseOne": "Choose an option",
+	"requiredMark": "(required)"
+}

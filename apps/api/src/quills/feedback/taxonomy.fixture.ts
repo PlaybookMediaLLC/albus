@@ -8,3 +8,5 @@ export * from "./post-views.fixture";
 // RFC 0003 lane L5.
 export * from "./changelog-ai.fixture";
 export * from "./changelog-engagement.fixture";
+// Issue #76.
+export * from "./changelog-translations.fixture";

@@ -218,6 +218,13 @@
 			"when": 1794823413743,
 			"tag": "0030_conversation_archive",
 			"breakpoints": true
+		},
+		{
+			"idx": 31,
+			"version": "7",
+			"when": 1794876076541,
+			"tag": "0031_changelog_translations",
+			"breakpoints": true
 		}
 	]
 }

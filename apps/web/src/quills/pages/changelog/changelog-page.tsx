@@ -6,7 +6,7 @@ import { useListPortalChangelog } from "../../hooks/changelog/use-list-portal-ch
 import type { SetPortalChangelogReactionRequest } from "../../api/changelog/set-portal-changelog-reaction";
 import { useSetPortalChangelogReaction } from "../../hooks/changelog/use-set-portal-changelog-reaction";
 import { useListPortalVotedPosts } from "../../hooks/feedback/use-list-portal-voted-posts";
-import { usePortalRuntime } from "../../portal/runtime";
+import { usePortalRuntime, useReaderLocale } from "../../portal/runtime";
 import { ChangelogEntry } from "../../ui/changelog-entry";
 import { PageFrame } from "../../ui/page-frame";
 import { PortalGate } from "../../ui/portal-gate";
@@ -31,10 +31,12 @@ export function ChangelogPage(props: ChangelogPageProps) {
   const gated = (meta.audience as string) !== "public";
   const shown = portal.config.nav.tabs.changelog;
   const canLoad = shown && (!gated || portal.access?.granted === true);
+  // Entries that a teammate wrote in the reader's language show in it (issue #76).
+  const locale = useReaderLocale();
   const changelog = useListPortalChangelog(
     {
       param: { workspace: canLoad ? props.workspaceId : "" },
-      query: { offset: "0", limit: "20" },
+      query: { offset: "0", limit: "20", locale },
     },
     viewer,
   );

@@ -7,7 +7,7 @@ import {
   it,
   vi,
 } from "vite-plus/test";
-import { createId } from "@kaneo/ids";
+import { createId, toUuid } from "@kaneo/ids";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
@@ -420,4 +420,95 @@ describe.skipIf(!url)("Quills portal translations", () => {
     ).toBe(200);
     // 62 requests of three transactions each need more than the 5-second default on a busy machine.
   }, 30000);
+  it("keeps each protected term unchanged and never sends it to the provider", async () => {
+    const env = contractEnv();
+    // A post that names the workspace's protected terms (the help center's list).
+    const [{ id: postId }] = (
+      await pool.query(
+        "UPDATE quills.posts SET title=$2, content=$3 WHERE workspace_id=$1 AND id=$4 RETURNING id",
+        [
+          env.a,
+          "Kaneo Cloud export",
+          "Exports from Kaneo Cloud and Kaneo fail",
+          toUuid(s.a.postId as never),
+        ],
+      )
+    ).rows;
+    expect(postId).toBeTruthy();
+    await pool.query(
+      "UPDATE quills.settings SET help_center_config=$2 WHERE workspace_id=$1",
+      [
+        env.a,
+        JSON.stringify({
+          autoTranslate: {
+            enabled: false,
+            protectedTerms: ["Kaneo", "Kaneo Cloud"],
+          },
+        }),
+      ],
+    );
+    try {
+      provider.reply((request) => {
+        const sent = JSON.parse(
+          String(request.body.messages[1].content)
+            .replace(/^[^{]*/, "")
+            .replace(/[^}]*$/, ""),
+        );
+        // The longer term is replaced first, so "Kaneo Cloud" is one placeholder.
+        expect(sent).toEqual({
+          title: "⟦0⟧ export",
+          content: "Exports from ⟦0⟧ and ⟦1⟧ fail",
+        });
+        return chatReply({
+          title: "⟦0⟧-Export",
+          content: "Exporte aus ⟦0⟧ und ⟦1⟧ schlagen fehl",
+        });
+      });
+      const res = await translate({ postId: s.a.postId, locale: "de" });
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({
+        title: "Kaneo Cloud-Export",
+        content: "Exporte aus Kaneo Cloud und Kaneo schlagen fehl",
+      });
+      for (const call of translateCalls())
+        expect(call.body.messages[1].content).not.toContain("Kaneo");
+      // A provider that drops or changes a term is refused, and nothing is cached for it.
+      provider.reply(() =>
+        chatReply({
+          title: "⟦0⟧-Export",
+          content: "Exporte aus Kaneo Wolke schlagen fehl",
+        }),
+      );
+      const before = (await cacheRows()).length;
+      const dropped = await translate({ postId: s.a.postId, locale: "fr" });
+      expect(dropped.status).toBe(502);
+      expect((await cacheRows()).length).toBe(before);
+    } finally {
+      await pool.query(
+        "UPDATE quills.settings SET help_center_config=NULL WHERE workspace_id=$1",
+        [env.a],
+      );
+    }
+  });
+
+  it("stops new translations at the workspace's monthly AI limit and still serves cached ones", async () => {
+    // The first Italian translation is a miss and fills the cache.
+    const cached = await translate({ postId: s.a.postId, locale: "it" });
+    expect(cached.status).toBe(200);
+    vi.stubEnv("QUILLS_AI_MONTHLY_TOKEN_LIMIT", "1");
+    try {
+      provider.requests.length = 0;
+      expect(
+        (await translate({ postId: s.a.postId, locale: "it" })).status,
+      ).toBe(200);
+      const limited = await translate({ postId: s.a.postId, locale: "ja" });
+      expect(limited.status).toBe(409);
+      expect(limited.body.message).toBe(
+        "The workspace reached its monthly AI limit",
+      );
+      expect(translateCalls()).toHaveLength(0);
+    } finally {
+      vi.stubEnv("QUILLS_AI_MONTHLY_TOKEN_LIMIT", "");
+    }
+  });
 });

@@ -39,6 +39,13 @@ import {
 import { postStatuses } from "../../../database/quills/schema/statuses";
 import { defineQuillsRoute, type Database } from "../../framework/define-route";
 import { afterCursor, randomSort, sorts } from "../../feedback/post-filters";
+import {
+  checkValues,
+  fieldValueItem,
+  fieldValuesInput,
+  toItems,
+  valuesFor,
+} from "../../feedback/custom-fields";
 import { notFound, notTest, relatedPosts } from "../../feedback/visibility";
 import { claimReceipt } from "./receipts";
 import {
@@ -124,6 +131,10 @@ const postDetail = postItem.extend({
   importance: importance.nullable().openapi({
     description:
       "How much the caller needs the post, when the caller voted and said so",
+  }),
+  customFields: z.array(fieldValueItem.extend({ label: z.string() })).openapi({
+    description:
+      "The post's values of the board's public custom fields, in the board's order. Internal fields are never included.",
   }),
 });
 
@@ -518,8 +529,19 @@ export const getPost = (audience: Customer) =>
             )
             .limit(1)
         : [];
+      const [stored] = await db
+        .select({ values: posts.customFieldValues })
+        .from(posts)
+        .where(eq(posts.id, post.id));
+      const boardFields =
+        boardList.find((b) => b.id === post.board.id)?.fields ?? [];
+      const values = valuesFor(boardFields, stored?.values);
       return {
         ...(await presentOne(db, viewer, boardList, post.id)),
+        customFields: toItems(boardFields, values).map((item) => ({
+          ...item,
+          label: boardFields.find((field) => field.key === item.key)!.label,
+        })),
         attachments: (await readAttachments(db, { postIds: [post.id] })).map(
           attachmentFields,
         ),
@@ -548,7 +570,7 @@ export const createPost = (audience: Customer) =>
     operationId: `createQuills${title(audience)}Post`,
     summary: "Submit a feedback post",
     description:
-      "Without boardId, the first board (by name) that accepts the caller's submissions. Without title, the first line of content. The author's vote and subscription are added. A held post waits for review and is visible only to its author. idempotencyKey returns the first post for a repeated request; another payload under the same key is 409.",
+      "Without boardId, the first board (by name) that accepts the caller's submissions. Without title, the first line of content. customFields must hold a value for each required public field of the board (see the board list); 400 for a missing, unknown or wrongly typed value. The author's vote and subscription are added. A held post waits for review and is visible only to its author. idempotencyKey returns the first post for a repeated request; another payload under the same key is 409.",
     action: "create",
     rateLimit: { limit: 20, windowSeconds: 600 },
     body: z
@@ -558,6 +580,7 @@ export const createPost = (audience: Customer) =>
         content: z.string().trim().max(10000),
         attachmentIds,
         idempotencyKey: z.string().min(1).max(128).optional(),
+        customFields: fieldValuesInput.optional(),
         ...(audience === "widget" && { metadata: widgetMetadata }),
       })
       .refine((body) => body.title || body.content, {
@@ -565,7 +588,10 @@ export const createPost = (audience: Customer) =>
       }),
     response: postItem.extend({ replayed: z.boolean() }),
     responseDescription: "The created post",
-    errors: writeErrors,
+    errors: {
+      ...writeErrors,
+      400: "A custom field value is missing, unknown or of the wrong type",
+    },
     event: (_input, result) =>
       !result.replayed && {
         type: "post.created",
@@ -583,6 +609,10 @@ export const createPost = (audience: Customer) =>
       if (!board) throw notFound("Board");
       if (!capabilities(viewer, board.access).canSubmit)
         throw forbidden("Submissions are not open to you on this board");
+      // board.fields holds the public fields only: an internal key is an unknown field here.
+      const customFieldValues = checkValues(board.fields, body.customFields, {
+        team: false,
+      });
       const postTitle =
         body.title ?? body.content.split("\n")[0]!.trim().slice(0, 200);
       const sent = (body as { metadata?: Record<string, string> }).metadata;
@@ -595,6 +625,9 @@ export const createPost = (audience: Customer) =>
             ...(body.attachmentIds?.length
               ? { attachmentIds: JSON.stringify(body.attachmentIds) }
               : {}),
+            ...(customFieldValues && {
+              customFields: JSON.stringify(customFieldValues),
+            }),
           })
         : null;
       if (receipt?.replayOf) {
@@ -628,6 +661,7 @@ export const createPost = (audience: Customer) =>
           voteCount: viewer.isTest ? 0 : 1,
           moderationState: pending ? "pending" : "published",
           widgetMetadata: metadata,
+          customFieldValues,
         })
         .returning({ id: posts.id });
       const postId = post!.id;

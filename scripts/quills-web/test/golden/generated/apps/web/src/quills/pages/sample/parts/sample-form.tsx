@@ -9,6 +9,18 @@ const schema = z.object({
   content: z.string().max(10000),
   attachmentIds: z.array(z.string()).max(10).optional(),
   idempotencyKey: z.string().min(1).max(128).optional(),
+  customFields: z
+    .record(
+      z.string(),
+      z.union([
+        z.string().max(2000),
+        z.number(),
+        z.boolean(),
+        z.array(z.string().max(100)).max(50),
+        z.null(),
+      ]),
+    )
+    .optional(),
 });
 export interface SampleFormProps {
   onSubmit: (values: z.infer<typeof schema>) => Promise<PortalProblem | void>;

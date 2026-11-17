@@ -1,13 +1,17 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
+import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { Outlet, useLocation, useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { portalReturnPath } from "../core/portal-return-path";
+import { readerLocale } from "../core/reader-locale";
+import { directionOf } from "../core/text-direction";
 import { portalHref } from "../core/portal-href";
 import { navOf } from "../core/portal-nav";
 import { PortalNavigation } from "../ui/portal-navigation";
 import type { PortalBranding } from "../core/types";
 import { usePortalViewer } from "../core/use-portal-viewer";
 import { useEvaluateMyPortalAccess } from "../hooks/portal/use-evaluate-my-portal-access";
+import { useGetMyLanguagePreference } from "../hooks/portal/use-get-my-language-preference";
 import { useGetPublicPortalConfig } from "../hooks/portal/use-get-public-portal-config";
 import { PortalShell } from "../ui/portal-shell";
 import { StateView } from "../ui/state-view";
@@ -51,6 +55,22 @@ export function PortalRoute() {
   const input = { param: { workspace: workspaceId } };
   const config = useGetPublicPortalConfig(input, viewer);
   const access = useEvaluateMyPortalAccess(input, viewer);
+  // A signed-in customer's saved language: translations and changelog versions follow it.
+  const language = useGetMyLanguagePreference(
+    { param: { workspace: viewer.kind === "user" ? workspaceId : "" } },
+    viewer,
+  );
+  // A right-to-left reader gets a right-to-left portal (issue #117); the page goes back on leaving.
+  const direction = directionOf(readerLocale(language.data?.language));
+  useEffect(() => {
+    const root = document.documentElement;
+    const previous = root.getAttribute("dir");
+    root.setAttribute("dir", direction);
+    return () => {
+      if (previous === null) root.removeAttribute("dir");
+      else root.setAttribute("dir", previous);
+    };
+  }, [direction]);
   // The portal pages read the nav from the runtime, so this one fallback covers them all.
   const nav = navOf(config.data?.nav);
   const section =
@@ -70,59 +90,62 @@ export function PortalRoute() {
       onRetry={() => void config.refetch()}
     >
       {config.data ? (
-        <PortalRuntimeProvider
-          value={{
-            config: { ...config.data, nav },
-            viewer,
-            access: access.data ?? null,
-            accessLoading: access.isLoading,
-            accessProblem: access.error ?? null,
-            retryAccess: () => void access.refetch(),
-          }}
-        >
-          <PortalLayout
-            workspaceName={config.data.name}
-            branding={config.data.branding}
-            navigation={
-              <PortalNavigation
-                workspaceId={workspaceId}
-                currentPath={currentPath.split(/[?#]/)[0]}
-                nav={nav}
-              />
-            }
-            actions={
-              <>
-                <PortalSearch workspaceId={workspaceId} />
-                {viewer.kind === "user" ? (
-                  <PortalAccountMenu workspaceId={workspaceId} />
-                ) : (
+        <DirectionProvider direction={direction}>
+          <PortalRuntimeProvider
+            value={{
+              config: { ...config.data, nav },
+              viewer,
+              access: access.data ?? null,
+              accessLoading: access.isLoading,
+              accessProblem: access.error ?? null,
+              retryAccess: () => void access.refetch(),
+              savedLanguage: language.data?.language ?? null,
+            }}
+          >
+            <PortalLayout
+              workspaceName={config.data.name}
+              branding={config.data.branding}
+              navigation={
+                <PortalNavigation
+                  workspaceId={workspaceId}
+                  currentPath={currentPath.split(/[?#]/)[0]}
+                  nav={nav}
+                />
+              }
+              actions={
+                <>
+                  <PortalSearch workspaceId={workspaceId} />
+                  {viewer.kind === "user" ? (
+                    <PortalAccountMenu workspaceId={workspaceId} />
+                  ) : (
+                    <a
+                      className="bg-muted text-foreground hover:bg-muted/70"
+                      href={`/auth/sign-in?redirect=${encodeURIComponent(portalReturnPath(currentPath))}`}
+                    >
+                      {t("core.signIn")}
+                    </a>
+                  )}
                   <a
-                    className="bg-muted text-foreground hover:bg-muted/70"
-                    href={`/auth/sign-in?redirect=${encodeURIComponent(portalReturnPath(currentPath))}`}
+                    className="hidden bg-primary text-primary-foreground hover:bg-primary/90 sm:inline-flex"
+                    href={portalHref(workspaceId, "", { openFeedback: "1" })}
                   >
-                    {t("core.signIn")}
+                    {t("feedback.submit")}
                   </a>
-                )}
+                </>
+              }
+            >
+              <Outlet />
+              {floatSubmit ? (
                 <a
-                  className="hidden bg-primary text-primary-foreground hover:bg-primary/90 sm:inline-flex"
+                  className="fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-30 mx-auto w-fit rounded-full bg-primary px-5 py-3 font-medium text-primary-foreground shadow-lg outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:hidden"
                   href={portalHref(workspaceId, "", { openFeedback: "1" })}
                 >
                   {t("feedback.submit")}
                 </a>
-              </>
-            }
-          >
-            <Outlet />
-            {floatSubmit ? (
-              <a
-                className="fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-30 mx-auto w-fit rounded-full bg-primary px-5 py-3 font-medium text-primary-foreground shadow-lg outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:hidden"
-                href={portalHref(workspaceId, "", { openFeedback: "1" })}
-              >
-                {t("feedback.submit")}
-              </a>
-            ) : null}
-          </PortalLayout>
-        </PortalRuntimeProvider>
+              ) : null}
+            </PortalLayout>
+          </PortalRuntimeProvider>
+        </DirectionProvider>
       ) : null}
     </StateView>
   );
