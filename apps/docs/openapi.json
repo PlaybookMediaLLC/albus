@@ -10833,14 +10833,14 @@
             "description": "Continue in the web app",
             "headers": {
               "Location": {
-                "description": "The web result page",
+                "description": "The web page",
                 "schema": {
                   "type": "string",
                   "format": "uri"
                 }
               },
               "Cache-Control": {
-                "description": "The callback response is never cached",
+                "description": "The redirect is never cached",
                 "schema": {
                   "type": "string",
                   "enum": [
@@ -10849,7 +10849,7 @@
                 }
               },
               "Referrer-Policy": {
-                "description": "The callback URL is not sent to the web app",
+                "description": "This URL is not sent to the web app",
                 "schema": {
                   "type": "string",
                   "enum": [
@@ -11439,14 +11439,14 @@
             "description": "Continue in the web app",
             "headers": {
               "Location": {
-                "description": "The web result page",
+                "description": "The web page",
                 "schema": {
                   "type": "string",
                   "format": "uri"
                 }
               },
               "Cache-Control": {
-                "description": "The callback response is never cached",
+                "description": "The redirect is never cached",
                 "schema": {
                   "type": "string",
                   "enum": [
@@ -11455,7 +11455,7 @@
                 }
               },
               "Referrer-Policy": {
-                "description": "The callback URL is not sent to the web app",
+                "description": "This URL is not sent to the web app",
                 "schema": {
                   "type": "string",
                   "enum": [
@@ -13823,7 +13823,7 @@
           "Quills"
         ],
         "summary": "Show what an unsubscribe link would do",
-        "description": "Never writes and never spends the token, so a mail scanner that opens the link changes nothing.",
+        "description": "Never writes and never spends the token, so a mail scanner that opens the link changes nothing. A browser that opens it goes to the portal's unsubscribe page, which asks before it unsubscribes.",
         "security": [],
         "parameters": [
           {
@@ -13886,6 +13886,36 @@
                     "valid",
                     "action",
                     "postTitle"
+                  ]
+                }
+              }
+            }
+          },
+          "303": {
+            "description": "Continue in the web app",
+            "headers": {
+              "Location": {
+                "description": "The web page",
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              },
+              "Cache-Control": {
+                "description": "The redirect is never cached",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              },
+              "Referrer-Policy": {
+                "description": "This URL is not sent to the web app",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-referrer"
                   ]
                 }
               }
