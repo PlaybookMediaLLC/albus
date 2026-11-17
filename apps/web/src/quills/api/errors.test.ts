@@ -55,6 +55,30 @@ describe("toPortalProblem", () => {
       issues: [{ path: "incomingSecret" }, { path: "subdomain" }],
     });
   });
+  it("shows a malformed link as not found, or as gone for a token link, not as a form error", async () => {
+    const invalid = (...paths: string[]) =>
+      new Response(
+        JSON.stringify({
+          code: "VALIDATION_ERROR",
+          message: "Invalid input",
+          issues: paths.map((path) => ({ path, message: "Invalid" })),
+        }),
+        { status: 400 },
+      );
+    await expect(
+      toPortalProblem(invalid("params.incidentId")),
+    ).resolves.toEqual({ kind: "notFound" });
+    await expect(
+      toPortalProblem(invalid("query.token"), "record", true),
+    ).resolves.toEqual({ kind: "gone" });
+    // A value the visitor typed is still a field error.
+    await expect(
+      toPortalProblem(invalid("params.postId", "body.title")),
+    ).resolves.toMatchObject({ kind: "invalid" });
+    await expect(
+      toPortalProblem(invalid("query.token")),
+    ).resolves.toMatchObject({ kind: "invalid" });
+  });
   it("hides a denied record as not found", async () => {
     await expect(
       toPortalProblem(new Response("denied", { status: 403 })),

@@ -25,6 +25,16 @@ export async function toPortalProblem(
     error.status === 422 ||
     (error.status === 400 && error.code === "VALIDATION_ERROR")
   ) {
+    // Only a path ID, or a token link's token, is wrong: the link is bad, not a form value.
+    if (
+      error.issues?.length &&
+      error.issues.every(
+        (issue) =>
+          issue.path.startsWith("params.") ||
+          (token && /(?:^|\.)token$/.test(issue.path)),
+      )
+    )
+      return { kind: token ? "gone" : "notFound" };
     return {
       kind: "invalid",
       // The API's issue text is zod's English: keep its code and bounds, and the form translates them.
