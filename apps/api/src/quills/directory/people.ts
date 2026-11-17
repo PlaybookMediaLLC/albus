@@ -340,7 +340,7 @@ const updateUser = defineQuillsRoute({
   operationId: "updateQuillsUser",
   summary: "Update a customer's profile and attributes",
   description:
-    "For a lead, `email` sets the contact email. Attributes need a user attribute definition; null removes one. A profile linked to a Kaneo account (a portal customer) keeps its email, email verification and external ID (409).",
+    "For a lead, `email` sets the contact email. Attributes need a user attribute definition; null removes one. A portal customer's profile, linked to their sign-in account, keeps its email, email verification and external ID (409).",
   action: "update",
   params: principalParams,
   body: z
@@ -357,7 +357,7 @@ const updateUser = defineQuillsRoute({
   responseDescription: "The updated customer",
   errors: {
     ...notFound,
-    409: "Email or external ID already in use, or the profile is linked to a Kaneo account",
+    409: "Email or external ID already in use, or the profile is linked to a sign-in account",
   },
   event: ({ params }) => ({
     type: "user.updated",
@@ -379,7 +379,7 @@ const updateUser = defineQuillsRoute({
       if (profile?.kaneoUserId)
         throw new HTTPException(409, {
           message:
-            "A profile linked to a Kaneo account keeps its email and external ID",
+            "A profile linked to a sign-in account keeps its email and external ID",
         });
     }
     const attributes = await coerceAttributes(db, body.attributes ?? {});

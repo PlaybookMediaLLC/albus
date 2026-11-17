@@ -15241,7 +15241,7 @@
           "Quills"
         ],
         "summary": "Identify a widget visitor with a signed token",
-        "description": "Creates or updates the customer that the host app's signed ssoToken names and returns a widget session token for the Authorization header. The token needs sub (or id), email and exp. Optional claims: custom attributes that match a user attribute definition (at most 50; others are dropped), segments (at most 50 manual segment slugs; it replaces the widget-sourced memberships, and a missing claim removes them). Identify also subscribes the person to the changelog when the workspace auto-subscribes. A profile that a portal sign-in linked to a Kaneo account resolves only by its sub and email together, and the token never changes its name, email or avatar. canPortalHandoff is true while the portal is on and Kaneo can mail its sign-in link (mail delivery on, login form on, no captcha): POST /widget/portal-link then asks for one.",
+        "description": "Creates or updates the customer that the host app's signed ssoToken names and returns a widget session token for the Authorization header. The token needs sub (or id), email and exp. Optional claims: custom attributes that match a user attribute definition (at most 50; others are dropped), segments (at most 50 manual segment slugs; it replaces the widget-sourced memberships, and a missing claim removes them). Identify also subscribes the person to the changelog when the workspace auto-subscribes. A profile that a portal sign-in linked to an account resolves only by its sub and email together, and the token never changes its name, email or avatar. canPortalHandoff is true while the portal is on and the instance can mail a sign-in link (mail delivery on, login form on, no captcha): POST /widget/portal-link then asks for one.",
         "security": [],
         "parameters": [
           {
@@ -15854,7 +15854,7 @@
           "Quills"
         ],
         "summary": "Validate the widget session",
-        "description": "user is null for an anonymous visitor. The session expires 7 days after identify. canPortalHandoff is true for an identified visitor while the portal is on and Kaneo can mail its sign-in link (mail delivery on, login form on, no captcha).",
+        "description": "user is null for an anonymous visitor. The session expires 7 days after identify. canPortalHandoff is true for an identified visitor while the portal is on and the instance can mail a sign-in link (mail delivery on, login form on, no captcha).",
         "security": [],
         "parameters": [
           {
@@ -16056,7 +16056,7 @@
           "Quills"
         ],
         "summary": "Mail the identified visitor a sign-in link to the portal",
-        "description": "Sends Kaneo's sign-in link to the email of the visitor that the host app identified. The link works once, expires after 5 minutes and opens the portal's My feedback page signed in. For the next 15 minutes, the portal asks a signed-in account with that verified address to confirm linking this widget profile (GET, POST and DELETE /portal/widget-link). A used or expired link opens Kaneo's sign-in page with the error. With registration closed, Kaneo mails only an address that has an account, and delivery is if_account. 403 for an anonymous visitor, or when Kaneo cannot mail a sign-in link (no mail delivery, login form off, captcha on); 404 while the portal is closed.",
+        "description": "Sends the instance's sign-in link to the email of the visitor that the host app identified. The link works once, expires after 5 minutes and opens the portal's My feedback page signed in. For the next 15 minutes, the portal asks a signed-in account with that verified address to confirm linking this widget profile (GET, POST and DELETE /portal/widget-link). A used or expired link opens the sign-in page with the error. With registration closed, only an address that has an account gets the mail, and delivery is if_account. 403 for an anonymous visitor, or when the instance cannot mail a sign-in link (no mail delivery, login form off, captcha on); 404 while the portal is closed.",
         "security": [],
         "parameters": [
           {
@@ -16074,7 +16074,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The sign-in link was handed to Kaneo's mail delivery",
+            "description": "The sign-in link was handed to the instance's mail delivery",
             "content": {
               "application/json": {
                 "schema": {
@@ -16089,7 +16089,7 @@
                         "sent",
                         "if_account"
                       ],
-                      "description": "sent: Kaneo mails any address. if_account: registration is closed, so Kaneo mails only an address that has an account; the API never says which, so the visitor is told so."
+                      "description": "sent: the instance mails any address. if_account: registration is closed, so it mails only an address that has an account; the API never says which, so the visitor is told so."
                     }
                   },
                   "required": [
@@ -16111,7 +16111,7 @@
             }
           },
           "403": {
-            "description": "Anonymous visitor, blocked person, or Kaneo cannot send a sign-in link",
+            "description": "Anonymous visitor, blocked person, or the instance cannot send a sign-in link",
             "content": {
               "application/json": {
                 "schema": {
@@ -56560,7 +56560,7 @@
           "Quills"
         ],
         "summary": "Update a customer's profile and attributes",
-        "description": "For a lead, `email` sets the contact email. Attributes need a user attribute definition; null removes one. A profile linked to a Kaneo account (a portal customer) keeps its email, email verification and external ID (409).",
+        "description": "For a lead, `email` sets the contact email. Attributes need a user attribute definition; null removes one. A portal customer's profile, linked to their sign-in account, keeps its email, email verification and external ID (409).",
         "parameters": [
           {
             "schema": {
@@ -56814,7 +56814,7 @@
             }
           },
           "409": {
-            "description": "Email or external ID already in use, or the profile is linked to a Kaneo account",
+            "description": "Email or external ID already in use, or the profile is linked to a sign-in account",
             "content": {
               "application/json": {
                 "schema": {

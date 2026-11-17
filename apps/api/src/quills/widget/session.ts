@@ -23,7 +23,7 @@ const getSession = defineQuillsRoute({
   operationId: "getQuillsWidgetSession",
   summary: "Validate the widget session",
   description:
-    "user is null for an anonymous visitor. The session expires 7 days after identify. canPortalHandoff is true for an identified visitor while the portal is on and Kaneo can mail its sign-in link (mail delivery on, login form on, no captcha).",
+    "user is null for an anonymous visitor. The session expires 7 days after identify. canPortalHandoff is true for an identified visitor while the portal is on and the instance can mail a sign-in link (mail delivery on, login form on, no captcha).",
   action: "read",
   response: z.object({
     user: z

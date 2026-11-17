@@ -25,22 +25,23 @@ const portalLink = defineQuillsRoute({
   operationId: "sendQuillsWidgetPortalLink",
   summary: "Mail the identified visitor a sign-in link to the portal",
   description:
-    "Sends Kaneo's sign-in link to the email of the visitor that the host app identified. The link works once, expires after 5 minutes and opens the portal's My feedback page signed in. For the next 15 minutes, the portal asks a signed-in account with that verified address to confirm linking this widget profile (GET, POST and DELETE /portal/widget-link). A used or expired link opens Kaneo's sign-in page with the error. With registration closed, Kaneo mails only an address that has an account, and delivery is if_account. 403 for an anonymous visitor, or when Kaneo cannot mail a sign-in link (no mail delivery, login form off, captcha on); 404 while the portal is closed.",
+    "Sends the instance's sign-in link to the email of the visitor that the host app identified. The link works once, expires after 5 minutes and opens the portal's My feedback page signed in. For the next 15 minutes, the portal asks a signed-in account with that verified address to confirm linking this widget profile (GET, POST and DELETE /portal/widget-link). A used or expired link opens the sign-in page with the error. With registration closed, only an address that has an account gets the mail, and delivery is if_account. 403 for an anonymous visitor, or when the instance cannot mail a sign-in link (no mail delivery, login form off, captcha on); 404 while the portal is closed.",
   action: "create",
   rateLimit: { limit: 10, windowSeconds: 15 * 60 },
   response: z.object({
     sent: z.boolean(),
     delivery: z.enum(["sent", "if_account"]).openapi({
       description:
-        "sent: Kaneo mails any address. if_account: registration is closed, so Kaneo mails only an address that has an account; the API never says which, so the visitor is told so.",
+        "sent: the instance mails any address. if_account: registration is closed, so it mails only an address that has an account; the API never says which, so the visitor is told so.",
     }),
   }),
-  responseDescription: "The sign-in link was handed to Kaneo's mail delivery",
+  responseDescription:
+    "The sign-in link was handed to the instance's mail delivery",
   errors: {
-    403: "Anonymous visitor, blocked person, or Kaneo cannot send a sign-in link",
+    403: "Anonymous visitor, blocked person, or the instance cannot send a sign-in link",
   },
   event: {
-    none: "A pending link request in kv_store (15 minutes) and Kaneo's sign-in mail; no customer record changes",
+    none: "A pending link request in kv_store (15 minutes) and the sign-in mail; no customer record changes",
   },
   prepare: async ({ db, caller }) => {
     await requirePortal(db);
