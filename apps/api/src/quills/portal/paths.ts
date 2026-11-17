@@ -34,6 +34,9 @@ export const portalPaths = {
   changelogEntry: (workspaceId: string, entryId: string) =>
     portalPath(workspaceId, `/changelog/${encodeURIComponent(entryId)}`),
   myFeedback: (workspaceId: string) => portalPath(workspaceId, "/my-feedback"),
+  /** Kaneo's sign-in page, back to My feedback after sign-in; a magic link error adds `error`. */
+  signIn: (workspaceId: string) =>
+    `${clientBase()}/auth/sign-in?${new URLSearchParams({ redirect: `/portal/${encodeURIComponent(workspaceId)}/my-feedback` })}`,
   helpCenter: (workspaceId: string, locale?: string) =>
     portalPath(
       workspaceId,

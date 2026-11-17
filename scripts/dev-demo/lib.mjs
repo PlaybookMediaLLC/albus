@@ -5,9 +5,11 @@ export const PORTS = {
   db: 54480,
   api: 1390,
   web: 5190,
-  smtp: 54425,
-  inbox: 54825,
+  smtp: 51390,
+  inbox: 51391,
 };
+/** The demo's local mail catcher. Pinned: the demo pulls it on first start. */
+export const MAILPIT_IMAGE = "axllent/mailpit:v1.32.0";
 export const WORKSPACE = "quills_portal_demo";
 export const AI_DEFAULTS = {
   QUILLS_AI_BASE_URL: "https://openrouter.ai/api/v1",
@@ -58,14 +60,20 @@ export function demoEnv(base, secrets, ai, ports = PORTS) {
     VITE_CLIENT_URL: web,
     // A root .env cannot turn on AI, send real mail or use a shared Redis: dotenv keeps set values.
     QUILLS_AI_API_KEY: "",
-    SMTP_HOST: "",
-    // Quills mail goes to the demo's Mailpit only: plain SMTP on loopback, no login.
+    // Kaneo's mail (sign-in links, invitations) goes to the demo's local Mailpit only.
+    SMTP_HOST: "127.0.0.1",
+    SMTP_PORT: String(ports.smtp),
+    SMTP_FROM: "Kaneo demo <demo@example.test>",
+    SMTP_SECURE: "false",
+    SMTP_REQUIRE_TLS: "false",
+    SMTP_USER: "",
+    // Quills mail (status changes, shipped notices, updates) goes to the same Mailpit.
     EMAIL_SMTP_HOST: "127.0.0.1",
     EMAIL_SMTP_PORT: String(ports.smtp),
     EMAIL_SMTP_SECURE: "false",
     EMAIL_SMTP_USER: "",
     EMAIL_SMTP_PASS: "",
-    EMAIL_FROM: "Kaneo demo <demo@kaneo.test>",
+    EMAIL_FROM: "Kaneo demo <demo@example.test>",
     EMAIL_RESEND_API_KEY: "",
     RESEND_API_KEY: "",
     EMAIL_SES_ACCESS_KEY_ID: "",
@@ -75,9 +83,6 @@ export function demoEnv(base, secrets, ai, ports = PORTS) {
     ...ai,
   };
 }
-
-/** The Mailpit inbox of the demo. */
-export const inboxUrl = (ports = PORTS) => `http://127.0.0.1:${ports.inbox}`;
 
 /** The image of the postgres service in compose.yml. */
 export function composeImage(compose) {

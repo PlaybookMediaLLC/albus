@@ -180,6 +180,7 @@
 			"guestError": "Accesso come ospite fallito",
 			"errors": {
 				"account_not_linked": "Questa identità non può essere collegata all'account esistente. Accedi via email per verificare l'account, poi riprova con SSO. Se l'accesso via email non è disponibile, contatta l'amministratore.",
+				"invalid_token": "Questo link di accesso è scaduto o è già stato usato. Accedi di nuovo per continuare.",
 				"oauth_code_verification_failed": "Verifica OAuth fallita. Riprova.",
 				"registration_is_currently_disabled_you_need_a_valid_invitation_to_create_an_account_": "La registrazione è attualmente disabilitata. Hai bisogno di un invito valido per creare un account.",
 				"use_a_permanent_email_address_disposable_addresses_cannot_create_accounts_": "Usa un indirizzo email permanente. Con gli indirizzi usa e getta non è possibile creare account."

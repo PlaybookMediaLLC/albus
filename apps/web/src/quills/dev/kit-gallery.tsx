@@ -45,6 +45,7 @@ import { PortalGate } from "../ui/portal-gate";
 import { PortalNavigation } from "../ui/portal-navigation";
 import { PortalShell } from "../ui/portal-shell";
 import { ResultCard } from "../ui/result-card";
+import { WidgetLinkPrompt } from "../ui/widget-link/widget-link-prompt";
 import { StateView } from "../ui/state-view";
 import { SurveyCard } from "../ui/survey-card";
 import { CommandPalette } from "../ui/inbox/command-palette";
@@ -238,6 +239,18 @@ export function KitGallery() {
               disabled
               labelKey="core.gallery.confirm"
               onConfirm={async () => {}}
+            />
+            <WidgetLinkPrompt
+              answer={null}
+              onConfirm={async () => {}}
+              onDecline={async () => {}}
+              workspaceName={demo}
+            />
+            <WidgetLinkPrompt
+              answer="linked"
+              onConfirm={async () => {}}
+              onDecline={async () => {}}
+              workspaceName={demo}
             />
             <SettingsCard>
               <SettingSwitchRow

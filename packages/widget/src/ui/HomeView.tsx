@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Icon } from "./Icon.js";
+import { PortalLink } from "./PortalLink.js";
 import { UpdateCard } from "./UpdateCard.js";
 import type { UpdateEntry, WidgetTab, Conversation } from "./types.js";
 
@@ -13,6 +14,7 @@ export function HomeView({
   openConversation,
   teamAvailability,
   survey,
+  openPortal,
 }: {
   latest?: UpdateEntry;
   navigate: (tab: WidgetTab) => void;
@@ -25,6 +27,8 @@ export function HomeView({
   teamAvailability?: string;
   /** A waiting survey, shown under the greeting. */
   survey?: ReactNode;
+  /** Mails a portal sign-in link; only for a visitor that the host app identified. */
+  openPortal?: () => Promise<"sent" | "if_account">;
 }) {
   const recent = has("messages")
     ? (conversations.find((item) => (item.unreadCount ?? 0) > 0) ??
@@ -96,6 +100,7 @@ export function HomeView({
           <Icon name="chevron" />
         </button>
       )}
+      {openPortal && <PortalLink send={openPortal} />}
       {latest && has("updates") && (
         <section className="qb-latest">
           <div className="qb-section-label">

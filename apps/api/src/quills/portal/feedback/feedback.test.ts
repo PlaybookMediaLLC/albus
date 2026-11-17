@@ -112,7 +112,7 @@ async function fingerprint() {
     await pool.query(
       `SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
        JOIN pg_attribute t ON t.attrelid=c.oid AND t.attname='workspace_id' AND NOT t.attisdropped
-       WHERE n.nspname='quills' AND c.relkind IN ('r','p') AND NOT c.relispartition AND c.relname <> 'rate_bucket'`,
+       WHERE n.nspname='quills' AND c.relkind IN ('r','p') AND NOT c.relispartition AND c.relname <> 'rate_bucket' ORDER BY 1`,
     )
   ).rows.map((row) => row.relname);
   const sql = `SELECT ${tables

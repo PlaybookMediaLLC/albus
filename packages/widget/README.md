@@ -284,6 +284,10 @@ Session rules:
 4. A 401 removes private data and starts a new session for the same identity. If the host's token no longer verifies, the widget continues anonymously and sends `quackback:auth-change` with `user: null`.
 5. An unverified identity (`{ id, email }`) is refused: Kaneo identifies visitors only with a signed token.
 
+### Open in portal
+
+When identify answers `canPortalHandoff: true`, the home tab offers **Open in portal** (`WidgetView` `onOpenPortal`). The API asks Kaneo to mail its sign-in link to the identified visitor's email and records the request for 15 minutes. It answers `delivery`: `sent`, or `if_account` when the instance's registration is closed and only an address with an account gets the mail; the widget's message says which. When the person signs in to the portal with that verified address, the portal asks them to confirm, and only then does the widget history join their portal profile. From then on, identify with the same `sub` and email returns the portal profile: its name, email and avatar come from the Kaneo account (also in `quackback:auth-change`), and later name or avatar claims in the token are ignored. A token with that `sub` but another email is refused. The session of the old profile ends, so the widget identifies again after its next 401.
+
 The adapter polls the unread count at the interval from `/widget/capabilities`. When the count changes, it reads only new messages (`?after=`). Before the panel first opens, it polls only for an identified visitor, for the launcher badge.
 
 ### Screenshots of the host page

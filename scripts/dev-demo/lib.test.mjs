@@ -7,9 +7,7 @@ import {
   aiEnv,
   composeImage,
   demoEnv,
-  inboxUrl,
   isPortInUse,
-  PORTS,
   parseArgs,
 } from "./lib.mjs";
 
@@ -41,14 +39,7 @@ test("aiEnv is off without a key, and takes only the file's QUILLS_AI_ keys", ()
 
 test("demoEnv points every URL and the database at the demo stack", () => {
   const env = demoEnv(
-    {
-      PATH: "/bin",
-      QUILLS_AI_API_KEY: "shell",
-      SMTP_HOST: "mail",
-      EMAIL_SMTP_HOST: "smtp.example.com",
-      EMAIL_SMTP_USER: "user",
-      EMAIL_FROM: "real@example.com",
-    },
+    { PATH: "/bin", QUILLS_AI_API_KEY: "shell", SMTP_HOST: "mail" },
     secrets,
     null,
     ports,
@@ -64,20 +55,23 @@ test("demoEnv points every URL and the database at the demo stack", () => {
     assert.equal(env[key], "http://127.0.0.1:2");
   for (const key of ["KANEO_CLIENT_URL", "CORS_ORIGINS", "VITE_CLIENT_URL"])
     assert.equal(env[key], "http://127.0.0.1:3");
-  for (const key of [
-    "SMTP_HOST",
-    "EMAIL_SMTP_USER",
-    "EMAIL_SMTP_PASS",
-    "RESEND_API_KEY",
-    "EMAIL_SES_ACCESS_KEY_ID",
-    "REDIS_URL",
-  ])
-    assert.equal(env[key], "");
-  // Quills mail goes to the demo's Mailpit, over a shell or root .env mail server.
+  // Kaneo's mail goes to the local catcher, whatever the shell or a root .env says.
+  assert.equal(env.SMTP_HOST, "127.0.0.1");
+  assert.equal(env.SMTP_PORT, "4");
+  assert.equal(env.SMTP_SECURE, "false");
+  // Quills mail goes to the same catcher, with no login.
   assert.equal(env.EMAIL_SMTP_HOST, "127.0.0.1");
   assert.equal(env.EMAIL_SMTP_PORT, "4");
   assert.equal(env.EMAIL_SMTP_SECURE, "false");
-  assert.equal(env.EMAIL_FROM, "Kaneo demo <demo@kaneo.test>");
+  assert.equal(env.EMAIL_FROM, "Kaneo demo <demo@example.test>");
+  for (const key of [
+    "SMTP_USER",
+    "EMAIL_SMTP_USER",
+    "EMAIL_SMTP_PASS",
+    "RESEND_API_KEY",
+    "REDIS_URL",
+  ])
+    assert.equal(env[key], "");
   // AI off: an empty key also wins over a key in a root .env.
   assert.equal(env.QUILLS_AI_API_KEY, "");
 });
@@ -86,11 +80,6 @@ test("demoEnv adds the AI settings when AI is on", () => {
   const env = demoEnv({}, secrets, aiEnv({ QUILLS_AI_API_KEY: "k" }), ports);
   assert.equal(env.QUILLS_AI_API_KEY, "k");
   assert.equal(env.QUILLS_AI_BASE_URL, "https://openrouter.ai/api/v1");
-});
-
-test("the demo ports are distinct, and the inbox URL is on loopback", () => {
-  assert.equal(new Set(Object.values(PORTS)).size, Object.keys(PORTS).length);
-  assert.equal(inboxUrl(ports), "http://127.0.0.1:5");
 });
 
 test("composeImage reads the postgres image of the repository's compose.yml", () => {

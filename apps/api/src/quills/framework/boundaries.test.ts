@@ -45,6 +45,8 @@ const allowedImport = (file: string, specifier: string) => {
         "framework/define-route",
         "framework/app",
         "framework/app-keys",
+        // Kaneo's own sign-in link, mailed by Kaneo's auth module (issue #129); never the database.
+        "framework/sign-in-link",
         "framework/files",
         "framework/integration-config",
         "framework/platform-reads",

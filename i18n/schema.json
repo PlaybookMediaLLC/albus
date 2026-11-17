@@ -712,6 +712,9 @@
 								"account_not_linked": {
 									"type": "string"
 								},
+								"invalid_token": {
+									"type": "string"
+								},
 								"oauth_code_verification_failed": {
 									"type": "string"
 								},
@@ -724,6 +727,7 @@
 							},
 							"required": [
 								"account_not_linked",
+								"invalid_token",
 								"oauth_code_verification_failed",
 								"registration_is_currently_disabled_you_need_a_valid_invitation_to_create_an_account_",
 								"use_a_permanent_email_address_disposable_addresses_cannot_create_accounts_"

@@ -6,18 +6,18 @@ import { dirname, join, resolve } from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import {
-  MAIL_CONTAINER,
   startContainer,
-  startMailContainer,
+  startMailpit,
   stopContainer,
+  stopMailpit,
   waitHealthy,
 } from "./docker.mjs";
 import {
   aiEnv,
   composeImage,
   demoEnv,
-  inboxUrl,
   isPortInUse,
+  MAILPIT_IMAGE,
   parseArgs,
   PORTS,
   WORKSPACE,
@@ -35,7 +35,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const children = [];
 let stopping = false;
 let ownsContainer = false;
-let ownsMailContainer = false;
+let ownsMailpit = false;
 
 const log = (line) => console.log(`[demo] ${line}`);
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
@@ -94,7 +94,7 @@ async function stop(code) {
   }
   for (const child of children) signalGroup(child, "SIGKILL");
   if (ownsContainer) stopContainer();
-  if (ownsMailContainer) stopContainer(MAIL_CONTAINER);
+  if (ownsMailpit) stopMailpit();
   unlock();
   process.exit(code);
 }
@@ -120,9 +120,12 @@ async function main() {
     port: PORTS.db,
     password: secrets.POSTGRES_PASSWORD,
   });
-  ownsMailContainer = startMailContainer(PORTS);
+  ownsMailpit = startMailpit({
+    image: MAILPIT_IMAGE,
+    smtp: PORTS.smtp,
+    inbox: PORTS.inbox,
+  });
   await waitHealthy();
-  await waitHealthy(MAIL_CONTAINER);
   const env = demoEnv(process.env, secrets, null);
   await finish(
     // The root build:dependencies filter matches no package, so name the two apps here.
@@ -190,8 +193,8 @@ async function main() {
   log(`  Portal:        ${app}/portal/${WORKSPACE}`);
   log(`  Teammate app:  ${app}/feedback/${WORKSPACE}`);
   log(`  Kaneo:         ${app}/dashboard/workspace/${WORKSPACE}`);
-  log(`  Mail inbox:    ${inboxUrl()}`);
   log(`  API health:    ${env.KANEO_API_URL}/api/health`);
+  log(`  Mail inbox:    http://127.0.0.1:${PORTS.inbox}`);
   log(`Local test accounts. The password is in ${secretsFile}.`);
   log(`  Teammate:  portal-demo@example.test  ${secrets.QUILLS_DEMO_PASSWORD}`);
   log(
