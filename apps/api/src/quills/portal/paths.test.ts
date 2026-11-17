@@ -33,4 +33,11 @@ describe("portal paths", () => {
       pattern: "/feedback/$workspaceId/conversations/$conversationId",
     });
   });
+
+  it("links a Kaneo task back to the request in the teammate app", () => {
+    process.env.KANEO_CLIENT_URL = "https://client.example.test";
+    expect(portalPaths.teammatePost("w/a", "p/b")).toBe(
+      "https://client.example.test/feedback/w%2Fa/posts/p%2Fb",
+    );
+  });
 });

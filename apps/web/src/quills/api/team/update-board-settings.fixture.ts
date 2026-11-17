@@ -8,6 +8,7 @@ export const updateBoardSettingsFixture = {
         defaultSort: "votes",
         taskSync: { statusOnTaskDone: null },
         customFields: [],
+        delivery: null,
       },
       ...overrides,
     }) satisfies UpdateBoardSettingsResponse,

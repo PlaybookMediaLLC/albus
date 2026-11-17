@@ -41,6 +41,8 @@ export interface RoadmapBoardProps {
   counts: ReadonlyMap<string, number>;
   /** Opens New request in a status. Left out without the create permission. */
   onCreate?: (statusId: string) => void;
+  /** Opens a card's Create task or Link existing task dialog (RFC 0005). Stable: the cards are memoized. */
+  onTask?: (post: RoadmapPost, kind: "create" | "link") => void;
 }
 
 const itemOf = (node: Active | Over | null) =>
@@ -177,6 +179,7 @@ export function RoadmapBoard({ workspaceId, ...props }: RoadmapBoardProps) {
                 props.onCreate ? () => props.onCreate?.(status.id) : undefined
               }
               onMove={team.permissions.update ? move : undefined}
+              onTask={team.permissions.update ? props.onTask : undefined}
             />
           ))}
         </div>

@@ -39,6 +39,7 @@ const tabs: { id: WidgetTab; label: string }[] = [
 export function WidgetView({
   brandName = "Quills",
   dir = "ltr",
+  identified = false,
   theme = "auto",
   initialTab = "home",
   tabs: enabledTabs,
@@ -482,6 +483,7 @@ export function WidgetView({
         ) : tab === "feedback" ? (
           <FeedbackView
             posts={feedback}
+            identified={identified}
             onOpen={(id) => open("feedback", id)}
             onCompose={() => compose("feedback")}
             filters={feedbackFilters}

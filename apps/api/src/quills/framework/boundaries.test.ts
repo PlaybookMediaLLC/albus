@@ -48,6 +48,10 @@ const allowedImport = (file: string, specifier: string) => {
         "framework/files",
         "framework/integration-config",
         "framework/platform-reads",
+        // RFC 0005: Kaneo's own task and comment controllers, called as the acting teammate.
+        "framework/platform-writes",
+        // #92: the mail preference rule, read through the caller's database handle only.
+        "jobs/preferences",
         "framework/webhook-config",
         "framework/audience",
         "framework/signed",

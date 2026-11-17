@@ -9,6 +9,7 @@ import {
   taskSyncInput,
   taskSyncView,
 } from "../integrations/task-sync";
+import { deliveryOf, deliveryView } from "../integrations/post-task";
 import { DEFAULT_SORTS, VOTE_DISPLAYS, votingOf } from "./board-voting";
 import { fieldDefinition, fieldDefinitions, fieldsOf } from "./custom-fields";
 import { findBoard, loadProjects } from "./visibility";
@@ -36,6 +37,7 @@ const voting = z.object({
   defaultSort,
   taskSync: taskSyncView,
   customFields: z.array(fieldDefinition),
+  delivery: deliveryView,
 });
 /** The response view of the stored settings. */
 const view = (boardId: string, settings: unknown) => ({
@@ -43,6 +45,7 @@ const view = (boardId: string, settings: unknown) => ({
   ...votingOf(settings),
   taskSync: { statusOnTaskDone: statusOnTaskDone(settings) },
   customFields: fieldsOf(settings),
+  delivery: deliveryOf(settings),
 });
 const errors = { 404: "Board or status not found" };
 

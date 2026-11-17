@@ -181,6 +181,9 @@ export async function fanOutIntegrations(workspaceId: string, eventId: string) {
     }
     const trigger = triggerOf(event.type);
     if (!trigger) return;
+    // An update's page comment (#92) reaches Slack only when the sender chose Slack.
+    const flags = event.payload as { update?: unknown; slack?: unknown };
+    const skipSlack = Boolean(flags.update) && flags.slack !== "true";
     const targets = await db
       .select({
         id: integrations.id,
@@ -206,6 +209,7 @@ export async function fanOutIntegrations(workspaceId: string, eventId: string) {
     const statusId = (event.payload as { statusId?: unknown }).statusId;
     for (const target of targets) {
       if (
+        (skipSlack && target.type === "slack") ||
         !(provider(target.type)?.events as string[] | undefined)?.includes(
           trigger,
         ) ||

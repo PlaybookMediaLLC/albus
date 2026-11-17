@@ -7,7 +7,9 @@ import {
   aiEnv,
   composeImage,
   demoEnv,
+  inboxUrl,
   isPortInUse,
+  PORTS,
   parseArgs,
 } from "./lib.mjs";
 
@@ -16,7 +18,7 @@ const secrets = {
   POSTGRES_PASSWORD: "p@ss/word",
   QUILLS_DEMO_PASSWORD: "demo",
 };
-const ports = { db: 1, api: 2, web: 3 };
+const ports = { db: 1, api: 2, web: 3, smtp: 4, inbox: 5 };
 
 test("parseArgs accepts --reset and refuses other arguments", () => {
   assert.deepEqual(parseArgs([]), { reset: false });
@@ -39,7 +41,14 @@ test("aiEnv is off without a key, and takes only the file's QUILLS_AI_ keys", ()
 
 test("demoEnv points every URL and the database at the demo stack", () => {
   const env = demoEnv(
-    { PATH: "/bin", QUILLS_AI_API_KEY: "shell", SMTP_HOST: "mail" },
+    {
+      PATH: "/bin",
+      QUILLS_AI_API_KEY: "shell",
+      SMTP_HOST: "mail",
+      EMAIL_SMTP_HOST: "smtp.example.com",
+      EMAIL_SMTP_USER: "user",
+      EMAIL_FROM: "real@example.com",
+    },
     secrets,
     null,
     ports,
@@ -57,11 +66,18 @@ test("demoEnv points every URL and the database at the demo stack", () => {
     assert.equal(env[key], "http://127.0.0.1:3");
   for (const key of [
     "SMTP_HOST",
-    "EMAIL_SMTP_HOST",
+    "EMAIL_SMTP_USER",
+    "EMAIL_SMTP_PASS",
     "RESEND_API_KEY",
+    "EMAIL_SES_ACCESS_KEY_ID",
     "REDIS_URL",
   ])
     assert.equal(env[key], "");
+  // Quills mail goes to the demo's Mailpit, over a shell or root .env mail server.
+  assert.equal(env.EMAIL_SMTP_HOST, "127.0.0.1");
+  assert.equal(env.EMAIL_SMTP_PORT, "4");
+  assert.equal(env.EMAIL_SMTP_SECURE, "false");
+  assert.equal(env.EMAIL_FROM, "Kaneo demo <demo@kaneo.test>");
   // AI off: an empty key also wins over a key in a root .env.
   assert.equal(env.QUILLS_AI_API_KEY, "");
 });
@@ -70,6 +86,11 @@ test("demoEnv adds the AI settings when AI is on", () => {
   const env = demoEnv({}, secrets, aiEnv({ QUILLS_AI_API_KEY: "k" }), ports);
   assert.equal(env.QUILLS_AI_API_KEY, "k");
   assert.equal(env.QUILLS_AI_BASE_URL, "https://openrouter.ai/api/v1");
+});
+
+test("the demo ports are distinct, and the inbox URL is on loopback", () => {
+  assert.equal(new Set(Object.values(PORTS)).size, Object.keys(PORTS).length);
+  assert.equal(inboxUrl(ports), "http://127.0.0.1:5");
 });
 
 test("composeImage reads the postgres image of the repository's compose.yml", () => {

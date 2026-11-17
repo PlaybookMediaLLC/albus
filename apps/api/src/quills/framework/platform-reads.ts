@@ -3,6 +3,7 @@ import { statement } from "@kaneo/permissions";
 import { HTTPException } from "hono/http-exception";
 import platformDb from "../../database";
 import {
+  columnTable,
   projectTable,
   taskTable,
   teamTable,
@@ -10,6 +11,8 @@ import {
   workspaceTable,
   workspaceUserTable,
 } from "../../database/schema";
+import { assertAssignableUser } from "../../utils/assert-assignable-user";
+import type { PermissionMap } from "../../utils/role-permissions";
 import { findInaccessibleProjectIds } from "../../project-access/find-inaccessible-project-ids";
 import { roleHasWorkspacePermission } from "../../utils/require-workspace-permission";
 import { hasInstanceAdminRole } from "../../utils/instance-admin-role";
@@ -199,31 +202,10 @@ export async function teammateMayAct(
   userId: string,
   action: QuillsAction,
 ) {
-  const [row] = await platformDb
-    .select({
-      role: userTable.role,
-      banned: userTable.banned,
-      memberRole: workspaceUserTable.role,
-    })
-    .from(userTable)
-    .leftJoin(
-      workspaceUserTable,
-      and(
-        eq(workspaceUserTable.userId, userTable.id),
-        eq(workspaceUserTable.workspaceId, workspaceId),
-      ),
-    )
-    .where(eq(userTable.id, userId))
-    .limit(1);
-  if (!row || row.banned) return false;
-  if (hasInstanceAdminRole(row.role)) return true;
-  return (
-    row.memberRole !== null &&
-    roleHasWorkspacePermission(workspaceId, row.memberRole, {
-      workspace: ["read"],
-      quills: [action],
-    })
-  );
+  return teammateHolds(workspaceId, userId, {
+    workspace: ["read"],
+    quills: [action],
+  });
 }
 
 /**
@@ -404,4 +386,155 @@ export async function memberHoldsQuillsAction(
         quills: [action],
       })
     : false;
+}
+
+/**
+ * Whether the account holds the Kaneo permissions in this workspace now, by Kaneo's rules without a
+ * request: an unbanned instance administrator, or a member whose role grants them. A worker that
+ * acts as a teammate checks it; a request checks the same through route middleware.
+ */
+export async function teammateHolds(
+  workspaceId: string,
+  userId: string,
+  permissions: PermissionMap,
+) {
+  const [row] = await platformDb
+    .select({
+      role: userTable.role,
+      banned: userTable.banned,
+      memberRole: workspaceUserTable.role,
+    })
+    .from(userTable)
+    .leftJoin(
+      workspaceUserTable,
+      and(
+        eq(workspaceUserTable.userId, userTable.id),
+        eq(workspaceUserTable.workspaceId, workspaceId),
+      ),
+    )
+    .where(eq(userTable.id, userId))
+    .limit(1);
+  if (!row || row.banned) return false;
+  if (hasInstanceAdminRole(row.role)) return true;
+  return (
+    row.memberRole !== null &&
+    roleHasWorkspacePermission(workspaceId, row.memberRole, permissions)
+  );
+}
+
+/** Why a teammate cannot create a Kaneo task from a request (RFC 0005, 5.2). Safe to show to that teammate. */
+export const TASK_FAILURES = [
+  "forbidden",
+  "archived",
+  "column_missing",
+  "plan",
+  "failed",
+] as const;
+export type TaskFailure = (typeof TASK_FAILURES)[number];
+
+/**
+ * The column slug to create a task in, as the teammate, or why they cannot: Kaneo task:create, project
+ * access, a live project of this workspace, Kaneo's plan check and the column. A null column is the
+ * project's first open column. Kaneo's createTask route checks the same before its controller runs.
+ */
+export async function taskTarget(
+  workspaceId: string,
+  userId: string,
+  projectId: string,
+  columnId: string | null,
+): Promise<{ status: string } | { reason: TaskFailure }> {
+  const [project] = await platformDb
+    .select({ archivedAt: projectTable.archivedAt })
+    .from(projectTable)
+    .where(
+      and(
+        eq(projectTable.id, projectId),
+        eq(projectTable.workspaceId, workspaceId),
+      ),
+    )
+    .limit(1);
+  if (
+    !project ||
+    !(await teammateHolds(workspaceId, userId, { task: ["create"] })) ||
+    !(await listAccessibleProjectIds(platformDb, workspaceId, userId)).has(
+      projectId,
+    )
+  )
+    return { reason: "forbidden" };
+  if (project.archivedAt) return { reason: "archived" };
+  if (!(await hasWorkspaceEntitlement(workspaceId))) return { reason: "plan" };
+  const columns = await platformDb
+    .select({
+      id: columnTable.id,
+      slug: columnTable.slug,
+      isFinal: columnTable.isFinal,
+    })
+    .from(columnTable)
+    .where(eq(columnTable.projectId, projectId))
+    .orderBy(columnTable.position, columnTable.id);
+  const column = columnId
+    ? columns.find((one) => one.id === columnId)
+    : columns.find((one) => !one.isFinal);
+  return column ? { status: column.slug } : { reason: "column_missing" };
+}
+
+/** Whether Kaneo lets the user be the assignee of a task in the project. */
+export async function assignable(
+  workspaceId: string,
+  projectId: string,
+  userId: string,
+) {
+  try {
+    await assertAssignableUser(userId, workspaceId, projectId);
+    return true;
+  } catch (error) {
+    if (error instanceof HTTPException) return false;
+    throw error;
+  }
+}
+
+/**
+ * The linked tasks of this workspace that the user can open, with their key, column and assignee,
+ * and how many others the user cannot open. A task that left the workspace counts as neither.
+ */
+export async function linkedTasks(
+  workspaceId: string,
+  userId: string,
+  taskIds: readonly string[],
+) {
+  const rows = taskIds.length
+    ? await platformDb
+        .select({
+          taskId: taskTable.id,
+          title: taskTable.title,
+          number: taskTable.number,
+          projectId: taskTable.projectId,
+          projectSlug: projectTable.slug,
+          columnName: columnTable.name,
+          columnColor: columnTable.color,
+          done: sql<boolean>`coalesce(${columnTable.isFinal}, false)`,
+          assigneeName: userTable.name,
+        })
+        .from(taskTable)
+        .innerJoin(projectTable, eq(projectTable.id, taskTable.projectId))
+        .leftJoin(columnTable, eq(columnTable.id, taskTable.columnId))
+        .leftJoin(userTable, eq(userTable.id, taskTable.userId))
+        .where(
+          and(
+            inArray(taskTable.id, [...taskIds]),
+            eq(projectTable.workspaceId, workspaceId),
+          ),
+        )
+    : [];
+  const open = rows.length
+    ? await listAccessibleProjectIds(platformDb, workspaceId, userId)
+    : new Set<string>();
+  const visible = rows.filter((row) => open.has(row.projectId));
+  return {
+    items: visible.map(({ projectSlug, number, ...row }) => ({
+      ...row,
+      key: number ? `${projectSlug}-${number}` : null,
+    })),
+    hidden: rows.length - visible.length,
+  };
 }

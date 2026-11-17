@@ -1,7 +1,9 @@
 import { fireEvent, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
+import { previewPostUpdateFixture } from "../../../api/team/preview-post-update.fixture";
 import { TeamRuntimeProvider } from "../../../team/runtime";
 import { press } from "../../../test/actions";
+import { mockApi } from "../../../test/mock-api";
 import { renderComponent } from "../../../test/render";
 import { postTeam } from "../post.fixture";
 import { PostMenu } from "./post-menu";
@@ -50,6 +52,26 @@ describe("PostMenu", () => {
       await view.findByRole("dialog", { name: "Delete this request?" }),
     ).toBeVisible();
     open.mockRestore();
+  });
+
+  it("opens Send update only with update and manage_settings", async () => {
+    const api = mockApi();
+    api.reply({ segments: [] });
+    api.reply(previewPostUpdateFixture.ok());
+    const view = render();
+    press("More actions");
+    fireEvent.click(await view.findByRole("menuitem", { name: "Send update" }));
+    expect(
+      await view.findByRole("dialog", { name: "Send an update" }),
+    ).toBeVisible();
+    view.unmount();
+    const limited = render({
+      ...postTeam,
+      permissions: { ...postTeam.permissions, manageSettings: false },
+    });
+    press("More actions");
+    await limited.findByRole("menuitem", { name: "Copy link" });
+    expect(limited.queryByRole("menuitem", { name: "Send update" })).toBeNull();
   });
 
   it("has no Delete without the delete permission", async () => {

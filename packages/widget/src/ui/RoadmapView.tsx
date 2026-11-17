@@ -5,11 +5,14 @@ import type { FeedbackPost, FeedbackStatus } from "./types.js";
 
 export function RoadmapView({
   posts,
+  identified = false,
   onOpen,
   expanded,
   onExpanded,
 }: {
   posts: readonly FeedbackPost[];
+  /** A signed-in customer: each shipped request that they voted for gets the "For you" mark (#109). */
+  identified?: boolean;
   onOpen: (id: string) => void;
   expanded: readonly FeedbackStatus[];
   onExpanded: (statuses: readonly FeedbackStatus[]) => void;
@@ -40,6 +43,12 @@ export function RoadmapView({
                 >
                   <span className="qb-feedback-copy">
                     <strong>{post.title}</strong>
+                    {identified && status === "shipped" && post.voted && (
+                      <span className="qb-for-you">
+                        <Icon name="check" />
+                        For you
+                      </span>
+                    )}
                     <span>{post.body}</span>
                     <small>
                       <Avatar name={post.author} avatarUrl={post.avatarUrl} />

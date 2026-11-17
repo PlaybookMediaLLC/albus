@@ -10,3 +10,11 @@ export * from "./demand.fixture";
 export * from "./scores.fixture";
 // RFC 0004: the AI chip of the request detail.
 export * from "./post-summary.fixture";
+// RFC 0005: requests become Kaneo tasks.
+export {
+  createQuillsPostTask,
+  listQuillsPostTasks,
+} from "./post-tasks.fixture";
+export * from "./board-delivery.fixture";
+// #92: one update to every channel.
+export * from "./post-updates.fixture";

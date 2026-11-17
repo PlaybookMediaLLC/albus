@@ -5,11 +5,18 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
-import { startContainer, stopContainer, waitHealthy } from "./docker.mjs";
+import {
+  MAIL_CONTAINER,
+  startContainer,
+  startMailContainer,
+  stopContainer,
+  waitHealthy,
+} from "./docker.mjs";
 import {
   aiEnv,
   composeImage,
   demoEnv,
+  inboxUrl,
   isPortInUse,
   parseArgs,
   PORTS,
@@ -28,6 +35,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const children = [];
 let stopping = false;
 let ownsContainer = false;
+let ownsMailContainer = false;
 
 const log = (line) => console.log(`[demo] ${line}`);
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
@@ -86,6 +94,7 @@ async function stop(code) {
   }
   for (const child of children) signalGroup(child, "SIGKILL");
   if (ownsContainer) stopContainer();
+  if (ownsMailContainer) stopContainer(MAIL_CONTAINER);
   unlock();
   process.exit(code);
 }
@@ -111,7 +120,9 @@ async function main() {
     port: PORTS.db,
     password: secrets.POSTGRES_PASSWORD,
   });
+  ownsMailContainer = startMailContainer(PORTS);
   await waitHealthy();
+  await waitHealthy(MAIL_CONTAINER);
   const env = demoEnv(process.env, secrets, null);
   await finish(
     // The root build:dependencies filter matches no package, so name the two apps here.
@@ -179,6 +190,7 @@ async function main() {
   log(`  Portal:        ${app}/portal/${WORKSPACE}`);
   log(`  Teammate app:  ${app}/feedback/${WORKSPACE}`);
   log(`  Kaneo:         ${app}/dashboard/workspace/${WORKSPACE}`);
+  log(`  Mail inbox:    ${inboxUrl()}`);
   log(`  API health:    ${env.KANEO_API_URL}/api/health`);
   log(`Local test accounts. The password is in ${secretsFile}.`);
   log(`  Teammate:  portal-demo@example.test  ${secrets.QUILLS_DEMO_PASSWORD}`);

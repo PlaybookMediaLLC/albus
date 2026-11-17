@@ -1,5 +1,5 @@
 import { ExternalLink } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { portalHref } from "../../core/portal-href";
 import { useGetPostFilterCounts } from "../../hooks/team/use-get-post-filter-counts";
@@ -12,6 +12,10 @@ import { PageFrame } from "../../ui/page-frame";
 import { Button } from "../../ui/upstream";
 import { NewRequestDialog } from "../../team/new-request/new-request-dialog";
 import { RoadmapBoard } from "./parts/roadmap-board";
+import {
+  RoadmapTaskDialog,
+  type RoadmapTaskDialogProps,
+} from "./parts/roadmap-task-dialog";
 
 export interface TeamRoadmapPageProps {
   workspaceId: string;
@@ -25,6 +29,11 @@ export function TeamRoadmapPage({ workspaceId }: TeamRoadmapPageProps) {
   const team = useTeamRuntime();
   // The status of the open New request dialog.
   const [creating, setCreating] = useState<string | null>(null);
+  const [task, setTask] = useState<RoadmapTaskDialogProps["target"]>(null);
+  // Stable: the memoized card bodies must not render again on each page render.
+  const openTask = useCallback<
+    NonNullable<Parameters<typeof RoadmapBoard>[0]["onTask"]>
+  >((post, kind) => setTask({ post, kind }), []);
   const param = { workspaceId };
   // ponytail: the first 100 statuses and boards (the API maximum); page them when a workspace has more.
   const statuses = useListStatuses(
@@ -86,6 +95,7 @@ export function TeamRoadmapPage({ workspaceId }: TeamRoadmapPageProps) {
             boards={boardNames}
             counts={statusCounts}
             onCreate={team.permissions.create ? setCreating : undefined}
+            onTask={team.permissions.update ? openTask : undefined}
           />
         </TeamStateView>
       </div>
@@ -100,6 +110,11 @@ export function TeamRoadmapPage({ workspaceId }: TeamRoadmapPageProps) {
           onCreated={() => setCreating(null)}
         />
       ) : null}
+      <RoadmapTaskDialog
+        workspaceId={workspaceId}
+        target={task}
+        onClose={() => setTask(null)}
+      />
     </PageFrame>
   );
 }

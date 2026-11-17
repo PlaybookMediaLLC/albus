@@ -40,6 +40,8 @@ export interface HostEvents {
     payload: EventMap[K],
   ): void;
   unread(count: number): void;
+  /** A new update that the launcher has not shown this visitor: show its title, or open it (#108). */
+  announce(entry: { id: string; title: string }, open: boolean): void;
   /** The API answered 401: this session ended. */
   expired(session: number | null): void;
 }
@@ -156,10 +158,14 @@ export function useWidgetData({
   };
   // ponytail: read once per session and after a mark, not polled; updates ship rarely.
   const reportUpdatesUnread = async (signal: AbortSignal) => {
-    const { count } = await send.updatesUnread(signal);
-    if (!signal.aborted) {
-      updatesUnread.current = count;
-      badge();
+    const { count, announce, autoOpen } = await send.updatesUnread(signal);
+    if (signal.aborted) return;
+    updatesUnread.current = count;
+    badge();
+    // Once per visitor: the server's announced mark moves before the launcher shows the title.
+    if (announce) {
+      await send.announced(signal);
+      if (!signal.aborted) events.current.announce(announce, autoOpen);
     }
   };
   const load = (signal: AbortSignal) =>

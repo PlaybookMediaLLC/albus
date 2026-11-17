@@ -10,9 +10,11 @@ import {
   Menu,
   MenuGroup,
   MenuGroupLabel,
+  MenuItem,
   MenuPopup,
   MenuRadioGroup,
   MenuRadioItem,
+  MenuSeparator,
   MenuTrigger,
 } from "../../../ui/upstream";
 import type { RoadmapPost } from "../roadmap-moves";
@@ -33,6 +35,8 @@ export interface RoadmapCardBodyProps {
   describedBy?: string;
   /** Moves the card; `byMenu` is true for the Move to menu. Left out without the update permission. */
   onMove?: (post: RoadmapPost, statusId: string, byMenu?: boolean) => void;
+  /** Opens the Create task or Link existing task dialog (RFC 0005). Left out without the update permission. */
+  onTask?: (post: RoadmapPost, kind: "create" | "link") => void;
 }
 
 /**
@@ -44,6 +48,7 @@ export function RoadmapCardBody({
   post,
   statusId,
   onMove,
+  onTask,
   ...props
 }: RoadmapCardBodyProps) {
   const { t } = useTranslation("quills");
@@ -131,6 +136,17 @@ export function RoadmapCardBody({
                 ))}
               </MenuRadioGroup>
             </MenuGroup>
+            {onTask ? (
+              <>
+                <MenuSeparator />
+                <MenuItem onClick={() => onTask(post, "create")}>
+                  {t("team-post.createTask")}
+                </MenuItem>
+                <MenuItem onClick={() => onTask(post, "link")}>
+                  {t("team-post.linkTask")}
+                </MenuItem>
+              </>
+            ) : null}
           </MenuPopup>
         </Menu>
       ) : null}
