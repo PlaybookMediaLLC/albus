@@ -141,6 +141,54 @@ describe("API integration: desktop session", () => {
     expect(await after.json()).toBeNull();
   });
 
+  it("takes the provider session id of the person's own live session", async () => {
+    const { app } = createApp();
+    const sessionOf = async (sessionCookie: string) => {
+      const response = await app.request(
+        "/api/auth/get-session?disableCookieCache=true",
+        { headers: { Origin: origin, Cookie: sessionCookie } },
+      );
+      return (
+        (await response.json()) as {
+          session: { id: string; userId: string };
+        }
+      ).session;
+    };
+    const setSid = (id: string, oidcSid: string) =>
+      db
+        .update(schema.sessionTable)
+        .set({ oidcSid })
+        .where(eq(schema.sessionTable.id, id));
+    const { cookie } = await signedInCookie(app);
+    const browser = await sessionOf(cookie);
+    await setSid(browser.id, "idp-session-1");
+    // Newer single sign-on sessions that must not count: another person's, and an expired one.
+    const other = await signedInCookie(app);
+    await setSid((await sessionOf(other.cookie)).id, "idp-other");
+    const later = new Date(Date.now() + 60_000);
+    await db.insert(schema.sessionTable).values({
+      id: randomUUID(),
+      token: randomUUID(),
+      userId: browser.userId,
+      oidcSid: "idp-expired",
+      expiresAt: new Date(Date.now() - 60_000),
+      createdAt: later,
+      updatedAt: later,
+    });
+
+    const token = await deviceToken(app, cookie);
+    const response = await app.request("/api/desktop/session", {
+      method: "POST",
+      headers: { Origin: origin, Authorization: `Bearer ${token}` },
+    });
+    const desktop = await sessionOf(cookiesOf(response));
+    const [row] = await db
+      .select({ oidcSid: schema.sessionTable.oidcSid })
+      .from(schema.sessionTable)
+      .where(eq(schema.sessionTable.id, desktop.id));
+    expect(row?.oidcSid).toBe("idp-session-1");
+  });
+
   it("refuses a cookie session without a bearer token", async () => {
     const { app } = createApp();
     const { cookie } = await signedInCookie(app);

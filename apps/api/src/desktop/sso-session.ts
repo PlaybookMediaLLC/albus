@@ -1,9 +1,9 @@
-import { and, desc, eq, isNotNull, ne } from "drizzle-orm";
+import { and, desc, eq, gt, isNotNull, ne } from "drizzle-orm";
 import db, { schema } from "../database";
 
 /**
  * Gives the desktop session the identity provider's session id (`oidcSid`) of the person's newest
- * single sign-on session. A back-channel logout ends sessions by that id, so it also ends the
+ * live single sign-on session. A back-channel logout ends sessions by that id, so it also ends the
  * desktop session. ponytail: the newest single sign-on session stands for the browser that
  * approved the device code, because Better Auth does not record which session approved it.
  */
@@ -16,6 +16,8 @@ export async function inheritSsoSessionId(sessionId: string, userId: string) {
         eq(schema.sessionTable.userId, userId),
         isNotNull(schema.sessionTable.oidcSid),
         ne(schema.sessionTable.id, sessionId),
+        // Better Auth deletes an expired row only when something reads it.
+        gt(schema.sessionTable.expiresAt, new Date()),
       ),
     )
     .orderBy(desc(schema.sessionTable.createdAt))
