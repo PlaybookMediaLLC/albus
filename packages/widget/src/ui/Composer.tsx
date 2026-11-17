@@ -2,11 +2,17 @@ import { useId, useRef, useState } from "react";
 import { Icon } from "./Icon.js";
 import { Avatar } from "./Avatar.js";
 import { AttachmentControls } from "./AttachmentControls.js";
+import { FeedbackDraftPanel } from "./FeedbackDraftPanel.js";
+import { FeedbackFields } from "./FeedbackFields.js";
+import { missingFields, toFieldValues, type RawFieldValue } from "./fields.js";
 import { suggestArticles } from "./search.js";
 import { useAction } from "./useAction.js";
 import { useSimilarRequests } from "./useSimilarRequests.js";
 import type {
+  FeedbackDraft,
+  FeedbackField,
   FeedbackPost,
+  SubmissionOptions,
   HelpArticle,
   WidgetPerson,
   WidgetViewProps,
@@ -33,11 +39,16 @@ export function Composer({
   onFilesChange,
   onCapture,
   articleContext,
+  onDraft,
+  fields = [],
 }: {
   kind: "message" | "feedback" | "reply" | "comment";
   draft: Draft;
   onChange: (body: string) => void;
-  onSubmit?: () => void;
+  /** Feedback: the custom field values, and the title and board that the visitor took from a draft. */
+  onSubmit?: (
+    extra?: Pick<SubmissionOptions, "title" | "boardId" | "customFields">,
+  ) => void;
   articles?: readonly HelpArticle[];
   posts?: readonly FeedbackPost[];
   onOpenArticle?: (id: string) => void;
@@ -52,12 +63,28 @@ export function Composer({
   onFilesChange?: (files: readonly File[]) => void;
   onCapture?: WidgetViewProps["onCaptureScreenshot"];
   articleContext?: string;
+  /** Feedback: suggests a title and a board from the visitor's words. */
+  onDraft?: (body: string) => Promise<FeedbackDraft>;
+  /** Feedback: the public custom fields of the board that the post goes to. */
+  fields?: readonly FeedbackField[];
 }) {
   const t = useT();
   const form = useRef<HTMLFormElement>(null);
   const fieldId = useId();
   const [preparing, setPreparing] = useState(false);
+  const [suggested, setSuggested] = useState<{
+    body: string;
+    draft: FeedbackDraft;
+  } | null>(null);
+  const [drafting, setDrafting] = useState(false);
+  const [draftError, setDraftError] = useState("");
+  const [values, setValues] = useState<Record<string, RawFieldValue>>({});
   const { body, pending, error, files } = draft;
+  // A suggestion belongs to the text it was made for: an edit hides it.
+  const shown =
+    kind === "feedback" && suggested?.body === body.trim()
+      ? suggested.draft
+      : null;
   const compact = kind === "reply" || kind === "comment";
   const label =
     kind === "feedback"
@@ -76,25 +103,34 @@ export function Composer({
   // Votes cast here, for requests the widget has not loaded.
   const [votedHere, setVotedHere] = useState<Record<string, boolean>>({});
   const voting = useAction();
-  const suggestions =
-    kind === "feedback"
+  const suggestions = shown
+    ? []
+    : kind === "feedback"
       ? similar
       : kind === "message" && body.trim().length >= 3
         ? suggestArticles(articles, body)
         : [];
+  // A suggested board asks for its own fields.
+  const asked = kind === "feedback" ? (shown?.board?.fields ?? fields) : [];
+  const missing = missingFields(asked, values);
   const canSend =
     !!onSubmit &&
     (!!body.trim() || !!files.length) &&
     !pending &&
     !preparing &&
-    !offline;
+    !offline &&
+    !missing.length;
+  const extra = () => {
+    const customFields = toFieldValues(asked, values);
+    return Object.keys(customFields).length ? { customFields } : {};
+  };
   return (
     <form
       ref={form}
       className={`qb-composer qb-compose-${kind}${kind === "reply" ? " qb-reply-composer" : ""}`}
       onSubmit={(event) => {
         event.preventDefault();
-        if (canSend) onSubmit?.();
+        if (canSend) onSubmit?.(extra());
       }}
     >
       {kind === "message" && (
@@ -150,7 +186,7 @@ export function Composer({
               !event.nativeEvent.isComposing
             ) {
               event.preventDefault();
-              if (canSend) onSubmit?.();
+              if (canSend) onSubmit?.(extra());
             }
           }}
         />
@@ -202,6 +238,67 @@ export function Composer({
           </button>
         </div>
       </div>
+      {kind === "feedback" && (
+        <FeedbackFields
+          fields={asked}
+          values={values}
+          disabled={pending}
+          onChange={(key, value) =>
+            setValues((all) => ({ ...all, [key]: value }))
+          }
+        />
+      )}
+      {kind === "feedback" &&
+        !!missing.length &&
+        (body.trim() || !!files.length) && (
+          <p className="qb-form-note">
+            Fill in {missing.map((field) => field.label).join(", ")} to post.
+          </p>
+        )}
+      {kind === "feedback" && onDraft && !shown && body.trim().length >= 3 && (
+        <button
+          type="button"
+          className="qb-text-button qb-draft-button"
+          disabled={drafting || pending || offline}
+          onClick={async () => {
+            const text = body.trim();
+            setDrafting(true);
+            setDraftError("");
+            try {
+              setSuggested({ body: text, draft: await onDraft(text) });
+            } catch {
+              setDraftError(
+                "A title could not be suggested right now. You can still post your feedback as written.",
+              );
+            } finally {
+              setDrafting(false);
+            }
+          }}
+        >
+          {drafting ? "Suggesting a title…" : "Suggest a title"}
+        </button>
+      )}
+      {kind === "feedback" && draftError && !shown && (
+        <p className="qb-form-note" role="alert">
+          {draftError}
+        </p>
+      )}
+      {shown && (
+        <FeedbackDraftPanel
+          draft={shown}
+          canSend={canSend}
+          onPost={() =>
+            onSubmit?.({
+              ...extra(),
+              title: shown.title,
+              boardId: shown.board?.id,
+            })
+          }
+          onDismiss={() => setSuggested(null)}
+          onOpenPost={onOpenPost}
+          onVote={onVote && ((postId) => onVote(postId, true))}
+        />
+      )}
       {!!suggestions.length && (
         <aside
           className="qb-suggestions"

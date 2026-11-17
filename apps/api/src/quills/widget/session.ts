@@ -1,11 +1,17 @@
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { apiRouter, z } from "../../openapi";
-import { principal, user as customer } from "../../database/quills/schema/auth";
+import {
+  principal,
+  settings,
+  user as customer,
+} from "../../database/quills/schema/auth";
 import {
   pageViews,
   visitorDevices,
 } from "../../database/quills/schema/visitor-analytics";
 import { defineQuillsRoute } from "../framework/define-route";
+import { signInLinkAvailable } from "../framework/sign-in-link";
+import { parseJson } from "../settings/area";
 
 // The widget session itself and the visitor device it runs on. Both act on the session's own
 // principal only.
@@ -17,7 +23,7 @@ const getSession = defineQuillsRoute({
   operationId: "getQuillsWidgetSession",
   summary: "Validate the widget session",
   description:
-    "user is null for an anonymous visitor. The session expires 7 days after identify.",
+    "user is null for an anonymous visitor. The session expires 7 days after identify. canPortalHandoff is true for an identified visitor while the portal is on and the instance can mail a sign-in link (mail delivery on, login form on, no captcha).",
   action: "read",
   response: z.object({
     user: z
@@ -39,22 +45,21 @@ const getSession = defineQuillsRoute({
         email: customer.email,
         image: customer.image,
         type: principal.type,
+        portalConfig: settings.portalConfig,
       })
       .from(principal)
       .innerJoin(customer, eq(customer.id, principal.userId))
+      .leftJoin(settings, sql`true`)
       .where(eq(principal.id, caller.principalId!))
       .limit(1);
+    const identified = row && row.type !== "anonymous";
     return {
-      user:
-        row && row.type !== "anonymous"
-          ? {
-              id: row.id,
-              name: row.name,
-              email: row.email,
-              avatarUrl: row.image,
-            }
-          : null,
-      canPortalHandoff: false,
+      user: identified
+        ? { id: row.id, name: row.name, email: row.email, avatarUrl: row.image }
+        : null,
+      canPortalHandoff: identified
+        ? signInLinkAvailable() && parseJson(row.portalConfig).enabled === true
+        : false,
     };
   },
 });

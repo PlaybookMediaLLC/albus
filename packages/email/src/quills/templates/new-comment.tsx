@@ -9,6 +9,8 @@ import { EmailLayout, NotificationFooter } from "./email-layout";
 import { typography, colors } from "./shared-styles";
 
 interface NewCommentEmailProps {
+  /** Text direction: "rtl" for a recipient who reads a right-to-left language (issue #117). */
+  dir?: "ltr" | "rtl";
   postTitle: string;
   postUrl: string;
   commenterName: string;
@@ -21,6 +23,7 @@ interface NewCommentEmailProps {
 }
 
 export function NewCommentEmail({
+  dir,
   postTitle,
   postUrl,
   commenterName,
@@ -33,6 +36,7 @@ export function NewCommentEmail({
 }: NewCommentEmailProps) {
   return (
     <EmailLayout
+      dir={dir}
       footer={
         <NotificationFooter
           reason="You received this email because you submitted or subscribed to this feedback."

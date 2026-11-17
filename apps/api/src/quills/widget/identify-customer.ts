@@ -2,11 +2,9 @@ import { and, eq, ne, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { z } from "../../openapi";
 import { principal, user as customer } from "../../database/quills/schema/auth";
-import { kvStore } from "../../database/quills/schema/kv";
 import type { Database } from "../../database/quills/client";
 import { mergeMetadata } from "../directory/customer";
 import type { verifyIdentityToken } from "../framework/audience";
-import { tokenLinkKey } from "../framework/portal-sign-in";
 import {
   attributeClaims,
   autoSubscribeChangelog,
@@ -34,22 +32,6 @@ const claimsSchema = z.object({
     .optional()
     .catch(undefined),
 });
-
-/** True when token sign-in linked this profile to `kaneoUserId`: the host token still names it. */
-async function linkedByTokenSignIn(
-  db: Database,
-  customerId: string,
-  kaneoUserId: string,
-) {
-  const [row] = await db
-    .select({ value: kvStore.value })
-    .from(kvStore)
-    .where(eq(kvStore.key, tokenLinkKey(customerId)))
-    .limit(1);
-  return (
-    (row?.value as { userId?: unknown } | undefined)?.userId === kaneoUserId
-  );
-}
 
 type Raw = NonNullable<ReturnType<typeof verifyIdentityToken>>;
 
@@ -82,6 +64,7 @@ export async function identifyCustomer(db: Database, raw: Raw) {
       id: customer.id,
       kaneoUserId: customer.kaneoUserId,
       email: customer.email,
+      externalId: customer.externalId,
     })
     .from(customer)
     .where(
@@ -91,16 +74,18 @@ export async function identifyCustomer(db: Database, raw: Raw) {
     .orderBy(sql`(${customer.externalId} = ${sub}) desc nulls last`)
     .limit(1)
     .for("update");
-  // A profile linked to a Kaneo account belongs to that account's portal sign-in, unless this
-  // workspace's token sign-in made the link: the host token already names that account.
+  // A profile linked to a Kaneo account (a verified-email link, portal/widget-link.ts, or a token
+  // sign-in, portal/token-sign-in.ts) resolves only by the sub and email together, and the token
+  // never changes its name, email or avatar.
+  const linked = Boolean(match?.kaneoUserId);
   if (
-    match?.kaneoUserId &&
-    !(await linkedByTokenSignIn(db, match.id, match.kaneoUserId))
+    linked &&
+    (match!.externalId !== sub || match!.email?.toLowerCase() !== email)
   )
     throw new HTTPException(409, {
       message: "The email belongs to another customer",
     });
-  if (match && match.email?.toLowerCase() !== email) {
+  if (!linked && match && match.email?.toLowerCase() !== email) {
     const [holder] = await db
       .select({ id: customer.id })
       .from(customer)
@@ -123,16 +108,18 @@ export async function identifyCustomer(db: Database, raw: Raw) {
     ...(name && { name }),
     ...(avatarUrl && { image: avatarUrl }),
   };
-  const [identity] = match
-    ? await db
-        .update(customer)
-        .set(fields)
-        .where(eq(customer.id, match.id))
-        .returning()
-    : await db
-        .insert(customer)
-        .values({ ...fields, name: name ?? email.split("@")[0]! })
-        .returning();
+  const [identity] = linked
+    ? await db.select().from(customer).where(eq(customer.id, match!.id))
+    : match
+      ? await db
+          .update(customer)
+          .set(fields)
+          .where(eq(customer.id, match.id))
+          .returning()
+      : await db
+          .insert(customer)
+          .values({ ...fields, name: name ?? email.split("@")[0]! })
+          .returning();
   await db
     .insert(principal)
     .values({

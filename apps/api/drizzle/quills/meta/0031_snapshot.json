@@ -1,5 +1,5 @@
 {
-	"id": "054837f0-81da-4206-8bf1-63efed6ff932",
+	"id": "d8a9a21c-222c-4f83-a941-071b46e228bf",
 	"prevId": "7976329b-19ea-4765-9e92-c4e397158988",
 	"version": "7",
 	"dialect": "postgresql",
@@ -4091,13 +4091,6 @@
 				},
 				"is_comments_locked": {
 					"name": "is_comments_locked",
-					"type": "boolean",
-					"primaryKey": false,
-					"notNull": true,
-					"default": false
-				},
-				"is_hidden": {
-					"name": "is_hidden",
 					"type": "boolean",
 					"primaryKey": false,
 					"notNull": true,
@@ -26612,6 +26605,111 @@
 				}
 			},
 			"checkConstraints": {},
+			"isRLSEnabled": true
+		},
+		"quills.changelog_translations": {
+			"name": "changelog_translations",
+			"schema": "quills",
+			"columns": {
+				"workspace_id": {
+					"name": "workspace_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "nullif(current_setting('quills.workspace_id', true), '')"
+				},
+				"changelog_entry_id": {
+					"name": "changelog_entry_id",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"locale": {
+					"name": "locale",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"title": {
+					"name": "title",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"content": {
+					"name": "content",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp with time zone",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamp with time zone",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {
+				"changelog_translations_workspace_id_workspace_id_fk": {
+					"name": "changelog_translations_workspace_id_workspace_id_fk",
+					"tableFrom": "changelog_translations",
+					"tableTo": "workspace",
+					"columnsFrom": ["workspace_id"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "no action"
+				},
+				"changelog_translations_entry_fk": {
+					"name": "changelog_translations_entry_fk",
+					"tableFrom": "changelog_translations",
+					"tableTo": "changelog_entries",
+					"schemaTo": "quills",
+					"columnsFrom": ["workspace_id", "changelog_entry_id"],
+					"columnsTo": ["workspace_id", "id"],
+					"onDelete": "cascade",
+					"onUpdate": "no action"
+				}
+			},
+			"compositePrimaryKeys": {
+				"changelog_translations_pk": {
+					"name": "changelog_translations_pk",
+					"columns": ["workspace_id", "changelog_entry_id", "locale"]
+				}
+			},
+			"uniqueConstraints": {},
+			"policies": {
+				"workspace_isolation": {
+					"name": "workspace_isolation",
+					"as": "PERMISSIVE",
+					"for": "ALL",
+					"to": ["public"],
+					"using": "\"quills\".\"changelog_translations\".\"workspace_id\" = nullif(current_setting('quills.workspace_id', true), '')",
+					"withCheck": "\"quills\".\"changelog_translations\".\"workspace_id\" = nullif(current_setting('quills.workspace_id', true), '')"
+				}
+			},
+			"checkConstraints": {
+				"changelog_translations_locale_check": {
+					"name": "changelog_translations_locale_check",
+					"value": "\"quills\".\"changelog_translations\".\"locale\" ~ '^[a-z]{2,3}(-[a-z]{2,4})?$'"
+				},
+				"changelog_translations_title_check": {
+					"name": "changelog_translations_title_check",
+					"value": "char_length(\"quills\".\"changelog_translations\".\"title\") BETWEEN 1 AND 200"
+				},
+				"changelog_translations_content_check": {
+					"name": "changelog_translations_content_check",
+					"value": "char_length(\"quills\".\"changelog_translations\".\"content\") BETWEEN 1 AND 100000"
+				}
+			},
 			"isRLSEnabled": true
 		},
 		"quills.content_translations": {

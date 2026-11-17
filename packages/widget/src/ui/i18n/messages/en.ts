@@ -259,7 +259,13 @@ export const en = {
   Assistant: "Assistant",
   "Submit request": "Submit request",
   "Request submitted": "Request submitted",
-  "Open the full board": "Open the full board",
+  "Open in portal": "Open in portal",
+  "Check your email for a sign-in link to the portal.":
+    "Check your email for a sign-in link to the portal.",
+  "If your email has an account on the portal, a sign-in link is on its way. Check your email.":
+    "If your email has an account on the portal, a sign-in link is on its way. Check your email.",
+  "The portal could not be opened. Try again later.":
+    "The portal could not be opened. Try again later.",
 } as const;
 
 export type MessageKey = keyof typeof en;

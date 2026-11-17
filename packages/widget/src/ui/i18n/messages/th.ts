@@ -244,7 +244,13 @@ const th: Catalog = {
   Assistant: "ผู้ช่วย",
   "Submit request": "ส่งคำขอ",
   "Request submitted": "ส่งคำขอแล้ว",
-  "Open the full board": "เปิดบอร์ดฉบับเต็ม",
+  "Open in portal": "เปิดในพอร์ทัล",
+  "Check your email for a sign-in link to the portal.":
+    "ตรวจสอบอีเมลของคุณเพื่อรับลิงก์ลงชื่อเข้าใช้พอร์ทัล",
+  "If your email has an account on the portal, a sign-in link is on its way. Check your email.":
+    "หากอีเมลของคุณมีบัญชีในพอร์ทัล ลิงก์ลงชื่อเข้าใช้กำลังส่งไป ตรวจสอบอีเมลของคุณ",
+  "The portal could not be opened. Try again later.":
+    "เปิดพอร์ทัลไม่ได้ ลองอีกครั้งภายหลัง",
 };
 
 export default th;

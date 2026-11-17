@@ -107,34 +107,36 @@ export interface BoardSettings {
   customFields?: BoardCustomField[]; // Extra intake fields the submission form renders
 }
 
-/** The input controls a board custom field can render as on the public
- *  submission form. Mirrors the ticket intake-form field types. */
+/** The types of a board custom field (issue #71). */
 export const BOARD_CUSTOM_FIELD_TYPES = [
   "text",
-  "long_text",
   "number",
   "select",
-  "date",
+  "multi_select",
   "checkbox",
+  "date",
 ] as const;
 export type BoardCustomFieldType = (typeof BOARD_CUSTOM_FIELD_TYPES)[number];
 
 /**
- * One configurable field on a board's public submission form. Validated
- * values land in the post's `customFieldValues` JSONB column, keyed by
- * `key`. `options` is only meaningful for `select`.
+ * One field that a board asks for. Validated values land in the post's `customFieldValues`
+ * JSONB column, keyed by `key`. `options` is only for `select` and `multi_select`. An internal
+ * field is for teammates only: customers never see or set it.
  */
 export interface BoardCustomField {
   key: string;
   label: string;
   type: BoardCustomFieldType;
   required: boolean;
+  internal: boolean;
   options?: string[];
 }
 
-/** Validated custom-field answers as stored on a post row. Every field type
- *  coerces to a JSON scalar, so the map is always wire-serializable. */
-export type CustomFieldValues = Record<string, string | number | boolean>;
+/** Validated custom-field values as stored on a post row: JSON scalars, or strings for multi-select. */
+export type CustomFieldValues = Record<
+  string,
+  string | number | boolean | string[]
+>;
 
 // ----------------------------------------------------------------------
 // Per-action access tiers (View+Vote / Comment / Submit) and per-board

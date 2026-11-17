@@ -1,4 +1,5 @@
 import type { ComponentProps } from "react";
+import { toFieldValues } from "../core/composer-fields";
 import { useFeedbackAttachments } from "../core/use-feedback-attachments";
 import { useCreatePortalPost } from "../hooks/feedback/use-create-portal-post";
 import { AttachmentPicker } from "../ui/attachment-picker";
@@ -56,6 +57,7 @@ export function FeedbackComposer({
                 boards={props.boards}
                 draft={draft}
                 onApply={apply}
+                onPreviewTitle={props.onTitleChange}
               />
             )
           : undefined
@@ -63,11 +65,18 @@ export function FeedbackComposer({
       onSubmit={async (values) => {
         // A failed upload throws, so PortalForm offers a retry.
         const attachmentIds = await files.upload();
+        const { customFields: raw, ...post } = values;
+        const customFields = toFieldValues(
+          props.boards.find((board) => board.id === values.boardId)?.fields ??
+            [],
+          raw,
+        );
         try {
           await create.mutateAsync({
             param: { workspace: workspaceId },
             json: {
-              ...values,
+              ...post,
+              ...(Object.keys(customFields).length && { customFields }),
               idempotencyKey: files.idempotencyKey,
               attachmentIds,
             },

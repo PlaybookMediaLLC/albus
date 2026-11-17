@@ -17,7 +17,6 @@ export function FeedbackView({
   filters,
   onFilters,
   onVote,
-  onOpenPortal,
   offline,
 }: {
   posts: readonly FeedbackPost[];
@@ -26,7 +25,6 @@ export function FeedbackView({
   filters: FeedbackFilters;
   onFilters: (filters: FeedbackFilters) => void;
   onVote?: WidgetViewProps["onVoteFeedback"];
-  onOpenPortal?: WidgetViewProps["onOpenPortal"];
   offline?: boolean;
 }) {
   const t = useT();
@@ -72,17 +70,6 @@ export function FeedbackView({
           </select>
         </label>
       </div>
-      {onOpenPortal && (
-        <button
-          type="button"
-          className="qb-text-button"
-          disabled={offline}
-          onClick={() => void onOpenPortal().catch(() => {})}
-        >
-          {t("Open the full board")}
-          <Icon name="external" />
-        </button>
-      )}
       {sort === "roadmap" ? (
         <RoadmapView
           posts={posts}

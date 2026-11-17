@@ -272,7 +272,13 @@ const uk: Catalog = {
   Assistant: "Асистент",
   "Submit request": "Надіслати запит",
   "Request submitted": "Запит надіслано",
-  "Open the full board": "Відкрити всю дошку",
+  "Open in portal": "Відкрити на порталі",
+  "Check your email for a sign-in link to the portal.":
+    "Перевірте пошту: там посилання для входу на портал.",
+  "If your email has an account on the portal, a sign-in link is on its way. Check your email.":
+    "Якщо ваша адреса має обліковий запис на порталі, посилання для входу вже в дорозі. Перевірте пошту.",
+  "The portal could not be opened. Try again later.":
+    "Не вдалося відкрити портал. Спробуйте пізніше.",
 };
 
 export default uk;

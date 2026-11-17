@@ -6,6 +6,8 @@ import { useAddPostProxyVote } from "../../../hooks/team/use-add-post-proxy-vote
 import { useCreateUser } from "../../../hooks/team/use-create-user";
 import { useListPostVoters } from "../../../hooks/team/use-list-post-voters";
 import { useListUsers } from "../../../hooks/team/use-list-users";
+import { SourceSelect } from "../../../team/new-request/source-select";
+import type { Source } from "../../../team/new-request/sources";
 import { useTeamRuntime } from "../../../team/runtime";
 import { PersonAvatar } from "../../../ui/person-avatar";
 import { Button, toast, useDebouncedValue } from "../../../ui/upstream";
@@ -17,12 +19,13 @@ export interface AddVoterProps {
 
 /**
  * Adds a vote for a customer: find a person by name or email, or create a customer with the
- * typed name and add the vote for them.
+ * typed name and add the vote for them, with where the teammate heard it.
  */
 export function AddVoter({ workspaceId, post }: AddVoterProps) {
   const { t } = useTranslation("quills");
   const team = useTeamRuntime();
   const [text, setText] = useState("");
+  const [source, setSource] = useState<Source>("other");
   const name = text.trim();
   const search = useDebouncedValue(name, 300);
   const param = { workspaceId, postId: post.id };
@@ -46,7 +49,7 @@ export function AddVoter({ workspaceId, post }: AddVoterProps) {
   const failed = () => toast.error(t("core.problem.failed"));
   const addFor = (principalId: string, who: string) =>
     add.mutate(
-      { param: { ...param, principalId } },
+      { param: { ...param, principalId }, query: { source } },
       {
         onSuccess: () => {
           setText("");
@@ -57,17 +60,20 @@ export function AddVoter({ workspaceId, post }: AddVoterProps) {
     );
   return (
     <div className="grid">
-      <label className="flex items-center gap-2 border-b border-border px-3">
-        <Search aria-hidden="true" className="size-4 text-muted-foreground" />
-        <span className="sr-only">{t("team-post.addVote")}</span>
-        <input
-          type="search"
-          value={text}
-          placeholder={t("team-post.searchMembers")}
-          onChange={(event) => setText(event.target.value)}
-          className="h-11 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-        />
-      </label>
+      <div className="flex items-center gap-2 border-b border-border px-3">
+        <label className="flex min-w-0 flex-1 items-center gap-2">
+          <Search aria-hidden="true" className="size-4 text-muted-foreground" />
+          <span className="sr-only">{t("team-post.addVote")}</span>
+          <input
+            type="search"
+            value={text}
+            placeholder={t("team-post.searchMembers")}
+            onChange={(event) => setText(event.target.value)}
+            className="h-11 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          />
+        </label>
+        <SourceSelect value={source} onChange={setSource} />
+      </div>
       <ul className="grid gap-0.5 p-1.5">
         {search && users.data
           ? users.data.items

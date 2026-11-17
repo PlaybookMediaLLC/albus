@@ -27,6 +27,7 @@ export const getPortalPostFixture = {
         authorOnlyReplies: false,
         mergedInto: { id: "id_test_1", title: "value" },
         importance: null,
+        customFields: [],
       },
       ...overrides,
     }) satisfies GetPortalPostResponse,

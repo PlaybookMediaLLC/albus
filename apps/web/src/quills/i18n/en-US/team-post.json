@@ -4,6 +4,8 @@
 	"addMyVote": "Add my vote ({{count}} votes)",
 	"addVote": "Add a vote for a customer",
 	"addVoteFor": "Add a vote for {{name}}",
+	"addedBy": "Added by {{name}}",
+	"addedBySource": "Added by {{name}} · {{source}}",
 	"ai": {
 		"chip": "Summarize",
 		"failed": "AI could not summarize this request.",

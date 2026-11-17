@@ -16,6 +16,7 @@ import {
   type QuillsActor,
 } from "../framework/define-route";
 import { recordActivity } from "./activity";
+import { behalfSource, type BehalfSource } from "./schemas";
 import { lockMergeTarget } from "./thread-counts";
 import {
   findPost,
@@ -74,13 +75,18 @@ async function count(
   return row!.voteCount;
 }
 
-/** Adds `voter`'s vote to a visible post, or to the post it was merged into. Idempotent. */
+/**
+ * Adds `voter`'s vote to a visible post, or to the post it was merged into. Idempotent. With
+ * `addedBy`, a teammate adds it for the voter: the vote and the post history record the teammate,
+ * the voter and the source (#73). Like a portal vote, it does not subscribe the voter.
+ */
 export async function addVote(
   db: Database,
   postId: TypeId<"post">,
   projects: string[],
   voter: TypeId<"principal">,
   addedBy?: QuillsActor,
+  source: BehalfSource = "other",
 ) {
   // The merge link cannot change while the vote moves a count (thread-counts.ts).
   await lockMergeTarget(db, postId);
@@ -104,13 +110,27 @@ export async function addVote(
           postId: post.id,
           principalId: voter,
           ...(addedBy && {
-            sourceType: "proxy",
+            sourceType: source,
             addedByPrincipalId: addedBy.principalId,
           }),
         })
         .onConflictDoNothing()
         .returning({ id: postVotes.id });
   const changed = inserted.length > 0;
+  if (changed && addedBy) {
+    const [person] = await db
+      .select({ name: principal.displayName })
+      .from(principal)
+      .where(eq(principal.id, voter));
+    await recordActivity(db, addedBy, post.id, {
+      type: "vote.proxy",
+      metadata: {
+        voterPrincipalId: voter,
+        voterName: person?.name ?? null,
+        source,
+      },
+    });
+  }
   return {
     postId: post.id,
     changed,
@@ -118,7 +138,6 @@ export async function addVote(
   };
 }
 
-/** A principal of this workspace that is not a service account. 404 otherwise. */
 /** A person who can vote or author a post: not a service principal. 404 when missing. */
 export async function findVoter(db: Database, id: TypeId<"principal">) {
   const [voter] = await db
@@ -133,15 +152,30 @@ export async function findVoter(db: Database, id: TypeId<"principal">) {
 const voteEvent =
   (type: "post.voted" | "post.unvoted", proxy: boolean) =>
   (
-    { params }: { params: { postId: string; principalId?: string } },
+    {
+      params,
+      query,
+    }: {
+      params: { postId: string; principalId?: string };
+      query?: { source: string };
+    },
     result: z.output<typeof voteResult>,
   ) =>
     result.changed && {
       type,
       entityType: "post" as const,
       entityId: result.postId,
-      payload: proxy ? { principalId: params.principalId! } : undefined,
+      payload: proxy
+        ? {
+            principalId: params.principalId!,
+            ...(query && { source: query.source }),
+          }
+        : undefined,
     };
+/** The display name of the teammate who added a vote. */
+const adderName = sql<
+  string | null
+>`(select adder.display_name from ${principal} adder where adder.workspace_id = ${postVotes.workspaceId} and adder.id = ${postVotes.addedByPrincipalId})`;
 
 const listVoters = defineQuillsRoute({
   method: "get",
@@ -149,7 +183,7 @@ const listVoters = defineQuillsRoute({
   operationId: "listQuillsPostVoters",
   summary: "List a post's voters, newest first",
   description:
-    "The votes the post's count is made of: for a merged post, those of the post it was merged into. Leaves out test customers and votes on posts the caller cannot see. Names come from the principal profile; emails are not returned. importance is how much the voter needs the post, when the voter said so.",
+    "The votes the post's count is made of: for a merged post, those of the post it was merged into. Leaves out test customers and votes on posts the caller cannot see. Names come from the principal profile; emails are not returned. importance is how much the voter needs the post, when the voter said so. A vote that a teammate added for the voter has addedByPrincipalId, addedByName and, as sourceType, where the teammate heard it.",
   action: "read",
   params: postParams,
   query: z.object({
@@ -165,6 +199,7 @@ const listVoters = defineQuillsRoute({
         isAnonymous: z.boolean(),
         sourceType: z.string().nullable(),
         addedByPrincipalId: z.string().nullable(),
+        addedByName: z.string().nullable(),
         importance: z.enum(postVotes.importance.enumValues).nullable(),
         createdAt: responseTimestamp,
       }),
@@ -184,6 +219,7 @@ const listVoters = defineQuillsRoute({
         type: principal.type,
         sourceType: postVotes.sourceType,
         addedByPrincipalId: postVotes.addedByPrincipalId,
+        addedByName: adderName,
         importance: postVotes.importance,
         createdAt: postVotes.createdAt,
       })
@@ -240,23 +276,19 @@ const proxyVote = defineQuillsRoute({
   operationId: "addQuillsPostProxyVote",
   summary: "Vote on a post on behalf of a person",
   description:
-    "Idempotent. The vote records the caller as the teammate who added it.",
+    "Idempotent: a person has one vote on a post, however it was added. The vote and the post history record the caller as the teammate who added it, and `source`. It does not subscribe the person to the post, as a portal vote does not.",
   action: "update",
   params: voterParams,
+  // A query field, so a request without a body, as clients sent before #73, keeps working.
+  query: z.object({ source: behalfSource }),
   response: voteResult,
   responseDescription: "Vote result",
   errors,
   event: voteEvent("post.voted", true),
   load: loadProjects,
-  handler: async ({ db, actor, params, loaded: projects }) => {
+  handler: async ({ db, actor, params, query, loaded: projects }) => {
     const voter = await findVoter(db, params.principalId);
-    const result = await addVote(db, params.postId, projects, voter.id, actor);
-    if (result.changed)
-      await recordActivity(db, actor, result.postId, {
-        type: "vote.proxy",
-        metadata: { voterPrincipalId: voter.id, voterName: voter.name },
-      });
-    return result;
+    return addVote(db, params.postId, projects, voter.id, actor, query.source);
   },
 });
 

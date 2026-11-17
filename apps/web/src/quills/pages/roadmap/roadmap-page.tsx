@@ -123,7 +123,7 @@ export function RoadmapPage(props: RoadmapPageProps) {
                   onSelect={(slug) => change({ roadmap: slug })}
                 />
               ) : null}
-              <div className="ml-auto flex items-center gap-1">
+              <div className="ms-auto flex items-center gap-1">
                 <div className="relative">
                   <IconMagnifierOutline18
                     aria-hidden="true"

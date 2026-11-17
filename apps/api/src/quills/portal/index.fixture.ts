@@ -18,3 +18,4 @@ export * from "./surveys.fixture";
 // RFC 0003 lane L5.
 export * from "./changelog-engagement.fixture";
 export * from "./my-feedback.fixture";
+export * from "./widget-link.fixture";

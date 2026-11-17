@@ -123,7 +123,8 @@ describe("snapshot loading", () => {
       "GET /widget/posts?limit=50": {
         body: { items: [post("p1"), post("p2", null)] },
       },
-      "GET /widget/changelog?limit=50": { body: { entries: [] } },
+      // The visitor's language picks a teammate's version of an entry (issue #76).
+      "GET /widget/changelog?limit=50&locale=de": { body: { entries: [] } },
       "GET /widget/help/articles?limit=100&locale=de": {
         body: { articles: [] },
       },

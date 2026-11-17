@@ -14,6 +14,7 @@ import { notTest, visiblePost } from "../../feedback/visibility";
 import { notTestConversation } from "../../support/conversation-model";
 import { csvLines } from "./csv";
 import type { exportKinds } from "./export-runs";
+import { visibleValues } from "../../feedback/custom-fields";
 
 // The CSV of each export kind, read as the run's initiator may read it: posts on boards the
 // initiator can see, no deleted rows and no test customers.
@@ -46,6 +47,8 @@ async function postsCsv(db: Database, projects: string[], page: Page) {
         sql`select count(*) from quills."post_votes" v where v.post_id = ${posts.id} and ${notTest(sql`v.principal_id`)}`,
       ),
       createdAt: posts.createdAt,
+      customFieldValues: posts.customFieldValues,
+      boardSettings: boards.settings,
     })
     .from(posts)
     .innerJoin(boards, eq(boards.id, posts.boardId))
@@ -67,18 +70,24 @@ async function postsCsv(db: Database, projects: string[], page: Page) {
       "author_email",
       "vote_count",
       "created_at",
+      "custom_fields",
     ],
-    rows: rows.map((r) => [
-      r.title,
-      r.content,
-      r.status,
-      r.tags,
-      r.board,
-      r.authorName,
-      realEmail(r.authorEmail),
-      r.votes,
-      r.createdAt,
-    ]),
+    rows: rows.map((r) => {
+      // Teammate data: internal fields are included, as on the teammate post routes.
+      const values = visibleValues(r.boardSettings, r.customFieldValues, true);
+      return [
+        r.title,
+        r.content,
+        r.status,
+        r.tags,
+        r.board,
+        r.authorName,
+        realEmail(r.authorEmail),
+        r.votes,
+        r.createdAt,
+        Object.keys(values).length ? JSON.stringify(values) : null,
+      ];
+    }),
   };
 }
 
@@ -130,7 +139,8 @@ async function usersCsv(db: Database, projects: string[], page: Page) {
   };
 }
 
-async function companiesCsv(db: Database, page: Page) {
+/** Without `revenue` (quills:view_revenue of the teammate who started it), no monthly_spend column. */
+async function companiesCsv(db: Database, page: Page, revenue: boolean) {
   const rows = await db
     .select({
       name: companies.name,
@@ -153,7 +163,7 @@ async function companiesCsv(db: Database, page: Page) {
       "domain",
       "external_id",
       "plan",
-      "monthly_spend",
+      ...(revenue ? ["monthly_spend"] : []),
       "people_count",
       "created_at",
     ],
@@ -162,7 +172,9 @@ async function companiesCsv(db: Database, page: Page) {
       r.domain,
       r.externalId,
       r.plan,
-      r.mrrCents === null ? null : (r.mrrCents / 100).toFixed(2),
+      ...(revenue
+        ? [r.mrrCents === null ? null : (r.mrrCents / 100).toFixed(2)]
+        : []),
       r.people,
       r.createdAt,
     ]),
@@ -246,6 +258,7 @@ export async function buildExport(
   db: Database,
   kind: Kind,
   projects: string[],
+  revenue = false,
 ): Promise<Built> {
   const read = (page: Page) =>
     kind === "posts"
@@ -253,7 +266,7 @@ export async function buildExport(
       : kind === "users"
         ? usersCsv(db, projects, page)
         : kind === "companies"
-          ? companiesCsv(db, page)
+          ? companiesCsv(db, page, revenue)
           : conversationsCsv(db, page);
   const parts: string[] = [];
   let bytes = 0;

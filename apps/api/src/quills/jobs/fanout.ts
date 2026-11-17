@@ -51,6 +51,7 @@ import { statusSubscribers } from "./handlers/status-mail";
 import { supportSubscribers } from "./handlers/support-mail";
 import { enqueueQuillsJob, type QuillsQueue } from "./queue";
 import { postReplyAddress } from "../framework/signed";
+import { recipientDirection } from "./handlers/recipient-language";
 
 /** Event type → the queue whose handler does the requested work after commit. */
 export const eventQueues: Partial<Record<string, QuillsQueue>> = {
@@ -309,6 +310,7 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
         "unsubscribe_post",
         post.id,
       );
+      const dir = await recipientDirection(db, principalId);
       return {
         type: "post_status_changed",
         emailType: "StatusChangeEmail",
@@ -318,6 +320,7 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
             to,
             // A reply by mail becomes the subscriber's comment (inbound/email.ts).
             replyTo: postReplyAddress(workspace, post.id) ?? undefined,
+            dir,
             postTitle: post.title,
             postUrl: postUrl(workspace.id, post.id),
             // The event records only the new status.
@@ -355,6 +358,7 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
         "unsubscribe_post",
         post.id,
       );
+      const dir = await recipientDirection(db, principalId);
       return {
         type: "comment_created",
         emailType: "NewCommentEmail",
@@ -364,6 +368,7 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
           sendNewCommentEmail({
             to,
             replyTo: postReplyAddress(workspace, post.id) ?? undefined,
+            dir,
             postTitle: post.title,
             postUrl: postUrl(workspace.id, post.id),
             commenterName: comment.author ?? "Someone",

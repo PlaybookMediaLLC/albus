@@ -29,7 +29,7 @@ import {
   isMemberOfNamedWorkspace,
   tokenCustomerOfNamedWorkspace,
 } from "./platform-reads";
-import { readPortalSignIn, tokenLinkKey } from "./portal-sign-in";
+import { readPortalSignIn } from "./portal-sign-in";
 
 // One resolver per audience that is not a teammate. A resolver reads the caller's credential
 // from the request, then, inside the scoped transaction, returns the customer principal (or
@@ -138,7 +138,8 @@ export async function readCredentials(
   return { account: null, tokenHash: token ? hashToken(token) : null };
 }
 
-async function portalCaller(
+/** The portal account's customer profile; with `ensure`, created when missing. */
+export async function portalCaller(
   db: Database,
   account: PortalAccount,
   ensure: boolean,
@@ -159,7 +160,7 @@ async function portalCaller(
   let row = await find();
   // A token sign-in account takes over the widget profile it was created for, once: the votes and
   // conversations carry over. The customer_membership trigger accepts this link only for the account
-  // that the session vouches for (migration 0033).
+  // that the session vouches for (migration 0036).
   if (!row && account.tokenCustomerId) {
     const linked = await db
       .update(customer)
@@ -171,26 +172,11 @@ async function portalCaller(
         ),
       )
       .returning({ id: customer.id });
-    if (linked.length) {
-      await db
-        .insert(kvStore)
-        .values({
-          workspaceKey: "_",
-          key: tokenLinkKey(account.tokenCustomerId),
-          value: { userId: account.id },
-          // As long as the link: the profile keeps its token sign-in account.
-          expiresAt: new Date("9999-12-31T00:00:00Z"),
-        })
-        .onConflictDoUpdate({
-          target: [kvStore.workspaceId, kvStore.workspaceKey, kvStore.key],
-          set: { value: { userId: account.id } },
-        });
-      row = await find();
-    }
+    if (linked.length) row = await find();
   }
   if (ensure && !row?.principalId) {
     // The customer_membership trigger accepts this link only for the account the entry point vouched for.
-    // The email stays on the Kaneo account: a profile is never matched to an account by email.
+    // A new profile carries no email. Only portal/widget-link.ts matches one by email: the account's verified email.
     if (!row)
       await db
         .insert(customer)
@@ -376,8 +362,8 @@ export const callerActor = (caller: QuillsCaller): ChangeActor => ({
 
 /**
  * Mints a widget session for a customer that a token signed with `secret` identified. Only the
- * SHA-256 hash of the session token is stored. HMAC provenance for the portal handoff is not
- * recorded until the handoff exists.
+ * SHA-256 hash of the session token is stored. The portal link (issue #129, option C) proves the
+ * email by mail, so no HMAC provenance is recorded.
  */
 export async function mintWidgetSession(
   db: Database,
@@ -509,7 +495,8 @@ const strings = (value: unknown) =>
 /**
  * What a portal caller may see: the private-portal gate. Fails closed on a malformed config.
  * A verified address with an accepted invite to this workspace is let in, and so is an account
- * that this workspace's token sign-in created (the host app vouched for that customer).
+ * that this workspace's token sign-in created (the host app vouched for that customer). Issue
+ * #129 also links profiles by verified email (portal/widget-link.ts).
  */
 export async function evaluatePortalAccess(
   db: Database,

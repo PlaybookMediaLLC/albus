@@ -180,6 +180,7 @@
 			"guestError": "Error al iniciar sesión como invitado",
 			"errors": {
 				"account_not_linked": "No se ha podido vincular esta identidad a la cuenta existente. Inicia sesión con tu correo electrónico para verificar la cuenta y vuelve a intentar el SSO. Si el inicio de sesión por correo no está disponible, contacta con tu administrador.",
+				"invalid_token": "Este enlace de inicio de sesión ha caducado o ya se ha usado. Vuelve a iniciar sesión para continuar.",
 				"oauth_code_verification_failed": "La verificación OAuth ha fallado. Por favor, inténtalo de nuevo.",
 				"registration_is_currently_disabled_you_need_a_valid_invitation_to_create_an_account_": "El registro está actualmente deshabilitado. Necesitas una invitación válida para crear una cuenta.",
 				"use_a_permanent_email_address_disposable_addresses_cannot_create_accounts_": "Usa una dirección de correo permanente. Con direcciones desechables no se pueden crear cuentas."

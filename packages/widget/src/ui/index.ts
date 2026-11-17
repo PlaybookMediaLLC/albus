@@ -15,4 +15,6 @@ export type {
   RequestActivity,
   WidgetSurvey,
   SurveyAnswer,
+  FeedbackDraft,
+  FeedbackField,
 } from "./types.js";

@@ -25,6 +25,7 @@ export const writes = (api: Api) => ({
       attachmentIds?: string[];
       metadata?: Record<string, string>;
       title?: string;
+      customFields?: Record<string, string | number | boolean | string[]>;
     } = {},
   ) =>
     api.request<ApiPost>(
@@ -35,11 +36,34 @@ export const writes = (api: Api) => ({
         idempotencyKey,
         ...(context.title && { title: context.title }),
         ...(boardId && { boardId }),
+        ...(context.customFields && { customFields: context.customFields }),
         ...(context.attachmentIds?.length && {
           attachmentIds: context.attachmentIds,
         }),
         ...(context.metadata && { metadata: context.metadata }),
       },
+      signal,
+    ),
+  /** A suggested title and board for the visitor's words (issue #106). Saves nothing. */
+  draftPost: (details: string, signal?: AbortSignal) =>
+    api.request<{
+      title: string;
+      boardId: string | null;
+      boardName: string | null;
+    }>(
+      "POST",
+      "/widget/post-draft/improve",
+      { title: "", details: details.slice(0, 4000) },
+      signal,
+    ),
+  /** Visible posts with a title like the text, best match first. */
+  similarPosts: (title: string, signal?: AbortSignal) =>
+    api.request<{
+      items: Array<{ id: string; title: string; voteCount?: number }>;
+    }>(
+      "GET",
+      `/widget/posts/similar?title=${encodeURIComponent(title.slice(0, 200))}&limit=5`,
+      undefined,
       signal,
     ),
   /** Desired state, not a toggle: a retry changes nothing. */

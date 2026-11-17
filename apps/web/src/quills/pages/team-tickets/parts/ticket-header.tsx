@@ -39,7 +39,10 @@ export function TicketHeader({
           <>
             <TicketAssignee ticket={ticket} people={people} />
             <TicketStatusButton ticket={ticket} statuses={statuses} />
-            <TicketMenu ticketId={ticket.id} />
+            <TicketMenu
+              ticketId={ticket.id}
+              hasRequester={Boolean(ticket.requester)}
+            />
           </>
         ) : null
       }

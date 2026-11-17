@@ -91,6 +91,7 @@ export function createApi(base: string, fetchImpl: typeof fetch = fetch) {
         user: WidgetUserView;
         warnings?: Array<{ code: string; field: string }>;
         canPortalHandoff?: boolean;
+        portalSignIn?: boolean;
       }>(
         "POST",
         "/widget/identify",
@@ -98,13 +99,29 @@ export function createApi(base: string, fetchImpl: typeof fetch = fetch) {
         signal,
         previousToken,
       );
+      // How the portal opens for this person: signed in from the widget (G-17), or a mailed link.
+      const portal: "sign-in" | "link" | null = result.portalSignIn
+        ? "sign-in"
+        : result.canPortalHandoff
+          ? "link"
+          : null;
       return {
         token: result.sessionToken,
         user: result.user,
         warnings: result.warnings ?? [],
-        /** The portal can open with this person signed in (gap G-17). */
-        canOpenPortal: result.canPortalHandoff === true,
+        portal,
       };
+    },
+    /**
+     * Asks Kaneo to mail its portal sign-in link to the identified visitor's email. "if_account":
+     * registration is closed, so only an address with an account gets the mail.
+     */
+    async sendPortalLink() {
+      const result = await request<{ delivery: "sent" | "if_account" }>(
+        "POST",
+        "/widget/portal-link",
+      );
+      return result.delivery;
     },
   };
 }

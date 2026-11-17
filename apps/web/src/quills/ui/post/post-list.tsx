@@ -58,6 +58,7 @@ export function PostList(props: PostListProps) {
               <a
                 className="block truncate font-medium after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
                 href={portalHref(props.workspaceId, `posts/${post.id}`)}
+                dir="auto"
               >
                 {post.title}
               </a>

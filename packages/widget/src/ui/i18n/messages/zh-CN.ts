@@ -243,7 +243,13 @@ const zh_CN: Catalog = {
   Assistant: "助手",
   "Submit request": "提交请求",
   "Request submitted": "请求已提交",
-  "Open the full board": "打开完整看板",
+  "Open in portal": "在门户中打开",
+  "Check your email for a sign-in link to the portal.":
+    "请查看邮箱中的门户登录链接。",
+  "If your email has an account on the portal, a sign-in link is on its way. Check your email.":
+    "如果你的邮箱在门户上有账号，登录链接正在发送中。请查看邮箱。",
+  "The portal could not be opened. Try again later.":
+    "无法打开门户。请稍后重试。",
 };
 
 export default zh_CN;

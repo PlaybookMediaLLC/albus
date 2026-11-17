@@ -14,6 +14,7 @@ import {
   postTagAssignments,
 } from "../../../database/quills/schema/posts";
 import { postStatuses } from "../../../database/quills/schema/statuses";
+import { checkValues, fieldsOf } from "../../feedback/custom-fields";
 import { boardVisible } from "../../feedback/visibility";
 import { parseCsv } from "./csv";
 
@@ -65,6 +66,8 @@ const rowSchema = z.object({
         .optional(),
     ),
   source_id: optional(200),
+  // A JSON object of field values keyed by field key, as the posts export writes it.
+  custom_fields: optional(20000),
 });
 
 // Other feedback tools name the same columns differently (gap G-25): their exports import as they
@@ -160,6 +163,28 @@ const STATUS_WORDS: [RegExp, string][] = [
     "closed",
   ],
 ];
+/**
+ * The checked values of a custom_fields cell, or why they are invalid. Required fields are not
+ * asked: an older post may predate them. A teammate imports, so internal fields are allowed.
+ */
+function fieldValuesOf(text: string, fields: ReturnType<typeof fieldsOf>) {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return "custom_fields is not valid JSON";
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+    return "custom_fields must be a JSON object";
+  try {
+    return checkValues(fields, parsed as never, {
+      team: true,
+      requireAll: false,
+    });
+  } catch (error) {
+    return error instanceof Error ? error.message : "Invalid custom_fields";
+  }
+}
 
 const clip = (value: string) =>
   value.length > 80 ? `${value.slice(0, 80)}…` : value;
@@ -198,9 +223,12 @@ export async function importPosts(
   });
 
   const visibleBoards = await db
-    .select({ id: boards.id, slug: boards.slug })
+    .select({ id: boards.id, slug: boards.slug, settings: boards.settings })
     .from(boards)
     .where(boardVisible(input.projects));
+  const fieldsByBoard = new Map(
+    visibleBoards.map((b) => [String(b.id), fieldsOf(b.settings)]),
+  );
   if (!visibleBoards.some((b) => b.id === input.boardId)) {
     fail(0, "The target board is not available", "boardId");
     return totals(0, 0);
@@ -270,10 +298,20 @@ export async function importPosts(
         fail(line, "Duplicate source_id in this file", "source_id");
       sourceIds.add(row.source_id);
     }
+    const customFieldValues = row.custom_fields
+      ? fieldValuesOf(
+          row.custom_fields,
+          fieldsByBoard.get(String(boardId)) ?? [],
+        )
+      : null;
+    if (typeof customFieldValues === "string")
+      fail(line, customFieldValues, "custom_fields");
     return [
       {
         line,
         ...row,
+        customFieldValues:
+          typeof customFieldValues === "string" ? null : customFieldValues,
         boardId: boardId!,
         statusId: statusId ?? null,
         tagIds: [...new Set(tagIds)] as TypeId<"post_tag">[],
@@ -389,6 +427,7 @@ export async function importPosts(
           ? authors.get(row.author_email.toLowerCase())!
           : teammate,
         statusId: row.statusId,
+        customFieldValues: row.customFieldValues,
         ...(row.createdAt && {
           createdAt: row.createdAt,
           updatedAt: row.createdAt,

@@ -25,6 +25,7 @@ import type {
   WidgetViewProps,
   HelpFilters,
   FeedbackFilters,
+  SubmissionOptions,
 } from "./types.js";
 import { isRtl, widgetLocale } from "./i18n/locales.js";
 import type { MessageKey } from "./i18n/messages/en.js";
@@ -49,6 +50,7 @@ export function WidgetView(props: WidgetViewProps) {
 
 function WidgetViewBody({
   brandName = "Quills",
+  dir,
   theme = "auto",
   initialTab = "home",
   tabs: enabledTabs,
@@ -82,6 +84,8 @@ function WidgetViewBody({
   onOpenPortal,
   onSendMessage,
   onSubmitFeedback,
+  onDraftFeedback,
+  feedbackFields,
   onReplyMessage,
   onConfirmFeedbackCard,
   onReadConversation,
@@ -221,7 +225,9 @@ function WidgetViewBody({
   );
   const unreadUpdates = updates.filter((item) => item.unread).length;
   const submission = composer === "message" ? onSendMessage : onSubmitFeedback;
-  const submit = () => {
+  const submit = (
+    extra?: Pick<SubmissionOptions, "title" | "boardId" | "customFields">,
+  ) => {
     if (!composer || !submission || offline) return;
     const origin = nav.key;
     void draftStore.submit(
@@ -230,6 +236,7 @@ function WidgetViewBody({
         submission(body, {
           ...options,
           ...(route.articleId ? { articleId: route.articleId } : {}),
+          ...(composer === "feedback" && extra),
         }),
       () => {
         if (nav.currentKey.current !== origin) return;
@@ -251,7 +258,7 @@ function WidgetViewBody({
       data-composer={composer}
       aria-label={t("{brand} support", { brand: brandName })}
       lang={locale}
-      dir={isRtl(locale) ? "rtl" : "ltr"}
+      dir={dir ?? (isRtl(locale) ? "rtl" : "ltr")}
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.stopPropagation();
@@ -372,6 +379,8 @@ function WidgetViewBody({
             onCapture={onCaptureScreenshot}
             onOpenArticle={(id) => open("help", id)}
             onBrowseHelp={() => nav.go({ tab: "help" })}
+            onDraft={composer === "feedback" ? onDraftFeedback : undefined}
+            fields={composer === "feedback" ? feedbackFields : undefined}
           />
         ) : article ? (
           <ArticleView
@@ -505,6 +514,7 @@ function WidgetViewBody({
             team={team}
             replyTime={replyTime}
             greeting={greeting}
+            openPortal={onOpenPortal}
             survey={
               survey &&
               onAnswerSurvey && (
@@ -544,7 +554,6 @@ function WidgetViewBody({
             onOpen={(id) => open("feedback", id)}
             onCompose={() => compose("feedback")}
             onVote={onVoteFeedback}
-            onOpenPortal={onOpenPortal}
             offline={offline}
             filters={feedbackFilters}
             onFilters={(filters) => {

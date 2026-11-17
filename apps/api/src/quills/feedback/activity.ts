@@ -7,7 +7,16 @@ type Text = string | null;
 
 /** The source's activity types and their metadata, as the post timeline reads them. */
 type Activity =
-  | { type: "post.created"; metadata: { boardName: string } }
+  | {
+      type: "post.created";
+      /** On behalf of a customer (#73): the author and where the teammate heard the request. */
+      metadata: {
+        boardName: string;
+        authorPrincipalId?: string;
+        authorName?: Text;
+        source?: string;
+      };
+    }
   | { type: "post.deleted" | "post.restored"; metadata?: undefined }
   | {
       type: "status.changed";
@@ -38,7 +47,7 @@ type Activity =
   | { type: "post.hidden" | "post.shown"; metadata?: undefined }
   | {
       type: "vote.proxy" | "vote.removed";
-      metadata: { voterPrincipalId: string; voterName: Text };
+      metadata: { voterPrincipalId: string; voterName: Text; source?: string };
     }
   | { type: "comment.pinned"; metadata: { commentId: string } }
   | { type: "comment.unpinned"; metadata?: undefined }
@@ -80,6 +89,9 @@ export const activityMetadata = z.object({
   tagNames: z.array(z.string()).optional(),
   voterPrincipalId: text,
   voterName: text,
+  authorPrincipalId: text,
+  authorName: text,
+  source: text,
   commentId: text,
   commentAuthorPrincipalId: text,
 });

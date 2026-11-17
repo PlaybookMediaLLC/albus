@@ -18,9 +18,6 @@ import { resolveAuthSecret } from "../../utils/auth-secret";
 export const PORTAL_TOKEN_PROVIDER = "quills-portal";
 export const portalTokenAccountId = (workspaceId: string, customerId: string) =>
   `${workspaceId}:${customerId}`;
-/** The kv key that records a profile linked to its token sign-in account (framework/audience.ts). */
-export const tokenLinkKey = (customerId: string) =>
-  `portal_token_link:${customerId}`;
 
 type Purpose = "handoff" | "session";
 const TTL_MS: Record<Purpose, number> = {

@@ -1,6 +1,7 @@
 import { apiRouter } from "../../../openapi";
 import { changelogEngagementRoutes } from "../../portal/changelog-engagement";
 import { boardRoutes } from "../../portal/feedback/boards";
+import { improvePostDraft } from "../../portal/feedback/ai";
 import { changelogRoutes } from "../../portal/feedback/changelog";
 import { commentRoutes } from "../../portal/feedback/comments";
 import { postRoutes } from "../../portal/feedback/posts";
@@ -18,4 +19,5 @@ export default apiRouter()
   .route("/", changelogEngagementRoutes("widget"))
   // Before /changelog/{entryId}: "subscription" would match it.
   .route("/", widgetChangelogSubscription())
-  .route("/", changelogRoutes("widget"));
+  .route("/", changelogRoutes("widget"))
+  .openapi(...improvePostDraft("widget"));

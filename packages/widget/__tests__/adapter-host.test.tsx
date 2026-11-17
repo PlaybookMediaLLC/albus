@@ -223,7 +223,12 @@ describe("widget host page", () => {
 
   it("opens the portal signed in for an identified visitor when the workspace allows it", async () => {
     table["POST /widget/identify"] = () => ({
-      body: { sessionToken: "known", user, canPortalHandoff: true },
+      body: {
+        sessionToken: "known",
+        user,
+        canPortalHandoff: true,
+        portalSignIn: true,
+      },
     });
     table["POST /widget/portal-sign-in"] = () => ({
       body: {
@@ -236,12 +241,9 @@ describe("widget host page", () => {
       .mockReturnValue(tab as unknown as Window);
     mount();
     fromParent({ type: "quackback:identify", data: { ssoToken: "a.b.c" } });
-    fromParent({ type: "quackback:open", data: { postId: "p1" } });
-    await screen.findByRole("button", { name: "Vote · 3" });
-    fireEvent.click(screen.getByRole("button", { name: "Back" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Feedback" }));
+    fromParent({ type: "quackback:open", data: {} });
     fireEvent.click(
-      await screen.findByRole("button", { name: "Open the full board" }),
+      await screen.findByRole("button", { name: "Open in portal" }),
     );
     // The tab opens on the click, then goes to the one-time link.
     expect(open).toHaveBeenCalledWith("", "_blank");
@@ -256,20 +258,10 @@ describe("widget host page", () => {
         requested("POST /widget/portal-sign-in")[0]!.init.body as string,
       ),
     ).toEqual({ next: "" });
+    // Widget sign-in replaces the mailed link.
+    expect(requested("POST /widget/portal-link")).toHaveLength(0);
+    expect(screen.queryByRole("status")).toBeNull();
     open.mockRestore();
-  });
-
-  it("offers no portal link when the workspace has widget sign-in off", async () => {
-    mount();
-    fromParent({ type: "quackback:identify", data: { ssoToken: "a.b.c" } });
-    fromParent({ type: "quackback:open", data: { postId: "p1" } });
-    await screen.findByRole("button", { name: "Vote · 3" });
-    fireEvent.click(screen.getByRole("button", { name: "Back" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Feedback" }));
-    await screen.findByRole("combobox", { name: "Sort feedback" });
-    expect(
-      screen.queryByRole("button", { name: "Open the full board" }),
-    ).toBeNull();
   });
 
   it("keeps the anonymous session when the host's token is refused", async () => {
@@ -309,6 +301,91 @@ describe("widget host page", () => {
       ssoToken: "a.b.c",
     });
     expect(call!.init.headers).not.toHaveProperty("authorization");
+  });
+
+  it("offers Open in portal to an identified visitor and mails the sign-in link through the API", async () => {
+    table["POST /widget/identify"] = () => ({
+      body: { sessionToken: "known", user, canPortalHandoff: true },
+    });
+    let refuse = true;
+    table["POST /widget/portal-link"] = () =>
+      refuse
+        ? ((refuse = false),
+          {
+            status: 403,
+            body: { message: "A sign-in link cannot be sent now" },
+          })
+        : { body: { sent: true, delivery: "sent" } };
+    mount();
+    fromParent({ type: "quackback:identify", data: { ssoToken: "a.b.c" } });
+    fromParent({ type: "quackback:open", data: {} });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open in portal" }),
+    );
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "The portal could not be opened. Try again later.",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Open in portal" }));
+    expect((await screen.findByRole("status")).textContent).toBe(
+      "Check your email for a sign-in link to the portal.",
+    );
+    expect(requested("POST /widget/portal-link")).toHaveLength(2);
+    expect(
+      requested("POST /widget/portal-link")[1]!.init.headers,
+    ).toMatchObject({ authorization: "Bearer known" });
+    // The link expires after 5 minutes: the visitor can ask again.
+    fireEvent.click(screen.getByRole("button", { name: "Open in portal" }));
+    await waitFor(() =>
+      expect(requested("POST /widget/portal-link")).toHaveLength(3),
+    );
+  });
+
+  it("says the link reaches only an account while the portal's registration is closed", async () => {
+    table["POST /widget/identify"] = () => ({
+      body: { sessionToken: "known", user, canPortalHandoff: true },
+    });
+    table["POST /widget/portal-link"] = () => ({
+      body: { sent: true, delivery: "if_account" },
+    });
+    mount();
+    fromParent({ type: "quackback:identify", data: { ssoToken: "a.b.c" } });
+    fromParent({ type: "quackback:open", data: {} });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open in portal" }),
+    );
+    expect((await screen.findByRole("status")).textContent).toBe(
+      "If your email has an account on the portal, a sign-in link is on its way. Check your email.",
+    );
+  });
+
+  it("identifies again when Open in portal finds the session ended by a portal link", async () => {
+    table["POST /widget/identify"] = () => ({
+      body: { sessionToken: "known", user, canPortalHandoff: true },
+    });
+    table["POST /widget/portal-link"] = () => ({
+      status: 401,
+      body: { message: "Valid widget session required" },
+    });
+    mount();
+    fromParent({ type: "quackback:identify", data: { ssoToken: "a.b.c" } });
+    fromParent({ type: "quackback:open", data: {} });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open in portal" }),
+    );
+    await waitFor(() =>
+      expect(requested("POST /widget/identify")).toHaveLength(2),
+    );
+  });
+
+  it("hides Open in portal when the API does not offer it", async () => {
+    table["POST /widget/identify"] = () => ({
+      body: { sessionToken: "known", user, canPortalHandoff: false },
+    });
+    mount();
+    fromParent({ type: "quackback:identify", data: { ssoToken: "a.b.c" } });
+    fromParent({ type: "quackback:open", data: {} });
+    await screen.findByText("How can we help?");
+    expect(screen.queryByRole("button", { name: "Open in portal" })).toBeNull();
   });
 
   it("keeps the identity after a transient identify failure and retries it when the panel opens", async () => {
@@ -1097,6 +1174,196 @@ describe("widget host page", () => {
       expect(
         screen.queryByRole("button", { name: "Capture screenshot" }),
       ).toBeNull();
+    });
+  });
+  describe("AI title and board draft (issue #106)", () => {
+    const words = "please add a dark theme, my eyes hurt at night";
+    const withAi = () => {
+      const config = table["GET /widget/config.json"]!({} as RequestInit)
+        .body as { config: Record<string, unknown> };
+      table["GET /widget/config.json"] = () => ({
+        body: { ...config, config: { ...config.config, ai: true } },
+      });
+    };
+    const compose = async () => {
+      mount();
+      fromParent({ type: "quackback:identify", data: { ssoToken: "a.b.c" } });
+      fromParent({ type: "quackback:open", data: { view: "new-post" } });
+      const field = await screen.findByLabelText("Your feedback");
+      fireEvent.change(field, { target: { value: words } });
+      return field;
+    };
+
+    it("offers no draft when the instance has no AI provider", async () => {
+      await compose();
+      expect(
+        screen.queryByRole("button", { name: "Suggest a title" }),
+      ).toBeNull();
+    });
+
+    it("shows the suggested title, board and similar requests, votes, and posts the visitor's words only after Post", async () => {
+      withAi();
+      table["POST /widget/post-draft/improve"] = () => ({
+        body: { title: "Dark mode", boardId: "b2", boardName: "Themes" },
+      });
+      table["GET /widget/posts/similar?title=Dark%20mode&limit=5"] = () => ({
+        body: { items: [{ id: "p1", title: "Dark mode", voteCount: 3 }] },
+      });
+      table["POST /widget/posts"] = () => ({
+        body: { ...post, id: "p9", title: "Dark mode", content: words },
+      });
+      await compose();
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Suggest a title" }),
+      );
+      const panel = await screen.findByRole("region", {
+        name: "Suggested title",
+      });
+      expect(panel.textContent).toContain("Dark mode");
+      expect(panel.textContent).toContain("Board: Themes");
+      const [draft] = requested("POST /widget/post-draft/improve");
+      expect(JSON.parse(String(draft!.init.body))).toEqual({
+        title: "",
+        details: words,
+      });
+      expect(requested("POST /widget/posts")).toHaveLength(0);
+      fireEvent.click(
+        within(panel).getByRole("button", { name: "Vote: Dark mode" }),
+      );
+      await waitFor(() =>
+        expect(requested("PUT /widget/posts/p1/vote")).toHaveLength(1),
+      );
+      expect(
+        await within(panel).findByRole("button", { name: "Voted: Dark mode" }),
+      ).toHaveProperty("disabled", true);
+      fireEvent.click(
+        within(panel).getByRole("button", { name: "Post with this title" }),
+      );
+      await waitFor(() =>
+        expect(requested("POST /widget/posts")).toHaveLength(1),
+      );
+      const [created] = requested("POST /widget/posts");
+      expect(JSON.parse(String(created!.init.body))).toMatchObject({
+        title: "Dark mode",
+        content: words,
+        boardId: "b2",
+      });
+    });
+
+    it("keeps the manual path when the draft fails", async () => {
+      withAi();
+      table["POST /widget/post-draft/improve"] = () => ({
+        status: 409,
+        body: { message: "The workspace reached its monthly AI limit" },
+      });
+      table["POST /widget/posts"] = () => ({ body: { ...post, id: "p9" } });
+      await compose();
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Suggest a title" }),
+      );
+      expect((await screen.findByRole("alert")).textContent).toContain(
+        "You can still post your feedback as written",
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Post" }));
+      await waitFor(() =>
+        expect(requested("POST /widget/posts")).toHaveLength(1),
+      );
+      const [created] = requested("POST /widget/posts");
+      const body = JSON.parse(String(created!.init.body));
+      expect(body.content).toBe(words);
+      expect(body.title).toBeUndefined();
+    });
+  });
+  describe("board custom fields (issue #71)", () => {
+    it("asks for the default board's public fields, blocks Post until a required one is set, and sends them typed", async () => {
+      table["GET /widget/boards"] = () => ({
+        body: {
+          items: [
+            {
+              id: "b0",
+              slug: "closed",
+              name: "Announcements",
+              canSubmit: false,
+              fields: [],
+            },
+            {
+              id: "b1",
+              slug: "ideas",
+              name: "Ideas",
+              canSubmit: true,
+              fields: [
+                {
+                  key: "plan",
+                  label: "Plan",
+                  type: "select",
+                  required: true,
+                  options: ["Free", "Pro"],
+                },
+                {
+                  key: "seats",
+                  label: "Seats",
+                  type: "number",
+                  required: false,
+                },
+              ],
+            },
+          ],
+        },
+      });
+      table["POST /widget/posts"] = () => ({ body: { ...post, id: "p9" } });
+      mount();
+      fromParent({ type: "quackback:identify", data: { ssoToken: "a.b.c" } });
+      fromParent({ type: "quackback:open", data: { view: "new-post" } });
+      const field = await screen.findByLabelText("Your feedback");
+      fireEvent.change(field, { target: { value: "Export to CSV" } });
+      const plan = await screen.findByLabelText("Plan (required)");
+      expect(screen.getByText("Fill in Plan to post.")).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Post" })).toHaveProperty(
+        "disabled",
+        true,
+      );
+      fireEvent.change(plan, { target: { value: "Pro" } });
+      fireEvent.change(screen.getByLabelText("Seats"), {
+        target: { value: "4" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Post" }));
+      await waitFor(() =>
+        expect(requested("POST /widget/posts")).toHaveLength(1),
+      );
+      const [created] = requested("POST /widget/posts");
+      expect(JSON.parse(String(created!.init.body))).toMatchObject({
+        content: "Export to CSV",
+        boardId: "b1",
+        customFields: { plan: "Pro", seats: 4 },
+      });
+    });
+  });
+  describe("right-to-left layout (issue #117)", () => {
+    const mountWith = (locale: string) =>
+      render(
+        <div style={{ height: 760 }}>
+          <WidgetHost
+            base="/api/quills-public/acme"
+            params={new URLSearchParams({ locale })}
+          />
+        </div>,
+      );
+
+    it("lays the panel out right to left for Arabic", async () => {
+      const view = mountWith("ar");
+      // The panel's label is in Arabic too.
+      const panel = await view.findByRole("region", { name: "دعم Quills" });
+      expect(panel.getAttribute("dir")).toBe("rtl");
+      expect(document.documentElement.getAttribute("dir")).toBe("rtl");
+      // Each icon names itself, so the stylesheet mirrors the ones that point the way of reading.
+      expect(panel.querySelector("svg.qb-icon-close")).not.toBeNull();
+    });
+
+    it("keeps a left-to-right language left to right", async () => {
+      const view = mountWith("en-US");
+      const panel = await view.findByRole("region", { name: /support/ });
+      expect(panel.getAttribute("dir")).toBe("ltr");
+      expect(document.documentElement.getAttribute("dir")).toBe("ltr");
     });
   });
 });

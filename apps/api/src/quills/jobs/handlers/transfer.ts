@@ -43,7 +43,11 @@ import { eventPayloadSchema, finishQuillsJob } from "../queue";
 // drain (scheduler/index.ts is an upstream file) when exports grow toward the five-minute lease.
 
 const EXPORT_TTL_MS = 7 * 86_400_000;
-const exportPayload = z.object({ kind: z.enum(exportKinds) });
+// revenue: whether the request's caller held quills:view_revenue (#79); absent on older events.
+const exportPayload = z.object({
+  kind: z.enum(exportKinds),
+  revenue: z.enum(["true", "false"]).optional(),
+});
 const importPayload = z.object({
   fileId: z.string().min(1).max(200),
   boardId: z.string().min(1).max(200),
@@ -148,7 +152,7 @@ async function runExport(
   runId: TypeId<"export_run">,
   payload: unknown,
 ) {
-  const { kind } = exportPayload.parse(payload);
+  const { kind, revenue } = exportPayload.parse(payload);
   if (!isQuillsStorageConfigured())
     return settle(workspaceId, job, (db) =>
       failExport(db, runId, "File storage is not configured"),
@@ -169,9 +173,18 @@ async function runExport(
     );
   let uploaded = false;
   try {
-    await finishExport(workspaceId, job, runId, kind, key, run.userId, () => {
-      uploaded = true;
-    });
+    await finishExport(
+      workspaceId,
+      job,
+      runId,
+      kind,
+      key,
+      run.userId,
+      revenue !== "false",
+      () => {
+        uploaded = true;
+      },
+    );
   } finally {
     if (uploaded)
       await releaseKey(workspaceId, runId, key).catch(
@@ -187,6 +200,7 @@ async function finishExport(
   kind: z.output<typeof exportPayload>["kind"],
   key: string,
   userId: string | null,
+  requestRevenue: boolean,
   uploading: () => void,
 ) {
   const outcome: Outcome<{ csv: string; count: number }> = await (async () => {
@@ -195,9 +209,15 @@ async function finishExport(
       return {
         error: "The teammate who started this export can no longer read it",
       };
+    // Revenue only when the teammate held view_revenue at the request and still holds it now.
+    const revenue =
+      requestRevenue &&
+      (
+        await quillsReaders(workspaceId, [userId!], ["read", "view_revenue"])
+      ).has(userId!);
     const built = await withQuillsSystemWorkspace(
       workspaceId,
-      (db) => buildExport(db, kind, projects),
+      (db) => buildExport(db, kind, projects, revenue),
       { snapshot: true },
     );
     if ("error" in built) return built;

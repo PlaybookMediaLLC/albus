@@ -115,7 +115,7 @@ export function PortalForm<T extends FieldValues>(props: PortalFormProps<T>) {
       type="submit"
       variant={props.submitVariant}
       size={props.submitIcon ? "icon-sm" : undefined}
-      className={props.submitIcon ? "ml-auto rounded-full" : undefined}
+      className={props.submitIcon ? "ms-auto rounded-full" : undefined}
       aria-label={props.submitIcon ? t(props.submitKey) : undefined}
       disabled={form.formState.isSubmitting || blocked}
       loading={form.formState.isSubmitting}

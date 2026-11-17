@@ -72,7 +72,7 @@ export default function TaskDueDatePopover({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-65 p-0" align="start">
+      <PopoverContent variant="menu" className="w-65" align="start">
         <TaskDueDatePicker
           label={t("tasks:dueDate.label")}
           clearLabel={t("tasks:popover.dueDate.clear")}

@@ -7,7 +7,7 @@ import {
   it,
   vi,
 } from "vite-plus/test";
-import { createId } from "@kaneo/ids";
+import { createId, toUuid } from "@kaneo/ids";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { boards } from "../../../database/quills/schema/boards";
@@ -30,9 +30,10 @@ import publicRouter from "../../public";
 import { portalAiReply } from "./ai.fixture";
 import { scene, type Scene } from "./seed.fixture";
 
-// Feature checks for improveQuillsPortalPostDraft that the contract cannot express: the board
-// restriction on the input and the answer, the AI-off refusal, input bounds, the usage row and
-// the per-account rate limit. Only the AI provider's HTTP edge is a test double.
+// Feature checks for improveQuills{Portal,Widget}PostDraft that the contract cannot express: the
+// board restriction on the input and the answer, the customer's text kept as written, the AI-off
+// and monthly-limit refusals with the manual path, input bounds, the usage row and the
+// per-account rate limit. Only the AI provider's HTTP edge is a test double.
 
 let pool: Pool;
 vi.mock("../../../database/index", () => ({
@@ -58,12 +59,10 @@ const url = process.env.QUILLS_TEST_DATABASE_URL;
 const app = contractApp(quillsRouter, publicRouter);
 let client = 0;
 
-async function improve(
-  body: unknown,
-  options: { user?: string; workspace?: string; ip?: string } = {},
-) {
+type Options = { user?: string; workspace?: string; ip?: string };
+async function portal(path: string, body: unknown, options: Options = {}) {
   const res = await app.request(
-    `/quills-public/${options.workspace ?? contractEnv().a}/portal/post-draft/improve`,
+    `/quills-public/${options.workspace ?? contractEnv().a}/portal/${path}`,
     {
       method: "POST",
       headers: {
@@ -78,6 +77,8 @@ async function improve(
   );
   return { status: res.status, body: await res.json() };
 }
+const improve = (body: unknown, options: Options = {}) =>
+  portal("post-draft/improve", body, options);
 
 /** Chat calls of the portal composer prompt since the last reset. */
 const draftCalls = () =>
@@ -135,11 +136,7 @@ describe.skipIf(!url)("Quills portal composer AI help", () => {
   it("returns a bounded suggestion, logs the usage and stores nothing else", async () => {
     provider.requests.length = 0;
     provider.reply(() =>
-      chatReply({
-        title: "T".repeat(300),
-        problem: "P".repeat(1500),
-        boardId: s.a.boardId,
-      }),
+      chatReply({ title: "T".repeat(300), boardId: s.a.boardId }),
     );
     const events = async () =>
       (
@@ -152,10 +149,15 @@ describe.skipIf(!url)("Quills portal composer AI help", () => {
     const used = (await usageRows(contractEnv().a)).length;
     const res = await improve({ title: "csv", details: "send reports" });
     expect(res.status).toBe(200);
+    const [{ name }] = (
+      await pool.query("SELECT name FROM quills.boards WHERE id=$1", [
+        toUuid(s.a.boardId as never),
+      ])
+    ).rows;
     expect(res.body).toEqual({
       title: "T".repeat(200),
-      problem: "P".repeat(1000),
       boardId: s.a.boardId,
+      boardName: name,
     });
     const rows = await usageRows(contractEnv().a);
     expect(rows).toHaveLength(used + 1);
@@ -178,9 +180,7 @@ describe.skipIf(!url)("Quills portal composer AI help", () => {
   it("never suggests a board the caller cannot post to", async () => {
     const readOnly = await readOnlyBoard();
     for (const suggested of [readOnly, s.b.boardId, "board_made_up"]) {
-      provider.reply(() =>
-        chatReply({ title: "Title", problem: "Problem", boardId: suggested }),
-      );
+      provider.reply(() => chatReply({ title: "Title", boardId: suggested }));
       const free = await improve({ title: "csv", details: "" });
       expect(free.status).toBe(200);
       expect(free.body.boardId).toBeNull();
@@ -195,9 +195,7 @@ describe.skipIf(!url)("Quills portal composer AI help", () => {
 
   it("suggests another board that takes the caller's posts over the given one", async () => {
     const reports = await board();
-    provider.reply(() =>
-      chatReply({ title: "Title", problem: "Problem", boardId: reports }),
-    );
+    provider.reply(() => chatReply({ title: "Title", boardId: reports }));
     const res = await improve({
       title: "csv",
       details: "",
@@ -234,6 +232,236 @@ describe.skipIf(!url)("Quills portal composer AI help", () => {
       { workspace: contractEnv().b },
     );
     expect(crossed.status).toBe(404);
+  });
+
+  it("saves nothing until the customer submits, and then only their words and the confirmed title", async () => {
+    // The model may answer with extra text: only the title and the board are used.
+    provider.reply(() =>
+      chatReply({
+        title: "Export reports as CSV",
+        boardId: s.a.boardId,
+        problem: "Invented details",
+        content: "Invented details",
+      }),
+    );
+    const count = async () =>
+      (
+        await pool.query(
+          "SELECT count(*)::int AS n FROM quills.posts WHERE workspace_id=$1",
+          [contractEnv().a],
+        )
+      ).rows[0].n;
+    const before = await count();
+    const words = "ich muss Berichte an meinen Chef schicken\nals CSV bitte";
+    const draft = await improve({ title: "", details: words });
+    expect(draft.status).toBe(200);
+    expect(Object.keys(draft.body).sort()).toEqual([
+      "boardId",
+      "boardName",
+      "title",
+    ]);
+    expect(await count()).toBe(before);
+    const saved = await portal("posts", {
+      boardId: draft.body.boardId,
+      title: draft.body.title,
+      content: words,
+    });
+    expect(saved.status).toBe(200);
+    const [row] = (
+      await pool.query(
+        "SELECT title, content, board_id FROM quills.posts WHERE id=$1",
+        [toUuid(saved.body.id)],
+      )
+    ).rows;
+    expect(row).toEqual({
+      title: "Export reports as CSV",
+      content: words,
+      board_id: toUuid(s.a.boardId as never),
+    });
+  });
+
+  it("rejects a board of another workspace when the post is submitted", async () => {
+    const res = await portal("posts", {
+      boardId: s.b.boardId,
+      title: "Export",
+      content: "csv",
+    });
+    expect(res.status).toBe(404);
+    expect(JSON.stringify(res.body)).not.toContain(s.b.postTitle);
+  });
+
+  it("stops at the workspace's monthly AI limit, keeps the manual path, and counts each workspace alone", async () => {
+    provider.requests.length = 0;
+    provider.reply(portalAiReply);
+    // Every earlier call in A logged tokens, here past the limit; B logged none.
+    await pool.query(
+      "UPDATE quills.ai_usage_log SET total_tokens = 100000 WHERE workspace_id=$1",
+      [contractEnv().a],
+    );
+    vi.stubEnv("QUILLS_AI_MONTHLY_TOKEN_LIMIT", "100000");
+    try {
+      const limited = await improve({ title: "csv", details: "" });
+      expect(limited.status).toBe(409);
+      expect(limited.body.message).toBe(
+        "The workspace reached its monthly AI limit",
+      );
+      expect(draftCalls()).toHaveLength(0);
+      const manual = await portal("posts", {
+        boardId: s.a.boardId,
+        title: "Written by hand",
+        content: "no AI",
+      });
+      expect(manual.status).toBe(200);
+      // Workspace B has its own month: A's usage never stops B's customers.
+      const user = contractEnv().customerB;
+      await contractEnv().portalCustomer(contractEnv().b, user);
+      const other = await improve(
+        { title: "csv", details: "" },
+        { workspace: contractEnv().b, user },
+      );
+      expect(other.status).toBe(200);
+      expect(other.body.boardId).toBe(null);
+      // A last month's usage does not count.
+      await pool.query(
+        "UPDATE quills.ai_usage_log SET created_at = date_trunc('month', now()) - interval '1 day' WHERE workspace_id=$1",
+        [contractEnv().a],
+      );
+      expect((await improve({ title: "csv", details: "" })).status).toBe(200);
+    } finally {
+      vi.stubEnv("QUILLS_AI_MONTHLY_TOKEN_LIMIT", "");
+    }
+  });
+
+  it("reserves each call's ceiling first, so parallel calls cannot pass the limit together", async () => {
+    const a = contractEnv().a;
+    const rows = async (status: string) =>
+      (
+        await pool.query(
+          "SELECT total_tokens::int AS tokens FROM quills.ai_usage_log WHERE workspace_id=$1 AND status=$2 AND created_at >= date_trunc('month', now())",
+          [a, status],
+        )
+      ).rows as Array<{ tokens: number }>;
+    // Start the month empty: earlier tests logged usage in A.
+    await pool.query(
+      "UPDATE quills.ai_usage_log SET created_at = date_trunc('month', now()) - interval '1 day' WHERE workspace_id=$1",
+      [a],
+    );
+    let open!: () => void;
+    const gate = new Promise<void>((resolve) => (open = resolve));
+    provider.requests.length = 0;
+    provider.reply(async (request) => {
+      await gate;
+      return portalAiReply(request);
+    });
+    vi.stubEnv("QUILLS_AI_MONTHLY_TOKEN_LIMIT", "1000000");
+    try {
+      const first = improve({ title: "csv", details: "monthly export" });
+      await vi.waitFor(async () =>
+        expect(await rows("reserved")).toHaveLength(1),
+      );
+      const ceiling = (await rows("reserved"))[0]!.tokens;
+      expect(ceiling).toBeGreaterThan(300);
+      // Room for one ceiling only: the second call is refused while the first one runs.
+      vi.stubEnv("QUILLS_AI_MONTHLY_TOKEN_LIMIT", String(2 * ceiling - 1));
+      const second = await improve({ title: "csv", details: "monthly export" });
+      expect(second.status).toBe(409);
+      expect(second.body.message).toBe(
+        "The workspace reached its monthly AI limit",
+      );
+      open();
+      expect((await first).status).toBe(200);
+      expect(draftCalls()).toHaveLength(1);
+      // The reservation became the real usage, which leaves room for the next call.
+      expect(await rows("reserved")).toHaveLength(0);
+      expect((await rows("success")).map((row) => row.tokens)).toEqual([20]);
+      // A failed call keeps its reservation until it expires.
+      provider.reply(() => ({ status: 500, json: {} }));
+      expect(
+        (await improve({ title: "csv", details: "monthly export" })).status,
+      ).toBe(502);
+      expect(await rows("reserved")).toHaveLength(1);
+      provider.reply(portalAiReply);
+      expect(
+        (await improve({ title: "csv", details: "monthly export" })).status,
+      ).toBe(409);
+      await pool.query(
+        "UPDATE quills.ai_usage_log SET created_at = now() - interval '6 minutes' WHERE workspace_id=$1 AND status='reserved'",
+        [a],
+      );
+      expect(
+        (await improve({ title: "csv", details: "monthly export" })).status,
+      ).toBe(200);
+      expect(await rows("reserved")).toHaveLength(0);
+    } finally {
+      open();
+      provider.reply(portalAiReply);
+      vi.stubEnv("QUILLS_AI_MONTHLY_TOKEN_LIMIT", "");
+    }
+  });
+
+  it("drafts in the widget too: same board limits, and the post keeps the visitor's words", async () => {
+    provider.reply(() =>
+      chatReply({ title: "Dark mode", boardId: s.b.boardId }),
+    );
+    const { token } = await contractEnv().widgetVisitor(contractEnv().a);
+    const widget = async (path: string, body: unknown) => {
+      const res = await app.request(
+        `/quills-public/${contractEnv().a}/widget/${path}`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${token}`,
+            "x-kaneo-client-ip": `203.0.113.${++client % 250}`,
+          },
+          body: JSON.stringify(body),
+        },
+      );
+      return { status: res.status, body: await res.json() };
+    };
+    const words = "please add a dark theme, my eyes hurt at night";
+    const draft = await widget("post-draft/improve", {
+      title: "",
+      details: words,
+    });
+    expect(draft.status).toBe(200);
+    // The model named a board of workspace B: it is dropped.
+    expect(draft.body).toEqual({
+      title: "Dark mode",
+      boardId: null,
+      boardName: null,
+    });
+    expect(
+      (
+        await widget("post-draft/improve", {
+          title: "",
+          details: words,
+          boardId: s.b.boardId,
+        })
+      ).status,
+    ).toBe(404);
+    const saved = await widget("posts", {
+      title: draft.body.title,
+      content: words,
+      boardId: s.a.boardId,
+    });
+    expect(saved.status).toBe(200);
+    const [row] = (
+      await pool.query("SELECT title, content FROM quills.posts WHERE id=$1", [
+        toUuid(saved.body.id),
+      ])
+    ).rows;
+    expect(row).toEqual({ title: "Dark mode", content: words });
+    expect(
+      (
+        await widget("posts", {
+          title: "x",
+          content: words,
+          boardId: s.b.boardId,
+        })
+      ).status,
+    ).toBe(404);
+    provider.reply(portalAiReply);
   });
 
   it("asks a visitor to sign in", async () => {

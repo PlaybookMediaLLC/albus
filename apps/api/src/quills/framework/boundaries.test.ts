@@ -45,6 +45,8 @@ const allowedImport = (file: string, specifier: string) => {
         "framework/define-route",
         "framework/app",
         "framework/app-keys",
+        // Kaneo's own sign-in link, mailed by Kaneo's auth module (issue #129); never the database.
+        "framework/sign-in-link",
         "framework/files",
         "framework/integration-config",
         "framework/platform-reads",
@@ -63,6 +65,8 @@ const allowedImport = (file: string, specifier: string) => {
         "support/link-fetch",
         // Pure builders for every web URL emitted by API routes and mail.
         "portal/paths",
+        // Pure RFC 4180 CSV text helpers; never the database.
+        "transfer/runs/csv",
         // Pure: the widget tab defaults of a stored settings blob; never the database.
         "settings/widget-tabs",
         // Website branding: a guarded site fetch, a logo upload and the personal email domain list;

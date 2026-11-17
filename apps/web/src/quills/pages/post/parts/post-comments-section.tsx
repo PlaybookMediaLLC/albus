@@ -13,7 +13,9 @@ import { runMutation } from "../run-mutation";
 import { CommentSheets } from "./comment-sheets";
 import { CreateCommentForm } from "./create-comment-form";
 import { PostAttachments } from "./post-attachments";
-import { browserLocale, TranslatedText } from "./translated-text";
+import { readsEnglish } from "../../../core/reader-locale";
+import { TranslatedText } from "./translated-text";
+import { useReaderLocale } from "../../../portal/runtime";
 
 type Comment = ListPortalPostCommentsResponse["items"][number];
 type Emoji = SetPortalCommentReactionRequest["json"]["emoji"];
@@ -47,7 +49,8 @@ export function PostCommentsSection(props: PostCommentsSectionProps) {
   const react = useSetPortalCommentReaction(props.viewer);
   const signedIn = props.viewer.kind === "user";
   // English readers, and instances without AI, get the plain comment and no translation query.
-  const translatable = props.translatable !== false && browserLocale() !== null;
+  const reader = useReaderLocale();
+  const translatable = props.translatable !== false && !readsEnglish(reader);
   // Comments load oldest first, so a new one can fall past the loaded pages.
   // ponytail: an edit of such a comment shows the old text until the page reloads;
   // keep the edit response here if people edit fresh comments on long threads.

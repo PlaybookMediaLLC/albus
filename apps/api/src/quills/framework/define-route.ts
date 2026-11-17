@@ -11,6 +11,8 @@ import {
 } from "../../database/quills/client";
 import { ApiError } from "../../errors/api-error";
 import { validationError } from "../../errors/validation-error";
+/** For a handler that finds an invalid input the schema cannot see, such as a CSV row. */
+export { validationError };
 import { boundedRequestBody } from "../../utils/bounded-request-body";
 import {
   createRoute,
@@ -150,7 +152,8 @@ export type QuillsRouteDeclaration<
   redirect?: SignedRedirect<P, Q, R>;
   /**
    * Teammate, app, signed, portal and widget: a read in its own scoped transaction, before `call`. It
-   * must not write. The handler then runs in a new scoped transaction with the call's result as `called`.
+   * must not write, except an AI budget reservation (assistant/budget.ts), which must commit before
+   * the call. The handler then runs in a new scoped transaction with the call's result as `called`.
    * Portal and widget: `prepare` gets the caller and runs the route's read gates; the handler's
    * transaction resolves the caller again and answers 409 when it changed. Use it for work that must
    * hold no pooled connection, for example an upload verification (framework/files.ts).

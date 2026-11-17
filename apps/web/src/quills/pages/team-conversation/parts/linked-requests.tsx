@@ -29,6 +29,8 @@ const link = "min-w-0 truncate text-primary underline-offset-4 hover:underline";
 export function LinkedRequests(props: LinkedRequestsProps) {
   const { t } = useTranslation("quills");
   const team = useTeamRuntime();
+  // Tracking records the visitor's request or vote, which needs create and update (#73).
+  const canTrack = team.permissions.create && team.permissions.update;
   const { workspaceId, conversationId } = props;
   const posts = useGetLinkedPostsForConversation(
     { param: { workspaceId, conversationId } },
@@ -85,12 +87,12 @@ export function LinkedRequests(props: LinkedRequestsProps) {
               </li>
             ))}
           </ul>
-        ) : team.permissions.create ? null : (
+        ) : canTrack ? null : (
           <span className="text-muted-foreground">
             {t("team-conversations.links.none")}
           </span>
         )}
-        {team.permissions.create ? (
+        {canTrack ? (
           <div className="-ms-2 flex flex-wrap gap-x-1">
             <Button
               variant="ghost"

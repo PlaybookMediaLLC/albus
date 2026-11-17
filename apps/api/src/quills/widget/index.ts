@@ -5,6 +5,7 @@ import contactEmail from "./contact-email";
 import identify from "./identify";
 import portalSignIn from "./portal-sign-in";
 import install from "./install";
+import portalLink from "./portal-link";
 import session from "./session";
 
 // Widget routes under /quills-public/{workspace}. Each module declares its routes with
@@ -16,4 +17,5 @@ export default apiRouter()
   .route("/", portalSignIn)
   .route("/", contactEmail)
   .route("/", session)
-  .route("/", activity);
+  .route("/", activity)
+  .route("/", portalLink);

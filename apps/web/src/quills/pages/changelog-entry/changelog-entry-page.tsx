@@ -3,7 +3,7 @@ import { portalHref } from "../../core/portal-href";
 import { useGetPortalChangelogEntry } from "../../hooks/changelog/use-get-portal-changelog-entry";
 import type { SetPortalChangelogReactionRequest } from "../../api/changelog/set-portal-changelog-reaction";
 import { useSetPortalChangelogReaction } from "../../hooks/changelog/use-set-portal-changelog-reaction";
-import { usePortalRuntime } from "../../portal/runtime";
+import { usePortalRuntime, useReaderLocale } from "../../portal/runtime";
 import { ChangelogEntry } from "../../ui/changelog-entry";
 import { PageFrame } from "../../ui/page-frame";
 import { PortalGate } from "../../ui/portal-gate";
@@ -26,12 +26,15 @@ export function ChangelogEntryPage(props: ChangelogEntryPageProps) {
   const gated = (meta.audience as string) !== "public";
   const shown = portal.config.nav.tabs.changelog;
   const canLoad = shown && (!gated || portal.access?.granted === true);
+  // The teammate's version in the reader's language, when there is one (issue #76).
+  const locale = useReaderLocale();
   const entry = useGetPortalChangelogEntry(
     {
       param: {
         workspace: canLoad ? props.workspaceId : "",
         entryId: props.params.entryId ?? "",
       },
+      query: { locale },
     },
     viewer,
   );

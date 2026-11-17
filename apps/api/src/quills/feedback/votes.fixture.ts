@@ -18,5 +18,8 @@ const onVoter = fixture({
 
 export const listQuillsPostVoters = { ...onPost, seed: customerVote };
 export const voteQuillsPost = onPost;
-export const addQuillsPostProxyVote = onVoter;
+export const addQuillsPostProxyVote = fixture({
+  ...onVoter,
+  valid: (ids: Ids) => ({ ...onVoter.valid(ids), query: { source: "call" } }),
+});
 export const removeQuillsPostVote = { ...onVoter, seed: customerVote };

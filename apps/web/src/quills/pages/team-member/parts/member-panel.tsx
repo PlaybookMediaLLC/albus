@@ -1,5 +1,6 @@
 import { Calendar, Plug } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { MemberCompany } from "./member-company";
 import { MemberTraits, type MemberTraitsProps } from "./member-traits";
 
 export interface MemberPanelProps {
@@ -10,12 +11,13 @@ export interface MemberPanelProps {
     postCount: number;
     commentCount: number;
     voteCount: number;
+    companyId: string | null;
   };
 }
 
 /**
- * The right panel of a member: when they joined, the counts that the API gives and the
- * traits. The weekly chart, "Requests shipped" and "Votes received" wait for 5.4.
+ * The right panel of a member: when they joined, the counts that the API gives, their company
+ * and the traits. The weekly chart, "Requests shipped" and "Votes received" wait for 5.4.
  */
 export function MemberPanel({ workspaceId, member }: MemberPanelProps) {
   const { t, i18n } = useTranslation("quills");
@@ -64,6 +66,11 @@ export function MemberPanel({ workspaceId, member }: MemberPanelProps) {
           ))}
         </dl>
       </section>
+      <MemberCompany
+        workspaceId={workspaceId}
+        principalId={member.principalId}
+        companyId={member.companyId}
+      />
       <MemberTraits workspaceId={workspaceId} member={member} />
     </div>
   );

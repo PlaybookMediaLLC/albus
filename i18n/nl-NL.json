@@ -180,6 +180,7 @@
 			"guestError": "Inloggen als gast mislukt",
 			"errors": {
 				"account_not_linked": "Deze identiteit kon niet aan het bestaande account worden gekoppeld. Log in met e-mail om het account te verifiëren en probeer SSO daarna opnieuw. Als inloggen met e-mail niet beschikbaar is, neem dan contact op met je beheerder.",
+				"invalid_token": "Deze inloglink is verlopen of al gebruikt. Log opnieuw in om verder te gaan.",
 				"oauth_code_verification_failed": "OAuth-verificatie mislukt. Probeer het opnieuw.",
 				"registration_is_currently_disabled_you_need_a_valid_invitation_to_create_an_account_": "Registratie is momenteel uitgeschakeld. Je hebt een geldige uitnodiging nodig om een account aan te maken.",
 				"use_a_permanent_email_address_disposable_addresses_cannot_create_accounts_": "Gebruik een permanent e-mailadres. Met wegwerpadressen kun je geen account aanmaken."

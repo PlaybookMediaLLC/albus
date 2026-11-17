@@ -17,6 +17,8 @@ export const meta = {
     "createQuillsTag",
     "updateQuillsTag",
     "deleteQuillsTag",
+    "getQuillsScoringFactors",
+    "setQuillsScoringFactors",
   ],
   states: ["loading", "failed", "ready", "done"],
 } satisfies PageMeta;

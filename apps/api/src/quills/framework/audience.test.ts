@@ -304,7 +304,7 @@ describe.skipIf(!url)("Quills audiences", () => {
 
   it("lets an unlinked profile link only to the vouched account, and never moves a link", async () => {
     const env = contractEnv();
-    // A portal-only account that a token sign-in created (migration 0033).
+    // A portal-only account that a token sign-in created (migration 0036).
     const account = env.id("token_account");
     await pool.query(
       'INSERT INTO public."user" (id, name, email, email_verified, created_at, updated_at) VALUES ($1, $2, $3, false, now(), now())',

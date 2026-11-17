@@ -7,7 +7,9 @@ import {
   loadPost,
   loadSnapshot,
   loadUpdate,
+  loadBoards,
   resolveBoard,
+  type WidgetBoard,
   syncConversations,
   unavailable,
   type Snapshot,
@@ -61,6 +63,8 @@ interface Options {
   pollIntervalMs: number;
   /** The host app's metadata and the page URL from the SDK, sent with a new post. */
   context?: Record<string, string>;
+  /** The instance has an AI provider: the feedback composer can suggest a title and a board. */
+  ai?: boolean;
 }
 
 /** Replaces the item with the same ID, or adds it at `where`. */
@@ -90,6 +94,7 @@ export function useWidgetData({
   host,
   pollIntervalMs,
   context = {},
+  ai = false,
 }: Options): Partial<WidgetViewProps> {
   const [state, setState] = useState({
     session,
@@ -102,6 +107,7 @@ export function useWidgetData({
   const send = writes(api);
   const abort = useRef(new AbortController());
   const boardId = useRef<string | undefined>(undefined);
+  const [boards, setBoards] = useState<WidgetBoard[]>([]);
   const current = state.session === session;
   const data = useRef(state.data);
   data.current = current ? state.data : emptySnapshot;
@@ -197,16 +203,29 @@ export function useWidgetData({
           (await resolveBoard(api, board, signal).catch((error) => {
             if (!unavailable(error)) throw error;
           })) ?? "";
+      // The boards' public fields for the feedback composer, read beside the snapshot.
+      const fields =
+        surfaces.feedback && !boards.length
+          ? loadBoards(api, signal).then(
+              (items) => !signal.aborted && setBoards(items),
+              (error) => {
+                if (!unavailable(error)) throw error;
+              },
+            )
+          : undefined;
       // Read the count first: a reply that lands during the load makes the next poll read again.
       if (surfaces.messenger)
         await reportUnread(signal).catch((error) => {
           if (!unavailable(error)) throw error;
         });
-      const next = await loadSnapshot(
-        api,
-        { surfaces, locale, boardId: boardId.current || undefined },
-        signal,
-      );
+      const [next] = await Promise.all([
+        loadSnapshot(
+          api,
+          { surfaces, locale, boardId: boardId.current || undefined },
+          signal,
+        ),
+        fields,
+      ]);
       if (!signal.aborted) {
         setState({ session, data: next, loadState: "ready" });
         loaded.current = true;
@@ -326,6 +345,11 @@ export function useWidgetData({
 
   // Actions only for surfaces that loaded: a denied surface stays hidden instead of failing.
   const { available, ...snapshot } = current ? state.data : emptySnapshot;
+  // The board a new post goes to: the init board, else the first that takes the visitor's posts,
+  // as the API picks it. Its public fields show in the composer.
+  const target =
+    boards.find((item) => item.id === boardId.current) ??
+    boards.find((item) => item.canSubmit);
   return {
     ...snapshot,
     loadState: current ? state.loadState : "loading",
@@ -349,7 +373,7 @@ export function useWidgetData({
         !data.current.updates.some((item) => item.id === id)
       )
         void run(async (signal) => {
-          const entry = await loadUpdate(api, id, signal);
+          const entry = await loadUpdate(api, id, signal, locale);
           patch(signal, (value) => ({
             ...value,
             updates: upsert(value.updates, entry, "end"),
@@ -365,6 +389,7 @@ export function useWidgetData({
         }).catch(() => {});
     },
     ...(available.feedback && {
+      feedbackFields: target?.fields ?? [],
       onSubmitFeedback: (body: string, options: SubmissionOptions) =>
         run(async (signal) => {
           const attachmentIds = await uploadFiles(options, signal);
@@ -377,11 +402,14 @@ export function useWidgetData({
             // A post needs a title: a screenshot alone gets a plain one.
             body || (attachmentIds.length ? "Screenshot" : body),
             options.idempotencyKey,
-            chosen ?? (boardId.current || undefined),
+            // A board picked in the composer, else the one the host page opened, else the default.
+            options.boardId ?? chosen ?? (boardId.current || target?.id),
             signal,
             {
               attachmentIds,
               metadata: postMetadata(page.current, navigator.userAgent),
+              title: options.title,
+              customFields: options.customFields,
             },
           );
           const post = toPost(created);
@@ -397,6 +425,36 @@ export function useWidgetData({
             statusId: created.status?.id ?? null,
           });
         }),
+      ...(ai && {
+        onDraftFeedback: (body: string) =>
+          run(async (signal) => {
+            const draft = await send.draftPost(body, signal);
+            const { items } =
+              draft.title.trim().length >= 3
+                ? await send.similarPosts(draft.title, signal)
+                : { items: [] };
+            return {
+              title: draft.title,
+              ...(draft.boardId && {
+                board: {
+                  id: draft.boardId,
+                  name: draft.boardName ?? "",
+                  fields:
+                    boards.find((item) => item.id === draft.boardId)?.fields ??
+                    [],
+                },
+              }),
+              similar: items.map((item) => ({
+                id: item.id,
+                title: item.title,
+                votes: item.voteCount,
+                voted: data.current.feedback.some(
+                  (post) => post.id === item.id && post.voted,
+                ),
+              })),
+            };
+          }),
+      }),
       onVoteFeedback: (postId: string, voted: boolean) =>
         run(async (signal) => {
           const result = await send.vote(postId, voted, signal);

@@ -24,6 +24,7 @@ export const setPostBoardFixture = {
         updatedAt: "2026-01-01T00:00:00.000Z",
         deletedAt: null,
         tags: [],
+        customFields: [],
         score: {
           reach: null,
           impact: null,
@@ -31,6 +32,7 @@ export const setPostBoardFixture = {
           effort: null,
           rice: null,
         },
+        factorValues: [],
       },
       ...overrides,
     }) satisfies SetPostBoardResponse,

@@ -55,7 +55,7 @@ Read the password with `docker inspect kaneo-w2-postgres` and never print it.
 | D2 | How does a teammate page check access? | The page calls the teammate API; the API is the authority. The page shows a denied state on 403 and never hides a control as an authorization check. |
 | D3 | Revenue weighting source | `quills.companies.mrr_cents` through the voter's principal → customer → company link. Aggregated at read time; no copy of revenue on posts. |
 | D4 | Vote importance | A nullable column `post_votes.importance` with `nice`, `important`, `critical`. A vote without importance stays valid. |
-| D5 | Prioritization score | Columns on `posts`: `score_reach` (int ≥ 0), `score_impact` (0.25, 0.5, 1, 2, 3), `score_confidence` (0 to 100), `score_effort` (> 0, person-weeks). RICE is computed at read time. |
+| D5 | Prioritization score | Columns on `posts`: `score_reach` (int ≥ 0), `score_impact` (0.25, 0.5, 1, 2, 3), `score_confidence` (0 to 100), `score_effort` (> 0, person-weeks). RICE is computed at read time. Since #79, a team can also define up to 10 weighted factors (`settings.metadata.scoringFactors`, weights -10 to 10) with per-post values 0 to 10 in `posts.score_values`; the team score is the sum of weight × value, also computed at read time. |
 | D6 | Voting-bias controls | Board settings JSON keys `voteDisplay` (`count` or `hidden`) and `defaultSort` (`votes`, `newest` or `random`). Random order is stable per viewer for a day. |
 | D7 | Autopilot signals | A table `feedback_signals` holds extracted requests from conversations and tickets. A teammate accepts (new post, or a proxy vote on a matching post) or dismisses. |
 | D8 | Surveys | Tables `surveys` and `survey_responses`. Types: `nps`, `csat`, `ces`, `pmf`, `poll`, `open`. One response per principal and survey. |
@@ -107,7 +107,10 @@ transaction boundary and the external effects. "New" marks objects that lane S0-
    summary on teammate post lists: voter count, company count, MRR sum, top segments, and
    importance counts. Read-only; filters unauthorized boards first. Web: `team-triage` page.
 8. **Scoring frameworks (L3).** `posts.score_*` (new). Teammate route `setQuillsPostScore`
-   (`update`), sort by RICE in the teammate list. Event `post.scored`.
+   (`update`), sort by RICE in the teammate list. Event `post.scored`. #79 adds team factors:
+   `getQuillsScoringFactors` (`read`), `setQuillsScoringFactors` (`manage_settings`, event
+   `settings.scoring_updated`), `setQuillsPostFactorScores` (`update`, event `post.scored`), and
+   `sort=score` with the `minVotes`, `minMrrCents`, `segmentIds` and `minScore` list filters.
 9. **Voting-bias controls (L3).** Board settings `voteDisplay` and `defaultSort`
    (`manage_settings`). The portal hides counts and orders posts as configured. Portal list
    responses omit `voteCount` when hidden. Web: portal rows without counts; teammate board

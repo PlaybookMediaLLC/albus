@@ -267,7 +267,13 @@ const ar: Catalog = {
   Assistant: "المساعد",
   "Submit request": "إرسال الطلب",
   "Request submitted": "تم إرسال الطلب",
-  "Open the full board": "فتح اللوحة الكاملة",
+  "Open in portal": "فتح في البوابة",
+  "Check your email for a sign-in link to the portal.":
+    "تحقق من بريدك الإلكتروني للعثور على رابط تسجيل الدخول إلى البوابة.",
+  "If your email has an account on the portal, a sign-in link is on its way. Check your email.":
+    "إذا كان لبريدك الإلكتروني حساب على البوابة، فرابط تسجيل الدخول في طريقه إليك. تحقق من بريدك الإلكتروني.",
+  "The portal could not be opened. Try again later.":
+    "تعذّر فتح البوابة. حاول مرة أخرى لاحقًا.",
 };
 
 export default ar;

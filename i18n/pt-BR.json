@@ -180,6 +180,7 @@
 			"guestError": "Falha ao entrar como convidado",
 			"errors": {
 				"account_not_linked": "Não foi possível vincular você a uma conta existente. Entre por e-mail para verificar a conta e tente o SSO novamente. Se o login por e-mail não estiver disponível, entre em contato com seu administrador.",
+				"invalid_token": "Este link de login expirou ou já foi usado. Entre novamente para continuar.",
 				"oauth_code_verification_failed": "Falha na verificação do OAuth. Tente novamente.",
 				"registration_is_currently_disabled_you_need_a_valid_invitation_to_create_an_account_": "O cadastro está atualmente desativado. Você precisa de um convite válido para criar uma conta.",
 				"use_a_permanent_email_address_disposable_addresses_cannot_create_accounts_": "Use um endereço de e-mail permanente. Endereços temporários não podem criar contas."

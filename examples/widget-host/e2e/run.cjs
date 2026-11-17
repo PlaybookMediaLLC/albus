@@ -2181,10 +2181,9 @@ const groups = {
         await signIn("ada");
         await sleep(1500);
         await openView("home");
-        await nav("Feedback").click();
         const [portal] = await Promise.all([
           page.context().waitForEvent("page"),
-          frame.getByRole("button", { name: "Open the full board" }).click(),
+          frame.getByRole("button", { name: "Open in portal" }).click(),
         ]);
         await portal.waitForURL(/\/portal\//, { timeout: 30000 });
         await portal.waitForLoadState("networkidle");
@@ -2202,7 +2201,7 @@ const groups = {
         await portal.close();
         return {
           expected:
-            "Widget sign-in on: Feedback → Open the full board opens the portal signed in with a portal-only Kaneo account created for this workspace's customer (a quills-portal account row, no team membership), and the widget profile links to it",
+            "Widget sign-in on: Home → Open in portal opens the portal signed in with a portal-only Kaneo account created for this workspace's customer (a quills-portal account row, no team membership), and the widget profile links to it",
           actual: `settings PUT ${saved.status()}; portal ${portal.url().replace(/\?.*$/, "")}; Sign in links ${signInLinks}; Kaneo user ${userId ?? "none"} quills-portal ${accountId ?? "none"} memberships ${memberships}; customer_identity.kaneo_user_id ${linked ?? "none"}`,
           rows: {
             "public.user": userId,

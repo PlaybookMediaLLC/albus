@@ -5,6 +5,7 @@ import type { GetPostResponse } from "../../../api/team/get-post";
 import { shortDate } from "../../../core/short-date";
 import { useListPostVoters } from "../../../hooks/team/use-list-post-voters";
 import { useRemovePostVote } from "../../../hooks/team/use-remove-post-vote";
+import { sourceKeys } from "../../../team/new-request/sources";
 import { useTeamRuntime } from "../../../team/runtime";
 import { PersonAvatar } from "../../../ui/person-avatar";
 import { IconButton } from "../../../ui/inbox/icon-button";
@@ -21,7 +22,10 @@ const importance = {
   critical: "team-post.critical",
 } as const;
 
-/** The voters of a post with their vote date and importance. A vote that the team added can be removed. */
+/**
+ * The voters of a post with their vote date and importance. A vote that the team added shows who
+ * added it and where they heard it, and can be removed.
+ */
 export function PostVoters({ workspaceId, post }: PostVotersProps) {
   const { t, i18n } = useTranslation("quills");
   const team = useTeamRuntime();
@@ -69,6 +73,18 @@ export function PostVoters({ workspaceId, post }: PostVotersProps) {
                     ? ` · ${t(importance[voter.importance])}`
                     : null}
                 </span>
+                {voter.addedByPrincipalId ? (
+                  <span className="truncate text-xs text-muted-foreground">
+                    {voter.sourceType && sourceKeys[voter.sourceType]
+                      ? t("team-post.addedBySource", {
+                          name: voter.addedByName ?? t("team-post.anonymous"),
+                          source: t(sourceKeys[voter.sourceType]!),
+                        })
+                      : t("team-post.addedBy", {
+                          name: voter.addedByName ?? t("team-post.anonymous"),
+                        })}
+                  </span>
+                ) : null}
               </span>
               {voter.addedByPrincipalId && !locked ? (
                 <IconButton

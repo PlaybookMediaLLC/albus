@@ -45,7 +45,7 @@ export function DisplayMenu({ children }: { children: ReactNode }) {
           <ShortcutTooltipLabel label={title} shortcutId="showDisplayOptions" />
         </TooltipContent>
       </Tooltip>
-      <PopoverContent align="end" className="w-80">
+      <PopoverContent variant="menu" align="end" className="w-80">
         <PopoverTitle className="sr-only">{title}</PopoverTitle>
         <div className="-mx-1 divide-y divide-border">{children}</div>
       </PopoverContent>

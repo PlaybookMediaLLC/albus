@@ -16,7 +16,7 @@ Tables and owning schema:      quills: principal, customer_identity, companies,
                                company_attribute_definitions, user_attribute_definitions,
                                user_tags, user_tag_assignments, segments, user_segments,
                                teams, audit_log, settings, kv_store; the lead merge also
-                               writes the 30 activity tables in lead-merge.ts;
+                               writes the 37 activity tables, notification preferences and segments in lead-merge.ts;
                                user-comments.ts reads posts, post_comments,
                                post_comment_reactions, boards and board_projects.
                                public: workspace_member (read only, platform-reads.ts).
@@ -44,11 +44,11 @@ People are customers only: `customer_identity` rows with a principal, no
 | `createQuillsUser` | `POST /users` | create | `customer_identity`, `principal` | `user.created` | contract, rollback |
 | `identifyQuillsUser` | `POST /users/identify` | update | `customer_identity`, `principal`, `user_attribute_definitions` | `user.identified` | contract, rollback |
 | `getQuillsUser` | `GET /users/{principalId}` (with segments and tags) | read | `principal`, `customer_identity`, `user_segments`, `user_tags` | - | contract, read-leak |
-| `updateQuillsUser` | `PUT /users/{principalId}` | update | `customer_identity`, `principal`, `user_attribute_definitions` | `user.updated` | contract, rollback |
+| `updateQuillsUser` | `PUT /users/{principalId}` (a profile linked to a Kaneo account keeps its email, verification and external ID: 409; issue #129) | update | `customer_identity`, `principal`, `user_attribute_definitions` | `user.updated` | contract, rollback, `portal/widget-link.test.ts` |
 | `deleteQuillsUser` | `DELETE /users/{principalId}` | delete | `principal`, `customer_identity` | `user.deleted` | contract, rollback, feature (409) |
 | `listQuillsUserDuplicates` | `GET /users/{principalId}/duplicates` | read | `principal`, `customer_identity` | - | contract |
 | `listQuillsUserComments` | `GET /users/{principalId}/comments` (`cursor`; `limit` ≤ 100; newest first) | read | `principal`, `customer_identity`, `post_comments`, `posts`, `boards`, `board_projects`, `post_comment_reactions` | - | contract, read-leak (`user-comments.test.ts`) |
-| `mergeQuillsLeadIntoUser` | `POST /users/{principalId}/merge` | update | 30 activity tables, `principal`, `customer_identity` | `user.lead_merged` | contract, rollback, feature |
+| `mergeQuillsLeadIntoUser` | `POST /users/{principalId}/merge` | update | 37 activity tables, `notification_preferences`, `user_segments`, `principal`, `customer_identity` | `user.lead_merged` | contract, rollback, feature |
 
 Merged: 14. `listQuillsUsers` (v1), `listQuillsPortalUsers`, `searchQuillsPeople`;
 `findQuillsPortalUsersByEmail`; `createQuillsPortalUser`; `createQuillsUsersIdentify`;
@@ -72,6 +72,9 @@ Merged: 7. `listQuillsUserTags`, `listQuillsUserTagsForPrincipal`, `assignQuills
 
 ## Companies and attribute definitions
 
+`mrrCents` reads as null without `quills:view_revenue`; setting it (create, update, import) or a
+segment rule on `company_mrr` needs that permission (403 otherwise).
+
 | operationId | Route | Action | Tables | Event |
 |---|---|---|---|---|
 | `listQuillsCompanies` | `GET /companies` (search, plan, offset; `limit` ≤ 100; `total`) | read | `companies`, `principal` | - |
@@ -84,6 +87,7 @@ Merged: 7. `listQuillsUserTags`, `listQuillsUserTagsForPrincipal`, `assignQuills
 | `getQuillsUserCompany` | `GET /users/{principalId}/company` | read | `principal`, `companies` | - |
 | `setQuillsUserCompany` | `PUT /users/{principalId}/company` (`companyId`, or `name` to find or create) | update | `principal`, `companies` | `user.company_set` |
 | `removeQuillsUserCompany` | `DELETE /users/{principalId}/company` | update | `principal` | `user.company_removed` |
+| `importQuillsCompanies` | `POST /companies/import` (`csv` ≤ 100,000 characters, ≤ 1,000 rows: `name`, `domain`, `external_id`, `plan`, `mrr` in major units; a row updates by `external_id`, else domain, else creates; all rows or none, 400 lists the rows) | manage_settings | `companies` | `company.imported` (counts only) |
 | `listQuillsUserAttributes`, `listQuillsCompanyAttributes` | `GET /user-attributes`, `GET /company-attributes` | read | `*_attribute_definitions` | - |
 | `createQuills{User,Company}Attribute` | `POST /{user,company}-attributes` | manage_settings | same | `*_attribute.created` |
 | `updateQuills{User,Company}Attribute` | `PUT /{user,company}-attributes/{attributeId}` | manage_settings | same | `*_attribute.updated` |

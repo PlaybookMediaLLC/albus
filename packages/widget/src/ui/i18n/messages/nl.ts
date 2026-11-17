@@ -266,7 +266,13 @@ const nl: Catalog = {
   Assistant: "Assistent",
   "Submit request": "Verzoek indienen",
   "Request submitted": "Verzoek ingediend",
-  "Open the full board": "Volledig bord openen",
+  "Open in portal": "Openen in portaal",
+  "Check your email for a sign-in link to the portal.":
+    "Kijk in je e-mail voor een inloglink voor het portaal.",
+  "If your email has an account on the portal, a sign-in link is on its way. Check your email.":
+    "Als je e-mailadres een account op het portaal heeft, is er een inloglink onderweg. Kijk in je e-mail.",
+  "The portal could not be opened. Try again later.":
+    "Het portaal kon niet worden geopend. Probeer het later opnieuw.",
 };
 
 export default nl;

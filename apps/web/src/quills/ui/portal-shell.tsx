@@ -57,7 +57,7 @@ export function PortalShell({
             ) : null}
           </div>
           {navigation}
-          <div className="portal-account-actions ml-auto flex items-center gap-1.5 text-sm [&_a]:whitespace-nowrap [&_a]:rounded-full [&_a]:px-3 [&_a]:py-1.5 [&_a]:font-medium">
+          <div className="portal-account-actions ms-auto flex items-center gap-1.5 text-sm [&_a]:whitespace-nowrap [&_a]:rounded-full [&_a]:px-3 [&_a]:py-1.5 [&_a]:font-medium">
             {actions}
           </div>
         </div>

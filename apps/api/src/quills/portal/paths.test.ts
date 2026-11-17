@@ -19,6 +19,9 @@ describe("portal paths", () => {
     expect(portalPaths.csat("w", "token&value", 5)).toBe(
       "https://client.example.test/portal/w/csat?token=token%26value&rating=5",
     );
+    expect(portalPaths.signIn("w/a")).toBe(
+      "https://client.example.test/auth/sign-in?redirect=%2Fportal%2Fw%252Fa%2Fmy-feedback",
+    );
   });
 
   it("links a teammate to the conversation in the teammate app", () => {

@@ -14,6 +14,7 @@ import { StateView } from "../../ui/state-view";
 import { meta } from "./meta";
 import { PostActions } from "./parts/post-actions";
 import { PostAttachments } from "./parts/post-attachments";
+import { PostCustomFields } from "./parts/post-custom-fields";
 import { PostCommentsSection } from "./parts/post-comments-section";
 import { PostVote } from "./parts/post-vote";
 import { RelatedRequests } from "./parts/related-requests";
@@ -49,6 +50,8 @@ export function PostPage(props: PostPageProps) {
   const follow = useSetPortalFollow(viewer);
   const currentVote = vote.data?.postId === post.data?.id ? vote.data : null;
   const here = portalHref(props.workspaceId, `posts/${postId}`);
+  const signIn =
+    viewer.kind === "user" ? undefined : signInHref(`posts/${postId}`);
   const data = post.data;
 
   return (
@@ -67,11 +70,7 @@ export function PostPage(props: PostPageProps) {
               href: portalHref(props.workspaceId, `boards/${data.board.id}`),
             }}
             following={viewer.kind === "user" ? data.following : undefined}
-            signInHref={
-              viewer.kind === "user"
-                ? undefined
-                : (signInHref(`posts/${postId}`) ?? undefined)
-            }
+            signInHref={signIn ?? undefined}
             onFollowChange={async (following) => {
               await follow.mutateAsync({
                 param: { workspace: props.workspaceId, postId },
@@ -131,6 +130,7 @@ export function PostPage(props: PostPageProps) {
                   target={{ postId }}
                   content={data.content}
                 />
+                <PostCustomFields fields={data.customFields} />
                 <PostAttachments
                   workspaceId={props.workspaceId}
                   viewer={viewer}

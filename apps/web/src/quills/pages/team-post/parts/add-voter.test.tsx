@@ -5,6 +5,7 @@ import { createUserFixture } from "../../../api/team/create-user.fixture";
 import type { ListUsersResponse } from "../../../api/team/list-users";
 import { listUsersFixture } from "../../../api/team/list-users.fixture";
 import { TeamRuntimeProvider } from "../../../team/runtime";
+import { choose } from "../../../test/actions";
 import { mockApi } from "../../../test/mock-api";
 import { renderComponent } from "../../../test/render";
 import { postDetail, postTeam, postVoters } from "../post.fixture";
@@ -56,6 +57,34 @@ describe("AddVoter", () => {
     expect(
       new URL(api.calls("listQuillsUsers")[0]!.url).searchParams.get("search"),
     ).toBe("barb");
+    expect(
+      new URL(api.calls("addQuillsPostProxyVote")[0]!.url).searchParams.get(
+        "source",
+      ),
+    ).toBe("other");
+  });
+
+  it("records where the teammate heard the request", async () => {
+    const api = mockApi();
+    api.reply(postVoters);
+    api.reply(listUsersFixture.ok({ items: [user], total: 1 }));
+    api.reply(addPostProxyVoteFixture.ok());
+    const view = render();
+    await choose("Where you heard it", "Call");
+    fireEvent.change(view.getByLabelText("Add a vote for a customer"), {
+      target: { value: "barb" },
+    });
+    fireEvent.click(
+      await view.findByRole("button", { name: "Add a vote for Barbara" }),
+    );
+    await waitFor(() =>
+      expect(api.calls("addQuillsPostProxyVote")).toHaveLength(1),
+    );
+    expect(
+      new URL(api.calls("addQuillsPostProxyVote")[0]!.url).searchParams.get(
+        "source",
+      ),
+    ).toBe("call");
   });
 
   it("creates a customer with the typed name and adds the vote", async () => {

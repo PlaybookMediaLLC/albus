@@ -265,7 +265,13 @@ const es: Catalog = {
   Assistant: "Asistente",
   "Submit request": "Enviar solicitud",
   "Request submitted": "Solicitud enviada",
-  "Open the full board": "Abrir el tablero completo",
+  "Open in portal": "Abrir en el portal",
+  "Check your email for a sign-in link to the portal.":
+    "Busca en tu correo un enlace para iniciar sesión en el portal.",
+  "If your email has an account on the portal, a sign-in link is on its way. Check your email.":
+    "Si tu correo tiene una cuenta en el portal, te llegará un enlace para iniciar sesión. Revisa tu correo.",
+  "The portal could not be opened. Try again later.":
+    "No se pudo abrir el portal. Inténtalo de nuevo más tarde.",
 };
 
 export default es;

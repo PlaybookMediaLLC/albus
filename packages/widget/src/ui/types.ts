@@ -5,6 +5,31 @@ export interface SubmissionOptions {
   attachments?: readonly File[];
   /** Article that prompted a new conversation; the server must verify access. */
   articleId?: string;
+  /** Feedback: the title and board that the visitor confirmed from a draft; the server checks the board. */
+  title?: string;
+  boardId?: string;
+  /** Feedback: the board's custom field values, typed and without empty ones. */
+  customFields?: Record<string, string | number | boolean | string[]>;
+}
+/** A public custom field that a board asks for (issue #71). */
+export interface FeedbackField {
+  key: string;
+  label: string;
+  type: "text" | "number" | "select" | "multi_select" | "checkbox" | "date";
+  required: boolean;
+  options?: readonly string[];
+}
+/** A suggested title and board for the visitor's feedback, with similar requests. Nothing is saved. */
+export interface FeedbackDraft {
+  title: string;
+  /** Omitted when no board was suggested: the post goes to the default board. */
+  board?: { id: string; name: string; fields?: readonly FeedbackField[] };
+  similar: ReadonlyArray<{
+    id: string;
+    title: string;
+    votes?: number;
+    voted?: boolean;
+  }>;
 }
 export interface WidgetPerson {
   name: string;
@@ -157,6 +182,8 @@ export interface SurveyAnswer {
 /** Data is supplied by the embedding application; this view performs no network requests. */
 export interface WidgetViewProps {
   brandName?: string;
+  /** Text direction of the panel; "rtl" for a right-to-left language. Default "ltr". */
+  dir?: "ltr" | "rtl";
   theme?: "light" | "dark" | "auto";
   /** A BCP-47 tag for the widget's language; unsupported tags show English. */
   locale?: string;
@@ -188,6 +215,12 @@ export interface WidgetViewProps {
   replyTime?: "minutes" | "hours" | "day";
   /** Home's greeting and subtitle from the workspace; null keeps the default. */
   greeting?: { title: string | null; subtitle: string | null };
+  /**
+   * Opens the portal for the identified visitor. Resolves "opened" when a new tab signs them in,
+   * "sent" when a sign-in link is on its way to their email, or "if_account" when only an address
+   * with an account gets it. Omit to hide the action.
+   */
+  onOpenPortal?: () => Promise<"opened" | "sent" | "if_account">;
   teamMember?: WidgetPerson;
   /** The host resizes its container or sends the existing quackback:expand message. */
   onExpandedChange?: (expanded: boolean) => void;
@@ -255,8 +288,6 @@ export interface WidgetViewProps {
   onClose: () => void;
   /** False hides the close button: the widget is inline in the host page. */
   closable?: boolean;
-  /** Opens the portal in a new tab with the identified visitor signed in. */
-  onOpenPortal?: () => Promise<unknown>;
   /** Resolve only after the action succeeds. Rejections keep the draft and show an error. */
   onSendMessage?: (
     body: string,
@@ -266,6 +297,10 @@ export interface WidgetViewProps {
     body: string,
     options: SubmissionOptions,
   ) => Promise<unknown>;
+  /** Suggests a title and a board from the visitor's words; omit it when AI is off. */
+  onDraftFeedback?: (body: string) => Promise<FeedbackDraft>;
+  /** The public custom fields of the board that a new feedback post goes to. */
+  feedbackFields?: readonly FeedbackField[];
   onReactToUpdate?: (entryId: string, emoji: string) => Promise<unknown>;
   onShareUpdate?: (entry: UpdateEntry) => Promise<unknown>;
   /** The survey that waits for the visitor; the home tab shows it. */

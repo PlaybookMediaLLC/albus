@@ -1,5 +1,6 @@
 import { apiRouter, z } from "../../openapi";
 import { settings } from "../../database/quills/schema/auth";
+import { aiConfig } from "../assistant/provider";
 import { widgetEnabled } from "../framework/audience";
 import { defineQuillsRoute } from "../framework/define-route";
 import { bool, parseJson, record, str } from "../settings/area";
@@ -36,6 +37,10 @@ const widgetConfig = defineQuillsRoute({
           home: z.boolean(),
         }),
         hmacRequired: z.boolean(),
+        ai: z.boolean().openapi({
+          description:
+            "True when the instance has an AI provider: the feedback composer can suggest a title and a board.",
+        }),
         visitorAnalytics: z.boolean(),
         visitorDeviceTracking: z.boolean(),
         launcherGreeting: z.string(),
@@ -80,6 +85,7 @@ const widgetConfig = defineQuillsRoute({
         // The same tab defaults as the settings read.
         tabs: widgetTabs(stored),
         hmacRequired: true,
+        ai: aiConfig() !== null,
         visitorAnalytics: bool(stored.visitorAnalytics, true),
         visitorDeviceTracking: bool(stored.visitorDeviceTracking, true),
         launcherGreeting: str(stored.launcherGreeting) ?? "",

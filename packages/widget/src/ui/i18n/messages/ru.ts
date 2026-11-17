@@ -270,7 +270,13 @@ const ru: Catalog = {
   Assistant: "Ассистент",
   "Submit request": "Отправить запрос",
   "Request submitted": "Запрос отправлен",
-  "Open the full board": "Открыть всю доску",
+  "Open in portal": "Открыть на портале",
+  "Check your email for a sign-in link to the portal.":
+    "Проверьте почту: там ссылка для входа на портал.",
+  "If your email has an account on the portal, a sign-in link is on its way. Check your email.":
+    "Если у вашего адреса есть аккаунт на портале, ссылка для входа уже в пути. Проверьте почту.",
+  "The portal could not be opened. Try again later.":
+    "Не удалось открыть портал. Попробуйте позже.",
 };
 
 export default ru;

@@ -243,7 +243,13 @@ const zh_TW: Catalog = {
   Assistant: "助理",
   "Submit request": "提交請求",
   "Request submitted": "請求已提交",
-  "Open the full board": "開啟完整看板",
+  "Open in portal": "在入口網站開啟",
+  "Check your email for a sign-in link to the portal.":
+    "請查看電子郵件中的入口網站登入連結。",
+  "If your email has an account on the portal, a sign-in link is on its way. Check your email.":
+    "如果你的電子郵件在入口網站有帳號，登入連結正在寄送中。請查看電子郵件。",
+  "The portal could not be opened. Try again later.":
+    "無法開啟入口網站。請稍後再試。",
 };
 
 export default zh_TW;

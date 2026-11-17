@@ -222,22 +222,43 @@
 		{
 			"idx": 31,
 			"version": "7",
-			"when": 1794878712111,
-			"tag": "0031_post_hidden",
+			"when": 1794876076541,
+			"tag": "0031_changelog_translations",
 			"breakpoints": true
 		},
 		{
 			"idx": 32,
 			"version": "7",
-			"when": 1794883887378,
-			"tag": "0032_assistant_quiet_sweep",
+			"when": 1794906164239,
+			"tag": "0032_post_score_values",
 			"breakpoints": true
 		},
 		{
 			"idx": 33,
 			"version": "7",
-			"when": 1794901898764,
-			"tag": "0033_portal_token_link",
+			"when": 1794906174344,
+			"tag": "0033_quills_view_revenue",
+			"breakpoints": true
+		},
+		{
+			"idx": 34,
+			"version": "7",
+			"when": 1794909817143,
+			"tag": "0034_post_hidden",
+			"breakpoints": true
+		},
+		{
+			"idx": 35,
+			"version": "7",
+			"when": 1794909831800,
+			"tag": "0035_assistant_quiet_sweep",
+			"breakpoints": true
+		},
+		{
+			"idx": 36,
+			"version": "7",
+			"when": 1794909835099,
+			"tag": "0036_portal_token_link",
 			"breakpoints": true
 		}
 	]

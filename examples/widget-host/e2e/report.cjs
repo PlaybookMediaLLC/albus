@@ -226,7 +226,7 @@ const F = {
   ],
   "portal-widget-sign-in": [
     "Portal: open signed in from the widget",
-    "Widget sign-in on; sign in as Ada; Feedback → Open the full board",
+    "Widget sign-in on; sign in as Ada; Home → Open in portal",
   ],
   "portal-sso-sign-in": [
     "Portal: SSO sign-in through the host app",
