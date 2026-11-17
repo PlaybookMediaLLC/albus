@@ -40,6 +40,7 @@ import {
   genericOAuth,
   lastLoginMethod,
   magicLink,
+  oneTimeToken,
   openAPI,
   organization,
 } from "better-auth/plugins";
@@ -753,6 +754,13 @@ export const auth = betterAuth({
       verificationUri: getDeviceAuthVerificationUri(),
       validateClient: async (clientId) =>
         getDeviceAuthClientIds().has(clientId),
+    }),
+    // Desktop sign-in (apps/api/src/desktop): the server turns a device-flow token into the
+    // session cookie. HTTP calls cannot mint a one-time token; only that route makes one.
+    oneTimeToken({
+      disableClientRequest: true,
+      storeToken: "hashed",
+      expiresIn: 1,
     }),
     adminPlugin({
       defaultRole: "user",
