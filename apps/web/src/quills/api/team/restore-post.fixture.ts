@@ -30,6 +30,7 @@ export const restorePostFixture = {
           effort: null,
           rice: null,
         },
+        factorValues: [],
       },
       ...overrides,
     }) satisfies RestorePostResponse,

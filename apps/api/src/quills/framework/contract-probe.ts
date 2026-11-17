@@ -26,6 +26,9 @@ export type Sent = {
   location: string | null;
 };
 const forbiddenKey = /secret|token|password|hash|workspaceId/i;
+/** Revenue never reaches a customer (#79): key names no portal, widget, public or signed response has. */
+export const revenueKey = /mrr|revenue|demand/i;
+export const customerAudiences = ["portal", "widget", "public", "signed"];
 
 let clientCount = 0;
 export async function send(
@@ -112,7 +115,11 @@ export function responseIssues(d: AnyQuillsRoute, res: Sent): Finding[] {
           ...new Set(
             keyNames(res.body)
               .filter(
-                (key) => forbiddenKey.test(key) && !d.allowKeys?.includes(key),
+                (key) =>
+                  (forbiddenKey.test(key) ||
+                    (customerAudiences.includes(d.audience ?? "teammate") &&
+                      revenueKey.test(key))) &&
+                  !d.allowKeys?.includes(key),
               )
               .map((key) => `the response has a key named ${key}`),
           ),

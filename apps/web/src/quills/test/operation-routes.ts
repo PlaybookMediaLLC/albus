@@ -386,6 +386,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/conversations/{conversationId}/posts",
   },
   {
+    operationId: "createQuillsPostFromTicket",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/tickets/{ticketId}/posts",
+  },
+  {
     operationId: "createQuillsPostView",
     method: "POST",
     path: "/api/quills/{workspaceId}/post-views",
@@ -1446,6 +1451,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/roadmaps/{roadmapId}",
   },
   {
+    operationId: "getQuillsScoringFactors",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/feedback/scoring-factors",
+  },
+  {
     operationId: "getQuillsSlackAgentSettings",
     method: "GET",
     path: "/api/quills/{workspaceId}/assistant/slack",
@@ -1724,6 +1734,11 @@ export const quillsOperationRoutes = [
     operationId: "importQuillsChangelogSubscribers",
     method: "POST",
     path: "/api/quills/{workspaceId}/changelog-subscribers/import",
+  },
+  {
+    operationId: "importQuillsCompanies",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/companies/import",
   },
   {
     operationId: "importQuillsStatusSubscribers",
@@ -3226,6 +3241,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/posts/{postId}/board",
   },
   {
+    operationId: "setQuillsPostFactorScores",
+    method: "PUT",
+    path: "/api/quills/{workspaceId}/posts/{postId}/factor-scores",
+  },
+  {
     operationId: "setQuillsPostOwner",
     method: "PUT",
     path: "/api/quills/{workspaceId}/posts/{postId}/owner",
@@ -3259,6 +3279,11 @@ export const quillsOperationRoutes = [
     operationId: "setQuillsPoweredBy",
     method: "PUT",
     path: "/api/quills/{workspaceId}/operations/powered-by",
+  },
+  {
+    operationId: "setQuillsScoringFactors",
+    method: "PUT",
+    path: "/api/quills/{workspaceId}/feedback/scoring-factors",
   },
   {
     operationId: "setQuillsSendingAddressSmtp",

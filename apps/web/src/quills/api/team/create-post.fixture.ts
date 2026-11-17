@@ -30,6 +30,7 @@ export const createPostFixture = {
           effort: null,
           rice: null,
         },
+        factorValues: [],
       },
       ...overrides,
     }) satisfies CreatePostResponse,

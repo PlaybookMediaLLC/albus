@@ -130,7 +130,8 @@ async function usersCsv(db: Database, projects: string[], page: Page) {
   };
 }
 
-async function companiesCsv(db: Database, page: Page) {
+/** Without `revenue` (quills:view_revenue of the teammate who started it), no monthly_spend column. */
+async function companiesCsv(db: Database, page: Page, revenue: boolean) {
   const rows = await db
     .select({
       name: companies.name,
@@ -153,7 +154,7 @@ async function companiesCsv(db: Database, page: Page) {
       "domain",
       "external_id",
       "plan",
-      "monthly_spend",
+      ...(revenue ? ["monthly_spend"] : []),
       "people_count",
       "created_at",
     ],
@@ -162,7 +163,9 @@ async function companiesCsv(db: Database, page: Page) {
       r.domain,
       r.externalId,
       r.plan,
-      r.mrrCents === null ? null : (r.mrrCents / 100).toFixed(2),
+      ...(revenue
+        ? [r.mrrCents === null ? null : (r.mrrCents / 100).toFixed(2)]
+        : []),
       r.people,
       r.createdAt,
     ]),
@@ -246,6 +249,7 @@ export async function buildExport(
   db: Database,
   kind: Kind,
   projects: string[],
+  revenue = false,
 ): Promise<Built> {
   const read = (page: Page) =>
     kind === "posts"
@@ -253,7 +257,7 @@ export async function buildExport(
       : kind === "users"
         ? usersCsv(db, projects, page)
         : kind === "companies"
-          ? companiesCsv(db, page)
+          ? companiesCsv(db, page, revenue)
           : conversationsCsv(db, page);
   const parts: string[] = [];
   let bytes = 0;

@@ -121,6 +121,48 @@ describe("Quills MCP tools", () => {
         "/api/quills/ws_1/posts/post_1/voters/principal_9",
       ],
       [
+        "quills_add_proxy_vote",
+        {
+          workspaceId: ws,
+          postId: "post_1",
+          principalId: "principal_9",
+          source: "call",
+        },
+        "PUT",
+        "/api/quills/ws_1/posts/post_1/voters/principal_9?source=call",
+      ],
+      [
+        "quills_create_post",
+        {
+          workspaceId: ws,
+          boardId: "board_1",
+          title: "SSO",
+          authorPrincipalId: "principal_9",
+          source: "meeting",
+        },
+        "POST",
+        "/api/quills/ws_1/posts",
+        {
+          boardId: "board_1",
+          title: "SSO",
+          authorPrincipalId: "principal_9",
+          source: "meeting",
+        },
+      ],
+      [
+        "quills_list_posts",
+        {
+          workspaceId: ws,
+          sort: "mrr",
+          minVotes: 2,
+          minMrrCents: 10000,
+          segmentId: "segment_1",
+          minScore: 5,
+        },
+        "GET",
+        "/api/quills/ws_1/posts?sort=mrr&minVotes=2&minMrrCents=10000&segmentIds=segment_1&minScore=5",
+      ],
+      [
         "quills_add_comment",
         {
           workspaceId: ws,

@@ -98,6 +98,11 @@ const PERMISSION_LABELS: Record<
     label: "Manage Quills settings",
     description: "Change Quills configuration for this workspace.",
   },
+  "quills:view_revenue": {
+    label: "View customer revenue",
+    description:
+      "See company revenue and the revenue of the companies behind each request.",
+  },
   "organization:update": {
     label: "Edit workspace administration",
     description: "Change workspace settings through the account service.",

@@ -337,7 +337,7 @@ describe.skipIf(!url)("Quills feedback signals", () => {
         .where(eq(postVotes.postId, target.postId)),
     );
     expect(votes).toEqual([
-      { principalId: signal.customerId, sourceType: "proxy" },
+      { principalId: signal.customerId, sourceType: "conversation" },
     ]);
     expect(await outbox([signal.signalId, target.postId])).toEqual([
       { type: "post.voted", entityId: target.postId },

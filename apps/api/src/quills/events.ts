@@ -53,6 +53,8 @@ export const changeSchema = z.object({
     "company.created",
     "company.updated",
     "company.deleted",
+    // #79: a company CSV import (counts only, never revenue).
+    "company.imported",
     "user_attribute.created",
     "user_attribute.updated",
     "user_attribute.deleted",
@@ -384,6 +386,8 @@ export const changeSchema = z.object({
     "survey.closed",
     "survey.responded",
     "post.scored",
+    // #79: the team's scoring factors.
+    "settings.scoring_updated",
     "post.vote_importance_set",
     "changelog.reacted",
     "changelog.unreacted",

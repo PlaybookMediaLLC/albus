@@ -30,6 +30,7 @@ export const setPostScoreFixture = {
           effort: null,
           rice: null,
         },
+        factorValues: [],
       },
       ...overrides,
     }) satisfies SetPostScoreResponse,

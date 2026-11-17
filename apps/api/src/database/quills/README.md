@@ -114,8 +114,13 @@ user, and the hook refreshes context on mount.
 Feature screens can use this hook and the existing `useWorkspacePermission` hook.
 
 Kaneo's role editor, API-key scopes and capability endpoint expose the `quills`
-resource with `read`, `create`, `update`, `delete`, and `manage_settings` actions.
-Viewers read; members read/create/update; admins and owners have all five actions.
+resource with `read`, `create`, `update`, `delete`, `manage_settings` and
+`view_revenue` actions. Viewers read; members read/create/update/view_revenue; admins
+and owners have all six actions. `view_revenue` (#79) covers customer revenue: without
+it, revenue fields read as null, and revenue sorts, filters, totals, writes, segment
+rules and the companies export column are refused or left out. Migration
+`0032_quills_view_revenue` gives it to stored member and admin roles whose Quills actions
+were still the previous default.
 Existing default roles gain these actions only if their stored permissions match
 the previous defaults exactly. Customized and custom roles remain unchanged;
 owners can grant Quills access in the same Roles screen. Imported Quills role

@@ -20,6 +20,9 @@ describe("PostVoters", () => {
     const view = render();
     expect(await view.findByText(/Blocker/)).toBeVisible();
     expect(view.getAllByText(/^Voted /)).toHaveLength(2);
+    // A vote that a teammate added names the teammate and where they heard it.
+    expect(view.getByText("Added by Grace · Call")).toBeVisible();
+    expect(view.queryAllByText(/^Added by/)).toHaveLength(1);
     expect(
       view.queryByRole("button", { name: /Linus/ }),
     ).not.toBeInTheDocument();

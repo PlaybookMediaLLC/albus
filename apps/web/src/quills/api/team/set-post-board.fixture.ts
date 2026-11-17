@@ -30,6 +30,7 @@ export const setPostBoardFixture = {
           effort: null,
           rice: null,
         },
+        factorValues: [],
       },
       ...overrides,
     }) satisfies SetPostBoardResponse,

@@ -112,7 +112,8 @@ export function TeamAutopilotPage({ workspaceId }: TeamAutopilotPageProps) {
             setOpenId(null);
           }}
           actions={{
-            canAccept: team.permissions.create,
+            // Accepting acts for the customer, which needs create and update (#73).
+            canAccept: team.permissions.create && team.permissions.update,
             canReview: team.permissions.update,
             busy:
               acceptVote.isPending || dismiss.isPending || restore.isPending,

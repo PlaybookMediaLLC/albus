@@ -1,6 +1,7 @@
 import { fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vite-plus/test";
 import { getPortalSettingsFixture } from "../../api/team/get-portal-settings.fixture";
+import { getScoringFactorsFixture } from "../../api/team/get-scoring-factors.fixture";
 import { listBoardsFixture } from "../../api/team/list-boards.fixture";
 import { listTagsFixture } from "../../api/team/list-tags.fixture";
 import { updateBoardFixture } from "../../api/team/update-board.fixture";
@@ -45,6 +46,11 @@ const ready = () => {
   api.reply(portal);
   api.reply(boards);
   api.reply(tags);
+  api.reply(
+    getScoringFactorsFixture.ok({
+      factors: [{ id: "impact", name: "Impact", weight: 3 }],
+    }),
+  );
 };
 
 describe("SettingsFeedbackPage", () => {
@@ -52,13 +58,13 @@ describe("SettingsFeedbackPage", () => {
     loading: {
       prepare: () => {
         const api = mockApi();
-        for (let index = 0; index < 3; index += 1) api.defer(() => undefined);
+        for (let index = 0; index < 4; index += 1) api.defer(() => undefined);
       },
     },
     failed: {
       prepare: () => {
         const api = mockApi();
-        for (let index = 0; index < 3; index += 1) api.fail();
+        for (let index = 0; index < 4; index += 1) api.fail();
       },
     },
     ready: {
@@ -114,5 +120,8 @@ describe("SettingsFeedbackPage", () => {
     ).toHaveAttribute("aria-disabled", "true");
     expect(view.queryByRole("button", { name: "New board" })).toBeNull();
     expect(view.queryByRole("button", { name: "New tag" })).toBeNull();
+    expect(view.getByText("Impact (weight 3)")).toBeVisible();
+    expect(view.queryByLabelText("Factor 1 name")).toBeNull();
+    expect(view.queryByRole("button", { name: "Save factors" })).toBeNull();
   });
 });

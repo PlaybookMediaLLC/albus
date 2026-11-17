@@ -11,6 +11,8 @@ import {
 } from "../../database/quills/client";
 import { ApiError } from "../../errors/api-error";
 import { validationError } from "../../errors/validation-error";
+/** For a handler that finds an invalid input the schema cannot see, such as a CSV row. */
+export { validationError };
 import { boundedRequestBody } from "../../utils/bounded-request-body";
 import {
   createRoute,

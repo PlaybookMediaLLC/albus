@@ -57,6 +57,7 @@ export function useWorkspacePermission() {
       canUpdateQuills: () => can.updateQuills,
       canDeleteQuills: () => can.deleteQuills,
       canManageQuillsSettings: () => can.manageQuillsSettings,
+      canViewQuillsRevenue: () => can.viewQuillsRevenue,
       canManageProjects: () => can.manageProjects,
       canCreateProjects: () => can.createProjects,
       canUpdateProjects: () => can.updateProjects,

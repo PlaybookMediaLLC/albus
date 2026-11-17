@@ -39,6 +39,12 @@ export const postSchema = z.object({
         "reach × impact × confidence ÷ 100 ÷ effort. Null when an input is missing.",
     }),
   }),
+  factorValues: z
+    .array(z.object({ factorId: z.string(), value: z.number() }))
+    .openapi({
+      description:
+        "The post's stored values (0 to 10) by scoring factor ID. Only the team's current factors count toward the score.",
+    }),
 });
 
 type Score = {
@@ -83,6 +89,7 @@ const fields = {
     confidence: posts.scoreConfidence,
     effort: posts.scoreEffort,
   },
+  factorValues: posts.scoreValues,
 };
 
 /** Posts joined to their board and author. The caller adds filters, order and limit. */
@@ -123,6 +130,11 @@ export async function withTags(db: Database, rows: Row[]) {
   return rows.map((row) => ({
     ...row,
     score: { ...row.score, rice: riceOf(row.score) },
+    // An imported row may hold other JSON: only numbers are values.
+    factorValues: Object.entries(row.factorValues ?? {}).flatMap(
+      ([factorId, value]) =>
+        typeof value === "number" ? [{ factorId, value }] : [],
+    ),
     tags: tags
       .filter((tag) => tag.postId === row.id)
       .map(({ id, name, color }) => ({ id, name, color })),

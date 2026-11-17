@@ -22,6 +22,7 @@ const post = {
     mrrCents: 0,
     importance: { nice: 0, important: 0, critical: 0 },
   },
+  teamScore: null,
 };
 
 // The Triage pill is a router link.

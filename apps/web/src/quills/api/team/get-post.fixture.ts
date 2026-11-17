@@ -30,6 +30,7 @@ export const getPostFixture = {
           effort: null,
           rice: null,
         },
+        factorValues: [],
         hasVoted: false,
         viewerPrincipalId: "principal_test_1",
         widgetMetadata: null,

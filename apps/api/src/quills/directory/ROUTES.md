@@ -72,6 +72,9 @@ Merged: 7. `listQuillsUserTags`, `listQuillsUserTagsForPrincipal`, `assignQuills
 
 ## Companies and attribute definitions
 
+`mrrCents` reads as null without `quills:view_revenue`; setting it (create, update, import) or a
+segment rule on `company_mrr` needs that permission (403 otherwise).
+
 | operationId | Route | Action | Tables | Event |
 |---|---|---|---|---|
 | `listQuillsCompanies` | `GET /companies` (search, plan, offset; `limit` ≤ 100; `total`) | read | `companies`, `principal` | - |
@@ -84,6 +87,7 @@ Merged: 7. `listQuillsUserTags`, `listQuillsUserTagsForPrincipal`, `assignQuills
 | `getQuillsUserCompany` | `GET /users/{principalId}/company` | read | `principal`, `companies` | - |
 | `setQuillsUserCompany` | `PUT /users/{principalId}/company` (`companyId`, or `name` to find or create) | update | `principal`, `companies` | `user.company_set` |
 | `removeQuillsUserCompany` | `DELETE /users/{principalId}/company` | update | `principal` | `user.company_removed` |
+| `importQuillsCompanies` | `POST /companies/import` (`csv` ≤ 100,000 characters, ≤ 1,000 rows: `name`, `domain`, `external_id`, `plan`, `mrr` in major units; a row updates by `external_id`, else domain, else creates; all rows or none, 400 lists the rows) | manage_settings | `companies` | `company.imported` (counts only) |
 | `listQuillsUserAttributes`, `listQuillsCompanyAttributes` | `GET /user-attributes`, `GET /company-attributes` | read | `*_attribute_definitions` | - |
 | `createQuills{User,Company}Attribute` | `POST /{user,company}-attributes` | manage_settings | same | `*_attribute.created` |
 | `updateQuills{User,Company}Attribute` | `PUT /{user,company}-attributes/{attributeId}` | manage_settings | same | `*_attribute.updated` |

@@ -30,6 +30,7 @@ export const deletePostFixture = {
           effort: null,
           rice: null,
         },
+        factorValues: [],
       },
       ...overrides,
     }) satisfies DeletePostResponse,
