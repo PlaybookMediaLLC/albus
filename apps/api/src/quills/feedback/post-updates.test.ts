@@ -69,6 +69,17 @@ vi.mock("../../database/index", () => ({
 vi.mock("../../utils/get-user-session", () => ({
   getUserSession: (headers: Headers) => contractSession(headers),
 }));
+// One follower per mail page, so the three recipients below take several pages.
+vi.mock("../jobs/handlers/update-mail", async (original) => {
+  const actual =
+    await original<typeof import("../jobs/handlers/update-mail")>();
+  return {
+    ...actual,
+    runUpdateMailPage: (
+      ...[workspaceId, job]: Parameters<typeof actual.runUpdateMailPage>
+    ) => actual.runUpdateMailPage(workspaceId, job, 1),
+  };
+});
 vi.mock("../../ws", () => ({
   broadcastToUserAndWait: vi.fn(async () => {}),
 }));
@@ -299,6 +310,7 @@ describe.skipIf(!url)("Quills send update", () => {
     expect(counted.status).toBe(200);
     // french, english and customer A; the chatter gets the conversation reply instead.
     expect(counted.body.counts).toEqual({
+      emailEstimated: false,
       page: 1,
       email: 3,
       conversations: 1,

@@ -30,6 +30,35 @@ const subscription = (postId: PostId, principalId: PrincipalId) =>
     eq(postSubscriptions.principalId, principalId),
   );
 
+/**
+ * Stops every notice about the post but keeps the row with both flags off: a voter's shipped notice
+ * reads it, so an unsubscribe also stops that. Following means notify_status_changes is on.
+ * Returns whether the person followed the post.
+ */
+export async function unfollowPost(
+  db: Database,
+  postId: PostId,
+  principalId: PrincipalId,
+) {
+  const [before] = await db
+    .select({ following: postSubscriptions.notifyStatusChanges })
+    .from(postSubscriptions)
+    .where(subscription(postId, principalId));
+  const off = { notifyComments: false, notifyStatusChanges: false };
+  await db
+    .insert(postSubscriptions)
+    .values({ postId, principalId, reason: "manual", ...off })
+    .onConflictDoUpdate({
+      target: [
+        postSubscriptions.workspaceId,
+        postSubscriptions.postId,
+        postSubscriptions.principalId,
+      ],
+      set: { ...off, updatedAt: new Date() },
+    });
+  return before?.following === true;
+}
+
 /** Creates the row with `reason`, or changes the level of an existing one. */
 async function setLevel(
   db: Database,
@@ -111,17 +140,15 @@ const unsubscribe = defineQuillsRoute({
   action: "read",
   params: postParams,
   response: z.object({ changed: z.boolean() }),
-  responseDescription: "Whether a subscription was removed",
+  responseDescription: "Whether the caller followed the post",
   errors,
   event: personal,
   load: loadProjects,
   handler: async ({ db, actor, params, loaded }) => {
     await findPost(db, params.postId, loaded);
-    const rows = await db
-      .delete(postSubscriptions)
-      .where(subscription(params.postId, actor.principalId))
-      .returning({ id: postSubscriptions.id });
-    return { changed: rows.length > 0 };
+    return {
+      changed: await unfollowPost(db, params.postId, actor.principalId),
+    };
   },
 });
 
@@ -159,9 +186,7 @@ const setVoterSubscription = defineQuillsRoute({
       );
     if (!vote) throw new HTTPException(404, { message: "Vote not found" });
     if (body.level === "none")
-      await db
-        .delete(postSubscriptions)
-        .where(subscription(params.postId, params.principalId));
+      await unfollowPost(db, params.postId, params.principalId);
     else
       await setLevel(db, params.postId, params.principalId, body.level, "vote");
     return { level: body.level };

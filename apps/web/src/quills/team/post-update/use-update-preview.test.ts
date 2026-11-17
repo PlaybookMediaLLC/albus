@@ -11,7 +11,13 @@ const channels = {
   conversations: false,
   slack: false,
 };
-const counts = { page: 1, email: 2, conversations: 0, slack: 0 };
+const counts = {
+  page: 1,
+  email: 2,
+  emailEstimated: false,
+  conversations: 0,
+  slack: 0,
+};
 const render = (targets: UpdateTargets) =>
   renderQuillsHook(
     (props: UpdateTargets) =>

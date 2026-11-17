@@ -281,6 +281,13 @@
 			"when": 1794915893003,
 			"tag": "0039_portal_token_link",
 			"breakpoints": true
+		},
+		{
+			"idx": 40,
+			"version": "7",
+			"when": 1794945254772,
+			"tag": "0040_drop_update_recipients",
+			"breakpoints": true
 		}
 	]
 }

@@ -3,13 +3,13 @@ import type { PostId, PrincipalId } from "@kaneo/ids";
 import { changelogSubscriptions } from "../../database/quills/schema/changelog-subscriptions";
 import {
   notificationPreferences,
-  postSubscriptions,
   unsubscribeTokens,
 } from "../../database/quills/schema/notifications";
 import { posts } from "../../database/quills/schema/posts";
 import { statusSubscriptions } from "../../database/quills/schema/status";
 import { hashToken } from "../framework/audience";
 import type { Database } from "../framework/define-route";
+import { unfollowPost } from "../delivery/post-subscriptions";
 import { portalPaths } from "./paths";
 
 // Route-module helper: emailed unsubscribe links. The `token` column holds the SHA-256 hash of
@@ -141,14 +141,7 @@ export async function spendToken(
 ) {
   const now = new Date();
   if (row.action === "unsubscribe_post" && row.postId)
-    await db
-      .delete(postSubscriptions)
-      .where(
-        and(
-          eq(postSubscriptions.postId, row.postId),
-          eq(postSubscriptions.principalId, row.principalId),
-        ),
-      );
+    await unfollowPost(db, row.postId, row.principalId);
   if (row.action === "unsubscribe_all")
     await db
       .insert(notificationPreferences)

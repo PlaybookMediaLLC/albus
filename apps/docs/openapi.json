@@ -13413,7 +13413,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Whether a subscription was removed",
+            "description": "Whether the caller followed the post",
             "content": {
               "application/json": {
                 "schema": {
@@ -81015,7 +81015,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Whether a subscription was removed",
+            "description": "Whether the caller followed the post",
             "content": {
               "application/json": {
                 "schema": {
@@ -157051,7 +157051,7 @@
           "Quills"
         ],
         "summary": "Count who a post update reaches on each channel",
-        "description": "Writes nothing. The counts are what sendQuillsPostUpdate queues for the same channels and targets, unless followers or conversations change in between.",
+        "description": "Writes nothing. The counts are what sendQuillsPostUpdate sends for the same channels and targets, unless followers or conversations change in between. Above 1,000 matching followers, counts.emailEstimated is true and counts.email is the number of matching followers, before each one's address and access are checked at send time.",
         "parameters": [
           {
             "schema": {
@@ -157149,6 +157149,9 @@
                         "email": {
                           "type": "number"
                         },
+                        "emailEstimated": {
+                          "type": "boolean"
+                        },
                         "conversations": {
                           "type": "number"
                         },
@@ -157159,6 +157162,7 @@
                       "required": [
                         "page",
                         "email",
+                        "emailEstimated",
                         "conversations",
                         "slack"
                       ]
@@ -157219,7 +157223,7 @@
           "Quills"
         ],
         "summary": "Send an update about a post to its followers on every chosen channel",
-        "description": "Needs Quills update and manage_settings, and confirmRelease: true (no verified release record exists yet; a merged PR or a status change is not one). Page: a public team comment. Email: the followers that previewQuillsPostUpdate counts, each once. Conversations: a reply in each linked conversation, without reopening or claiming it; its customer gets no update mail. Slack: the page comment, through Slack connections that send the board's comments. A repeated idempotency key returns the first send.",
+        "description": "Needs Quills update and manage_settings, and confirmRelease: true (no verified release record exists yet; a merged PR or a status change is not one). Page: a public team comment. Email: every follower that matches the targets, each once and with no cap; each one's address and access are checked when the mail is sent. Conversations: a reply in each linked conversation, without reopening or claiming it; its customer gets no update mail. Slack: the page comment, through Slack connections that send the board's comments. A repeated idempotency key returns the first send.",
         "parameters": [
           {
             "schema": {
@@ -157337,6 +157341,9 @@
                         "email": {
                           "type": "number"
                         },
+                        "emailEstimated": {
+                          "type": "boolean"
+                        },
                         "conversations": {
                           "type": "number"
                         },
@@ -157347,6 +157354,7 @@
                       "required": [
                         "page",
                         "email",
+                        "emailEstimated",
                         "conversations",
                         "slack"
                       ]

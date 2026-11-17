@@ -28,6 +28,7 @@ import {
   runTaskSyncJob,
 } from "../integrations/task-sync-job";
 import { runTaskRuleJob } from "../integrations/task-rule-job";
+import { runUpdateMailPage } from "./handlers/update-mail";
 import {
   claimFrom,
   enqueueQuillsEvent,
@@ -52,11 +53,14 @@ const handlers: Record<
         : "crm" in (job.payload as object)
           ? runCrmNoteJob(workspaceId, job)
           : runGitHubCommentJob(workspaceId, job),
-  // The weekly digest (handlers/digest.ts) shares the mail queue; its job names a week.
+  // The weekly digest (handlers/digest.ts) and an update's mail pages (handlers/update-mail.ts) share
+  // the mail queue; a digest job names a week, a page job its update event.
   "quills.mail": (workspaceId, job) =>
     "digest" in (job.payload as object)
       ? runDigestJob(workspaceId, job)
-      : runMailJob(workspaceId, job),
+      : "updateMail" in (job.payload as object)
+        ? runUpdateMailPage(workspaceId, job)
+        : runMailJob(workspaceId, job),
   "quills.notification": runNotificationJob,
   "quills.domain_check": runDomainCheckJob,
   "quills.wipe": runWipeJob,
