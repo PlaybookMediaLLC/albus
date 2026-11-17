@@ -41,10 +41,10 @@ export function ChangelogEntry({
   const { t, i18n } = useTranslation("quills");
   return (
     <article className="portal-update grid gap-4 pb-14 md:grid-cols-[180px_minmax(0,1fr)] md:gap-14">
-      <div className="relative md:border-l md:border-dashed md:border-border md:pl-4">
+      <div className="relative md:border-s md:border-dashed md:border-border md:ps-4">
         <span
           aria-hidden="true"
-          className="absolute -left-[3.5px] top-2 hidden size-1.5 rounded-full bg-foreground md:block"
+          className="absolute -start-[3.5px] top-2 hidden size-1.5 rounded-full bg-foreground md:block"
         />
         <p className="text-sm font-medium">
           <time

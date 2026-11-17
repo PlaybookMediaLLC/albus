@@ -15,6 +15,7 @@ import {
   visibleBoards,
   type Customer,
 } from "./viewer";
+import { publicField } from "../../feedback/custom-fields";
 
 // Boards with the caller's capabilities (audience: "portal" and audience: "widget"), and the
 // portal's status and public tag lists. The board access matrix (tiers, segment IDs and
@@ -51,6 +52,10 @@ export const listBoards = (audience: Customer) =>
           defaultSort: z.enum(DEFAULT_SORTS).nullable().openapi({
             description:
               "The board's post order when the caller names none. Null: no board default.",
+          }),
+          fields: z.array(publicField).openapi({
+            description:
+              "The public custom fields that a new post on this board fills in. Internal fields are never listed.",
           }),
         }),
       ),

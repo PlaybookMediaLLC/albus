@@ -14,12 +14,11 @@ const draft = () => ({
 });
 
 describe("ImproveDraft", () => {
-  it("sends the draft only when asked and applies the accepted suggestion", async () => {
+  it("sends the draft only when asked and applies only the title, never new details", async () => {
     const api = mockApi();
     api.reply(
       improvePortalPostDraftFixture.ok({
         title: "Export reports as CSV",
-        problem: "I cannot share a report with my team.",
         boardId: null,
       }),
     );
@@ -34,7 +33,7 @@ describe("ImproveDraft", () => {
       />,
     );
     expect(api.calls()).toHaveLength(0);
-    press("Improve with AI");
+    press("Suggest a title with AI");
     const suggestion = await view.findByRole("region", {
       name: "Suggestion from AI",
     });
@@ -47,12 +46,46 @@ describe("ImproveDraft", () => {
       boardId: "board_test_1",
     });
     press("Use this");
+    // The writer's details stay exactly as written.
     expect(onApply).toHaveBeenCalledWith({
       boardId: "board_test_1",
       title: "Export reports as CSV",
-      content: "I cannot share a report with my team.",
+      content: "x".repeat(5000),
     });
     expect(view.queryByRole("region")).not.toBeInTheDocument();
+  });
+
+  it("names the suggested board and shows similar requests for the suggested title while it is open", async () => {
+    const api = mockApi();
+    api.reply(
+      improvePortalPostDraftFixture.ok({
+        title: "Export reports as CSV",
+        boardId: "board_test_2",
+        boardName: "Reports",
+      }),
+    );
+    const onApply = vi.fn();
+    const onPreviewTitle = vi.fn();
+    const view = renderComponent(
+      <ImproveDraft
+        workspaceId="workspace_test_1"
+        viewer={viewer}
+        boards={[...boards, { id: "board_test_2" }]}
+        draft={draft}
+        onApply={onApply}
+        onPreviewTitle={onPreviewTitle}
+      />,
+    );
+    press("Suggest a title with AI");
+    const suggestion = await view.findByRole("region", {
+      name: "Suggestion from AI",
+    });
+    expect(suggestion).toHaveTextContent("Board: Reports");
+    expect(onPreviewTitle).toHaveBeenLastCalledWith("Export reports as CSV");
+    press("Dismiss");
+    // The writer's own title gets its similar requests back.
+    expect(onPreviewTitle).toHaveBeenLastCalledWith("csv");
+    expect(onApply).not.toHaveBeenCalled();
   });
 
   it("dismisses a suggestion without changing the draft", async () => {
@@ -68,7 +101,7 @@ describe("ImproveDraft", () => {
         onApply={onApply}
       />,
     );
-    press("Improve with AI");
+    press("Suggest a title with AI");
     await view.findByRole("region", { name: "Suggestion from AI" });
     press("Dismiss");
     expect(view.queryByRole("region")).not.toBeInTheDocument();
@@ -76,7 +109,10 @@ describe("ImproveDraft", () => {
   });
 
   it.each([
-    [409, "AI help is not available right now."],
+    [
+      409,
+      "AI help is not available right now. You can still write a title and post.",
+    ],
     [429, "You asked for AI help too often. Try again in a few minutes."],
     [502, "AI help failed. Try again."],
   ] as const)("explains a %s refusal once", async (status, message) => {
@@ -91,7 +127,7 @@ describe("ImproveDraft", () => {
         onApply={vi.fn()}
       />,
     );
-    press("Improve with AI");
+    press("Suggest a title with AI");
     expect(await view.findByRole("alert")).toHaveTextContent(message);
   });
 
@@ -108,9 +144,9 @@ describe("ImproveDraft", () => {
         onApply={vi.fn()}
       />,
     );
-    press("Improve with AI");
+    press("Suggest a title with AI");
     await view.findByRole("alert");
-    press("Improve with AI");
+    press("Suggest a title with AI");
     expect(
       await view.findByRole("region", { name: "Suggestion from AI" }),
     ).toHaveTextContent("Second try");
@@ -130,7 +166,7 @@ describe("ImproveDraft", () => {
         onApply={onApply}
       />,
     );
-    press("Improve with AI");
+    press("Suggest a title with AI");
     await view.findByRole("region", { name: "Suggestion from AI" });
     const [request] = api.calls("improveQuillsPortalPostDraft");
     expect((await request!.json()).title).toBe("t".repeat(200));

@@ -49,7 +49,7 @@ export function DateDefaultPicker({
             : t("settings:customFields.noDefault")}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-65 p-0">
+      <PopoverContent variant="menu" align="end" className="w-65">
         <DatePickerMenu
           label={t("settings:customFields.defaultLabel")}
           placeholder={t("tasks:datePicker.datePlaceholder")}

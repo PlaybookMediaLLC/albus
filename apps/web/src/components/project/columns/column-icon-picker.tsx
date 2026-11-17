@@ -59,7 +59,7 @@ export function ColumnIconPicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80" align="start">
-        <div className="space-y-2 p-1">
+        <div className="space-y-2">
           <Input
             size="sm"
             value={search}

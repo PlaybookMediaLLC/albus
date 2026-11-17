@@ -612,4 +612,193 @@ describe("widget host page", () => {
       ).toBeNull();
     });
   });
+  describe("AI title and board draft (issue #106)", () => {
+    const words = "please add a dark theme, my eyes hurt at night";
+    const withAi = () => {
+      const config = table["GET /widget/config.json"]!({} as RequestInit)
+        .body as { config: Record<string, unknown> };
+      table["GET /widget/config.json"] = () => ({
+        body: { ...config, config: { ...config.config, ai: true } },
+      });
+    };
+    const compose = async () => {
+      mount();
+      fromParent({ type: "quackback:identify", data: { ssoToken: "a.b.c" } });
+      fromParent({ type: "quackback:open", data: { view: "new-post" } });
+      const field = await screen.findByLabelText("Your feedback");
+      fireEvent.change(field, { target: { value: words } });
+      return field;
+    };
+
+    it("offers no draft when the instance has no AI provider", async () => {
+      await compose();
+      expect(
+        screen.queryByRole("button", { name: "Suggest a title" }),
+      ).toBeNull();
+    });
+
+    it("shows the suggested title, board and similar requests, votes, and posts the visitor's words only after Post", async () => {
+      withAi();
+      table["POST /widget/post-draft/improve"] = () => ({
+        body: { title: "Dark mode", boardId: "b2", boardName: "Themes" },
+      });
+      table["GET /widget/posts/similar?title=Dark%20mode&limit=5"] = () => ({
+        body: { items: [{ id: "p1", title: "Dark mode", voteCount: 3 }] },
+      });
+      table["POST /widget/posts"] = () => ({
+        body: { ...post, id: "p9", title: "Dark mode", content: words },
+      });
+      await compose();
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Suggest a title" }),
+      );
+      const panel = await screen.findByRole("region", {
+        name: "Suggested title",
+      });
+      expect(panel.textContent).toContain("Dark mode");
+      expect(panel.textContent).toContain("Board: Themes");
+      const [draft] = requested("POST /widget/post-draft/improve");
+      expect(JSON.parse(String(draft!.init.body))).toEqual({
+        title: "",
+        details: words,
+      });
+      expect(requested("POST /widget/posts")).toHaveLength(0);
+      fireEvent.click(
+        within(panel).getByRole("button", { name: "Vote: Dark mode" }),
+      );
+      await waitFor(() =>
+        expect(requested("PUT /widget/posts/p1/vote")).toHaveLength(1),
+      );
+      expect(
+        await within(panel).findByRole("button", { name: "Voted: Dark mode" }),
+      ).toHaveProperty("disabled", true);
+      fireEvent.click(
+        within(panel).getByRole("button", { name: "Post with this title" }),
+      );
+      await waitFor(() =>
+        expect(requested("POST /widget/posts")).toHaveLength(1),
+      );
+      const [created] = requested("POST /widget/posts");
+      expect(JSON.parse(String(created!.init.body))).toMatchObject({
+        title: "Dark mode",
+        content: words,
+        boardId: "b2",
+      });
+    });
+
+    it("keeps the manual path when the draft fails", async () => {
+      withAi();
+      table["POST /widget/post-draft/improve"] = () => ({
+        status: 409,
+        body: { message: "The workspace reached its monthly AI limit" },
+      });
+      table["POST /widget/posts"] = () => ({ body: { ...post, id: "p9" } });
+      await compose();
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Suggest a title" }),
+      );
+      expect((await screen.findByRole("alert")).textContent).toContain(
+        "You can still post your feedback as written",
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Post" }));
+      await waitFor(() =>
+        expect(requested("POST /widget/posts")).toHaveLength(1),
+      );
+      const [created] = requested("POST /widget/posts");
+      const body = JSON.parse(String(created!.init.body));
+      expect(body.content).toBe(words);
+      expect(body.title).toBeUndefined();
+    });
+  });
+  describe("board custom fields (issue #71)", () => {
+    it("asks for the default board's public fields, blocks Post until a required one is set, and sends them typed", async () => {
+      table["GET /widget/boards"] = () => ({
+        body: {
+          items: [
+            {
+              id: "b0",
+              slug: "closed",
+              name: "Announcements",
+              canSubmit: false,
+              fields: [],
+            },
+            {
+              id: "b1",
+              slug: "ideas",
+              name: "Ideas",
+              canSubmit: true,
+              fields: [
+                {
+                  key: "plan",
+                  label: "Plan",
+                  type: "select",
+                  required: true,
+                  options: ["Free", "Pro"],
+                },
+                {
+                  key: "seats",
+                  label: "Seats",
+                  type: "number",
+                  required: false,
+                },
+              ],
+            },
+          ],
+        },
+      });
+      table["POST /widget/posts"] = () => ({ body: { ...post, id: "p9" } });
+      mount();
+      fromParent({ type: "quackback:identify", data: { ssoToken: "a.b.c" } });
+      fromParent({ type: "quackback:open", data: { view: "new-post" } });
+      const field = await screen.findByLabelText("Your feedback");
+      fireEvent.change(field, { target: { value: "Export to CSV" } });
+      const plan = await screen.findByLabelText("Plan (required)");
+      expect(screen.getByText("Fill in Plan to post.")).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Post" })).toHaveProperty(
+        "disabled",
+        true,
+      );
+      fireEvent.change(plan, { target: { value: "Pro" } });
+      fireEvent.change(screen.getByLabelText("Seats"), {
+        target: { value: "4" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Post" }));
+      await waitFor(() =>
+        expect(requested("POST /widget/posts")).toHaveLength(1),
+      );
+      const [created] = requested("POST /widget/posts");
+      expect(JSON.parse(String(created!.init.body))).toMatchObject({
+        content: "Export to CSV",
+        boardId: "b1",
+        customFields: { plan: "Pro", seats: 4 },
+      });
+    });
+  });
+  describe("right-to-left layout (issue #117)", () => {
+    const mountWith = (locale: string) =>
+      render(
+        <div style={{ height: 760 }}>
+          <WidgetHost
+            base="/api/quills-public/acme"
+            params={new URLSearchParams({ locale })}
+          />
+        </div>,
+      );
+
+    it("lays the panel out right to left for Arabic", async () => {
+      const view = mountWith("ar");
+      const panel = await view.findByRole("region", { name: /support/ });
+      expect(panel.getAttribute("dir")).toBe("rtl");
+      expect(document.documentElement.getAttribute("dir")).toBe("rtl");
+      // Each icon names itself, so the stylesheet mirrors the ones that point the way of reading.
+      expect(panel.querySelector("svg.qb-icon-close")).not.toBeNull();
+    });
+
+    it("keeps a left-to-right language left to right", async () => {
+      const view = mountWith("en-US");
+      const panel = await view.findByRole("region", { name: /support/ });
+      expect(panel.getAttribute("dir")).toBe("ltr");
+      expect(document.documentElement.getAttribute("dir")).toBe("ltr");
+    });
+  });
 });

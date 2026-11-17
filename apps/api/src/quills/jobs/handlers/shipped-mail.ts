@@ -8,7 +8,7 @@ import {
   lte,
   sql,
 } from "drizzle-orm";
-import { sendShippedEmail } from "@kaneo/email/quills";
+import { directionOf, sendShippedEmail } from "@kaneo/email/quills";
 import type { ChangelogId, PostId, PrincipalId } from "@kaneo/ids";
 import type { Database } from "../../../database/quills/client";
 import { principal, settings } from "../../../database/quills/schema/auth";
@@ -34,6 +34,8 @@ import {
   unsubscribeUrl,
 } from "../../portal/unsubscribe-token";
 import type { DeliveryEvent, Subscribers } from "../fanout";
+import { changelogTranslations } from "../../../database/quills/schema/changelog-translations";
+import { recipientLanguage } from "./recipient-language";
 
 // Shipped notices (RFC 0003, feature 13). When a changelog entry is published, the voters and the
 // status followers of its linked posts hear that their request shipped: teammates in-app and by
@@ -233,6 +235,20 @@ const entry: Subscribers = {
       principalId,
       "unsubscribe_shipped",
     );
+    // The entry's version in the customer's saved language, else its own title (issue #76).
+    const lang = await recipientLanguage(db, principalId);
+    const dir = directionOf(lang ?? "en");
+    const [version] = lang
+      ? await db
+          .select({ title: changelogTranslations.title })
+          .from(changelogTranslations)
+          .where(
+            and(
+              eq(changelogTranslations.changelogEntryId, shipped.id),
+              eq(changelogTranslations.locale, lang),
+            ),
+          )
+      : [];
     return {
       type: TYPE,
       emailType: "ShippedEmail",
@@ -240,7 +256,8 @@ const entry: Subscribers = {
       send: (to) =>
         sendShippedEmail({
           to,
-          entryTitle: shipped.title,
+          dir,
+          entryTitle: version?.title ?? shipped.title,
           entryUrl: portalPaths.changelogEntry(workspace.id, shipped.id),
           requestTitle: request.title,
           workspaceName: workspace.name,

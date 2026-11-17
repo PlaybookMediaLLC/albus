@@ -97,5 +97,18 @@
 		"label": "Changelog view"
 	},
 	"title": "Changelog",
-	"untitled": "Untitled"
+	"untitled": "Untitled",
+	"languages": {
+		"title": "Other languages",
+		"description": "Write this entry in another language. Customers who read that language see your version; everyone else sees the text above.",
+		"locale": "Language",
+		"localeHint": "A language tag, such as de, fr, ar or pt-BR.",
+		"localeInvalid": "Use a language tag, such as de or pt-BR.",
+		"versionTitle": "Title in this language",
+		"versionContent": "Text in this language",
+		"save": "Save version",
+		"edit": "Edit {{locale}}",
+		"delete": "Delete {{locale}}",
+		"none": "No other languages yet."
+	}
 }

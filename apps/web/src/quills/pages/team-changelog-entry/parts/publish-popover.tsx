@@ -91,11 +91,12 @@ export function PublishPopover({
       </PopoverTrigger>
       <PopoverPopup align="end" className="w-95 max-w-[calc(100vw-2rem)]">
         {entry ? (
-          <div className="grid gap-4">
+          // grid-cols-1 caps the column at the panel width: the link row would stretch it.
+          <div className="grid grid-cols-1 gap-4">
             <PopoverTitle className="text-sm font-medium">
               <StatusLabel status={status} />
             </PopoverTitle>
-            <section className="grid gap-2">
+            <section className="grid grid-cols-1 gap-2">
               <h3 className="text-xs text-muted-foreground">
                 {t("team-changelog.editor.publishing")}
               </h3>

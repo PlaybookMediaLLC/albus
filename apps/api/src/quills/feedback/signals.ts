@@ -31,6 +31,7 @@ import {
   type QuillsActor,
 } from "../framework/define-route";
 import { recordActivity } from "./activity";
+import { fieldValuesInput } from "./custom-fields";
 import { insertPost } from "./posts";
 import { page, pageQuery } from "./schemas";
 import { addVote } from "./votes";
@@ -266,17 +267,21 @@ const acceptAsPost = defineQuillsRoute({
   operationId: "acceptQuillsFeedbackSignalAsPost",
   summary: "Accept a signal as a new post",
   description:
-    "Creates a post on a board that you can see, as createQuillsPost does: the customer is its author and first voter, you are the teammate who tracks it, and the excerpt is its content. The post and the decision commit together. 409 when the signal is not pending.",
+    "Creates a post on a board that you can see, as createQuillsPost does: the customer is its author and first voter, you are the teammate who tracks it, and the excerpt is its content. The board's custom fields are checked as on createQuillsPost, so a required field needs a value. The post and the decision commit together. 409 when the signal is not pending.",
   action: "create",
   params,
   body: z.object({
     boardId: flexibleToTypeIdSchema("board"),
     title: z.string().trim().min(1).max(200),
+    customFields: fieldValuesInput.optional(),
   }),
   load: loadProjects,
   response: decision,
   responseDescription: "The accepted signal and its new post",
-  errors: decisionErrors,
+  errors: {
+    ...decisionErrors,
+    400: "A custom field value is missing, unknown or of the wrong type",
+  },
   event: ({ body }, result) => [
     {
       type: "post.created",
@@ -294,6 +299,7 @@ const acceptAsPost = defineQuillsRoute({
       content: signal.excerpt,
       tagIds: [],
       author: signal.principalId,
+      customFields: body.customFields,
     });
     return accept(db, actor, signal.id, postId);
   },

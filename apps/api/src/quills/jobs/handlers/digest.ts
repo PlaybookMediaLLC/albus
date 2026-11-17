@@ -63,6 +63,7 @@ import { claimDelivery, settleDelivery } from "../ledger";
 import { wants } from "../preferences";
 import { enqueueQuillsJob, finishQuillsJob } from "../queue";
 import { rejection } from "./mail";
+import { recipientDirection } from "./recipient-language";
 
 // The weekly digest (RFC 0003, feature 16, D15). The first sweep of each ISO week (UTC) queues one
 // mail job per customer whose voted or followed posts changed status in the week before. The job
@@ -302,7 +303,8 @@ export async function runDigestJob(workspaceId: string, job: JobQueueRow) {
         principalId,
         "unsubscribe_digest",
       );
-      return { items, workspace, token };
+      const dir = await recipientDirection(db, principalId);
+      return { items, workspace, token, dir };
     }));
   if (!prepared) return finish();
   const key = `digest:${principalId}:${digest}`;
@@ -312,7 +314,7 @@ export async function runDigestJob(workspaceId: string, job: JobQueueRow) {
   if (claim === "completed") return finish();
   if (claim === "uncertain") return finish(UNCERTAIN, true);
 
-  const { items, workspace, token } = prepared;
+  const { items, workspace, token, dir } = prepared;
   let result: EmailResult | undefined;
   let failure: { error: string; permanent: boolean } | undefined;
   let uncertain = false;
@@ -322,6 +324,7 @@ export async function runDigestJob(workspaceId: string, job: JobQueueRow) {
       withEmailTags(mailTags(workspaceId, logId), () =>
         sendWeeklyDigestEmail({
           to: address,
+          dir,
           items: items.map((item) => ({
             title: item.title,
             status: item.status,

@@ -10,10 +10,12 @@ import {
   taskSyncView,
 } from "../integrations/task-sync";
 import { DEFAULT_SORTS, VOTE_DISPLAYS, votingOf } from "./board-voting";
+import { fieldDefinition, fieldDefinitions, fieldsOf } from "./custom-fields";
 import { findBoard, loadProjects } from "./visibility";
 
-// The voting-bias settings of a board (RFC 0003, feature 9) and its task sync (feature 12). They live
-// in boards.settings next to keys that other features own; a write changes only its own keys.
+// The voting-bias settings of a board (RFC 0003, feature 9), its task sync (feature 12) and its custom
+// fields (issue #71). They live in boards.settings next to keys that other features own; a write
+// changes only its own keys.
 
 const boardParams = z.object({ boardId: flexibleToTypeIdSchema("board") });
 const voteDisplay = z.enum(VOTE_DISPLAYS).openapi({
@@ -24,17 +26,23 @@ const defaultSort = z.enum(DEFAULT_SORTS).nullable().openapi({
   description:
     "The order of the board's portal and widget posts when the caller names none. random is stable for one viewer for one UTC day. Null: newest in the API, the portal's own default in the web portal.",
 });
+const customFields = fieldDefinitions.openapi({
+  description:
+    "The fields that the board asks for (at most 20). An internal field is for teammates only: the portal, the widget and customer responses never include it. A required checkbox must be checked.",
+});
 const voting = z.object({
   boardId: z.string(),
   voteDisplay,
   defaultSort,
   taskSync: taskSyncView,
+  customFields: z.array(fieldDefinition),
 });
 /** The response view of the stored settings. */
 const view = (boardId: string, settings: unknown) => ({
   boardId,
   ...votingOf(settings),
   taskSync: { statusOnTaskDone: statusOnTaskDone(settings) },
+  customFields: fieldsOf(settings),
 });
 const errors = { 404: "Board or status not found" };
 
@@ -42,11 +50,11 @@ const getSettings = defineQuillsRoute({
   method: "get",
   path: "/boards/{boardId}/settings",
   operationId: "getQuillsBoardSettings",
-  summary: "Get a board's voting and task sync settings",
+  summary: "Get a board's voting, task sync and custom field settings",
   action: "read",
   params: boardParams,
   response: voting,
-  responseDescription: "Voting and task sync settings",
+  responseDescription: "Voting, task sync and custom field settings",
   errors,
   load: loadProjects,
   handler: async ({ db, params, loaded: projects }) => {
@@ -63,9 +71,9 @@ const updateSettings = defineQuillsRoute({
   method: "patch",
   path: "/boards/{boardId}/settings",
   operationId: "updateQuillsBoardSettings",
-  summary: "Change a board's voting and task sync settings",
+  summary: "Change a board's voting, task sync and custom field settings",
   description:
-    "Changes only the given keys and keeps every other board setting. defaultSort null removes the board's default. taskSync.statusOnTaskDone must be a live post status of the workspace; null turns the sync off.",
+    "Changes only the given keys and keeps every other board setting. defaultSort null removes the board's default. taskSync.statusOnTaskDone must be a live post status of the workspace; null turns the sync off. customFields replaces the board's whole field list; values that posts already hold stay stored.",
   action: "manage_settings",
   params: boardParams,
   body: z
@@ -73,16 +81,18 @@ const updateSettings = defineQuillsRoute({
       voteDisplay: voteDisplay.optional(),
       defaultSort: defaultSort.optional(),
       taskSync: taskSyncInput.optional(),
+      customFields: customFields.optional(),
     })
     .refine(
       (body) =>
         body.voteDisplay !== undefined ||
         body.defaultSort !== undefined ||
-        body.taskSync !== undefined,
+        body.taskSync !== undefined ||
+        body.customFields !== undefined,
       { message: "Provide at least one field" },
     ),
   response: voting,
-  responseDescription: "Voting and task sync settings",
+  responseDescription: "Voting, task sync and custom field settings",
   errors,
   event: ({ params, body }) => ({
     type: "board.settings_updated",
@@ -105,6 +115,7 @@ const updateSettings = defineQuillsRoute({
       ...(body.taskSync && {
         taskSync: { statusOnTaskDone: body.taskSync.statusOnTaskDone },
       }),
+      ...(body.customFields && { customFields: body.customFields }),
     };
     // jsonb || merges in one statement, so a parallel write of another key is kept.
     const [row] = await db

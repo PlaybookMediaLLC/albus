@@ -235,24 +235,35 @@ Boundary map:
   row in a second transaction. A failure after the provider call writes nothing.
 - Events: none. A suggestion and a cached translation change no domain data.
 - External effect: the AI provider (`assistant/provider.ts`). It is off without `QUILLS_AI_*` (409).
-  There is no workspace AI budget yet; the per-account rate limit bounds the calls.
+  The per-account rate limit bounds the calls, and `QUILLS_AI_MONTHLY_TOKEN_LIMIT` (issue #23,
+  `assistant/budget.ts`) answers 409 when the call's reserved ceiling would pass the workspace's tokens
+  for the UTC month. `prepare` writes only that reservation; the handler swaps it for the real usage.
 
 | operationId | Route | Audience | Action | Tables | Event | Tests |
 |---|---|---|---|---|---|---|
 | `improveQuillsPortalPostDraft` | `POST /portal/post-draft/improve` (title ≤ 200, details ≤ 4000, optional `boardId`; 10 per 10 min per account and per client) | portal | create | `boards`, `ai_usage_log`, `rate_bucket` | none | contract, `feedback/ai.test.ts` |
+| `improveQuillsWidgetPostDraft` | `POST /widget/post-draft/improve` (the same body and limits) | widget | create | `boards`, `ai_usage_log`, `rate_bucket` | none | contract, `feedback/ai.test.ts` |
 | `translateQuillsPortalContent` | `POST /portal/translations` (`postId` or `commentId`, `locale` as a BCP 47 tag; 60 per 10 min per client, and per account with a session) | portal, sign-in optional | read | `posts`, `post_comments`, `content_translations`, `ai_usage_log`, `rate_bucket` | none | contract, `translations.test.ts` |
 
 Rules:
 
-1. The composer route returns a suggestion only. The model gets the customer's text as data and
-   must not add facts. The answer is cut to 200 and 1,000 characters. The suggested board is a
-   board that takes the caller's posts; another value becomes the given board or null.
+1. The composer routes (issue #106) return a title and a board only: the customer's text is never
+   rewritten, so a saved post holds the customer's words and the title they confirmed. The model
+   gets the text as data and must not add facts. The title is cut to 200 characters. The suggested
+   board is a board that takes the caller's posts; another value becomes the given board or null.
+   Creating the post checks the board again.
 2. The translation key is the post or comment, the language and the SHA-256 of the source title
    and text. The language is the primary subtag of the locale (`de-AT` is `de`); Chinese keeps its
    script as `zh-cn` or `zh-tw`. An edit changes the hash, so an old translation is never served.
    A cached translation needs no AI, so it is served when AI is off. An empty answer for a text is
    a 502 and is not cached. Two requests that miss at the same time store one row: the insert does
    nothing on a conflict with the unique key.
+   Protected terms (issue #76): the help center's `autoTranslate.protectedTerms` list is the
+   workspace's one list. Each term that occurs in the text is swapped for a placeholder before the
+   provider call (`assistant/protected-terms.ts`), so the provider never sees it; a translation
+   that lost, repeated or invented a placeholder is a 502 and is not cached. The terms in the text
+   are part of the hash, so changing the list never serves a translation made under the old one.
+   A miss also reserves against the monthly AI limit (409); a cached translation is served past the limit.
 3. `rateLimit.per: "caller"` (`framework/define-route.ts`) counts these routes per client IP, like
    every rate-limited route, and also per signed-in Kaneo account after the session read. One
    account cannot spend the limit from many addresses, and many accounts cannot spend it from one.

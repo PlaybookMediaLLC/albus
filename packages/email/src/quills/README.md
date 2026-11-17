@@ -93,5 +93,7 @@ must configure `KANEO_EMAIL_ASSETS_URL` or `KANEO_CLIENT_URL` for absolute image
 Quills uses Kaneo's `EmailShell`, `EmailIntro`, `Frame`, `DetailRows`,
 `InvitationCard`, `OtpCode`, `EmailButton`, `EmailNote`, and `EmailFooter`, with the
 same color tokens and dark-mode CSS. The shared shell adds optional brand, logo and text-direction
-overrides; existing Kaneo callers keep their defaults. Explicit React imports
+overrides; existing Kaneo callers keep their defaults. The customer feedback emails (status
+change, new comment, shipped, weekly digest) take `dir`; the API sets "rtl" for a customer whose
+saved portal language is right to left (`directionOf`, issue #117). Their copy is still English. Explicit React imports
 match Kaneo's JSX configuration and React Email's preview compiler.

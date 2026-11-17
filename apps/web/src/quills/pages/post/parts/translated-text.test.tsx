@@ -3,7 +3,20 @@ import { translatePortalContentFixture } from "../../../api/feedback/translate-p
 import { press } from "../../../test/actions";
 import { mockApi } from "../../../test/mock-api";
 import { renderComponent } from "../../../test/render";
+import { getPublicPortalConfigFixture } from "../../../api/portal/get-public-portal-config.fixture";
+import {
+  PortalRuntimeProvider,
+  type PortalRuntimeValue,
+} from "../../../portal/runtime";
 import { TranslatedText } from "./translated-text";
+
+const runtime: PortalRuntimeValue = {
+  config: getPublicPortalConfigFixture.ok(),
+  viewer: { kind: "anonymous" },
+  access: null,
+  accessLoading: false,
+  accessProblem: null,
+};
 
 const browser = (language: string) =>
   vi.spyOn(navigator, "language", "get").mockReturnValue(language);
@@ -61,6 +74,12 @@ describe("TranslatedText", () => {
       await view.findByText("Bitte Dunkelmodus hinzufügen."),
     ).toBeInTheDocument();
     expect(view.getByText("Dunkelmodus")).toBeInTheDocument();
+    // The translation is marked, and the source is one click away.
+    expect(
+      view.getByText(
+        "Translated automatically. The original text is one click away.",
+      ),
+    ).toBeInTheDocument();
     const [request] = api.calls("translateQuillsPortalContent");
     expect(await request!.json()).toEqual({
       postId: "post_test_1",
@@ -68,6 +87,24 @@ describe("TranslatedText", () => {
     });
     press("Show original");
     expect(view.getByText("Please add dark mode.")).toBeInTheDocument();
+    expect(view.queryByText(/Translated automatically/)).toBeNull();
+  });
+
+  it("follows the customer's saved language over the browser's", async () => {
+    browser("en-US");
+    const api = mockApi();
+    api.reply(
+      translatePortalContentFixture.ok({ title: null, content: "مرحبا" }),
+    );
+    const view = renderComponent(
+      <PortalRuntimeProvider value={{ ...runtime, savedLanguage: "ar" }}>
+        {post}
+      </PortalRuntimeProvider>,
+    );
+    press("Translate");
+    expect(await view.findByText("مرحبا")).toBeInTheDocument();
+    const [request] = api.calls("translateQuillsPortalContent");
+    expect((await request!.json()).locale).toBe("ar");
   });
 
   it("shows the new original after an edit and translates the new text", async () => {

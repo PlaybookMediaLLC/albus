@@ -93,6 +93,7 @@ const post = (id: string, title: string, statusId: string, votes: number) => ({
     mrrCents: 0,
     importance: { nice: 0, important: 0, critical: 0 },
   },
+  customFields: [],
 });
 
 export const inboxPosts = {

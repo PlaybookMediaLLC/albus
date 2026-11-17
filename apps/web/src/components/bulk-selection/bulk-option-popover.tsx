@@ -73,10 +73,11 @@ export function BulkOptionPopover({
         </PopoverTrigger>
       </BarTooltip>
       <PopoverContent
+        variant="menu"
         side="top"
         align="start"
         sideOffset={8}
-        className="w-60 p-0"
+        className="w-60"
         finalFocus={() => (openedByRequest() && returnFocus?.()) || true}
       >
         <OptionMenu

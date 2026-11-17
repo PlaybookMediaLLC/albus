@@ -32,6 +32,7 @@ import testConversations from "./support/test-conversations";
 // RFC 0003 lane L5.
 import changelogAi from "./feedback/changelog-ai";
 import changelogEngagement from "./feedback/changelog-engagement";
+import changelogTranslations from "./feedback/changelog-translations";
 // RFC 0003, lane L3.
 import boardSettings from "./feedback/board-settings";
 import demand from "./feedback/demand";
@@ -116,6 +117,7 @@ export default apiRouter<BaseVariables & { workspaceId: string }>()
   // RFC 0003 lane L5.
   .route("/", changelogAi)
   .route("/", changelogEngagement)
+  .route("/", changelogTranslations)
   // RFC 0003, lane L3.
   .route("/", boardSettings)
   .route("/", demand)

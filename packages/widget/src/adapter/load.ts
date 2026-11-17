@@ -16,6 +16,7 @@ import {
 } from "./map.js";
 import type {
   Conversation,
+  FeedbackField,
   FeedbackPost,
   HelpArticle,
   UpdateEntry,
@@ -80,15 +81,33 @@ async function surface<T>(enabled: boolean, load: () => Promise<T[]>) {
   }
 }
 
+/** A board that the visitor sees, with its public custom fields (issue #71). */
+export interface WidgetBoard {
+  id: string;
+  slug: string;
+  name: string;
+  canSubmit: boolean;
+  fields: FeedbackField[];
+}
+
+/** The boards that the visitor sees, by name. */
+export async function loadBoards(api: Api, signal?: AbortSignal) {
+  const { items } = await api.request<{ items: WidgetBoard[] }>(
+    "GET",
+    "/widget/boards",
+    undefined,
+    signal,
+  );
+  return items.map((board) => ({ ...board, fields: board.fields ?? [] }));
+}
+
 /** The ID of the init `defaultBoard` (an ID or slug) when the visitor can see it. */
 export async function resolveBoard(
   api: Api,
   ref: string,
   signal?: AbortSignal,
 ) {
-  const { items } = await api.request<{
-    items: Array<{ id: string; slug: string }>;
-  }>("GET", "/widget/boards", undefined, signal);
+  const items = await loadBoards(api, signal);
   return items.find((board) => board.id === ref || board.slug === ref)?.id;
 }
 
@@ -134,7 +153,8 @@ export async function loadSnapshot(
     surface(surfaces.changelog, async () => {
       const { entries } = await api.request<{ entries: ApiChangelogEntry[] }>(
         "GET",
-        `/widget/changelog${query({ limit: LIMITS.updates })}`,
+        // Entries that a teammate wrote in the visitor's language come in it (issue #76).
+        `/widget/changelog${query({ limit: LIMITS.updates, locale })}`,
         undefined,
         signal,
       );
@@ -185,11 +205,16 @@ export async function loadPost(api: Api, id: string, signal?: AbortSignal) {
 }
 
 /** One changelog entry: a deep link can point past the first page. */
-export async function loadUpdate(api: Api, id: string, signal?: AbortSignal) {
+export async function loadUpdate(
+  api: Api,
+  id: string,
+  signal?: AbortSignal,
+  locale?: string,
+) {
   return toUpdate(
     await api.request<ApiChangelogEntry>(
       "GET",
-      `/widget/changelog/${encodeURIComponent(id)}`,
+      `/widget/changelog/${encodeURIComponent(id)}${query({ locale })}`,
       undefined,
       signal,
     ),

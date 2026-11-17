@@ -65,9 +65,10 @@ export function CustomFieldPopover({
     >
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent
+        variant="menu"
         side={side}
         align="start"
-        className={cn("p-0", field.type === "date" && "w-65")}
+        className={cn(field.type === "date" && "w-65")}
       >
         {isText && (
           <TextFieldEditor

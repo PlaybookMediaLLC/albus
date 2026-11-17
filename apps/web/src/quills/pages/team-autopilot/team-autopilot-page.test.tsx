@@ -3,6 +3,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { acceptFeedbackSignalAsPostFixture } from "../../api/team/accept-feedback-signal-as-post.fixture";
 import { acceptFeedbackSignalAsVoteFixture } from "../../api/team/accept-feedback-signal-as-vote.fixture";
 import { dismissFeedbackSignalFixture } from "../../api/team/dismiss-feedback-signal.fixture";
+import { getBoardSettingsFixture } from "../../api/team/get-board-settings.fixture";
 import { listBoardsFixture } from "../../api/team/list-boards.fixture";
 import { listFeedbackSignalsFixture } from "../../api/team/list-feedback-signals.fixture";
 import { restoreFeedbackSignalFixture } from "../../api/team/restore-feedback-signal.fixture";
@@ -136,6 +137,7 @@ describe("TeamAutopilotPage", () => {
 
     it("accepts a signal as a new post with a board and an edited title", async () => {
       const api = queue();
+      api.reply(getBoardSettingsFixture.ok({ boardId: "board_test_1" }));
       api.reply(acceptFeedbackSignalAsPostFixture.ok());
       api.reply(listFeedbackSignalsFixture.ok());
       const view = await openSignal();
@@ -152,6 +154,7 @@ describe("TeamAutopilotPage", () => {
       expect(await accept!.clone().json()).toEqual({
         boardId: "board_test_1",
         title: "Night theme",
+        customFields: {},
       });
       expect(view.queryByLabelText("Post title")).toBeNull();
       expect(

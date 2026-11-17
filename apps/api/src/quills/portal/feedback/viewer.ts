@@ -35,6 +35,7 @@ import { votingOf } from "../../feedback/board-voting";
 import { notFound, notTest } from "../../feedback/visibility";
 import { bool, parseJson, record, str } from "../../settings/area";
 import { navTabs } from "../nav";
+import { fieldsOf } from "../../feedback/custom-fields";
 
 export type Customer = "portal" | "widget";
 export const title = (audience: Customer) =>
@@ -235,14 +236,15 @@ export async function visibleBoards(db: Database, viewer: Viewer) {
       ),
     )
     .orderBy(asc(boards.name), asc(boards.id));
-  // Only the voting keys leave the settings JSON, and the segment IDs stay server-side: no board
-  // row a caller reads carries them.
+  // Only the voting keys and the public custom fields leave the settings JSON, and the segment IDs
+  // stay server-side: no board row a caller reads carries them.
   return rows
     .filter((row) => inBoardSegments(viewer, row.visibleSegmentIds))
     .map(({ settings, visibleSegmentIds: _, ...row }) => ({
       ...row,
       access: accessOf(row.access),
       voting: votingOf(settings),
+      fields: fieldsOf(settings).filter((field) => !field.internal),
     }))
     .filter((board) => allows(viewer, board.access, "view"));
 }

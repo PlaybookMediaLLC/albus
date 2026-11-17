@@ -2,7 +2,7 @@ import type { ImprovePortalPostDraftResponse } from "./improve-portal-post-draft
 export const improvePortalPostDraftFixture = {
   ok: (overrides: Partial<ImprovePortalPostDraftResponse> = {}) =>
     ({
-      ...{ title: "value", problem: "value", boardId: null },
+      ...{ title: "value", boardId: null, boardName: null },
       ...overrides,
     }) satisfies ImprovePortalPostDraftResponse,
   problem: (status: 401 | 403 | 404 | 409 | 429 | 502) => ({

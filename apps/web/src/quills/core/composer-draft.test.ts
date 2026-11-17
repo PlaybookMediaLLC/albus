@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import { readDraft, saveDraft, startingDraft } from "./composer-draft";
+import {
+  readDraft,
+  rememberDraft,
+  saveDraft,
+  startingDraft,
+} from "./composer-draft";
 
 describe("composer draft", () => {
   afterEach(() => {
@@ -14,6 +19,16 @@ describe("composer draft", () => {
     });
     saveDraft("draft", { title: " ", content: "" });
     expect(localStorage.getItem("draft")).toBeNull();
+  });
+  it("remembers only the title and details of a form's values", () => {
+    rememberDraft("draft", {
+      title: "CSV",
+      customFields: { plan: "Pro" },
+    } as { title: string });
+    expect(JSON.parse(localStorage.getItem("draft")!)).toEqual({
+      title: "CSV",
+      content: "",
+    });
   });
   it("starts a given title as a new post and keeps the older draft saved", () => {
     saveDraft("draft", { title: "Old", content: "Details" });

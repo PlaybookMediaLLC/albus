@@ -591,6 +591,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/changelog/{entryId}",
   },
   {
+    operationId: "deleteQuillsChangelogTranslation",
+    method: "DELETE",
+    path: "/api/quills/{workspaceId}/changelog/{entryId}/translations/{locale}",
+  },
+  {
     operationId: "deleteQuillsChannelAccount",
     method: "DELETE",
     path: "/api/quills/{workspaceId}/support/email-channel/sending-addresses/{channelAccountId}",
@@ -1746,6 +1751,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills-public/{workspace}/portal/post-draft/improve",
   },
   {
+    operationId: "improveQuillsWidgetPostDraft",
+    method: "POST",
+    path: "/api/quills-public/{workspace}/widget/post-draft/improve",
+  },
+  {
     operationId: "inspectQuillsIntegrationSync",
     method: "GET",
     path: "/api/quills/{workspaceId}/integration-syncs/{syncId}",
@@ -1844,6 +1854,11 @@ export const quillsOperationRoutes = [
     operationId: "listQuillsChangelogEngagement",
     method: "GET",
     path: "/api/quills/{workspaceId}/changelog-engagement",
+  },
+  {
+    operationId: "listQuillsChangelogTranslations",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/changelog/{entryId}/translations",
   },
   {
     operationId: "listQuillsCompanies",
@@ -2934,6 +2949,11 @@ export const quillsOperationRoutes = [
     operationId: "saveQuillsAzureDevopsKey",
     method: "PUT",
     path: "/api/quills/{workspaceId}/integrations/azure-devops/connection",
+  },
+  {
+    operationId: "saveQuillsChangelogTranslation",
+    method: "PUT",
+    path: "/api/quills/{workspaceId}/changelog/{entryId}/translations",
   },
   {
     operationId: "saveQuillsCustomerAvatar",
