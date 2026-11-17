@@ -90,18 +90,18 @@ with a working "Try again". The table lists the other checks.
 | Support | normal, loading, error and retry, empty, start a conversation, B and signed out, reply mail after a teammate reply | Pass after fixes | O1 |
 | Tickets | normal, loading, error and retry, empty, create, B sees none of A's, teammate closes and reopens, reply mail after a teammate reply | Pass after fixes | O1 |
 | Conversation | normal, loading, error and retry, teammate reply shown, B gets 404, signed out gets sign-in, support reply mail link, portal reply mail link as A and B, no mail while the customer has the page open | Pass after fixes | D2, D9, O1 |
-| CSAT | CSAT mail link signed out, the token leaves the address bar, rate, reuse, error and retry, portal off | Pass after fixes | D6 |
+| CSAT | CSAT mail link signed out, the token leaves the address bar, rate, reuse, error and retry, portal off, malformed token | Pass after fixes | D6, O7 |
 | Preferences | normal, loading, error and retry, changelog and status on, off and on, language set, kept after reload, invalid, cleared | Pass after fixes | D4 |
 | Profile | normal, loading, error and retry, name too short, save, reload, revert, B reads A's public profile without email | Pass after fixes | D4 |
-| Unsubscribe | links from the comment, status-change, shipped and status-page mail, signed out; preview, confirm, reuse, follow again; one-click `POST` without cookies and its repeat; portal off | Pass after fixes | D3, D6, O2 |
+| Unsubscribe | links from the comment, status-change, shipped and status-page mail, signed out; preview, confirm, reuse, follow again; one-click `POST` without cookies and its repeat; the one-click URL opened in a browser; portal off | Pass after fixes | D3, D6, O2 |
 | Invite | invite mail link as the invitee (B), as another account (A), signed out through code sign-in and back, accept, open again | Pass after fixes | D7 |
 | Help center | normal, loading, error and retry, private portal as signed out, A, B (invited) and teammate | Pass after fixes | D5 |
 | Help locale | normal, loading, error and retry | Pass after fixes | D5 |
 | Help category | normal, loading, error and retry | Pass after fixes | D5 |
 | Help article | normal, loading, error and retry, private portal | Pass after fixes | D5 |
 | Help redirect | normal (no rule: not found), loading, error and retry, private portal | Pass after fixes | D5 |
-| Status | normal, loading, error and retry, private portal, public portal signed out | Pass after fixes | D5 |
-| Status incident | status-page mail link as B, A (denied) and signed out, loading, error and retry, words for the states | Pass after fixes | D5, D8, D9 |
+| Status | normal, loading, error and retry, private portal, public portal signed out, portal off | Pass after fixes | D5, O5 |
+| Status incident | status-page mail link as B, A (denied) and signed out, loading, error and retry, words for the states, portal off, malformed ID | Pass after fixes | D5, D8, D9, O5, O7 |
 | Status legacy redirect | redirect to the incident page | Pass | D9 |
 
 ## Mail flows
@@ -134,17 +134,17 @@ with a working "Try again". The table lists the other checks.
 | O1 | Support, tickets, conversation | A customer starts a conversation or a ticket on the portal; a teammate replies | A mail that brings the customer back to the reply | No mail at all ("a messenger message queues no mail job") | `jobs/handlers/support-mail.ts#portalReplyMail`: the reply is mailed to the customer's verified Kaneo account address with a link to the conversation page. The job waits 2 minutes (`directDelay`, and a delay in `enqueueQuillsJob`). At send time the reply must still be unread and the newest, the portal and support must be on, the private-portal gate must admit the customer, and the customer must not have muted mail or be blocked or a test customer | `support/conversation-assistant.test.ts` "mails a portal customer an unread, newest teammate reply after a wait, and never otherwise" (real PostgreSQL) | Fixed |
 | O3 | Status-change mail | Change the status of A's post that B follows | Only the author reads "your feedback" | "Your feedback is now Planned!" to every subscriber | The fan-out passes `yours` (the author); a follower gets "Feedback you follow is now …" as the subject and heading | `packages/email/src/quills/__tests__/status-change.test.tsx` | Fixed |
 | O6 | Every Quills form | The API rejects a field (`VALIDATION_ERROR`) | A translated message at the field | The API's English zod text | Each API issue now carries zod's `code`, and for size issues `origin` and `minimum` or `maximum` (`apps/api/src/errors/validation-issues.ts`, shared code approved by the owner; documented in the `ApiError` schema and `api-reference/errors.mdx`). `toPortalProblem` keeps those fields and drops the English text, and `PortalForm` translates them with `core/validation-message.ts`: "Use at most 200 characters.", "Check the format of this value.", or "Check this value." for any other code. Text that the client writes itself (such as "name taken") still shows | `errors/validation-issues.test.ts`, `error-shape.test.ts` (integration), `api/errors.test.ts`, and the form contract cases "names the reason of an API field issue from its code" and "shows a portal string for an API field issue" | Fixed |
+| O2 | Unsubscribe | Open the `List-Unsubscribe` URL of a real status-change mail in a browser, as some mail apps do instead of sending the `POST` | The unsubscribe page, which asks first | The JSON preview | A public GET may declare `browserPage` (`framework/define-route.ts`): a browser navigation gets a 303 to that web page, with `no-store` and `no-referrer`, before the handler runs. The preview route uses it. Mail providers still `POST` the same URL for one-click, and a scanner's GET still changes nothing | `portal/customer.test.ts` "previews an unsubscribe link without spending it, then spends it once" (303 to the page; still subscribed), `framework/contract.self.test.ts` "takes a browser page only on a public GET" | Fixed |
+| O5 | Status, status incident | Portal off; open the status page or a status-page mail link | The page: the status API needs only the status page's own switch, and applies the private-portal gate itself | "This item could not be found" | The layout also renders the status pages without the portal frame when the portal config is 404; with no portal runtime the pages call the API at once (`useOptionalPortalRuntime`). The help pages still need the portal, as their API does | `portal/layout.test.tsx` (status case), "opens while the portal is off" in the status test, "opens from a status mail while the portal is off" in the incident test | Fixed |
+| O7 | Any page with a path ID or link token | Open `/status/incidents/x` or `/csat?token=x` | "Not found", or "This link is no longer valid" for a token link | "Check the highlighted fields." | `toPortalProblem`: a validation answer whose issues are all on path parameters, or on the token of a token link, maps to `notFound` or `gone`, as a 404 does. An issue on a typed value stays a field error | `api/errors.test.ts` "shows a malformed link as not found, or as gone for a token link, not as a form error" | Fixed |
 
 ## Open findings
 
-O1, O3 and O6 were fixed in a follow-up; see the defects table.
+O1, O2, O3, O5, O6 and O7 were fixed in follow-ups; see the defects table.
 
-| ID | Finding | Why it is open |
+| ID | Finding | Why it is not changed |
 |---|---|---|
-| O2 | A browser `GET` of the one-click URL in `List-Unsubscribe` shows JSON. Some mail apps open that URL instead of sending the `POST`. | Documented behavior; the mail body links to the web page. A redirect for `Accept: text/html` would close it. |
-| O4 | Verifying B's address with a magic link removed B's password sign-in (no account row was left). | Kaneo authentication, out of scope. It looks like protection against an unverified sign-up. |
-| O5 | The web status and help pages need the portal on, although the status API ignores the portal switch. | No customer path reaches the status page while the portal is off, so it was left as is. |
-| O7 | A malformed path ID or token (`/status/incidents/x`, `/csat?token=x`) shows "Check the highlighted fields." | Wording only; no data is shown. |
+| O4 | Verifying B's address with a magic link removed B's password sign-in (no account row was left). | Intended. B signed up with a password and never verified the address. When someone then proves the address with a magic link, Better Auth (`revokeUnprovenAccountAccess`, used by `magic-link` and `email-otp`) deletes the unproven sign-in methods and sessions before it marks the address verified. Without that, whoever registered a victim's address with a password first would keep access. Kaneo's own `requireLocalEmailVerified` linking rule in `apps/api/src/auth.ts` guards the same case for OAuth. The customer sets a password again with "Forgot password". |
 
 ## Review
 
@@ -211,3 +211,17 @@ Run on the branch with the D2–D9 and review fixes, in a Linux cloud container 
 | `pnpm openapi:check:fix` | wrote the four optional issue fields to `apps/docs/openapi.json`; `openapi:check` then passed |
 | `pnpm exec vp check` on every changed file, `node scripts/quills-web/cli.mjs check`, `pnpm i18n:check` | passed |
 | Browser, demo stack | The profile form sent a 150-character name to the real API (lengthened in flight, since the form allows only valid names). The API answered `too_big`, `origin: "string"`, `maximum: 100`; the field was marked invalid and read "Use at most 100 characters." |
+
+### Follow-up checks (O2, O5, O7)
+
+| Command | Result |
+|---|---|
+| The new tests against the code before the fixes | O2: `expected [ 200, null, null ] to deeply equal [ 303, …(2) ]`, and the guard test failed. O5: three failed (the layout rendered nothing for `status`; the pages threw "usePortalRuntime must be used inside PortalRuntimeProvider"). O7: `expected { kind: 'invalid', …(1) } to deeply equal { kind: 'notFound' }` |
+| `vp test run --config src/quills/test/vitest.config.ts` in `apps/api` (`test:quills`, disposable database) | 135 files, 1,955 tests passed |
+| `pnpm exec vp test run --config vitest.config.ts` in `apps/web` (three workers) | 1,569 files, 6,627 tests passed |
+| `tsc --noEmit --singleThreaded` in `apps/api` and `apps/web` | passed |
+| `pnpm openapi:check:fix` | wrote the 303 answer of `GET /quills-public/{workspace}/unsubscribe`; the shared 303 headers of the signed redirect routes now read "The web page", "The redirect is never cached" and "This URL is not sent to the web app" |
+| `pnpm exec vp check` on every changed file, `node scripts/quills-web/cli.mjs check` | passed |
+| Kaneo integration suite | not run again: no Kaneo route, schema or migration changed |
+| Browser, demo stack, real mail | O2: the `List-Unsubscribe` URL of a real status-change mail, opened in a browser, landed on `/portal/…/unsubscribe` (token out of the address bar) with "You will stop getting mail about this post." and an Unsubscribe button; A still followed the post; a non-browser GET still got the JSON preview. The demo's http links carry no `List-Unsubscribe-Post` header, as designed (one-click needs HTTPS). O7: `/status/incidents/x` showed "This item could not be found."; `/csat?token=x` showed "This link is no longer valid. Open the latest email and try again." O5: with the portal off, the status page showed the components, active incidents and uptime, and the incident page its updates; the help center still showed "not found", as its API does. |
+
