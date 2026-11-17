@@ -76,7 +76,7 @@ export function AcceptPostForm({
               {...form.register("title")}
             />
             {form.formState.errors.title?.message ? (
-              <p role="alert">{form.formState.errors.title.message}</p>
+              <p role="alert">{String(form.formState.errors.title.message)}</p>
             ) : null}
           </div>
           <BoardSelect
@@ -89,7 +89,7 @@ export function AcceptPostForm({
             }}
           />
           {form.formState.errors.boardId?.message ? (
-            <p role="alert">{form.formState.errors.boardId.message}</p>
+            <p role="alert">{String(form.formState.errors.boardId.message)}</p>
           ) : null}
           <ComposerFields boards={boards} form={form} />
         </div>
