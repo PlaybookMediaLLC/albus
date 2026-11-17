@@ -154,6 +154,8 @@ export interface WidgetViewProps {
   onRetryLoad?: () => Promise<unknown>;
   /** Display only availability verified by the host; omit when unknown. */
   teamAvailability?: string;
+  /** Resolves once a portal sign-in link is on its way to the visitor's email. Omit to hide the action. */
+  onOpenPortal?: () => Promise<unknown>;
   teamMember?: WidgetPerson;
   /** The host resizes its container or sends the existing quackback:expand message. */
   onExpandedChange?: (expanded: boolean) => void;

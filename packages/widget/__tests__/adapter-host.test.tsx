@@ -204,6 +204,73 @@ describe("widget host page", () => {
     );
   });
 
+  it("offers Open in portal to an identified visitor and mails the sign-in link through the API", async () => {
+    table["POST /widget/identify"] = () => ({
+      body: { sessionToken: "known", user, canPortalHandoff: true },
+    });
+    let refuse = true;
+    table["POST /widget/portal-link"] = () =>
+      refuse
+        ? ((refuse = false),
+          {
+            status: 403,
+            body: { message: "A sign-in link cannot be sent now" },
+          })
+        : { body: { sent: true } };
+    mount();
+    fromParent({ type: "quackback:identify", data: { ssoToken: "a.b.c" } });
+    fromParent({ type: "quackback:open", data: {} });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open in portal" }),
+    );
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "The sign-in link could not be sent. Try again later.",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Open in portal" }));
+    expect((await screen.findByRole("status")).textContent).toBe(
+      "Check your email for a sign-in link to the portal.",
+    );
+    expect(requested("POST /widget/portal-link")).toHaveLength(2);
+    expect(
+      requested("POST /widget/portal-link")[1]!.init.headers,
+    ).toMatchObject({ authorization: "Bearer known" });
+    // The link expires after 5 minutes: the visitor can ask again.
+    fireEvent.click(screen.getByRole("button", { name: "Open in portal" }));
+    await waitFor(() =>
+      expect(requested("POST /widget/portal-link")).toHaveLength(3),
+    );
+  });
+
+  it("identifies again when Open in portal finds the session ended by a portal link", async () => {
+    table["POST /widget/identify"] = () => ({
+      body: { sessionToken: "known", user, canPortalHandoff: true },
+    });
+    table["POST /widget/portal-link"] = () => ({
+      status: 401,
+      body: { message: "Valid widget session required" },
+    });
+    mount();
+    fromParent({ type: "quackback:identify", data: { ssoToken: "a.b.c" } });
+    fromParent({ type: "quackback:open", data: {} });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open in portal" }),
+    );
+    await waitFor(() =>
+      expect(requested("POST /widget/identify")).toHaveLength(2),
+    );
+  });
+
+  it("hides Open in portal when the API does not offer it", async () => {
+    table["POST /widget/identify"] = () => ({
+      body: { sessionToken: "known", user, canPortalHandoff: false },
+    });
+    mount();
+    fromParent({ type: "quackback:identify", data: { ssoToken: "a.b.c" } });
+    fromParent({ type: "quackback:open", data: {} });
+    await screen.findByText("How can we help?");
+    expect(screen.queryByRole("button", { name: "Open in portal" })).toBeNull();
+  });
+
   it("keeps the identity after a transient identify failure and retries it when the panel opens", async () => {
     let down = true;
     table["POST /widget/identify"] = () =>

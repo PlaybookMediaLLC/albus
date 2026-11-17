@@ -13,6 +13,8 @@ import {
   widgetEnabled,
 } from "../framework/audience";
 import { mergeMetadata } from "../directory/customer";
+import { signInLinkAvailable } from "../framework/sign-in-link";
+import { parseJson } from "../settings/area";
 import { mergeAnonymousSession } from "./anonymous-merge";
 import {
   autoSubscribeChangelog,
@@ -48,7 +50,7 @@ const identify = defineQuillsRoute({
   operationId: "identifyQuillsWidgetVisitor",
   summary: "Identify a widget visitor with a signed token",
   description:
-    "Creates or updates the customer that the host app's signed ssoToken names and returns a widget session token for the Authorization header. The token needs sub (or id), email and exp. Optional claims: custom attributes that match a user attribute definition (at most 50; others are dropped), segments (at most 50 manual segment slugs; it replaces the widget-sourced memberships, and a missing claim removes them). Identify also subscribes the person to the changelog when the workspace auto-subscribes.",
+    "Creates or updates the customer that the host app's signed ssoToken names and returns a widget session token for the Authorization header. The token needs sub (or id), email and exp. Optional claims: custom attributes that match a user attribute definition (at most 50; others are dropped), segments (at most 50 manual segment slugs; it replaces the widget-sourced memberships, and a missing claim removes them). Identify also subscribes the person to the changelog when the workspace auto-subscribes. A profile that a portal sign-in linked to a Kaneo account resolves only by its sub and email together, and the token never changes its name, email or avatar. canPortalHandoff is true while the portal is on and Kaneo can mail its sign-in link (mail delivery on, login form on, no captcha): POST /widget/portal-link then asks for one.",
   action: "create",
   rateLimit: { limit: 60, windowSeconds: 15 * 60 },
   body: z.object({
@@ -102,6 +104,7 @@ const identify = defineQuillsRoute({
       .select({
         widgetConfig: settings.widgetConfig,
         widgetSecret: settings.widgetSecret,
+        portalConfig: settings.portalConfig,
       })
       .from(settings)
       .limit(1);
@@ -138,6 +141,7 @@ const identify = defineQuillsRoute({
         id: customer.id,
         kaneoUserId: customer.kaneoUserId,
         email: customer.email,
+        externalId: customer.externalId,
       })
       .from(customer)
       .where(
@@ -147,12 +151,18 @@ const identify = defineQuillsRoute({
       .orderBy(sql`(${customer.externalId} = ${sub}) desc nulls last`)
       .limit(1)
       .for("update");
-    // A profile linked to a Kaneo account belongs to that account's portal sign-in.
-    if (match?.kaneoUserId)
+    // A profile linked to a Kaneo account belongs to that account's portal sign-in. Only the sub and
+    // email that a verified-email link moved onto it (portal/widget-link.ts) resolve to it, and the
+    // token never changes its name, email or avatar.
+    const linked = Boolean(match?.kaneoUserId);
+    if (
+      linked &&
+      (match!.externalId !== sub || match!.email?.toLowerCase() !== email)
+    )
       throw new HTTPException(409, {
         message: "The email belongs to another customer",
       });
-    if (match && match.email?.toLowerCase() !== email) {
+    if (!linked && match && match.email?.toLowerCase() !== email) {
       const [holder] = await db
         .select({ id: customer.id })
         .from(customer)
@@ -175,16 +185,18 @@ const identify = defineQuillsRoute({
       ...(name && { name }),
       ...(avatarUrl && { image: avatarUrl }),
     };
-    const [identity] = match
-      ? await db
-          .update(customer)
-          .set(fields)
-          .where(eq(customer.id, match.id))
-          .returning()
-      : await db
-          .insert(customer)
-          .values({ ...fields, name: name ?? email.split("@")[0]! })
-          .returning();
+    const [identity] = linked
+      ? await db.select().from(customer).where(eq(customer.id, match!.id))
+      : match
+        ? await db
+            .update(customer)
+            .set(fields)
+            .where(eq(customer.id, match.id))
+            .returning()
+        : await db
+            .insert(customer)
+            .values({ ...fields, name: name ?? email.split("@")[0]! })
+            .returning();
     await db
       .insert(principal)
       .values({
@@ -246,8 +258,10 @@ const identify = defineQuillsRoute({
         email: identity!.email,
         avatarUrl: identity!.image,
       },
-      // The widget-to-portal handoff is not built (decision D1 has no portal session for a visitor).
-      canPortalHandoff: false,
+      // portal-link.ts mails a Kaneo sign-in link; the portal then links the profiles (portal/widget-link.ts).
+      canPortalHandoff:
+        signInLinkAvailable() &&
+        parseJson(config.portalConfig).enabled === true,
       votedPostIds: await votedPostIds(db, person!.id),
     };
   },

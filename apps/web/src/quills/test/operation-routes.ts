@@ -1751,6 +1751,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/boards/{boardId}/projects/{projectId}",
   },
   {
+    operationId: "linkQuillsPortalWidgetProfile",
+    method: "POST",
+    path: "/api/quills-public/{workspace}/portal/widget-link",
+  },
+  {
     operationId: "linkQuillsPostToTask",
     method: "PUT",
     path: "/api/quills/{workspaceId}/posts/{postId}/tasks/{taskId}",
@@ -3079,6 +3084,11 @@ export const quillsOperationRoutes = [
     operationId: "sendQuillsWidgetConversationTyping",
     method: "POST",
     path: "/api/quills-public/{workspace}/widget/conversations/{conversationId}/typing",
+  },
+  {
+    operationId: "sendQuillsWidgetPortalLink",
+    method: "POST",
+    path: "/api/quills-public/{workspace}/widget/portal-link",
   },
   {
     operationId: "setQuillsAgentAvailability",

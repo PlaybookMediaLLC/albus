@@ -9,6 +9,7 @@ import publicProfile from "./public-profile";
 import subscriptions from "./subscriptions";
 import translations from "./translations";
 import unsubscribe from "./unsubscribe";
+import widgetLink from "./widget-link";
 
 // Portal and public routes under /quills-public/{workspace}. Each module declares its routes
 // with ../framework/define-route. The teammate writers (access-settings.ts, invites.ts) mount in ../index.ts.
@@ -22,4 +23,5 @@ export default apiRouter()
   .route("/", preferences)
   .route("/", unsubscribe)
   .route("/", myFeedback)
-  .route("/", translations);
+  .route("/", translations)
+  .route("/", widgetLink);

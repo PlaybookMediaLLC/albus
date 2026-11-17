@@ -51,6 +51,7 @@ export function WidgetView({
   connection = "online",
   onRetryLoad,
   teamAvailability,
+  onOpenPortal,
   teamMember,
   attachmentsEnabled,
   onCaptureScreenshot,
@@ -435,6 +436,7 @@ export function WidgetView({
             conversations={conversations}
             openConversation={(id) => open("messages", id)}
             teamAvailability={teamAvailability}
+            openPortal={onOpenPortal}
             survey={
               survey &&
               onAnswerSurvey && (

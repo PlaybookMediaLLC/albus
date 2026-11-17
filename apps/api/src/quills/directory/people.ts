@@ -340,7 +340,7 @@ const updateUser = defineQuillsRoute({
   operationId: "updateQuillsUser",
   summary: "Update a customer's profile and attributes",
   description:
-    "For a lead, `email` sets the contact email. Attributes need a user attribute definition; null removes one.",
+    "For a lead, `email` sets the contact email. Attributes need a user attribute definition; null removes one. A profile linked to a Kaneo account (a portal customer) keeps its email, email verification and external ID (409).",
   action: "update",
   params: principalParams,
   body: z
@@ -355,7 +355,10 @@ const updateUser = defineQuillsRoute({
     .refine(nonEmpty, "Send at least one field"),
   response: person,
   responseDescription: "The updated customer",
-  errors: { ...notFound, 409: "Email or external ID already in use" },
+  errors: {
+    ...notFound,
+    409: "Email or external ID already in use, or the profile is linked to a Kaneo account",
+  },
   event: ({ params }) => ({
     type: "user.updated",
     entityType: "principal",
@@ -363,6 +366,22 @@ const updateUser = defineQuillsRoute({
   }),
   handler: async ({ db, params, body }) => {
     const current = await loadCustomer(db, params.principalId, true);
+    // A portal profile's email and sub name who may reach it from the widget (portal/widget-link.ts).
+    if (
+      body.email !== undefined ||
+      body.emailVerified !== undefined ||
+      body.externalId !== undefined
+    ) {
+      const [profile] = await db
+        .select({ kaneoUserId: user.kaneoUserId })
+        .from(user)
+        .where(eq(user.id, current.userId));
+      if (profile?.kaneoUserId)
+        throw new HTTPException(409, {
+          message:
+            "A profile linked to a Kaneo account keeps its email and external ID",
+        });
+    }
     const attributes = await coerceAttributes(db, body.attributes ?? {});
     const lead = current.type === "anonymous";
     if (

@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, type SQL } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { toUuid } from "@kaneo/ids";
 import { flexibleToTypeIdSchema } from "@kaneo/ids/zod";
@@ -77,7 +77,28 @@ const steps: { table: string; column: string; unique?: string[] }[] = [
     unique: ["changelog_entry_id", "emoji"],
   },
   { table: "changelog_reads", column: "principal_id", unique: [] },
+  // Issue #129: these cascade on a principal delete too. Unsubscribe links already mailed keep working.
+  { table: "unsubscribe_tokens", column: "principal_id" },
+  { table: "post_mentions", column: "principal_id", unique: ["post_id"] },
+  {
+    table: "conversation_message_mentions",
+    column: "principal_id",
+    unique: ["conversation_message_id"],
+  },
+  {
+    table: "conversation_message_reactions",
+    column: "principal_id",
+    unique: ["conversation_message_id", "emoji"],
+  },
 ];
+
+/** A dropped duplicate leaves no count behind: each vote or rating row is counted once. */
+const recount: Record<string, (drop: SQL) => SQL> = {
+  post_votes: (drop) =>
+    sql`WITH dropped AS (${drop} RETURNING s.post_id) UPDATE quills.posts p SET vote_count = greatest(0, p.vote_count - 1) FROM dropped WHERE p.id = dropped.post_id`,
+  kb_article_feedback: (drop) =>
+    sql`WITH dropped AS (${drop} RETURNING s.article_id, s.helpful) UPDATE quills.kb_articles a SET helpful_count = greatest(0, a.helpful_count - d.helpful::int), not_helpful_count = greatest(0, a.not_helpful_count - (NOT d.helpful)::int) FROM dropped d WHERE a.id = d.article_id`,
+};
 
 /** Profile fields on the customer that the lead fills only when the customer has none. */
 const fillIfEmpty = [
@@ -97,17 +118,23 @@ export async function repoint(db: Db, lead: string, target: string) {
     if (unique) {
       const same = unique.map((u) => sql.raw(` AND t."${u}" = s."${u}"`));
       const drop = sql`DELETE FROM ${name} s WHERE s.${col} = ${from}::uuid AND EXISTS (SELECT 1 FROM ${name} t WHERE t.${col} = ${to}::uuid${sql.join(same, sql``)})`;
-      // A dropped duplicate vote leaves the post's count: each vote row counted once.
-      await db.execute(
-        table === "post_votes"
-          ? sql`WITH dropped AS (${drop} RETURNING s.post_id) UPDATE quills.posts p SET vote_count = greatest(0, p.vote_count - 1) FROM dropped WHERE p.id = dropped.post_id`
-          : drop,
-      );
+      await db.execute(recount[table]?.(drop) ?? drop);
     }
     await db.execute(
       sql`UPDATE ${name} SET ${col} = ${to}::uuid WHERE ${col} = ${from}::uuid`,
     );
   }
+  // One preferences row per person. An opt-out on either side wins, so mail never resumes for
+  // someone who unsubscribed (the email channel of each matrix type too).
+  await db.execute(
+    sql`UPDATE quills.notification_preferences t SET email_muted = t.email_muted OR s.email_muted, email_status_change = t.email_status_change AND s.email_status_change, email_new_comment = t.email_new_comment AND s.email_new_comment, matrix = (SELECT jsonb_object_agg(k.key, coalesce(s.matrix -> k.key, '{}') || coalesce(t.matrix -> k.key, '{}') || CASE WHEN s.matrix -> k.key ->> 'email' = 'false' OR t.matrix -> k.key ->> 'email' = 'false' THEN '{"email": false}'::jsonb ELSE '{}'::jsonb END) FROM jsonb_object_keys(coalesce(s.matrix, '{}') || coalesce(t.matrix, '{}')) AS k(key)), updated_at = now() FROM quills.notification_preferences s WHERE t.principal_id = ${to}::uuid AND s.principal_id = ${from}::uuid`,
+  );
+  await db.execute(
+    sql`DELETE FROM quills.notification_preferences s WHERE s.principal_id = ${from}::uuid AND EXISTS (SELECT 1 FROM quills.notification_preferences t WHERE t.principal_id = ${to}::uuid)`,
+  );
+  await db.execute(
+    sql`UPDATE quills.notification_preferences SET principal_id = ${to}::uuid WHERE principal_id = ${from}::uuid`,
+  );
   // Explicit segment memberships follow the person; dynamic ones are rebuilt by evaluation.
   await db.execute(
     sql`DELETE FROM quills.user_segments s WHERE s.principal_id = ${from}::uuid AND (s.added_by = 'dynamic' OR EXISTS (SELECT 1 FROM quills.user_segments t WHERE t.principal_id = ${to}::uuid AND t.segment_id = s.segment_id))`,

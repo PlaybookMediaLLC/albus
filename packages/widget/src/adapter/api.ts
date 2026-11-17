@@ -79,8 +79,17 @@ export function createApi(base: string, fetchImpl: typeof fetch = fetch) {
       const result = await request<{
         sessionToken: string;
         user: WidgetUserView;
+        canPortalHandoff: boolean;
       }>("POST", "/widget/identify", { ssoToken }, signal);
-      return { token: result.sessionToken, user: result.user };
+      return {
+        token: result.sessionToken,
+        user: result.user,
+        canPortalHandoff: result.canPortalHandoff,
+      };
+    },
+    /** Mails Kaneo's sign-in link for the portal to the identified visitor's email. */
+    async sendPortalLink() {
+      await request("POST", "/widget/portal-link");
     },
   };
 }
