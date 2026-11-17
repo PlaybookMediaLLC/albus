@@ -17,9 +17,12 @@ export interface ConversationMessagesProps {
     content: string;
     attachments: Attachment[];
     createdAt: string;
+    fromAssistant?: boolean;
   }>;
   /** Renders a file that has an ID, such as a download link; otherwise its name shows. */
   renderAttachment?: (attachment: Attachment & { fileId: string }) => ReactNode;
+  /** Extra content under a message, such as the request the assistant proposed. */
+  renderExtra?: (messageId: string) => ReactNode;
 }
 
 const day = (iso: string) => new Date(iso).toDateString();
@@ -28,6 +31,7 @@ const day = (iso: string) => new Date(iso).toDateString();
 export function ConversationMessages({
   messages,
   renderAttachment,
+  renderExtra,
 }: ConversationMessagesProps) {
   const { t } = useTranslation("quills");
   const arrived = useArrived(
@@ -67,8 +71,10 @@ export function ConversationMessages({
                   author={{
                     name: message.fromVisitor
                       ? t("conversation.you")
-                      : message.author?.name?.trim() ||
-                        t("conversation.support"),
+                      : message.fromAssistant
+                        ? t("conversation.assistant")
+                        : message.author?.name?.trim() ||
+                          t("conversation.support"),
                   }}
                   time={message.createdAt}
                 >
@@ -83,6 +89,7 @@ export function ConversationMessages({
                         : t("conversation.attachment", { name })}
                     </p>
                   ))}
+                  {renderExtra?.(message.id)}
                 </MessageBubble>
               )}
             </li>

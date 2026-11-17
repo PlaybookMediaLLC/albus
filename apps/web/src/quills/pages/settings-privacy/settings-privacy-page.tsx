@@ -17,6 +17,7 @@ import {
   SettingsSection,
 } from "../../ui/upstream";
 import { DomainsForm } from "./parts/domains-form";
+import { SignInSection } from "./parts/sign-in-section";
 
 export interface SettingsPrivacyPageProps {
   workspaceId: string;
@@ -90,6 +91,38 @@ export function SettingsPrivacyPage({ workspaceId }: SettingsPrivacyPageProps) {
                   }}
                 />
               </SettingsRow>
+              {(
+                [
+                  [
+                    "holdSpam",
+                    t("settings-product.privacy.holdSpam"),
+                    t("settings-product.privacy.holdSpamText"),
+                  ],
+                  [
+                    "holdSensitive",
+                    t("settings-product.privacy.holdSensitive"),
+                    t("settings-product.privacy.holdSensitiveText"),
+                  ],
+                ] as const
+              ).map(([key, title, description]) => (
+                <SettingSwitchRow
+                  key={key}
+                  title={title}
+                  description={description}
+                  checked={data?.moderationDefault[key] ?? false}
+                  disabled={locked}
+                  onCheckedChange={async (value) => {
+                    await moderation.mutateAsync({
+                      param,
+                      json: {
+                        requireApproval: (data?.moderationDefault
+                          .requireApproval ?? "none") as Approval,
+                        [key]: value,
+                      },
+                    });
+                  }}
+                />
+              ))}
             </SettingsCard>
           </SettingsSection>
           <SettingsSection title={t("settings-product.privacy.access")}>
@@ -149,6 +182,13 @@ export function SettingsPrivacyPage({ workspaceId }: SettingsPrivacyPageProps) {
               {t("settings-product.privacy.membersNote")}
             </SettingsNote>
           </SettingsSection>
+          {data ? (
+            <SignInSection
+              workspaceId={workspaceId}
+              locked={locked}
+              data={data.signIn}
+            />
+          ) : null}
         </TeamStateView>
       </SettingsPage>
     </PageFrame>

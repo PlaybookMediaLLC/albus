@@ -8,6 +8,7 @@ export const updateWidgetSettingsFixture = {
         position: "value",
         launcherGreeting: "value",
         launcherLabel: "value",
+        replyTime: null,
         tabs: {
           feedback: false,
           changelog: false,

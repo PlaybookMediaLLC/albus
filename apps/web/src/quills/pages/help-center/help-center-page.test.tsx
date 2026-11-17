@@ -23,7 +23,7 @@ describe("HelpCenterPage", () => {
         mockApi().reply(
           getPublicHelpCenterFixture.ok({ homepageTitle: "Help home" }),
         );
-        return { accessGranted: false };
+        return {};
       },
       assert: async (view) => {
         await view.findByText("Help home");
@@ -34,7 +34,7 @@ describe("HelpCenterPage", () => {
         const api = mockApi();
         api.reply(getPublicHelpCenterFixture.ok());
         api.reply(searchPublicHelpCenterFixture.ok());
-        return { search: { query: "billing" }, accessGranted: false };
+        return { search: { query: "billing" } };
       },
       assert: async (view) => {
         await view.findByRole("heading", { name: "Search results" });
@@ -42,6 +42,13 @@ describe("HelpCenterPage", () => {
     },
   });
   describe("behavior", () => {
+    it("asks a signed-out visitor to sign in on a private portal and loads nothing", async () => {
+      const api = mockApi();
+      const view = renderPage(HelpCenterPage, meta, { accessGranted: false });
+      expect(await view.findByRole("link", { name: /sign in/i })).toBeVisible();
+      expect(api.calls()).toHaveLength(0);
+    });
+
     it("runs search from the route query", async () => {
       const api = mockApi();
       api.reply(
@@ -50,7 +57,6 @@ describe("HelpCenterPage", () => {
       api.reply(searchPublicHelpCenterFixture.ok());
       const view = renderPage(HelpCenterPage, meta, {
         search: { query: "reset" },
-        accessGranted: false,
       });
       expect(
         await view.findByText("No articles match your search."),

@@ -13,6 +13,7 @@ export const meta = {
     "listQuillsBoards",
     "createQuillsUpload",
     "createQuillsImport",
+    "importQuillsCompanies",
     "createQuillsExportWorkspace",
     "wipeQuillsWorkspaceData",
   ],

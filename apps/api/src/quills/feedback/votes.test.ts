@@ -132,7 +132,7 @@ describe.skipIf(!url)("Feedback votes", () => {
     expect(voters).toHaveLength(1);
     expect(voters[0]).toMatchObject({
       principalId: people[0],
-      sourceType: "proxy",
+      sourceType: "other",
     });
     expect((await world.request(owner, "DELETE", path)).body).toMatchObject({
       changed: true,

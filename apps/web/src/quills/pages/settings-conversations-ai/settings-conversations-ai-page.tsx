@@ -84,10 +84,31 @@ export function SettingsConversationsAiPage({
                 description={t("settings-conversations.ai.assistantText")}
               >
                 <SettingsCard>
+                  <SettingSwitchRow
+                    title={t("settings-conversations.ai.answerCustomers")}
+                    description={t(
+                      "settings-conversations.ai.answerCustomersText",
+                    )}
+                    checked={data.agent.enabled}
+                    disabled={locked || !data.aiConfigured}
+                    onCheckedChange={(agentEnabled) => save({ agentEnabled })}
+                  />
+                </SettingsCard>
+                <SettingsCard>
                   <VoiceForm
-                    values={{ name: data.identity.name, ...data.agent.voice }}
-                    onSubmit={({ name, ...agentVoice }) =>
-                      problemOf(save({ name, agentVoice }))
+                    values={{
+                      name: data.identity.name,
+                      productDescription: data.agent.productDescription,
+                      ...data.agent.voice,
+                    }}
+                    onSubmit={({ name, productDescription, ...agentVoice }) =>
+                      problemOf(
+                        save({
+                          name,
+                          agentVoice,
+                          agentProductDescription: productDescription,
+                        }),
+                      )
                     }
                   />
                 </SettingsCard>

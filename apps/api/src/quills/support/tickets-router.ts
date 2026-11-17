@@ -6,6 +6,7 @@ import supportReporting from "./support-reporting";
 import supportSettings from "./support-settings";
 import ticketExternalLinks from "./ticket-external-links";
 import ticketLinks from "./ticket-links";
+import ticketPosts from "./ticket-posts";
 import ticketReadState from "./ticket-read-state";
 import ticketStatuses from "./ticket-statuses";
 import ticketThread from "./ticket-thread";
@@ -20,6 +21,7 @@ export default apiRouter<BaseVariables & { workspaceId: string }>()
   .route("/", ticketWatchers)
   .route("/", ticketLinks)
   .route("/", ticketExternalLinks)
+  .route("/", ticketPosts)
   .route("/", ticketReadState)
   .route("/", ticketStatuses)
   .route("/", ticketTypes)

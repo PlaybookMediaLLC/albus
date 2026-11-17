@@ -56,6 +56,46 @@ describe("SettingsConversationsAiPage", () => {
     },
   });
 
+  it("turns on the customer agent and saves the product description with the voice", async () => {
+    api = mockApi();
+    api.reply(settings);
+    api.reply(updateAssistantSettingsFixture.ok());
+    api.reply({ ...settings, revision: 5 });
+    api.reply(updateAssistantSettingsFixture.ok());
+    api.reply({ ...settings, revision: 6 });
+    const view = renderPage(SettingsConversationsAiPage, meta);
+    fireEvent.click(
+      await view.findByRole("switch", { name: "Answer customers" }),
+    );
+    await waitFor(() =>
+      expect(api.calls("updateQuillsAssistantSettings")).toHaveLength(1),
+    );
+    expect(await api.calls("updateQuillsAssistantSettings")[0]!.json()).toEqual(
+      { revision: 4, agentEnabled: true },
+    );
+    await waitFor(() =>
+      expect(api.calls("getQuillsAssistantSettings")).toHaveLength(2),
+    );
+    fireEvent.change(view.getByLabelText("About your product"), {
+      target: { value: "A CSV exporter" },
+    });
+    fireEvent.click(view.getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(api.calls("updateQuillsAssistantSettings")).toHaveLength(2),
+    );
+    expect(
+      await api.calls("updateQuillsAssistantSettings")[1]!.json(),
+    ).toMatchObject({ revision: 5, agentProductDescription: "A CSV exporter" });
+  });
+
+  it("keeps the customer agent switch off without an AI provider", async () => {
+    mockApi().reply({ ...settings, aiConfigured: false });
+    const view = renderPage(SettingsConversationsAiPage, meta);
+    expect(
+      await view.findByRole("switch", { name: "Answer customers" }),
+    ).toHaveAttribute("data-disabled");
+  });
+
   it("says when the instance has no AI provider", async () => {
     mockApi().reply({ ...settings, aiConfigured: false });
     const view = renderPage(SettingsConversationsAiPage, meta);

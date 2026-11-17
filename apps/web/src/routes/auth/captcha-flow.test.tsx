@@ -24,6 +24,7 @@ const m = vi.hoisted(() => ({
   navigate: vi.fn(),
   getConfig: vi.fn(),
   config: {} as Record<string, unknown>,
+  search: {} as Record<string, unknown>,
 }));
 vi.mock("@/fetchers/config/get-config", () => ({ getConfig: m.getConfig }));
 vi.mock("@/lib/auth-client", () => ({
@@ -36,7 +37,7 @@ vi.mock("@/lib/auth-client", () => ({
 }));
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: unknown) => ({ options }),
-  useSearch: () => ({}),
+  useSearch: () => m.search,
   useNavigate: () => m.navigate,
   useRouter: () => ({ history: { push: vi.fn() } }),
   Link: ({ children }: { children: ReactNode }) => <a href="/">{children}</a>,
@@ -70,6 +71,7 @@ afterAll(() => vi.unstubAllEnvs());
 afterEach(() => cleanup());
 beforeEach(() => {
   vi.clearAllMocks();
+  m.search = {};
   m.config = {
     hasSmtp: false,
     hasGuestAccess: true,
@@ -154,6 +156,22 @@ describe("sign-in password form", () => {
     expect(m.email).toHaveBeenCalledWith(
       { email: "person@example.com", password: "long-test-password" },
       { headers: { "x-turnstile-token": "fresh-token" } },
+    );
+  });
+});
+
+describe("sign-in link errors", () => {
+  it("explains an expired or already used sign-in link", async () => {
+    // Better Auth sends a used or expired magic link here with error=INVALID_TOKEN.
+    m.search = { error: "INVALID_TOKEN", redirect: "/portal/acme/my-feedback" };
+    const Page = signin.options.component as ComponentType;
+    render(<Page />);
+    expect(
+      await screen.findByText("auth:signIn.errors.invalid_token"),
+    ).toBeInTheDocument();
+    const { default: english } = await import("../../../../../i18n/en-US.json");
+    expect(english.auth.signIn.errors.invalid_token).toBe(
+      "This sign-in link has expired or has already been used. Sign in again to continue.",
     );
   });
 });

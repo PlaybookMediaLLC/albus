@@ -34,9 +34,7 @@ describe("ImportSheet", () => {
       name: "Import posts from a CSV file",
     });
     expect(api.calls("listQuillsBoards")).toHaveLength(1);
-    expect(
-      within(sheet).getByText(/Required columns: title and content/),
-    ).toBeVisible();
+    expect(within(sheet).getByText(/Required column: title/)).toBeVisible();
     press("Start import");
     expect(await within(sheet).findByText("Choose a board.")).toBeVisible();
     expect(

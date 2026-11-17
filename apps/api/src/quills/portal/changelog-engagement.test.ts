@@ -191,26 +191,26 @@ describe.skipIf(!url)("Quills changelog engagement and my feedback", () => {
           bearer: visitor.token,
         })
       ).body,
-    ).toEqual({ count: 0 });
+    ).toMatchObject({ count: 0 });
     await call("PUT", "/portal/changelog/read", { user: env.customerA });
     await call("PUT", "/portal/changelog/read", { user: env.customerB });
     const unread = (user: string) =>
       call("GET", "/portal/changelog/unread", { user });
-    expect((await unread(env.customerA)).body).toEqual({ count: 0 });
+    expect((await unread(env.customerA)).body).toMatchObject({ count: 0 });
 
     const fresh = await entryIn(env.a, "now");
     // A segment entry and workspace B's entry are not counted.
     await entryIn(env.a, "now", { segmentIds: [env.id("segment")] });
     await entryIn(env.b, "now");
-    expect((await unread(env.customerA)).body).toEqual({ count: 1 });
-    expect((await unread(env.customerB)).body).toEqual({ count: 1 });
+    expect((await unread(env.customerA)).body).toMatchObject({ count: 1 });
+    expect((await unread(env.customerB)).body).toMatchObject({ count: 1 });
     expect(
       (
         await call("GET", "/widget/changelog/unread", {
           bearer: visitor.token,
         })
       ).body,
-    ).toEqual({ count: 1 });
+    ).toMatchObject({ count: 1 });
     const listed = await call("GET", "/portal/changelog", {
       user: env.customerA,
     });
@@ -222,11 +222,11 @@ describe.skipIf(!url)("Quills changelog engagement and my feedback", () => {
       user: env.customerA,
     });
     expect(marked.status).toBe(200);
-    expect((await unread(env.customerA)).body).toEqual({ count: 0 });
+    expect((await unread(env.customerA)).body).toMatchObject({ count: 0 });
     // Customer B and the widget visitor keep their own marks.
-    expect((await unread(env.customerB)).body).toEqual({ count: 1 });
+    expect((await unread(env.customerB)).body).toMatchObject({ count: 1 });
     // A caller without a session has nothing unread.
-    expect((await unread("")).body).toEqual({ count: 0 });
+    expect((await unread("")).body).toMatchObject({ count: 0 });
 
     // Teammates see the readers and reactions of each entry; B's rows never count in A.
     await call("PUT", `/portal/changelog/${fresh}/reactions`, {
@@ -248,6 +248,78 @@ describe.skipIf(!url)("Quills changelog engagement and my feedback", () => {
     });
     // The owner of A is no member of B: the workspace route does not disclose B.
     expect(foreign.status).toBe(404);
+  });
+
+  it("announces each new entry once per caller, keeps the read mark, and opens it only with the setting on (#108)", async () => {
+    const env = contractEnv();
+    await call("PUT", "/portal/changelog/read", { user: env.customerA });
+    await call("PUT", "/portal/changelog/read", { user: env.customerB });
+    const unread = (user: string) =>
+      call("GET", "/portal/changelog/unread", { user });
+    const shipped = await entryIn(env.a, "now");
+    const [row] = await env.scoped(env.a, (db) =>
+      db
+        .select({ title: changelogEntries.title })
+        .from(changelogEntries)
+        .where(eq(changelogEntries.id, shipped)),
+    );
+    // Newer entries that the caller may not see are never announced.
+    await entryIn(env.a, "now", { publishedAt: null });
+    await entryIn(env.a, -3_600_000);
+    await entryIn(env.a, "now", { segmentIds: [env.id("segment")] });
+    await entryIn(env.b, "now");
+    expect((await unread(env.customerA)).body).toEqual({
+      count: 1,
+      announce: { id: shipped, title: row!.title },
+      autoOpen: false,
+    });
+
+    const announced = await call("PUT", "/portal/changelog/announced", {
+      user: env.customerA,
+    });
+    expect(announced.status).toBe(200);
+    // Shown once: no second announcement, and the entry stays unread until it is opened.
+    expect((await unread(env.customerA)).body).toEqual({
+      count: 1,
+      announce: null,
+      autoOpen: false,
+    });
+    // Customer B keeps its own mark.
+    expect((await unread(env.customerB)).body).toMatchObject({
+      announce: { id: shipped },
+    });
+
+    // A teammate with manage_settings turns automatic open on; the next entry opens once.
+    const setting = await call("PATCH", "/changelog/settings", {
+      user: env.owner,
+      teammate: true,
+      body: { widgetAutoOpen: true },
+    });
+    expect(setting.status).toBe(200);
+    expect(setting.body).toMatchObject({ widgetAutoOpen: true });
+    const next = await entryIn(env.a, "now");
+    expect((await unread(env.customerA)).body).toMatchObject({
+      count: 2,
+      announce: { id: next },
+      autoOpen: true,
+    });
+    await call("PUT", "/portal/changelog/announced", { user: env.customerA });
+    expect((await unread(env.customerA)).body).toMatchObject({
+      announce: null,
+      autoOpen: false,
+    });
+    // A customer cannot change the setting.
+    const denied = await call("PATCH", "/changelog/settings", {
+      user: env.customerA,
+      teammate: true,
+      body: { widgetAutoOpen: false },
+    });
+    expect([403, 404]).toContain(denied.status);
+    await call("PATCH", "/changelog/settings", {
+      user: env.owner,
+      teammate: true,
+      body: { widgetAutoOpen: false },
+    });
   });
 
   it("lists the caller's own, voted and followed posts that it may still see", async () => {

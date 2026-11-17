@@ -30,7 +30,11 @@ const runtime = (granted: boolean): PortalRuntimeValue => ({
     },
   },
   viewer: { kind: "anonymous" },
-  access: { granted, reason: granted ? "public" : "unauthorized" },
+  access: {
+    granted,
+    reason: granted ? "public" : "unauthorized",
+    signIn: { mode: "account", ssoUrl: null },
+  },
   accessLoading: false,
   accessProblem: null,
 });

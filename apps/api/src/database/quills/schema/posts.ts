@@ -88,6 +88,8 @@ export const posts = quillsSchema
       ),
       // Lock thread: prevent portal users from commenting (team members can still comment)
       isCommentsLocked: boolean("is_comments_locked").default(false).notNull(),
+      // Hidden from the board: only its author and the team see it (one request on a public board)
+      isHidden: boolean("is_hidden").default(false).notNull(),
       // Moderation state for imported/pending content
       moderationState: text("moderation_state", {
         enum: MODERATION_STATES,
@@ -140,6 +142,12 @@ export const posts = quillsSchema
       scoreConfidence: integer("score_confidence"),
       /** Person-weeks. */
       scoreEffort: real("score_effort"),
+      // Team scoring factor values (#79): factor ID → 0 to 10. The factors and weights live in
+      // settings.metadata.scoringFactors; the score is computed at read time.
+      scoreValues: jsonb("score_values")
+        .$type<Record<string, number>>()
+        .notNull()
+        .default({}),
     },
     (table) => [
       // Named to match the constraint the SQL migration created.

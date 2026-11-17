@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { usePortalSignInHref } from "../../../portal/use-portal-sign-in-href";
 import type { ListPortalPostCommentsResponse } from "../../../api/feedback/list-portal-post-comments";
 import type { SetPortalCommentReactionRequest } from "../../../api/feedback/set-portal-comment-reaction";
-import { portalHref } from "../../../core/portal-href";
 import type { Viewer } from "../../../core/types";
 import { useCreatePortalComment } from "../../../hooks/feedback/use-create-portal-comment";
 import { useSetPortalCommentReaction } from "../../../hooks/feedback/use-set-portal-comment-reaction";
@@ -13,7 +13,9 @@ import { runMutation } from "../run-mutation";
 import { CommentSheets } from "./comment-sheets";
 import { CreateCommentForm } from "./create-comment-form";
 import { PostAttachments } from "./post-attachments";
-import { browserLocale, TranslatedText } from "./translated-text";
+import { readsEnglish } from "../../../core/reader-locale";
+import { TranslatedText } from "./translated-text";
+import { useReaderLocale } from "../../../portal/runtime";
 
 type Comment = ListPortalPostCommentsResponse["items"][number];
 type Emoji = SetPortalCommentReactionRequest["json"]["emoji"];
@@ -38,13 +40,17 @@ export interface PostCommentsSectionProps {
 /** The comment count, the composer and the threaded comments with likes and replies. */
 export function PostCommentsSection(props: PostCommentsSectionProps) {
   const { t } = useTranslation("quills");
+  const signInHref = usePortalSignInHref(props.workspaceId)(
+    `posts/${props.postId}`,
+  );
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const create = useCreatePortalComment(props.viewer);
   const react = useSetPortalCommentReaction(props.viewer);
   const signedIn = props.viewer.kind === "user";
   // English readers, and instances without AI, get the plain comment and no translation query.
-  const translatable = props.translatable !== false && browserLocale() !== null;
+  const reader = useReaderLocale();
+  const translatable = props.translatable !== false && !readsEnglish(reader);
   // Comments load oldest first, so a new one can fall past the loaded pages.
   // ponytail: an edit of such a comment shows the old text until the page reloads;
   // keep the edit response here if people edit fresh comments on long threads.
@@ -149,10 +155,10 @@ export function PostCommentsSection(props: PostCommentsSectionProps) {
           viewer={props.viewer}
           onSubmit={submit()}
         />
-      ) : !signedIn && props.open ? (
+      ) : !signedIn && props.open && signInHref ? (
         <a
           className="block rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground shadow-xs transition-shadow hover:shadow-sm"
-          href={`/auth/sign-in?redirect=${encodeURIComponent(portalHref(props.workspaceId, `posts/${props.postId}`))}`}
+          href={signInHref}
         >
           {t("post.commentPlaceholder")}
           <span className="sr-only"> {t("post.signInToComment")}</span>

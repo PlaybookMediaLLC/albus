@@ -4,7 +4,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import type { TypeId } from "@kaneo/ids";
 import { assistantInvolvements } from "../../database/quills/schema/assistant";
-import { principal, user } from "../../database/quills/schema/auth";
+import { principal, settings, user } from "../../database/quills/schema/auth";
 import { boards } from "../../database/quills/schema/boards";
 import {
   conversationMessages,
@@ -16,7 +16,14 @@ import { posts } from "../../database/quills/schema/posts";
 import * as kaneo from "../../database/schema";
 import { startFeature } from "../feedback/harness.fixture";
 import type { Database } from "../framework/define-route";
-import { supportSubscribers } from "../jobs/handlers/support-mail";
+import { jobQueue } from "../../database/quills/schema/job-queue";
+import { notificationPreferences } from "../../database/quills/schema/notifications";
+import { enqueueQuillsJob } from "../jobs/queue";
+import {
+  customerConversationLink,
+  PORTAL_REPLY_DELAY_SECONDS,
+  supportSubscribers,
+} from "../jobs/handlers/support-mail";
 import { conversation, customer } from "./conversation-seed.fixture";
 
 let pool: Pool;
@@ -40,6 +47,31 @@ const url = process.env.QUILLS_TEST_DATABASE_URL;
 let world: Awaited<ReturnType<typeof startFeature>>;
 const email = (label: string) =>
   `${label}-${Date.now()}-${Math.random().toString(36).slice(2)}@example.test`;
+
+/** The customer profile of the member's Kaneo account: a portal customer of workspace A. */
+async function portalCustomer(db: Database) {
+  const [found] = await db
+    .select({ id: principal.id })
+    .from(principal)
+    .innerJoin(user, eq(user.id, principal.userId))
+    .where(eq(user.kaneoUserId, world.users.member));
+  if (found) return found.id;
+  const [identity] = await db
+    .insert(user)
+    .values({ name: "Portal customer", kaneoUserId: world.users.member })
+    .returning({ id: user.id });
+  const [row] = await db
+    .insert(principal)
+    .values({
+      userId: identity!.id,
+      role: "user",
+      type: "user",
+      displayName: "Portal customer",
+      createdAt: new Date(),
+    })
+    .returning({ id: principal.id });
+  return row!.id;
+}
 
 type Status = (typeof assistantInvolvements.$inferInsert)["status"];
 let ids: {
@@ -237,6 +269,8 @@ describe.skipIf(!url)("Assistant inbox surface and outbound start", () => {
       expect(
         typeof reply.direct === "function" && (await reply.direct(db, created)),
       ).toBe(true);
+      // The customer's mail thread is the conversation: no wait.
+      expect(await reply.directDelay!(db, created)).toBe(0);
       const [address] = await db
         .select({ email: user.email })
         .from(principal)
@@ -248,6 +282,180 @@ describe.skipIf(!url)("Assistant inbox surface and outbound start", () => {
         conversationId: started.id,
       });
     });
+  });
+
+  it("links the reply mail to the portal page only for a customer who can open it there", async () => {
+    const { owner } = world.users;
+    await world.scoped(world.a, owner, async (db) => {
+      // An inbound mail's sender has no portal account: the reply mail has no portal link.
+      const mailOnly = {
+        id: ids.real as never,
+        visitorPrincipalId: ids.visitor as never,
+      };
+      expect(
+        await customerConversationLink(db, world.a, mailOnly),
+      ).toBeUndefined();
+      const linked = {
+        id: ids.real as never,
+        visitorPrincipalId: (await portalCustomer(db)) as never,
+      };
+      const [before] = await db
+        .select({ portalConfig: settings.portalConfig })
+        .from(settings);
+      // A portal account, but the portal is off: the page would not open.
+      await db
+        .update(settings)
+        .set({ portalConfig: JSON.stringify({ enabled: false }) });
+      expect(
+        await customerConversationLink(db, world.a, linked),
+      ).toBeUndefined();
+      await db
+        .update(settings)
+        .set({ portalConfig: JSON.stringify({ enabled: true }) });
+      expect(await customerConversationLink(db, world.a, linked)).toMatch(
+        new RegExp(`/portal/${world.a}/conversations/${ids.real}$`),
+      );
+      await db
+        .update(settings)
+        .set({ portalConfig: before?.portalConfig ?? null });
+    });
+  });
+
+  it("mails a portal customer an unread, newest teammate reply after a wait, and never otherwise", async () => {
+    const { owner, member } = world.users;
+    const entry = supportSubscribers["message.created"]!;
+    const setPortal = (portalConfig: object) =>
+      world.scoped(world.a, owner, (db) =>
+        db.update(settings).set({ portalConfig: JSON.stringify(portalConfig) }),
+      );
+    const verified = (emailVerified: boolean) =>
+      world.db
+        .update(kaneo.userTable)
+        .set({ emailVerified })
+        .where(eq(kaneo.userTable.id, member));
+    const before = await world.scoped(world.a, owner, async (db) => {
+      const [row] = await db
+        .select({ portalConfig: settings.portalConfig })
+        .from(settings);
+      return row?.portalConfig ?? null;
+    });
+    const conversationId = await world.scoped(
+      world.a,
+      owner,
+      async (db, actor) =>
+        (await conversation(db, actor.principalId, await portalCustomer(db)))
+          .conversationId,
+    );
+    const reply = async (content: string) => {
+      const res = await world.request(
+        owner,
+        "POST",
+        `/conversations/${conversationId}/reply`,
+        { content },
+      );
+      expect(res.status).toBe(200);
+      return world.scoped(world.a, owner, async (db) => {
+        const [event] = await db
+          .select()
+          .from(events)
+          .where(eq(events.entityId, res.body.message.id));
+        return event!;
+      });
+    };
+    const mail = (event: Awaited<ReturnType<typeof reply>>) =>
+      world.scoped(world.a, owner, (db) => entry.mail!(db, event, null));
+    await setPortal({ enabled: true });
+    await verified(true);
+    const first = await reply("Here is the fix");
+    await world.scoped(world.a, owner, async (db) => {
+      expect(
+        typeof entry.direct === "function" && (await entry.direct(db, first)),
+      ).toBe(true);
+      expect(await entry.directDelay!(db, first)).toBe(
+        PORTAL_REPLY_DELAY_SECONDS,
+      );
+    });
+    expect(await mail(first)).toMatchObject({
+      to: `${member}@example.test`,
+      emailType: "ConversationMessageEmail",
+      conversationId,
+    });
+    // Read on the open page before the job ran: no mail.
+    const read = (at: Date | null) =>
+      world.scoped(world.a, owner, (db) =>
+        db
+          .update(conversations)
+          .set({ visitorLastReadAt: at })
+          .where(eq(conversations.id, conversationId as never)),
+      );
+    await read(new Date());
+    expect(await mail(first)).toBeUndefined();
+    await read(null);
+    // A newer reply mails instead of the older one.
+    const second = await reply("One more detail");
+    expect(await mail(first)).toBeUndefined();
+    expect(await mail(second)).toMatchObject({ to: `${member}@example.test` });
+    // A customer who muted all mail (the unsubscribe-all link) gets none.
+    const muted = (emailMuted: boolean) =>
+      world.scoped(world.a, owner, async (db) => {
+        const visitor = (await portalCustomer(db)) as never;
+        await db
+          .insert(notificationPreferences)
+          .values({ principalId: visitor, emailMuted })
+          .onConflictDoUpdate({
+            target: [
+              notificationPreferences.workspaceId,
+              notificationPreferences.principalId,
+            ],
+            set: { emailMuted },
+          });
+      });
+    await muted(true);
+    expect(await mail(second)).toBeUndefined();
+    await muted(false);
+    expect(await mail(second)).toMatchObject({ to: `${member}@example.test` });
+    // An unverified address, a closed portal or turned-off support: no mail.
+    await verified(false);
+    expect(await mail(second)).toBeUndefined();
+    await verified(true);
+    await setPortal({ enabled: false });
+    expect(await mail(second)).toBeUndefined();
+    await setPortal({ enabled: true, support: { enabled: false } });
+    expect(await mail(second)).toBeUndefined();
+    await setPortal({ enabled: true });
+    // The job runs no sooner than the wait.
+    await world.scoped(world.a, owner, async (db) => {
+      const job = await enqueueQuillsJob(
+        db,
+        "quills.mail",
+        { eventId: first.eventId },
+        `${first.eventId}:delay-check`,
+        5,
+        PORTAL_REPLY_DELAY_SECONDS,
+      );
+      const [row] = await db
+        .select({ runAt: jobQueue.runAt })
+        .from(jobQueue)
+        .where(eq(jobQueue.id, job!.id));
+      expect(row!.runAt.getTime()).toBeGreaterThan(
+        Date.now() + (PORTAL_REPLY_DELAY_SECONDS - 10) * 1000,
+      );
+    });
+    // A blocked customer gets no reply mail at all.
+    const blocked = (blockedAt: Date | null) =>
+      world.scoped(world.a, owner, async (db) => {
+        const visitor = await portalCustomer(db);
+        await db
+          .update(principal)
+          .set({ blockedAt })
+          .where(eq(principal.id, visitor as never));
+        return typeof entry.direct === "function" && entry.direct(db, second);
+      });
+    expect(await blocked(new Date())).toBe(false);
+    expect(await blocked(null)).toBe(true);
+    await world.scoped(world.a, owner, (db) =>
+      db.update(settings).set({ portalConfig: before }),
+    );
   });
 
   it("refuses a target that cannot receive the message, and changes nothing", async () => {

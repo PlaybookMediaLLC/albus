@@ -1,6 +1,7 @@
 export * from "./access.fixture";
 export * from "./access-settings.fixture";
 export * from "./config.fixture";
+export * from "./token-sign-in.fixture";
 export * from "./feedback/index.fixture";
 export * from "./invite-accept.fixture";
 export * from "./invites.fixture";
@@ -17,3 +18,4 @@ export * from "./surveys.fixture";
 // RFC 0003 lane L5.
 export * from "./changelog-engagement.fixture";
 export * from "./my-feedback.fixture";
+export * from "./widget-link.fixture";

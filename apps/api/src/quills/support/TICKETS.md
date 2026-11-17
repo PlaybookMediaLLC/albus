@@ -16,7 +16,8 @@ Tables and owning schema:  quills: tickets, ticket_statuses, ticket_types, ticke
                            conversation_tag_assignments, macros, sla_policies, sla_events,
                            office_hours_schedules, workflows (read), settings, principal, teams,
                            companies, channel_accounts, email_sending_domains, email_log,
-                           audit_log, events, job_queue.
+                           audit_log, events, job_queue; for a request from a ticket (#73):
+                           boards, posts, post_votes, post_subscriptions, post_activity.
                            public (read only, through framework/platform-reads.ts): workspace_member.
 Actor and workspace:       authenticated context (helper).
 Permissions:               workspace:read + quills:<action>. No native permissions.
@@ -86,7 +87,18 @@ Merged: 7 (`listQuillsTicketsMessages` + `listQuillsTicketMessages`, `createQuil
 | `createQuillsTicketIssue` | `POST /tickets/{ticketId}/external-links/issue` (`integrationId`, `target`) | update | `integration_sync_operations` | `ticket.issue_requested` | contract, rollback, feature (local provider server) |
 | `unlinkQuillsTicketIssue` | `DELETE /tickets/{ticketId}/external-links/{linkId}` | update | `ticket_external_links`, `conversation_messages` | `ticket.external_unlinked` | contract, rollback, feature |
 
-`support/ticket-external-links.ts`. `TICKET_ASSIGN` maps to update. The providers are the ones P7b built
+`support/ticket-external-links.ts`. `TICKET_ASSIGN` maps to update.
+
+### Request from a ticket (#73)
+
+| operationId | Route | Action | Tables | Event | Tests |
+|---|---|---|---|---|---|
+| `createQuillsPostFromTicket` | `POST /tickets/{ticketId}/posts` (`boardId` and `title`, or `asUpvoteOfPostId`) | create + update | `tickets`, `principal`, `boards`, `posts`, `post_votes`, `post_subscriptions`, `post_activity` | `post.created` or `post.voted` (`onBehalfOf`, `source: ticket`, `ticketId`) | contract, two-workspace, permission, feature |
+
+`support/ticket-posts.ts`. The customer is the stored ticket's requester, never request input; a ticket
+without a customer requester (a teammate, a service or a test customer) answers 409. As every request a
+teammate records for a customer, the requester is the author and first voter and is subscribed as the
+author, a vote does not subscribe, and a person has one vote per post. The providers are the ones P7b built
 with issues: GitHub (`owner/repo#12` or the issue URL) and GitLab (`<project ID>#12`). The repository or
 project must be one of the connection's channels; a link is not checked remotely (no remote inspection
 exists). Linking and unlinking add a team-only note to the ticket thread. Create queues one sync operation

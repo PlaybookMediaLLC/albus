@@ -180,6 +180,7 @@
 			"guestError": "Nie udało się zalogować jako gość",
 			"errors": {
 				"account_not_linked": "Nie można było powiązać tej tożsamości z istniejącym kontem. Zaloguj się przez e-mail, aby zweryfikować konto, a następnie spróbuj ponownie SSO. Jeśli logowanie e-mail nie jest dostępne, skontaktuj się z administratorem.",
+				"invalid_token": "Ten link do logowania wygasł lub został już użyty. Zaloguj się ponownie, aby kontynuować.",
 				"oauth_code_verification_failed": "Weryfikacja OAuth nie powiodła się. Spróbuj ponownie.",
 				"registration_is_currently_disabled_you_need_a_valid_invitation_to_create_an_account_": "Rejestracja jest obecnie wyłączona. Do utworzenia konta potrzebujesz prawidłowego zaproszenia.",
 				"use_a_permanent_email_address_disposable_addresses_cannot_create_accounts_": "Użyj stałego adresu e-mail. Na adresy jednorazowe nie można zakładać kont."

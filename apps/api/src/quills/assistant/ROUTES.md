@@ -41,7 +41,9 @@ External effects:          provider calls (OpenAI-compatible, 60-second timeout,
 
 `provider.ts` calls `QUILLS_AI_BASE_URL` with `fetch` (`/chat/completions`, `/embeddings`).
 Configuration: `QUILLS_AI_BASE_URL`, `QUILLS_AI_MODEL`, `QUILLS_AI_API_KEY` (optional),
-`QUILLS_AI_EMBEDDING_MODEL` (optional, 1536 dimensions). See the database guide's "AI provider".
+`QUILLS_AI_EMBEDDING_MODEL` (optional, 1536 dimensions), `QUILLS_AI_MONTHLY_TOKEN_LIMIT` (optional
+workspace limit for the customer routes, `budget.ts`: each call reserves its ceiling under a workspace
+lock before the provider call, so parallel calls cannot pass the limit together). See the database guide's "AI provider".
 Without a provider each AI route returns 409 `AI is not configured`, and background AI work
 finishes with no work. Provider failures map to fixed messages (409, 502); the provider's text
 and the key never reach a response, a run or `ai_usage_log`. Each call writes one usage row.

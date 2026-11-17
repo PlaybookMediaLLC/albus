@@ -1,6 +1,7 @@
 import { useId, useState } from "react";
 import { useAction } from "./useAction.js";
 import type { SurveyAnswer, WidgetSurvey } from "./types.js";
+import { useT } from "./i18n/useT.js";
 
 /** One survey question on the home tab: a score scale, choices or a text answer. */
 export function SurveyPrompt({
@@ -14,6 +15,7 @@ export function SurveyPrompt({
   onAnswer: (answer: SurveyAnswer) => Promise<unknown>;
   onDismiss: () => void;
 }) {
+  const t = useT();
   const id = useId();
   const [answer, setAnswer] = useState<string | null>(null);
   const [comment, setComment] = useState("");
@@ -42,7 +44,7 @@ export function SurveyPrompt({
     <section className="qb-contact-card qb-survey" aria-labelledby={id}>
       <h2 id={id}>{survey.question}</h2>
       {done ? (
-        <p role="status">Thanks for your answer.</p>
+        <p role="status">{t("Thanks for your answer.")}</p>
       ) : (
         <>
           {!open && (
@@ -64,8 +66,10 @@ export function SurveyPrompt({
             </div>
           )}
           <textarea
-            aria-label={open ? "Your answer" : "Comment (optional)"}
-            placeholder={open ? "Your answer" : "Add a comment (optional)"}
+            aria-label={open ? t("Your answer") : t("Comment (optional)")}
+            placeholder={
+              open ? t("Your answer") : t("Add a comment (optional)")
+            }
             rows={2}
             maxLength={2000}
             value={comment}
@@ -80,7 +84,7 @@ export function SurveyPrompt({
       )}
       <div className="qb-composer-actions">
         <button type="button" className="qb-text-button" onClick={onDismiss}>
-          {done ? "Close" : "Not now"}
+          {done ? t("Close") : t("Not now")}
         </button>
         {!done && (
           <button
@@ -89,7 +93,7 @@ export function SurveyPrompt({
             disabled={!ready || offline || action.pending}
             onClick={send}
           >
-            Send answer
+            {t("Send answer")}
           </button>
         )}
       </div>

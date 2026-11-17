@@ -5,6 +5,7 @@ import { Icon } from "./Icon.js";
 import { captureScreenshot } from "./capture.js";
 import { MAX_ATTACHMENTS, validateImage } from "./media.js";
 import type { WidgetViewProps } from "./types.js";
+import { useT } from "./i18n/useT.js";
 
 export function AttachmentControls({
   files,
@@ -23,6 +24,7 @@ export function AttachmentControls({
   onBusy: (busy: boolean) => void;
   target: RefObject<HTMLFormElement | null>;
 }) {
+  const t = useT();
   const input = useRef<HTMLInputElement>(null);
   const controller = useRef<AbortController | null>(null);
   const busy = useRef(false);
@@ -49,8 +51,8 @@ export function AttachmentControls({
       if (!abort.signal.aborted)
         setError(
           error instanceof Error
-            ? error.message
-            : "Could not add the image. Please try again.",
+            ? t.text(error.message)
+            : t("Could not add the image. Please try again."),
         );
     } finally {
       if (!abort.signal.aborted) {
@@ -133,7 +135,7 @@ export function AttachmentControls({
                 type="button"
                 disabled={disabled || working}
                 onClick={() => setEditing({ file, index })}
-                aria-label={`Edit ${file.name}`}
+                aria-label={t("Edit {name}", { name: file.name })}
               >
                 <AttachmentImage file={file} />
               </button>
@@ -141,7 +143,7 @@ export function AttachmentControls({
                 type="button"
                 className="qb-image-remove"
                 disabled={disabled || working}
-                aria-label={`Remove ${file.name}`}
+                aria-label={t("Remove {name}", { name: file.name })}
                 onClick={() => onChange(files.filter((_, i) => i !== index))}
               >
                 <Icon name="close" />
@@ -157,7 +159,7 @@ export function AttachmentControls({
           accept="image/png,image/jpeg,image/webp"
           multiple
           hidden
-          aria-label="Choose images"
+          aria-label={t("Choose images")}
           onChange={(event) => {
             const selected = Array.from(event.target.files ?? []);
             event.target.value = "";
@@ -167,8 +169,8 @@ export function AttachmentControls({
         <button
           type="button"
           className="qb-icon-button"
-          aria-label="Attach images"
-          title="Attach images"
+          aria-label={t("Attach images")}
+          title={t("Attach images")}
           disabled={disabled || working || files.length >= MAX_ATTACHMENTS}
           onClick={() => input.current?.click()}
         >
@@ -178,8 +180,8 @@ export function AttachmentControls({
           <button
             type="button"
             className="qb-icon-button"
-            aria-label="Capture screenshot"
-            title="Capture screenshot"
+            aria-label={t("Capture screenshot")}
+            title={t("Capture screenshot")}
             disabled={disabled || working || files.length >= MAX_ATTACHMENTS}
             onClick={() =>
               void perform(async (signal) => {
@@ -194,7 +196,7 @@ export function AttachmentControls({
             <Icon name="camera" />
           </button>
         )}
-        {working && <span role="status">Preparing image…</span>}
+        {working && <span role="status">{t("Preparing image…")}</span>}
       </div>
       {error && (
         <p role="alert" className="qb-form-error">

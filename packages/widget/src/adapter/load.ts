@@ -16,6 +16,7 @@ import {
 } from "./map.js";
 import type {
   Conversation,
+  FeedbackField,
   FeedbackPost,
   HelpArticle,
   UpdateEntry,
@@ -53,7 +54,14 @@ type Thread = { conversation: ApiConversation; messages: ApiMessage[] };
 
 // ponytail: one page per list (50 posts and updates, 100 articles, 20 conversations with
 // their latest 30 messages, 100 comments). The view has no "load more" control yet.
-const LIMITS = { posts: 50, updates: 50, articles: 100, conversations: 20 };
+const LIMITS = {
+  posts: 50,
+  updates: 50,
+  articles: 100,
+  conversations: 20,
+  roadmap: 20,
+};
+const ROADMAP_STAGES = ["in_progress", "planned", "shipped"] as const;
 
 const query = (values: Record<string, string | number | undefined>) => {
   const params = new URLSearchParams();
@@ -80,15 +88,33 @@ async function surface<T>(enabled: boolean, load: () => Promise<T[]>) {
   }
 }
 
+/** A board that the visitor sees, with its public custom fields (issue #71). */
+export interface WidgetBoard {
+  id: string;
+  slug: string;
+  name: string;
+  canSubmit: boolean;
+  fields: FeedbackField[];
+}
+
+/** The boards that the visitor sees, by name. */
+export async function loadBoards(api: Api, signal?: AbortSignal) {
+  const { items } = await api.request<{ items: WidgetBoard[] }>(
+    "GET",
+    "/widget/boards",
+    undefined,
+    signal,
+  );
+  return items.map((board) => ({ ...board, fields: board.fields ?? [] }));
+}
+
 /** The ID of the init `defaultBoard` (an ID or slug) when the visitor can see it. */
 export async function resolveBoard(
   api: Api,
   ref: string,
   signal?: AbortSignal,
 ) {
-  const { items } = await api.request<{
-    items: Array<{ id: string; slug: string }>;
-  }>("GET", "/widget/boards", undefined, signal);
+  const items = await loadBoards(api, signal);
   return items.find((board) => board.id === ref || board.slug === ref)?.id;
 }
 
@@ -123,18 +149,29 @@ export async function loadSnapshot(
   const { surfaces, locale, boardId } = options;
   const [feedback, updates, articles, conversations] = await Promise.all([
     surface(surfaces.feedback, async () => {
-      const { items } = await api.request<{ items: ApiPost[] }>(
-        "GET",
-        `/widget/posts${query({ limit: LIMITS.posts, boardId })}`,
-        undefined,
-        signal,
-      );
-      return items.flatMap((item) => toPost(item) ?? []);
+      const list = (path: string) =>
+        api.request<{ items: ApiPost[] }>("GET", path, undefined, signal);
+      // The Roadmap reads each stage on its own, so it is not limited to the newest posts. A failed
+      // stage read only shortens the Roadmap.
+      const [main, ...stages] = await Promise.all([
+        list(`/widget/posts${query({ limit: LIMITS.posts, boardId })}`),
+        ...ROADMAP_STAGES.map((stage) =>
+          list(
+            `/widget/posts${query({ limit: LIMITS.roadmap, boardId, stage, sort: "votes" })}`,
+          ).catch(() => ({ items: [] as ApiPost[] })),
+        ),
+      ]);
+      const seen = new Set<string>();
+      return [main, ...stages]
+        .flatMap(({ items }) => items)
+        .filter((item) => !seen.has(item.id) && Boolean(seen.add(item.id)))
+        .flatMap((item) => toPost(item) ?? []);
     }),
     surface(surfaces.changelog, async () => {
       const { entries } = await api.request<{ entries: ApiChangelogEntry[] }>(
         "GET",
-        `/widget/changelog${query({ limit: LIMITS.updates })}`,
+        // Entries that a teammate wrote in the visitor's language come in it (issue #76).
+        `/widget/changelog${query({ limit: LIMITS.updates, locale })}`,
         undefined,
         signal,
       );
@@ -184,12 +221,38 @@ export async function loadPost(api: Api, id: string, signal?: AbortSignal) {
   return toPost(post, comments.items.map(toComment));
 }
 
+/** Up to three requests anywhere on the visible boards with a title like the text. */
+export async function findSimilar(
+  api: Api,
+  text: string,
+  signal?: AbortSignal,
+) {
+  const { items } = await api.request<{
+    items: Array<{ id: string; title: string; voteCount?: number }>;
+  }>(
+    "GET",
+    `/widget/posts/similar${query({ title: text, limit: 3 })}`,
+    undefined,
+    signal,
+  );
+  return items.map((item) => ({
+    id: item.id,
+    title: item.title,
+    ...(item.voteCount !== undefined && { votes: item.voteCount }),
+  }));
+}
+
 /** One changelog entry: a deep link can point past the first page. */
-export async function loadUpdate(api: Api, id: string, signal?: AbortSignal) {
+export async function loadUpdate(
+  api: Api,
+  id: string,
+  signal?: AbortSignal,
+  locale?: string,
+) {
   return toUpdate(
     await api.request<ApiChangelogEntry>(
       "GET",
-      `/widget/changelog/${encodeURIComponent(id)}`,
+      `/widget/changelog/${encodeURIComponent(id)}${query({ locale })}`,
       undefined,
       signal,
     ),

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { portalHref } from "../../core/portal-href";
+import { usePortalSignInHref } from "../../portal/use-portal-sign-in-href";
 import { useGetPortalPost } from "../../hooks/feedback/use-get-portal-post";
 import { useListPortalPostComments } from "../../hooks/feedback/use-list-portal-post-comments";
 import { useSetPortalFollow } from "../../hooks/feedback/use-set-portal-follow";
@@ -13,6 +14,7 @@ import { StateView } from "../../ui/state-view";
 import { meta } from "./meta";
 import { PostActions } from "./parts/post-actions";
 import { PostAttachments } from "./parts/post-attachments";
+import { PostCustomFields } from "./parts/post-custom-fields";
 import { PostCommentsSection } from "./parts/post-comments-section";
 import { PostVote } from "./parts/post-vote";
 import { RelatedRequests } from "./parts/related-requests";
@@ -27,6 +29,7 @@ export interface PostPageProps {
 export function PostPage(props: PostPageProps) {
   const { t } = useTranslation("quills");
   const portal = usePortalRuntime();
+  const signInHref = usePortalSignInHref(props.workspaceId);
   const { viewer } = portal;
   const postId = props.params.postId ?? "";
   const [editOpen, setEditOpen] = useState(false);
@@ -47,6 +50,8 @@ export function PostPage(props: PostPageProps) {
   const follow = useSetPortalFollow(viewer);
   const currentVote = vote.data?.postId === post.data?.id ? vote.data : null;
   const here = portalHref(props.workspaceId, `posts/${postId}`);
+  const signIn =
+    viewer.kind === "user" ? undefined : signInHref(`posts/${postId}`);
   const data = post.data;
 
   return (
@@ -65,11 +70,7 @@ export function PostPage(props: PostPageProps) {
               href: portalHref(props.workspaceId, `boards/${data.board.id}`),
             }}
             following={viewer.kind === "user" ? data.following : undefined}
-            signInHref={
-              viewer.kind === "user"
-                ? undefined
-                : `/auth/sign-in?redirect=${encodeURIComponent(here)}`
-            }
+            signInHref={signIn ?? undefined}
             onFollowChange={async (following) => {
               await follow.mutateAsync({
                 param: { workspace: props.workspaceId, postId },
@@ -129,6 +130,7 @@ export function PostPage(props: PostPageProps) {
                   target={{ postId }}
                   content={data.content}
                 />
+                <PostCustomFields fields={data.customFields} />
                 <PostAttachments
                   workspaceId={props.workspaceId}
                   viewer={viewer}

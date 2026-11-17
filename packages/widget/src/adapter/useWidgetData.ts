@@ -3,10 +3,13 @@ import { ApiError, type Api } from "./api.js";
 import {
   emptySnapshot,
   loadArticle,
+  findSimilar,
   loadPost,
   loadSnapshot,
   loadUpdate,
+  loadBoards,
   resolveBoard,
+  type WidgetBoard,
   syncConversations,
   unavailable,
   type Snapshot,
@@ -20,6 +23,7 @@ import {
   toPost,
   toReactions,
   VOTE_EMOJI,
+  type ApiMessage,
 } from "./map.js";
 import { postMetadata } from "./post-context.js";
 import { uploadImage } from "./uploads.js";
@@ -38,6 +42,8 @@ export interface HostEvents {
     payload: EventMap[K],
   ): void;
   unread(count: number): void;
+  /** A new update that the launcher has not shown this visitor: show its title, or open it (#108). */
+  announce(entry: { id: string; title: string }, open: boolean): void;
   /** The API answered 401: this session ended. */
   expired(session: number | null): void;
 }
@@ -51,10 +57,14 @@ interface Options {
   surfaces: Surfaces;
   locale?: string;
   board?: string;
+  /** A board for the next post, from a new-post deep link; an unseen board falls back to `board`. */
+  composeBoard?: string;
   host: HostEvents;
   pollIntervalMs: number;
   /** The host app's metadata and the page URL from the SDK, sent with a new post. */
   context?: Record<string, string>;
+  /** The instance has an AI provider: the feedback composer can suggest a title and a board. */
+  ai?: boolean;
 }
 
 /** Replaces the item with the same ID, or adds it at `where`. */
@@ -80,9 +90,11 @@ export function useWidgetData({
   surfaces,
   locale,
   board,
+  composeBoard,
   host,
   pollIntervalMs,
   context = {},
+  ai = false,
 }: Options): Partial<WidgetViewProps> {
   const [state, setState] = useState({
     session,
@@ -95,6 +107,7 @@ export function useWidgetData({
   const send = writes(api);
   const abort = useRef(new AbortController());
   const boardId = useRef<string | undefined>(undefined);
+  const [boards, setBoards] = useState<WidgetBoard[]>([]);
   const current = state.session === session;
   const data = useRef(state.data);
   data.current = current ? state.data : emptySnapshot;
@@ -140,6 +153,22 @@ export function useWidgetData({
       throw error;
     }
   };
+  /** Uploads each attached file once; a retry reuses the IDs, so its idempotency key still fits. */
+  const uploadFiles = async (
+    options: SubmissionOptions,
+    signal: AbortSignal,
+  ) => {
+    const ids: string[] = [];
+    for (const file of options.attachments ?? []) {
+      let id = uploaded.current.get(file);
+      if (!id) {
+        id = await uploadImage(api, file, signal);
+        uploaded.current.set(file, id);
+      }
+      ids.push(id);
+    }
+    return ids;
+  };
   const reportUnread = async (signal: AbortSignal) => {
     const { unreadCount } = await send.unread(signal);
     if (!signal.aborted && unreadCount !== unread.current) {
@@ -150,10 +179,14 @@ export function useWidgetData({
   };
   // ponytail: read once per session and after a mark, not polled; updates ship rarely.
   const reportUpdatesUnread = async (signal: AbortSignal) => {
-    const { count } = await send.updatesUnread(signal);
-    if (!signal.aborted) {
-      updatesUnread.current = count;
-      badge();
+    const { count, announce, autoOpen } = await send.updatesUnread(signal);
+    if (signal.aborted) return;
+    updatesUnread.current = count;
+    badge();
+    // Once per visitor: the server's announced mark moves before the launcher shows the title.
+    if (announce) {
+      await send.announced(signal);
+      if (!signal.aborted) events.current.announce(announce, autoOpen);
     }
   };
   const load = (signal: AbortSignal) =>
@@ -163,16 +196,29 @@ export function useWidgetData({
           (await resolveBoard(api, board, signal).catch((error) => {
             if (!unavailable(error)) throw error;
           })) ?? "";
+      // The boards' public fields for the feedback composer, read beside the snapshot.
+      const fields =
+        surfaces.feedback && !boards.length
+          ? loadBoards(api, signal).then(
+              (items) => !signal.aborted && setBoards(items),
+              (error) => {
+                if (!unavailable(error)) throw error;
+              },
+            )
+          : undefined;
       // Read the count first: a reply that lands during the load makes the next poll read again.
       if (surfaces.messenger)
         await reportUnread(signal).catch((error) => {
           if (!unavailable(error)) throw error;
         });
-      const next = await loadSnapshot(
-        api,
-        { surfaces, locale, boardId: boardId.current || undefined },
-        signal,
-      );
+      const [next] = await Promise.all([
+        loadSnapshot(
+          api,
+          { surfaces, locale, boardId: boardId.current || undefined },
+          signal,
+        ),
+        fields,
+      ]);
       if (!signal.aborted) {
         setState({ session, data: next, loadState: "ready" });
         loaded.current = true;
@@ -184,25 +230,39 @@ export function useWidgetData({
         throw error;
       }
     });
-  const sent = (signal: AbortSignal, result: Sent) =>
-    patch(signal, (value) => {
-      const known = value.conversations.find(
-        (item) => item.id === result.conversation.id,
-      );
-      return {
-        ...value,
-        conversations: upsert(
-          value.conversations,
-          {
-            ...toConversation(result.conversation, []),
-            messages: mergeMessages(known?.messages ?? [], [
-              toMessage(result.message),
-            ]),
-          },
-          "end",
-        ),
-      };
-    });
+  const sent = async (signal: AbortSignal, result: Sent) => {
+    const merge = (incoming: ApiMessage[]) =>
+      patch(signal, (value) => {
+        const known = value.conversations.find(
+          (item) => item.id === result.conversation.id,
+        );
+        return {
+          ...value,
+          conversations: upsert(
+            value.conversations,
+            {
+              ...toConversation(result.conversation, []),
+              messages: mergeMessages(
+                known?.messages ?? [],
+                incoming.map(toMessage),
+              ),
+            },
+            "end",
+          ),
+        };
+      });
+    merge([result.message]);
+    // An automatic answer (the away reply) is written with the message: read what follows it.
+    const page = await api
+      .request<{ items: ApiMessage[] }>(
+        "GET",
+        `/widget/conversations/${encodeURIComponent(result.conversation.id)}/messages?${new URLSearchParams({ after: result.message.id, limit: "100" })}`,
+        undefined,
+        signal,
+      )
+      .catch(() => null);
+    if (page?.items.length && !signal.aborted) merge(page.items);
+  };
 
   useEffect(() => {
     if (session === null) return;
@@ -278,6 +338,11 @@ export function useWidgetData({
 
   // Actions only for surfaces that loaded: a denied surface stays hidden instead of failing.
   const { available, ...snapshot } = current ? state.data : emptySnapshot;
+  // The board a new post goes to: the init board, else the first that takes the visitor's posts,
+  // as the API picks it. Its public fields show in the composer.
+  const target =
+    boards.find((item) => item.id === boardId.current) ??
+    boards.find((item) => item.canSubmit);
   return {
     ...snapshot,
     loadState: current ? state.loadState : "loading",
@@ -301,7 +366,7 @@ export function useWidgetData({
         !data.current.updates.some((item) => item.id === id)
       )
         void run(async (signal) => {
-          const entry = await loadUpdate(api, id, signal);
+          const entry = await loadUpdate(api, id, signal, locale);
           patch(signal, (value) => ({
             ...value,
             updates: upsert(value.updates, entry, "end"),
@@ -317,26 +382,27 @@ export function useWidgetData({
         }).catch(() => {});
     },
     ...(available.feedback && {
+      feedbackFields: target?.fields ?? [],
       onSubmitFeedback: (body: string, options: SubmissionOptions) =>
         run(async (signal) => {
-          const attachmentIds: string[] = [];
-          for (const file of options.attachments ?? []) {
-            let id = uploaded.current.get(file);
-            if (!id) {
-              id = await uploadImage(api, file, signal);
-              uploaded.current.set(file, id);
-            }
-            attachmentIds.push(id);
-          }
+          const attachmentIds = await uploadFiles(options, signal);
+          const chosen = composeBoard
+            ? await resolveBoard(api, composeBoard, signal).catch(
+                () => undefined,
+              )
+            : undefined;
           const created = await send.createPost(
             // A post needs a title: a screenshot alone gets a plain one.
             body || (attachmentIds.length ? "Screenshot" : body),
             options.idempotencyKey,
-            boardId.current || undefined,
+            // A board picked in the composer, else the one the host page opened, else the default.
+            options.boardId ?? chosen ?? (boardId.current || target?.id),
             signal,
             {
               attachmentIds,
               metadata: postMetadata(page.current, navigator.userAgent),
+              title: options.title,
+              customFields: options.customFields,
             },
           );
           const post = toPost(created);
@@ -352,6 +418,36 @@ export function useWidgetData({
             statusId: created.status?.id ?? null,
           });
         }),
+      ...(ai && {
+        onDraftFeedback: (body: string) =>
+          run(async (signal) => {
+            const draft = await send.draftPost(body, signal);
+            const { items } =
+              draft.title.trim().length >= 3
+                ? await send.similarPosts(draft.title, signal)
+                : { items: [] };
+            return {
+              title: draft.title,
+              ...(draft.boardId && {
+                board: {
+                  id: draft.boardId,
+                  name: draft.boardName ?? "",
+                  fields:
+                    boards.find((item) => item.id === draft.boardId)?.fields ??
+                    [],
+                },
+              }),
+              similar: items.map((item) => ({
+                id: item.id,
+                title: item.title,
+                votes: item.voteCount,
+                voted: data.current.feedback.some(
+                  (post) => post.id === item.id && post.voted,
+                ),
+              })),
+            };
+          }),
+      }),
       onVoteFeedback: (postId: string, voted: boolean) =>
         run(async (signal) => {
           const result = await send.vote(postId, voted, signal);
@@ -366,6 +462,8 @@ export function useWidgetData({
             voteCount: result.voteCount,
           });
         }),
+      onFindSimilar: (text: string, signal: AbortSignal) =>
+        findSimilar(api, text, signal),
       onFollowFeedback: (postId: string, following: boolean) =>
         run(async (signal) => {
           const result = await send.follow(postId, following, signal);
@@ -476,6 +574,7 @@ export function useWidgetData({
               options.idempotencyKey,
               signal,
               postMetadata(page.current, navigator.userAgent),
+              await uploadFiles(options, signal),
             ),
           ),
         ),
@@ -493,11 +592,59 @@ export function useWidgetData({
               options.idempotencyKey,
               signal,
               postMetadata(page.current, navigator.userAgent),
+              await uploadFiles(options, signal),
             ),
           ),
         ),
       onOpenFile: (conversationId: string, fileId: string) =>
         run((signal) => send.fileUrl(conversationId, fileId, signal)),
+      ...(available.feedback && {
+        onConfirmFeedbackCard: (
+          conversationId: string,
+          messageId: string,
+          card: { title: string; body: string },
+        ) =>
+          run(async (signal) => {
+            // The message ID keys the post, so a retry after a failed confirm posts it once.
+            const created = await send.createPost(
+              card.body || card.title,
+              `card:${messageId}`,
+              boardId.current || undefined,
+              signal,
+              {
+                title: card.title,
+                metadata: postMetadata(page.current, navigator.userAgent),
+              },
+            );
+            const result = await send.confirmFeedbackCard(
+              conversationId,
+              messageId,
+              created.id,
+              signal,
+            );
+            const post = toPost(created);
+            patch(signal, (value) => ({
+              ...value,
+              conversations: value.conversations.map((item) =>
+                item.id === conversationId
+                  ? {
+                      ...item,
+                      messages: mergeMessages(item.messages, [
+                        toMessage(result.message),
+                      ]),
+                    }
+                  : item,
+              ),
+              ...(post && { feedback: upsert(value.feedback, post, "start") }),
+            }));
+            events.current.event("post:created", {
+              id: created.id,
+              title: created.title,
+              board: created.board,
+              statusId: created.status?.id ?? null,
+            });
+          }),
+      }),
       onReadConversation: (conversationId: string, throughMessageId: string) =>
         run(async (signal) => {
           const result = await send.markRead(

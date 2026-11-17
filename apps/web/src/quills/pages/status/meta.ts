@@ -3,7 +3,7 @@ export const meta = {
   id: "status",
   feature: "status",
   route: "/portal/$workspaceId/status",
-  audience: "public",
+  audience: "portal",
   mailLinked: true,
   token: "none",
   operations: [

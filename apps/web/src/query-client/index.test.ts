@@ -110,4 +110,21 @@ describe("Quills query defaults", () => {
       undefined,
     );
   });
+
+  it("asks once for a Quills answer that a retry cannot change, and retries a failed request", async () => {
+    const calls = async (kind: string) => {
+      const queryFn = vi.fn(() => Promise.reject({ kind }));
+      await queryClient
+        .fetchQuery({
+          queryKey: ["quills", "workspace", "anonymous", "area", kind],
+          queryFn,
+          retryDelay: 0,
+        })
+        .catch(() => undefined);
+      return queryFn.mock.calls.length;
+    };
+    for (const kind of ["notFound", "gone", "noAccess", "authRequired"])
+      expect(await calls(kind)).toBe(1);
+    expect(await calls("failed")).toBe(3);
+  });
 });

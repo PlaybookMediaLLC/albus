@@ -7,6 +7,7 @@ import posts from "./conversation-posts";
 import state from "./conversation-state";
 import tags from "./conversation-tags";
 import ticket from "./conversation-ticket";
+import ipBlocks from "./ip-blocks";
 import views from "./conversation-views";
 import conversations from "./conversations";
 import inbox from "./inbox";
@@ -24,4 +25,5 @@ export default apiRouter<BaseVariables & { workspaceId: string }>()
   .route("/", views)
   .route("/", inbox)
   .route("/", posts)
-  .route("/", ticket);
+  .route("/", ticket)
+  .route("/", ipBlocks);

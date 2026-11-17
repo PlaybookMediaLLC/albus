@@ -3,7 +3,7 @@ export const meta = {
   id: "help-center-article",
   feature: "help-center",
   route: "/portal/$workspaceId/hc/$locale/articles/$idSlug",
-  audience: "public",
+  audience: "portal",
   mailLinked: true,
   token: "none",
   operations: [

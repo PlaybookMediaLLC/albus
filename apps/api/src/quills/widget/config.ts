@@ -1,8 +1,10 @@
 import { apiRouter, z } from "../../openapi";
 import { settings } from "../../database/quills/schema/auth";
+import { aiConfig } from "../assistant/provider";
 import { widgetEnabled } from "../framework/audience";
 import { defineQuillsRoute } from "../framework/define-route";
 import { bool, parseJson, record, str } from "../settings/area";
+import { REPLY_TIMES, replyTimeOf } from "../settings/widget-reply-time";
 import { widgetTabs } from "../settings/widget-tabs";
 
 // Public boot reads for the widget: its server config, the realtime transport and the locale.
@@ -35,10 +37,23 @@ const widgetConfig = defineQuillsRoute({
           home: z.boolean(),
         }),
         hmacRequired: z.boolean(),
+        ai: z.boolean().openapi({
+          description:
+            "True when the instance has an AI provider: the feedback composer can suggest a title and a board.",
+        }),
         visitorAnalytics: z.boolean(),
         visitorDeviceTracking: z.boolean(),
         launcherGreeting: z.string(),
         launcherLabel: z.string(),
+        replyTime: z.enum(REPLY_TIMES).nullable().openapi({
+          description:
+            "How soon the team usually replies; null shows no reply-time line",
+        }),
+        home: z.object({
+          greeting: z.string().nullable(),
+          subtitle: z.string().nullable(),
+          showTeamAvatars: z.boolean(),
+        }),
         position: z.enum(["left", "right"]),
         theme: z.object({
           themeMode: z.enum(["light", "dark", "user"]),
@@ -70,10 +85,17 @@ const widgetConfig = defineQuillsRoute({
         // The same tab defaults as the settings read.
         tabs: widgetTabs(stored),
         hmacRequired: true,
+        ai: aiConfig() !== null,
         visitorAnalytics: bool(stored.visitorAnalytics, true),
         visitorDeviceTracking: bool(stored.visitorDeviceTracking, true),
         launcherGreeting: str(stored.launcherGreeting) ?? "",
         launcherLabel: str(stored.launcherLabel) ?? "",
+        replyTime: replyTimeOf(stored.replyTime),
+        home: {
+          greeting: str(record(stored.home).greeting) ?? null,
+          subtitle: str(record(stored.home).subtitle) ?? null,
+          showTeamAvatars: bool(record(stored.home).showTeamAvatars, true),
+        },
         position:
           stored.position === "bottom-left"
             ? ("left" as const)

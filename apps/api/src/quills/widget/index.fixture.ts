@@ -8,6 +8,8 @@ export {
 export * from "./feedback/index.fixture";
 export * from "./identify.fixture";
 export * from "./install.fixture";
+export * from "./portal-link.fixture";
 export * from "./session.fixture";
+export * from "./activity.fixture";
 export * from "./help/index.fixture";
 export * from "./surveys.fixture";

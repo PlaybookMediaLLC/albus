@@ -726,6 +726,65 @@ describe.skipIf(!url)("Quills customer support routes and delivery", () => {
     );
   });
 
+  it("tells the customer about a request a teammate recorded for them with IDs only, never revenue (#79)", async () => {
+    const env = contractEnv();
+    await settle();
+    const started = await call("POST", "/support/conversations", {
+      user: env.customerA,
+      body: { content: "Can I export my data?", idempotencyKey: key() },
+    });
+    const id = started.body.conversation.id as string;
+    await settle();
+    const [conversation] = await env.scoped(env.a, (db) =>
+      db
+        .select({ visitor: conversations.visitorPrincipalId })
+        .from(conversations)
+        .where(eq(conversations.id, id as never)),
+    );
+    const company = await call("POST", "/companies", {
+      user: env.owner,
+      teammate: true,
+      body: { name: `Revenue ${key()}`, mrrCents: 4242424 },
+    });
+    expect(company.status).toBe(200);
+    await call("PUT", `/users/${conversation!.visitor}/company`, {
+      user: env.owner,
+      teammate: true,
+      body: { companyId: company.body.id },
+    });
+    const [board] = await env.scoped(env.a, (db) =>
+      db
+        .insert(boards)
+        .values({ name: "Ideas", slug: key() })
+        .returning({ id: boards.id }),
+    );
+    broadcast.mockClear();
+    const tracked = await call("POST", `/conversations/${id}/posts`, {
+      user: env.owner,
+      teammate: true,
+      body: { boardId: board!.id, title: "Data export" },
+    });
+    expect(tracked.status).toBe(200);
+    await drain();
+    const toCustomer = broadcast.mock.calls
+      .filter(([user]) => user === env.customerA)
+      .map(([, message]) => message);
+    expect(toCustomer.length).toBeGreaterThan(0);
+    for (const message of toCustomer)
+      expect(
+        Object.keys(message).every((k) =>
+          [
+            "type",
+            "workspaceId",
+            "eventId",
+            "conversationId",
+            "ticketId",
+          ].includes(k),
+        ),
+      ).toBe(true);
+    expect(JSON.stringify(toCustomer)).not.toMatch(/4242424|mrr|revenue/i);
+  });
+
   it("mails a teammate reply on an email conversation to the customer once, and never a note", async () => {
     const env = contractEnv();
     const visitor = await plainCustomer(env, env.a);
@@ -1182,8 +1241,13 @@ describe.skipIf(!url)("Quills customer support routes and delivery", () => {
     await drain();
     await drain();
     await drain();
-    expect(mail.map((m) => m.to)).toEqual([[address]]);
-    expect(readable(mail[0]!.data)).toContain("ReplyAllMarker-fixed");
+    // One copy per linked requester: the email pair at its address, and the portal ticket's
+    // customer at the verified account address, because the reply landed in their ticket.
+    expect(mail.map((m) => m.to).sort()).toEqual(
+      [[address], [`${env.customerA}@example.test`]].sort(),
+    );
+    for (const sent of mail)
+      expect(readable(sent.data)).toContain("ReplyAllMarker-fixed");
     const [kept] = await env.scoped(env.a, (db) =>
       db
         .select({
@@ -1211,7 +1275,7 @@ describe.skipIf(!url)("Quills customer support routes and delivery", () => {
     for (const event of replied) await fanOut(env.a, event.eventId);
     await drain();
     await drain();
-    expect(mail).toHaveLength(1);
+    expect(mail).toHaveLength(2);
 
     // The status cascade tells the linked portal requester.
     await settle();

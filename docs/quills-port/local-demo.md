@@ -8,7 +8,7 @@ pnpm dev:demo          # start, and seed the demo workspace if it has no demo da
 pnpm dev:demo --reset  # delete the demo workspace, then seed it again
 ```
 
-Press Ctrl-C to stop. The command stops the API, the web app and the container that it started.
+Press Ctrl-C to stop. The command stops the API, the web app and the containers that it started.
 The volume keeps the data for the next start.
 
 ## What the command does
@@ -17,6 +17,8 @@ The volume keeps the data for the next start.
 2. It creates or starts the container `kaneo-demo-postgres` (the PostgreSQL image of
    `compose.yml`, volume `kaneo-demo-postgres-data`, port `127.0.0.1:54480`) and waits until it
    is healthy. It does not touch other containers.
+   It also creates or starts `kaneo-demo-mailpit` (`axllent/mailpit`): SMTP on `127.0.0.1:51390`,
+   web inbox on `127.0.0.1:51391`. Mailpit keeps mail in memory, so a restart empties the inbox.
 3. It builds the workspace packages that the API and the web app import.
 4. It starts the API, which runs the Kaneo and Quills migrations, and the web app. Each log line
    has a prefix: `[api]`, `[web]`, `[seed]`, `[build]` or `[demo]`.
@@ -35,10 +37,12 @@ The URLs use `127.0.0.1`, not `localhost`. Thus the browser keeps the demo sessi
 | Teammate app | `http://127.0.0.1:5190/feedback/quills_portal_demo` |
 | Kaneo | `http://127.0.0.1:5190/dashboard/workspace/quills_portal_demo` |
 | API health | `http://127.0.0.1:1390/api/health` |
+| Mail inbox | `http://127.0.0.1:51391` |
 
 ## Sign-in
 
-Sign-in uses email and password. The demo needs no mail server. The accounts are local test
+Sign-in uses email and password, or a sign-in link or code: Kaneo's mail goes to the local mail
+inbox, never out. So does Quills mail: status changes, shipped notices and request updates. The widget's "Open in portal" link lands there too. The accounts are local test
 accounts only:
 
 - Teammate (workspace owner): `portal-demo@example.test`
@@ -53,15 +57,18 @@ Both use the password that the command prints at start.
   all worktrees share it because they share the one container. If you delete it, also delete the
   container and the volume:
   `docker rm -f kaneo-demo-postgres && docker volume rm kaneo-demo-postgres-data`.
+  The mail catcher keeps no data: `docker rm -f kaneo-demo-mailpit` removes it.
 - `~/.config/kaneo/quills-ai.env` (optional): when it sets `QUILLS_AI_API_KEY`, AI is on through
   OpenRouter, with `anthropic/claude-sonnet-5.5` and `openai/text-embedding-3-small`. The
   file's `QUILLS_AI_` values replace these defaults, and the command ignores its other keys. The command says "AI on" or "AI off" at start and never prints
   the key.
 
-The API loads a root `.env`, but values that the command sets win. The command sets the mail
-variables (`SMTP_HOST`, `EMAIL_SMTP_HOST`, the Resend keys and `EMAIL_SES_ACCESS_KEY_ID`), the
-Redis variables and, when AI is off, `QUILLS_AI_API_KEY` to empty values. Thus the demo sends no
-mail, uses no shared Redis, and AI stays off without the AI file. Only the API gets the AI key.
+The API loads a root `.env`, but values that the command sets win. The command points Kaneo's
+mail (`SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`) and Quills mail (`EMAIL_SMTP_HOST`,
+`EMAIL_SMTP_PORT`, `EMAIL_FROM`) at the local Mailpit, with no TLS and no login, and sets the
+other mail variables (the Resend keys and `EMAIL_SES_ACCESS_KEY_ID`), the Redis variables and, when AI is off, `QUILLS_AI_API_KEY` to empty values. Thus no mail leaves the
+machine, the demo uses no shared Redis, and AI stays off without the AI file. Only the API gets
+the AI key.
 
 Only one demo runs at a time on a machine. The lock file is `~/.config/kaneo/dev-demo.lock`.
 
@@ -69,3 +76,9 @@ Only one demo runs at a time on a machine. The lock file is `~/.config/kaneo/dev
 
 The API reads its port from `KANEO_API_PORT` (default `1337`). The web app gets `--port 5190
 --strictPort`. If a demo port is in use, the command stops with a message that names the port.
+
+## The desktop app on the demo stack
+
+`pnpm dev:desktop` starts the demo stack, or uses one that already runs, and then opens the
+desktop app on `http://127.0.0.1:5190`. It needs Rust. Close the app or press Ctrl-C to stop. A
+stack that the command started stops too. See `apps/desktop/README.md` for the tests.

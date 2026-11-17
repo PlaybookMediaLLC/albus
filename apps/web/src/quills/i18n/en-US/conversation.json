@@ -13,5 +13,9 @@
 	"send": "Send reply",
 	"readOnly": "This conversation is read-only.",
 	"attachment": "Attachment: {{name}}",
-	"attachmentFailed": "The file could not be opened. Try again."
+	"attachmentFailed": "The file could not be opened. Try again.",
+	"assistant": "Assistant",
+	"submitRequest": "Submit request",
+	"requestSubmitted": "Request submitted",
+	"requestFailed": "The request could not be submitted. Try again."
 }

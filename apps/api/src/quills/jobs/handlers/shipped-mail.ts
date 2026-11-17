@@ -8,7 +8,7 @@ import {
   lte,
   sql,
 } from "drizzle-orm";
-import { sendShippedEmail } from "@kaneo/email/quills";
+import { directionOf, sendShippedEmail } from "@kaneo/email/quills";
 import type { ChangelogId, PostId, PrincipalId } from "@kaneo/ids";
 import type { Database } from "../../../database/quills/client";
 import { principal, settings } from "../../../database/quills/schema/auth";
@@ -34,6 +34,8 @@ import {
   unsubscribeUrl,
 } from "../../portal/unsubscribe-token";
 import type { DeliveryEvent, Subscribers } from "../fanout";
+import { changelogTranslations } from "../../../database/quills/schema/changelog-translations";
+import { recipientLanguage } from "./recipient-language";
 
 // Shipped notices (RFC 0003, feature 13). When a changelog entry is published, the voters and the
 // status followers of its linked posts hear that their request shipped: teammates in-app and by
@@ -85,6 +87,9 @@ const shippedPosts = (db: Database, entryId: ChangelogId) =>
     )
     .orderBy(asc(changelogEntryPosts.createdAt), asc(posts.id));
 
+/** A voter who unsubscribed from the post they voted for, or from the post it was merged into. */
+const unsubscribed = sql`exists (select 1 from ${postSubscriptions} s where s.principal_id = ${postVotes.principalId} and not s.notify_status_changes and (s.post_id = ${postVotes.postId} or s.post_id = (select p.canonical_post_id from ${posts} p where p.id = ${postVotes.postId})))`;
+
 /** Voters and status followers of the posts, each once. */
 const recipients: Subscribers["recipients"] = async (db, event) => {
   const entry = await shippedEntry(db, event);
@@ -93,7 +98,12 @@ const recipients: Subscribers["recipients"] = async (db, event) => {
   const rows = await db
     .select({ id: postVotes.principalId })
     .from(postVotes)
-    .where(inArray(postVotes.postId, withDuplicates(db, ids)))
+    .where(
+      and(
+        inArray(postVotes.postId, withDuplicates(db, ids)),
+        sql`not ${unsubscribed}`,
+      ),
+    )
     .union(
       db
         .select({ id: postSubscriptions.principalId })
@@ -233,6 +243,20 @@ const entry: Subscribers = {
       principalId,
       "unsubscribe_shipped",
     );
+    // The entry's version in the customer's saved language, else its own title (issue #76).
+    const lang = await recipientLanguage(db, principalId);
+    const dir = directionOf(lang ?? "en");
+    const [version] = lang
+      ? await db
+          .select({ title: changelogTranslations.title })
+          .from(changelogTranslations)
+          .where(
+            and(
+              eq(changelogTranslations.changelogEntryId, shipped.id),
+              eq(changelogTranslations.locale, lang),
+            ),
+          )
+      : [];
     return {
       type: TYPE,
       emailType: "ShippedEmail",
@@ -240,7 +264,8 @@ const entry: Subscribers = {
       send: (to) =>
         sendShippedEmail({
           to,
-          entryTitle: shipped.title,
+          dir,
+          entryTitle: version?.title ?? shipped.title,
           entryUrl: portalPaths.changelogEntry(workspace.id, shipped.id),
           requestTitle: request.title,
           workspaceName: workspace.name,

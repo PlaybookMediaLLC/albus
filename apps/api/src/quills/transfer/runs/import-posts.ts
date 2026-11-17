@@ -14,6 +14,7 @@ import {
   postTagAssignments,
 } from "../../../database/quills/schema/posts";
 import { postStatuses } from "../../../database/quills/schema/statuses";
+import { checkValues, fieldsOf } from "../../feedback/custom-fields";
 import { boardVisible } from "../../feedback/visibility";
 import { parseCsv } from "./csv";
 
@@ -38,24 +39,90 @@ const optional = (max: number) =>
     .max(max)
     .optional()
     .transform((v) => v || undefined);
+// A date and time without a zone, as other tools write it, is read as UTC.
+const LOCAL_TIME = /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})(:\d{2}(?:\.\d+)?)?$/;
 const rowSchema = z.object({
   title: z.string().trim().min(1, "Title is required").max(200),
-  content: z.string().trim().max(10000),
+  content: z.string().trim().max(10000).default(""),
   status: optional(200),
   tags: optional(2000),
   board: optional(200),
   author_email: optional(254).pipe(z.email().optional()),
   author_name: optional(200),
   // ISO only, as the posts export writes it: a loose date parser reads "1" as 2001-01-01.
-  created_at: optional(40).pipe(
-    z
-      .union([z.iso.date(), z.iso.datetime({ offset: true })], {
-        error: "Use an ISO date",
-      })
-      .optional(),
-  ),
+  created_at: optional(40)
+    .transform((v) =>
+      v?.replace(
+        LOCAL_TIME,
+        (_, day: string, time: string, seconds?: string) =>
+          `${day}T${time}${seconds ?? ":00"}Z`,
+      ),
+    )
+    .pipe(
+      z
+        .union([z.iso.date(), z.iso.datetime({ offset: true })], {
+          error: "Use an ISO date",
+        })
+        .optional(),
+    ),
   source_id: optional(200),
+  // A JSON object of field values keyed by field key, as the posts export writes it.
+  custom_fields: optional(20000),
 });
+
+// Other feedback tools name the same columns differently (gap G-25): their exports import as they
+// are. A header matches here when the file has no column of the canonical name. The tools do not
+// publish their export headers, so these are the common names. A vote count is not imported: a
+// vote belongs to a person.
+const ALIASES: Record<string, string> = {
+  post_title: "title",
+  idea_title: "title",
+  name: "title",
+  subject: "title",
+  details: "content",
+  post_details: "content",
+  description: "content",
+  body: "content",
+  post_status: "status",
+  state: "status",
+  board_name: "board",
+  email: "author_email",
+  user_email: "author_email",
+  created_by_email: "author_email",
+  author: "author_name",
+  post_author: "author_name",
+  user_name: "author_name",
+  created_by: "author_name",
+  created: "created_at",
+  created_date: "created_at",
+  creation_date: "created_at",
+  date: "created_at",
+  submitted_at: "created_at",
+  labels: "tags",
+  id: "source_id",
+  post_id: "source_id",
+  idea_id: "source_id",
+  url: "source_id",
+  post_url: "source_id",
+};
+
+/** Header names as the row schema reads them: lower case, words joined by "_", aliases resolved. */
+export function importColumns(header: readonly string[]) {
+  const names = header.map((name) =>
+    name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_|_$/g, ""),
+  );
+  const taken = new Set(names);
+  return names.map((name) => {
+    const canonical = ALIASES[name];
+    if (!canonical || taken.has(canonical)) return name;
+    taken.add(canonical);
+    return canonical;
+  });
+}
 
 /** The data rows of a CSV file keyed by normalized header, or why the file cannot be read. */
 export function readRecords(
@@ -68,10 +135,8 @@ export function readRecords(
     return { error: "The file is not valid CSV" };
   }
   const [header, ...data] = rows;
-  const columns = (header ?? []).map((name) =>
-    name.trim().toLowerCase().replace(/\s+/g, "_"),
-  );
-  const missing = ["title", "content"].filter((c) => !columns.includes(c));
+  const columns = importColumns(header ?? []);
+  const missing = ["title"].filter((c) => !columns.includes(c));
   if (missing.length)
     return { error: `Missing required columns: ${missing.join(", ")}` };
   if (!data.length) return { error: "The file has no rows" };
@@ -82,6 +147,43 @@ export function readRecords(
       Object.fromEntries(columns.map((c, i) => [c, row[i] ?? ""])),
     ),
   };
+}
+
+const STATUS_WORDS: [RegExp, string][] = [
+  [/^(new|pending|needs[ _]review|awaiting[ _]review)$/, "open"],
+  [/^(reviewing|considering|under[ _]consideration)$/, "under_review"],
+  [/^(next|later|up[ _]next|roadmap|on[ _]the[ _]roadmap)$/, "planned"],
+  [
+    /^(in[ _]development|building|started|doing|working[ _]on[ _]it)$/,
+    "in_progress",
+  ],
+  [/^(completed|done|shipped|released|live|launched|fixed)$/, "complete"],
+  [
+    /^(declined|rejected|won'?t[ _](do|fix)|not[ _]planned|archived)$/,
+    "closed",
+  ],
+];
+/**
+ * The checked values of a custom_fields cell, or why they are invalid. Required fields are not
+ * asked: an older post may predate them. A teammate imports, so internal fields are allowed.
+ */
+function fieldValuesOf(text: string, fields: ReturnType<typeof fieldsOf>) {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return "custom_fields is not valid JSON";
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+    return "custom_fields must be a JSON object";
+  try {
+    return checkValues(fields, parsed as never, {
+      team: true,
+      requireAll: false,
+    });
+  } catch (error) {
+    return error instanceof Error ? error.message : "Invalid custom_fields";
+  }
 }
 
 const clip = (value: string) =>
@@ -121,9 +223,12 @@ export async function importPosts(
   });
 
   const visibleBoards = await db
-    .select({ id: boards.id, slug: boards.slug })
+    .select({ id: boards.id, slug: boards.slug, settings: boards.settings })
     .from(boards)
     .where(boardVisible(input.projects));
+  const fieldsByBoard = new Map(
+    visibleBoards.map((b) => [String(b.id), fieldsOf(b.settings)]),
+  );
   if (!visibleBoards.some((b) => b.id === input.boardId)) {
     fail(0, "The target board is not available", "boardId");
     return totals(0, 0);
@@ -147,6 +252,12 @@ export async function importPosts(
     ]),
   );
   const defaultStatus = statuses.find((s) => s.isDefault)?.id ?? null;
+  // Another tool's status word, as the default status of the same meaning.
+  const statusOf = (name: string) => {
+    const key = name.toLowerCase();
+    const word = STATUS_WORDS.find(([pattern]) => pattern.test(key))?.[1];
+    return statusByKey.get(key) ?? (word ? statusByKey.get(word) : undefined);
+  };
   const tags = await db
     .select({ id: postTags.id, name: postTags.name })
     .from(postTags)
@@ -168,9 +279,7 @@ export async function importPosts(
       ? boardBySlug.get(row.board.toLowerCase())
       : input.boardId;
     if (!boardId) fail(line, `Unknown board: ${clip(row.board!)}`, "board");
-    const statusId = row.status
-      ? statusByKey.get(row.status.toLowerCase())
-      : defaultStatus;
+    const statusId = row.status ? statusOf(row.status) : defaultStatus;
     if (statusId === undefined)
       fail(line, `Unknown status: ${clip(row.status!)}`, "status");
     const tagNames = (row.tags ?? "")
@@ -189,10 +298,20 @@ export async function importPosts(
         fail(line, "Duplicate source_id in this file", "source_id");
       sourceIds.add(row.source_id);
     }
+    const customFieldValues = row.custom_fields
+      ? fieldValuesOf(
+          row.custom_fields,
+          fieldsByBoard.get(String(boardId)) ?? [],
+        )
+      : null;
+    if (typeof customFieldValues === "string")
+      fail(line, customFieldValues, "custom_fields");
     return [
       {
         line,
         ...row,
+        customFieldValues:
+          typeof customFieldValues === "string" ? null : customFieldValues,
         boardId: boardId!,
         statusId: statusId ?? null,
         tagIds: [...new Set(tagIds)] as TypeId<"post_tag">[],
@@ -308,6 +427,7 @@ export async function importPosts(
           ? authors.get(row.author_email.toLowerCase())!
           : teammate,
         statusId: row.statusId,
+        customFieldValues: row.customFieldValues,
         ...(row.createdAt && {
           createdAt: row.createdAt,
           updatedAt: row.createdAt,

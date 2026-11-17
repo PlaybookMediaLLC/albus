@@ -40,6 +40,7 @@ import {
   genericOAuth,
   lastLoginMethod,
   magicLink,
+  oneTimeToken,
   openAPI,
   organization,
 } from "better-auth/plugins";
@@ -119,6 +120,10 @@ import {
 import { resolveFileSecret } from "./utils/file-secret";
 import { generateDemoName } from "./utils/generate-demo-name";
 import { getEmailRequestContext } from "./utils/email-request-context";
+import {
+  QUILLS_PORTAL_SESSION_PATH,
+  quillsPortalSession,
+} from "./utils/quills-portal-session";
 import { getDefaultCookieAttributes } from "./utils/get-default-cookie-attributes";
 import { getInvitationEmailSubject } from "./utils/get-invitation-email-subject";
 import {
@@ -410,6 +415,7 @@ export const auth = betterAuth({
   },
   plugins: [
     lockedSessionRevocation,
+    quillsPortalSession,
     ...(process.env.DISABLE_GUEST_ACCESS !== "true"
       ? [
           anonymous({
@@ -754,6 +760,13 @@ export const auth = betterAuth({
       validateClient: async (clientId) =>
         getDeviceAuthClientIds().has(clientId),
     }),
+    // Desktop sign-in (apps/api/src/desktop): the server turns a device-flow token into the
+    // session cookie. HTTP calls cannot mint a one-time token; only that route makes one.
+    oneTimeToken({
+      disableClientRequest: true,
+      storeToken: "hashed",
+      expiresIn: 1,
+    }),
     adminPlugin({
       defaultRole: "user",
       adminRoles: ["admin"],
@@ -833,6 +846,10 @@ export const auth = betterAuth({
             },
           );
           if ((user as Partial<UserWithAnonymous>).isAnonymous) return;
+          // A Quills portal token sign-in creates a portal-only customer account: always the
+          // plain user role, whatever the instance default (utils/quills-portal-session.ts).
+          if (ctx?.path === QUILLS_PORTAL_SESSION_PATH)
+            return { data: { role: "user" } };
           // Every sign-up path (password, email code, OAuth/OIDC) gets the
           // default role. better-auth's admin endpoint sets its own role.
           if (ctx?.path === "/admin/create-user") return;
@@ -845,7 +862,9 @@ export const auth = betterAuth({
             },
           };
         },
-        after: async (user) => {
+        after: async (user, ctx) => {
+          // A portal token sign-in account is never promoted to instance administrator.
+          if (ctx?.path === QUILLS_PORTAL_SESSION_PATH) return;
           // The anonymous() plugin creates ephemeral users for guest
           // access; never promote one to instance admin even if no
           // real admin exists yet. `isAnonymous` is contributed by the

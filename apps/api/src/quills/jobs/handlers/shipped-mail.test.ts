@@ -36,6 +36,7 @@ import {
   enablePortal,
   verifyEmail,
 } from "../../portal/customer-seed.fixture";
+import { mintUnsubscribeToken } from "../../portal/unsubscribe-token";
 import { drainQuillsWorkspace } from "../worker";
 import { runQuillsSweeps } from "./sweeps";
 
@@ -403,6 +404,72 @@ describe.skipIf(!url)("Quills shipped notices", () => {
     expect(mail.shipped).toEqual([]);
   });
 
+  it("mails a customer the entry's version in their saved language and direction, others the entry's own title", async () => {
+    const env = contractEnv();
+    mail.shipped.length = 0;
+    const published = await publish([p1.postId, p2.postId]);
+    expect(published.status).toBe(200);
+    // The German version is written before the worker delivers the event.
+    const saved = await app.request(
+      `/quills/${env.a}/changelog/${published.body.id}/translations`,
+      {
+        method: "PUT",
+        headers: {
+          "x-test-user": env.owner,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          locale: "ar",
+          title: "متاح الآن",
+          content: "جديد",
+        }),
+      },
+    );
+    expect(saved.status).toBe(200);
+    await env.scoped(env.a, (db) =>
+      db
+        .update(customer)
+        .set({ preferredLanguage: "ar-EG" })
+        .where(
+          eq(
+            customer.id,
+            sql`(select user_id from quills.principal where id = ${sql.param(customerA, principal.id)})`,
+          ),
+        ),
+    );
+    try {
+      await drain();
+      const byAddress = Object.fromEntries(
+        mail.shipped.map((sent) => [
+          sent.to,
+          sent as { entryTitle?: string; dir?: string },
+        ]),
+      );
+      // Arabic: the Arabic version, laid out right to left (issues #76, #117).
+      expect(byAddress[`${env.customerA}@example.test`]).toMatchObject({
+        entryTitle: "متاح الآن",
+        dir: "rtl",
+      });
+      // The follower saved no language: the entry's own title, left to right.
+      expect(byAddress[visitors.follower!.email]).toMatchObject({
+        entryTitle: published.body.title,
+        dir: "ltr",
+      });
+    } finally {
+      await env.scoped(env.a, (db) =>
+        db
+          .update(customer)
+          .set({ preferredLanguage: null })
+          .where(
+            eq(
+              customer.id,
+              sql`(select user_id from quills.principal where id = ${sql.param(customerA, principal.id)})`,
+            ),
+          ),
+      );
+    }
+  });
+
   it("records a refused send as failed and an uncertain one as never sent again", async () => {
     const env = contractEnv();
     const outcomes = async (eventId: string) =>
@@ -446,5 +513,53 @@ describe.skipIf(!url)("Quills shipped notices", () => {
     );
     await drain();
     expect(mail.shipped).toEqual([]);
+  });
+
+  it("sends no shipped notice to a voter who unsubscribed from the post", async () => {
+    const env = contractEnv();
+    const post = await customerPost(env, env.a);
+    const voter = async () => {
+      const visitor = await env.widgetVisitor(env.a);
+      const principalId = visitor.principalId as PrincipalId;
+      const [row] = await env.scoped(env.a, async (db) => {
+        await db
+          .insert(postVotes)
+          .values({ postId: post.postId as PostId, principalId });
+        return db
+          .select({ email: customer.email })
+          .from(principal)
+          .innerJoin(customer, eq(customer.id, principal.userId))
+          .where(eq(principal.id, principalId));
+      });
+      return { principalId, email: row!.email! };
+    };
+    const stays = await voter();
+    const leaves = await voter();
+    // The unsubscribe link of a status or update mail about this post.
+    const token = await env.scoped(env.a, (db) =>
+      mintUnsubscribeToken(
+        db,
+        leaves.principalId,
+        "unsubscribe_post",
+        post.postId as PostId,
+      ),
+    );
+    const confirmed = await app.request(
+      `/quills-public/${env.a}/unsubscribe/confirm`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-kaneo-client-ip": "203.0.113.8",
+        },
+        body: JSON.stringify({ token }),
+      },
+    );
+    expect(await confirmed.json()).toMatchObject({ processed: true });
+    mail.shipped.length = 0;
+    expect((await publish([post.postId])).status).toBe(200);
+    await drain();
+    expect(to()).toContain(stays.email);
+    expect(to()).not.toContain(leaves.email);
   });
 });

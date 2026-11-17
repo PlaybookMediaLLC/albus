@@ -14,6 +14,8 @@ export interface WeeklyDigestItem {
 }
 
 interface WeeklyDigestEmailProps {
+  /** Text direction: "rtl" for a recipient who reads a right-to-left language (issue #117). */
+  dir?: "ltr" | "rtl";
   /** Posts that this person created, voted for or follows and whose status changed last week. */
   items: readonly WeeklyDigestItem[];
   myFeedbackUrl: string;
@@ -24,6 +26,7 @@ interface WeeklyDigestEmailProps {
 
 /** The weekly summary of status changes on a person's feedback (RFC 0003, feature 16, D15). */
 export function WeeklyDigestEmail({
+  dir,
   items,
   myFeedbackUrl,
   organizationName,
@@ -32,6 +35,7 @@ export function WeeklyDigestEmail({
 }: WeeklyDigestEmailProps) {
   return (
     <EmailLayout
+      dir={dir}
       footer={
         <NotificationFooter
           reason="You received this email because you created, voted for or follow this feedback."

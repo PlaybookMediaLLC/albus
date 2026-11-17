@@ -180,6 +180,7 @@
 			"guestError": "Qonaq kimi daxil olmaq alınmadı",
 			"errors": {
 				"account_not_linked": "Bu kimliyi mövcud hesabla əlaqələndirmək mümkün olmadı. Hesabı təsdiqləmək üçün e-poçtla daxil olun, sonra SSO ilə yenidən cəhd edin. E-poçtla giriş mümkün deyilsə, inzibatçınızla əlaqə saxlayın.",
+				"invalid_token": "Bu giriş linkinin vaxtı bitib və ya o artıq istifadə olunub. Davam etmək üçün yenidən daxil olun.",
 				"oauth_code_verification_failed": "OAuth doğrulaması alınmadı. Yenidən cəhd edin.",
 				"registration_is_currently_disabled_you_need_a_valid_invitation_to_create_an_account_": "Qeydiyyat hazırda söndürülüb. Hesab yaratmaq üçün etibarlı dəvətiniz olmalıdır.",
 				"use_a_permanent_email_address_disposable_addresses_cannot_create_accounts_": "Daimi e-poçt ünvanından istifadə edin. Birdəfəlik ünvanlarla hesab yaratmaq olmur."

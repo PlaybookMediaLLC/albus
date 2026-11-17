@@ -11,7 +11,7 @@ with the Trello connect of follow-up FU1.
 | Entry points of #131 | Count |
 |---|---|
 | Built (lanes X1, C1, G1, G2, S1, B1, M1, P1, P2, P3, P4, and FU1 for Trello): 73 of the 73 assigned to lanes | 73 |
-| Blocked: widget handoff (#129) | 1 |
+| Replaced: widget handoff (#129, option C: profiles link by verified email; `apps/api/src/quills/portal/ROUTES.md`) | 1 |
 | Web-only: portal header setters (#130) | 2 |
 
 `ledger/overrides.json` closes the 73 built entry points: 62 server functions
@@ -28,7 +28,7 @@ Goal: bring all of Quackback's feedback and support capability into Kaneo's API 
 | [roadmap.md](roadmap.md) | Level 1. Eleven phases (P0 to P10) in dependency and risk order. For each: ledger rows closed, endpoints, migrations, acceptance checks. |
 | [detailed-plan.md](detailed-plan.md) | Level 2. How to read each endpoint row, the merge rule, the action mapping, and the final route tables for P0 and P1. |
 | [framework.md](framework.md) | The route helper, the contract test, the map from each `apps/api/AGENTS.md` rule to a mechanism or a test, and the `links.ts` rewrite. |
-| [local-demo.md](local-demo.md) | `pnpm dev:demo`: a seeded local stack on its own PostgreSQL container, with demo sign-ins. |
+| [local-demo.md](local-demo.md) | `pnpm dev:demo`: a seeded local stack on its own PostgreSQL container, with demo sign-ins and a local mail inbox. |
 | [ledger/summary.md](ledger/summary.md) | Generated. Completeness checks and counts. |
 | [ledger/routes.csv](ledger/routes.csv) | Generated. One row per Quackback route file (514). |
 | [ledger/capabilities.csv](ledger/capabilities.csv) | Generated. One row per server function and HTTP handler (1,091). |

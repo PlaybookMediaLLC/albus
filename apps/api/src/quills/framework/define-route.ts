@@ -11,6 +11,8 @@ import {
 } from "../../database/quills/client";
 import { ApiError } from "../../errors/api-error";
 import { validationError } from "../../errors/validation-error";
+/** For a handler that finds an invalid input the schema cannot see, such as a CSV row. */
+export { validationError };
 import { boundedRequestBody } from "../../utils/bounded-request-body";
 import {
   createRoute,
@@ -50,6 +52,8 @@ import {
   type SignedRequest,
   type SignedVerifier,
 } from "./signed";
+import { readClientIp } from "../../utils/client-ip";
+import { addressBlocked } from "./ip-block";
 
 export type { Database, QuillsActor };
 /** One change that a route's `event` records. */
@@ -90,6 +94,8 @@ export type QuillsRouteInput<P, Q, B> = {
   query: Output<Q>;
   body: Output<B>;
   workspaceId: string;
+  /** Teammate routes: the request's API-key scope; null without a key or for an unscoped key. */
+  apiKeyScope?: PermissionMap | null;
 };
 
 type SignedRedirectInput<P, Q> = {
@@ -147,8 +153,14 @@ export type QuillsRouteDeclaration<
   /** Signed JSON: exposes the web result location; GET browser navigations receive it as a 303. */
   redirect?: SignedRedirect<P, Q, R>;
   /**
+   * Public GET: the web page for a browser that opens the URL (a mail link). It gets a 303 there
+   * before the handler runs; other clients get the JSON answer.
+   */
+  browserPage?: (input: { workspace: string; query: Output<Q> }) => string;
+  /**
    * Teammate, app, signed, portal and widget: a read in its own scoped transaction, before `call`. It
-   * must not write. The handler then runs in a new scoped transaction with the call's result as `called`.
+   * must not write, except an AI budget reservation (assistant/budget.ts), which must commit before
+   * the call. The handler then runs in a new scoped transaction with the call's result as `called`.
    * Portal and widget: `prepare` gets the caller and runs the route's read gates; the handler's
    * transaction resolves the caller again and answers 409 when it changed. Use it for work that must
    * hold no pooled connection, for example an upload verification (framework/files.ts).
@@ -431,6 +443,56 @@ async function readBody(
   return c.req.valid("json");
 }
 
+/**
+ * The `Idempotency-Key` header fills `idempotencyKey` when the body schema has one and the caller
+ * left it out (the REST convention); a key in the body wins. The schema decides: a body without
+ * the field is returned unchanged.
+ */
+function withIdempotencyHeader(
+  c: Context<any, string, any>,
+  schema: z.ZodType,
+  body: unknown,
+) {
+  const key = c.req.header("idempotency-key")?.trim();
+  if (
+    !key ||
+    !body ||
+    typeof body !== "object" ||
+    (body as { idempotencyKey?: unknown }).idempotencyKey !== undefined
+  )
+    return body;
+  const parsed = schema.safeParse({ ...body, idempotencyKey: key });
+  return parsed.success &&
+    (parsed.data as { idempotencyKey?: unknown }).idempotencyKey === key
+    ? parsed.data
+    : body;
+}
+
+const continueInWebResponse = {
+  description: "Continue in the web app",
+  headers: {
+    Location: {
+      description: "The web page",
+      schema: { type: "string", format: "uri" },
+    },
+    "Cache-Control": {
+      description: "The redirect is never cached",
+      schema: { type: "string", enum: ["no-store"] },
+    },
+    "Referrer-Policy": {
+      description: "This URL is not sent to the web app",
+      schema: { type: "string", enum: ["no-referrer"] },
+    },
+  },
+};
+
+const continueInWeb = (c: Context<any, string, any>, location: string) => {
+  const response = c.redirect(location, 303);
+  response.headers.set("cache-control", "no-store");
+  response.headers.set("referrer-policy", "no-referrer");
+  return response;
+};
+
 /** Builds the route and its handler without registering them. Use defineQuillsRoute. */
 export function buildQuillsRoute<
   M extends Method,
@@ -542,6 +604,8 @@ export function buildQuillsRoute<
     throw new Error(
       `${d.operationId}: a browser redirect is for a JSON signed route`,
     );
+  if (d.browserPage && (audience !== "public" || d.method !== "get"))
+    throw new Error(`${d.operationId}: a browser page is for a public GET`);
   if (audience === "signed" || audience === "internal") {
     if (
       d.native ||
@@ -585,26 +649,7 @@ export function buildQuillsRoute<
       request: { params: d.params, query: d.query },
       responses: {
         200: ok,
-        ...(d.redirect &&
-          d.method === "get" && {
-            303: {
-              description: "Continue in the web app",
-              headers: {
-                Location: {
-                  description: "The web result page",
-                  schema: { type: "string", format: "uri" },
-                },
-                "Cache-Control": {
-                  description: "The callback response is never cached",
-                  schema: { type: "string", enum: ["no-store"] },
-                },
-                "Referrer-Policy": {
-                  description: "The callback URL is not sent to the web app",
-                  schema: { type: "string", enum: ["no-referrer"] },
-                },
-              },
-            },
-          }),
+        ...(d.redirect && d.method === "get" && { 303: continueInWebResponse }),
         401: errorResponse(signed ? "Invalid signature" : "Invalid token"),
         ...(signed &&
           d.body && {
@@ -668,19 +713,13 @@ export function buildQuillsRoute<
         params: request.params,
         query: d.query && request.query,
       } as SignedRedirectInput<P, Q>;
-      const continueInWeb = (location: string) => {
-        const response = c.redirect(location, 303);
-        response.headers.set("cache-control", "no-store");
-        response.headers.set("referrer-policy", "no-referrer");
-        return response;
-      };
       const answer = (value: unknown) => {
         if (d.redirect) {
           const location = d.redirect.success(
             value as z.output<R>,
             redirectInput,
           );
-          if (navigation) return continueInWeb(location);
+          if (navigation) return continueInWeb(c, location);
           const response = c.json(value, 200);
           response.headers.set("x-quills-result-location", location);
           return response;
@@ -691,7 +730,7 @@ export function buildQuillsRoute<
         if (!d.redirect || !(error instanceof HTTPException) || !navigation)
           throw error;
         const location = d.redirect.failure(error.status, redirectInput);
-        return continueInWeb(location);
+        return continueInWeb(c, location);
       };
       let located: Located;
       try {
@@ -847,6 +886,7 @@ export function buildQuillsRoute<
       },
       responses: {
         200: ok,
+        ...(d.browserPage && { 303: continueInWebResponse }),
         ...(signIn && {
           401: errorResponse(
             audience === "portal"
@@ -884,8 +924,22 @@ export function buildQuillsRoute<
       const input = {
         params,
         query: d.query && c.req.valid("query"),
-        body: d.body && (await readBody(c, d.body, d.textBody)),
+        body:
+          d.body &&
+          withIdempotencyHeader(
+            c,
+            d.body,
+            await readBody(c, d.body, d.textBody),
+          ),
       };
+      if (d.browserPage && prefersBrowserNavigation(c.req.raw.headers))
+        return continueInWeb(
+          c,
+          d.browserPage({
+            workspace: params.workspace,
+            query: input.query as Output<Q>,
+          }),
+        );
       if (d.rateLimit)
         await enforceRateLimit(c, params.workspace, d.operationId, d.rateLimit);
       const credentials = await readCredentials(c, audience, params.workspace);
@@ -939,6 +993,14 @@ export function buildQuillsRoute<
             signIn,
             ensureCustomer: d.ensureCustomer === true,
           });
+          // A customer write from an address that the team blocked (support/ip-blocks.ts).
+          if (
+            d.method !== "get" &&
+            (await addressBlocked(db, readClientIp(c.req.raw.headers)))
+          )
+            throw new HTTPException(403, {
+              message: "Requests from this address are blocked",
+            });
           if (
             seen &&
             (seen.workspaceId !== workspace.id ||
@@ -1029,10 +1091,17 @@ export function buildQuillsRoute<
       query: d.query && c.req.valid("query"),
       body:
         d.body &&
-        (c.req.header("content-type")
-          ? c.req.valid("json")
-          : emptyBody(d.body)),
+        withIdempotencyHeader(
+          c,
+          d.body,
+          c.req.header("content-type")
+            ? c.req.valid("json")
+            : emptyBody(d.body),
+        ),
       workspaceId: c.get("workspaceId"),
+      apiKeyScope:
+        (c.get("apiKey") as { permissions?: PermissionMap | null } | undefined)
+          ?.permissions ?? null,
     } as QuillsRouteInput<P, Q, B>;
     const { load, project, callerActions } = d;
     let loaded = undefined as L;

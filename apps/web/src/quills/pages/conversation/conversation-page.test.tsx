@@ -5,6 +5,8 @@ import { getMyConversationFixture } from "../../api/support/get-my-conversation.
 import { listMyConversationMessagesFixture } from "../../api/support/list-my-conversation-messages.fixture";
 import { markMyConversationReadFixture } from "../../api/support/mark-my-conversation-read.fixture";
 import { sendMyConversationMessageFixture } from "../../api/support/send-my-conversation-message.fixture";
+import { confirmFeedbackCardFixture } from "../../api/support/confirm-feedback-card.fixture";
+import { createPortalPostFixture } from "../../api/feedback/create-portal-post.fixture";
 import { fill, press } from "../../test/actions";
 import { describePageContract } from "../../test/contracts";
 import { mockApi } from "../../test/mock-api";
@@ -87,6 +89,8 @@ describe("ConversationPage", () => {
         attachments: [],
         createdAt: "2026-01-01T00:00:00.000Z",
         editedAt: null,
+        fromAssistant: false,
+        feedbackCard: null,
       });
       api.reply(getMyConversationFixture.ok());
       api.reply(
@@ -143,6 +147,8 @@ describe("ConversationPage", () => {
               attachments: [],
               createdAt: "2026-01-01T00:00:00.000Z",
               editedAt: null,
+              fromAssistant: false,
+              feedbackCard: null,
             },
           ],
         });
@@ -190,6 +196,8 @@ describe("ConversationPage", () => {
             attachments: [],
             createdAt: "2026-01-01T00:00:00.000Z",
             editedAt: null,
+            fromAssistant: false,
+            feedbackCard: null,
           },
         ],
       });
@@ -224,6 +232,63 @@ describe("ConversationPage", () => {
         expect(view.getByRole("textbox", { name: /reply/i })).toHaveValue(""),
       );
       expect(api.calls("markQuillsMyConversationRead")).toHaveLength(1);
+    });
+
+    it("shows the assistant's reply and submits the request it proposed once", async () => {
+      const api = mockApi();
+      const answer = {
+        id: "conversation_msg_card",
+        conversationId: "conversation_test_1",
+        fromVisitor: false,
+        senderType: "agent" as const,
+        author: null,
+        content: "I can pass this to the team.",
+        embeds: [],
+        attachments: [],
+        createdAt: "2026-01-01T00:00:00.000Z",
+        editedAt: null,
+        fromAssistant: true,
+        feedbackCard: {
+          title: "PDF export",
+          body: "Export reports as PDF",
+          status: "proposed" as const,
+          postId: null,
+        },
+      };
+      api.reply(getMyConversationFixture.ok());
+      api.reply(listMyConversationMessagesFixture.ok({ items: [answer] }));
+      const view = renderPage(ConversationPage, meta, options);
+      expect(await view.findByText("Assistant")).toBeInTheDocument();
+      api.reply(createPortalPostFixture.ok({ id: "post_test_card" }));
+      api.reply(confirmFeedbackCardFixture.ok());
+      api.reply(
+        listMyConversationMessagesFixture.ok({
+          items: [
+            {
+              ...answer,
+              feedbackCard: {
+                ...answer.feedbackCard,
+                status: "confirmed",
+                postId: "post_test_card",
+              },
+            },
+          ],
+        }),
+      );
+      press(/submit request/i);
+      expect(await view.findByRole("status")).toHaveTextContent(
+        "Request submitted",
+      );
+      expect(
+        await api.calls("createQuillsPortalPost")[0]!.json(),
+      ).toMatchObject({
+        title: "PDF export",
+        content: "Export reports as PDF",
+        idempotencyKey: "card:conversation_msg_card",
+      });
+      expect(await api.calls("confirmQuillsFeedbackCard")[0]!.json()).toEqual({
+        postId: "post_test_card",
+      });
     });
 
     it("requires sign-in without fetching the conversation", async () => {

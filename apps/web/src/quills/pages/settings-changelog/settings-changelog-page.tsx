@@ -3,9 +3,11 @@ import { navEnabled, withNavItem } from "../../core/portal-nav";
 import { problemOf } from "../../core/problem-of";
 import { useCreateChangelogCategory } from "../../hooks/team/use-create-changelog-category";
 import { useDeleteChangelogCategory } from "../../hooks/team/use-delete-changelog-category";
+import { useGetChangelogSettings } from "../../hooks/team/use-get-changelog-settings";
 import { useGetPortalSettings } from "../../hooks/team/use-get-portal-settings";
 import { useListChangelogCategories } from "../../hooks/team/use-list-changelog-categories";
 import { useUpdateChangelogCategory } from "../../hooks/team/use-update-changelog-category";
+import { useUpdateChangelogSettings } from "../../hooks/team/use-update-changelog-settings";
 import { useUpdatePortalSettings } from "../../hooks/team/use-update-portal-settings";
 import { useTeamRuntime } from "../../team/runtime";
 import { TeamStateView } from "../../team/team-state-view";
@@ -39,7 +41,7 @@ const copy = {
   emptyText: "settings-product.categories.emptyText",
 };
 
-/** Settings › Changelog (settings spec B6): the public changelog tab and the changelog tags. */
+/** Settings › Changelog (settings spec B6): the public changelog tab, the widget's automatic open (#108) and the changelog tags. */
 export function SettingsChangelogPage({
   workspaceId,
 }: SettingsChangelogPageProps) {
@@ -52,7 +54,9 @@ export function SettingsChangelogPage({
     { param, query: { offset: "0", limit: "100" } },
     team.viewer,
   );
+  const settings = useGetChangelogSettings({ param }, team.viewer);
   const update = useUpdatePortalSettings(team.viewer);
+  const updateSettings = useUpdateChangelogSettings(team.viewer);
   const create = useCreateChangelogCategory(team.viewer);
   const rename = useUpdateChangelogCategory(team.viewer);
   const remove = useDeleteChangelogCategory(team.viewer);
@@ -70,8 +74,10 @@ export function SettingsChangelogPage({
         description={t("settings-product.changelog.description")}
       >
         <TeamStateView
-          loading={portal.isPending || categories.isPending}
-          problem={portal.error ?? categories.error}
+          loading={
+            portal.isPending || categories.isPending || settings.isPending
+          }
+          problem={portal.error ?? categories.error ?? settings.error}
         >
           <SettingsSection title={t("settings-product.behavior")}>
             <SettingsCard>
@@ -84,6 +90,18 @@ export function SettingsChangelogPage({
                   await update.mutateAsync({
                     param,
                     json: { nav: withNavItem(nav, "changelog", next) },
+                  });
+                }}
+              />
+              <SettingSwitchRow
+                title={t("settings-product.changelog.autoOpen")}
+                description={t("settings-product.changelog.autoOpenText")}
+                checked={settings.data?.widgetAutoOpen ?? false}
+                disabled={!manage}
+                onCheckedChange={async (widgetAutoOpen) => {
+                  await updateSettings.mutateAsync({
+                    param,
+                    json: { widgetAutoOpen },
                   });
                 }}
               />

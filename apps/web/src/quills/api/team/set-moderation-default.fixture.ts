@@ -7,6 +7,8 @@ export const setModerationDefaultFixture = {
           requireApproval: "none",
           holdImages: false,
           holdLinks: false,
+          holdSpam: false,
+          holdSensitive: false,
         },
       },
       ...overrides,

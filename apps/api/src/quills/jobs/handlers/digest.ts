@@ -63,6 +63,7 @@ import { claimDelivery, settleDelivery } from "../ledger";
 import { wants } from "../preferences";
 import { enqueueQuillsJob, finishQuillsJob } from "../queue";
 import { rejection } from "./mail";
+import { recipientDirection } from "./recipient-language";
 
 // The weekly digest (RFC 0003, feature 16, D15). The first sweep of each ISO week (UTC) queues one
 // mail job per customer whose voted or followed posts changed status in the week before. The job
@@ -122,7 +123,7 @@ async function changedPosts(db: Database, from: Date, to: Date) {
 
 /** The customer voted for or follows a live duplicate that was merged into the post. */
 const askedOnDuplicate = (me: PrincipalId) =>
-  sql`exists (select 1 from ${posts} d where d.canonical_post_id = ${posts.id} and d.deleted_at is null and (exists (select 1 from ${postVotes} v where v.post_id = d.id and v.principal_id = ${sql.param(me, postVotes.principalId)}) or exists (select 1 from ${postSubscriptions} s where s.post_id = d.id and s.principal_id = ${sql.param(me, postSubscriptions.principalId)})))`;
+  sql`exists (select 1 from ${posts} d where d.canonical_post_id = ${posts.id} and d.deleted_at is null and (exists (select 1 from ${postVotes} v where v.post_id = d.id and v.principal_id = ${sql.param(me, postVotes.principalId)}) or exists (select 1 from ${postSubscriptions} s where s.post_id = d.id and s.principal_id = ${sql.param(me, postSubscriptions.principalId)} and s.notify_status_changes)))`;
 
 const progressKey = (week: string) => `digest:${week}`;
 const progressSchema = z.object({
@@ -155,7 +156,12 @@ export async function queueWeeklyDigests(db: Database, now = new Date()) {
       db
         .select({ id: postSubscriptions.principalId })
         .from(postSubscriptions)
-        .where(inArray(postSubscriptions.postId, withDuplicates(db, changed))),
+        .where(
+          and(
+            inArray(postSubscriptions.postId, withDuplicates(db, changed)),
+            eq(postSubscriptions.notifyStatusChanges, true),
+          ),
+        ),
     )
     .as("askers");
   const due = changed.length
@@ -302,7 +308,8 @@ export async function runDigestJob(workspaceId: string, job: JobQueueRow) {
         principalId,
         "unsubscribe_digest",
       );
-      return { items, workspace, token };
+      const dir = await recipientDirection(db, principalId);
+      return { items, workspace, token, dir };
     }));
   if (!prepared) return finish();
   const key = `digest:${principalId}:${digest}`;
@@ -312,7 +319,7 @@ export async function runDigestJob(workspaceId: string, job: JobQueueRow) {
   if (claim === "completed") return finish();
   if (claim === "uncertain") return finish(UNCERTAIN, true);
 
-  const { items, workspace, token } = prepared;
+  const { items, workspace, token, dir } = prepared;
   let result: EmailResult | undefined;
   let failure: { error: string; permanent: boolean } | undefined;
   let uncertain = false;
@@ -322,6 +329,7 @@ export async function runDigestJob(workspaceId: string, job: JobQueueRow) {
       withEmailTags(mailTags(workspaceId, logId), () =>
         sendWeeklyDigestEmail({
           to: address,
+          dir,
           items: items.map((item) => ({
             title: item.title,
             status: item.status,

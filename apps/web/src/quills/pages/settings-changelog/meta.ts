@@ -8,6 +8,8 @@ export const meta = {
   token: "none",
   operations: [
     "getQuillsPortalSettings",
+    "getQuillsChangelogSettings",
+    "updateQuillsChangelogSettings",
     "updateQuillsPortalSettings",
     "listQuillsChangelogCategories",
     "createQuillsChangelogCategory",

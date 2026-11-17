@@ -6,7 +6,8 @@ import { flexibleToTypeIdSchema } from "@kaneo/ids/zod";
 import { z } from "../../openapi";
 import { conversationMessages } from "../../database/quills/schema/conversation";
 import { files } from "../../database/quills/schema/files";
-import type { Database, QuillsActor } from "../framework/define-route";
+import type { Database } from "../framework/define-route";
+import type { PrincipalId } from "@kaneo/ids";
 import type { MessageId } from "./message-model";
 
 type Family = NonNullable<
@@ -21,15 +22,17 @@ export const attachmentIds = z
   .default([]);
 
 /**
- * Attaches the caller's unattached teammate uploads to a new message, in the message's
- * transaction. Another person's file, a customer upload, a removed file, a file of another
- * workspace or one already attached is 404, and nothing is attached.
+ * Attaches the caller's unattached uploads to a new message, in the message's transaction: a
+ * teammate's (`agent`) by default, or a customer's own portal or widget uploads. Another person's
+ * file, a file of the other kind, a removed file, a file of another workspace or one already
+ * attached is 404, and nothing is attached.
  */
 export async function attachMessageFiles(
   db: Database,
-  actor: QuillsActor,
+  owner: PrincipalId,
   messageId: MessageId,
   ids: readonly FileId[],
+  sources: readonly string[] = ["agent"],
 ) {
   if (!ids.length) return;
   // Locked in ID order, so two requests with the same files cannot deadlock. Under read committed
@@ -47,8 +50,8 @@ export async function attachMessageFiles(
     .where(
       and(
         inArray(files.id, [...ids]),
-        eq(files.uploadedById, actor.principalId),
-        eq(files.source, "agent"),
+        eq(files.uploadedById, owner),
+        inArray(files.source, [...sources]),
         isNull(files.attachedAt),
         isNull(files.deletedAt),
       ),

@@ -58,6 +58,9 @@
 	"shareFailed": "Sharing is not available. Copy the link instead.",
 	"signIn": "Sign in",
 	"signInRequired": "Sign in to continue.",
+	"signInOff": "Customer sign-in is off for this portal.",
+	"signInWithAccount": "Sign in with your account to continue.",
+	"signInLinkFailed": "That sign-in link expired or was already used. Open it again from the app.",
 	"breadcrumb": "Breadcrumb",
 	"breadcrumbSeparator": "/",
 	"submitAsFeedback": "Submit “{{query}}” as feedback",
@@ -65,5 +68,13 @@
 		"browser": "Browser",
 		"page": "Page",
 		"title": "Page context"
+	},
+	"validation": {
+		"format": "Check the format of this value.",
+		"invalid": "Check this value.",
+		"required": "Enter a value.",
+		"tooLong": "Use at most {{max}} characters.",
+		"tooShort": "Use at least {{min}} characters.",
+		"request": "Some values were not accepted. Check them and try again."
 	}
 }

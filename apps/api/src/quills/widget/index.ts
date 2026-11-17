@@ -1,8 +1,11 @@
 import { apiRouter } from "../../openapi";
+import activity from "./activity";
 import config from "./config";
 import contactEmail from "./contact-email";
 import identify from "./identify";
+import portalSignIn from "./portal-sign-in";
 import install from "./install";
+import portalLink from "./portal-link";
 import session from "./session";
 
 // Widget routes under /quills-public/{workspace}. Each module declares its routes with
@@ -11,5 +14,8 @@ export default apiRouter()
   .route("/", config)
   .route("/", install)
   .route("/", identify)
+  .route("/", portalSignIn)
   .route("/", contactEmail)
-  .route("/", session);
+  .route("/", session)
+  .route("/", activity)
+  .route("/", portalLink);

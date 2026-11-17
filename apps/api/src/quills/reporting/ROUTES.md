@@ -107,6 +107,8 @@ replaces `listQuillsExportRunsRuns` (`routes/api/export/runs.ts`), and `listQuil
   queues the object for cleanup. If another attempt settled the run while this one uploaded, the job queues
   its own key for cleanup. The existing retention step clears the key after `expires_at` (7 days).
 - The file is built 1,000 rows at a time, so memory stays near the byte limit.
+- The posts file has a `custom_fields` column: a JSON object of the post's values of its board's
+  current fields, internal fields included (issue #71). An import reads it back.
 - Bounds: 50,000 rows and 64 MB per file. A larger export fails with a reason. The job checks that the initiator
   can still read Quills before it reads rows.
 - A run is never retried. A later attempt that finds the run still running fails it.
@@ -124,6 +126,9 @@ replaces `listQuillsExportRunsRuns` (`routes/api/export/runs.ts`), and `listQuil
   else the initiator. The email of a teammate (a platform read of member addresses) or a test customer is a
   row error. New customers are inserted in batches.
 - `created_at` accepts ISO dates only.
+- `custom_fields` (issue #71) is a JSON object of field values keyed by field key, as the posts export
+  writes it (internal fields included). Each value is checked against the target board's fields like
+  the API checks it; required fields are not asked, because an older post may predate them.
 - Import settles run one at a time per workspace (a transaction advisory lock), so a CSV submitted twice
   imports each `source_id` once. Tested with two concurrent drains.
 - A write failure after inserts rolls the whole import back (tested with an injected trigger failure).

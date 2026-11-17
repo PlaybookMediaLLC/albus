@@ -2,6 +2,7 @@ import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
 import { apiRouter, z } from "../../../openapi";
 import { principal, settings } from "../../../database/quills/schema/auth";
 import { widgetEnabled } from "../../framework/audience";
+import { bool, parseJson, record } from "../../settings/area";
 import { defineQuillsRoute, type Database } from "../../framework/define-route";
 import { notFound } from "../../support/customer/model";
 import { presenceSchema, teamPresence } from "../../support/presence";
@@ -9,12 +10,14 @@ import { presenceSchema, teamPresence } from "../../support/presence";
 // Workspace-wide messenger reads that need no visitor: team availability and the avatar cluster.
 // Both are public while the widget is on. Neither returns an ID or an email.
 
+/** 404 while the widget is off; otherwise its stored config. */
 async function requireWidget(db: Database) {
   const [row] = await db
     .select({ widgetConfig: settings.widgetConfig })
     .from(settings)
     .limit(1);
   if (!widgetEnabled(row?.widgetConfig ?? null)) throw notFound("Widget");
+  return parseJson(row!.widgetConfig);
 }
 
 const presence = defineQuillsRoute({
@@ -39,9 +42,9 @@ const avatars = defineQuillsRoute({
   method: "get",
   path: "/widget/team-avatars",
   operationId: "listQuillsWidgetTeamAvatars",
-  summary: "List up to three teammate avatars for the widget header",
+  summary: "List up to four teammate avatars for the widget header",
   description:
-    "Display name and avatar of teammate principals only: never a customer, a visitor or a service principal.",
+    "Display name and avatar of teammate principals only: never a customer, a visitor or a service principal. Empty while Home's team avatars are off.",
   action: "read",
   response: z.object({
     items: z.array(
@@ -50,7 +53,8 @@ const avatars = defineQuillsRoute({
   }),
   responseDescription: "Teammate avatars",
   handler: async ({ db }) => {
-    await requireWidget(db);
+    const stored = await requireWidget(db);
+    if (!bool(record(stored.home).showTeamAvatars, true)) return { items: [] };
     // ponytail: a former member keeps a teammate principal and can appear; a public route has no platform read for the roster.
     const rows = await db
       .select({ name: principal.displayName, avatarUrl: principal.avatarUrl })
@@ -64,7 +68,7 @@ const avatars = defineQuillsRoute({
         ),
       )
       .orderBy(asc(principal.createdAt), asc(principal.id))
-      .limit(3);
+      .limit(4);
     return {
       items: rows.map((row) => ({ name: row.name!, avatarUrl: row.avatarUrl })),
     };

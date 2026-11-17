@@ -12,3 +12,4 @@ export * from "./inbox.fixture";
 export * from "./conversation-assistant.fixture";
 export * from "./read-batch.fixture";
 export * from "./test-conversations.fixture";
+export * from "./ip-blocks.fixture";

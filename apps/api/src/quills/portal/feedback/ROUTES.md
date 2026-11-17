@@ -70,6 +70,16 @@ Transaction:               one scoped transaction per request; the count, modera
 External effects:          none; each mutation records one outbox event (follow records none).
 ```
 
+## Changelog languages (issue #76)
+
+A teammate writes an entry's version in another language (`saveQuillsChangelogTranslation`,
+`feedback/changelog-translations.ts`, table `changelog_translations`, one row per entry and language).
+The portal and widget changelog list and entry routes take `locale`: an entry with a version in that
+language returns it with `locale` set; every other entry returns its own text with `locale: null`.
+The portal sends the customer's saved language, else the browser's; the widget sends the SDK
+`locale`. The shipped mail uses the customer's saved language. Deleting an entry deletes its
+versions; a workspace transfer carries them.
+
 ## What a customer never sees
 
 A teammate on these routes is a customer. These rules apply to lists, details, counts, search,
@@ -90,6 +100,9 @@ similar posts, voted posts, roadmap posts, the changelog, the feed and the sitem
   hides every entry from a caller without sign-in
 - team roadmaps, and segment roadmaps outside the caller's segments
 - board access matrices, segment IDs, roadmap filters, principal IDs of authors and emails
+- internal custom fields (issue #71): the board list names only the public fields, a post detail
+  holds only their values, and a customer who sends an internal key gets the same 400 as for an
+  unknown field
 
 ## Portal (Kaneo account; sign-in optional on reads)
 
@@ -101,7 +114,7 @@ similar posts, voted posts, roadmap posts, the changelog, the feed and the sitem
 | `listQuillsPortalPosts` | `GET /portal/posts` (`boardId`, `stage`, `search`, `sort` incl. `random`, `cursor`, `limit` 1-50); without `sort`, the board's `defaultSort`, else newest | read | posts, post_statuses, principal, post_tags, post_votes, post_subscriptions, boards | - | contract, ownership, moderation, voting |
 | `findQuillsPortalSimilarPosts` | `GET /portal/posts/similar?title=` (60 per minute per client) | read | posts, post_statuses | - | contract, portal-off |
 | `getQuillsPortalPost` | `GET /portal/posts/{postId}` | read | posts, post_votes, post_comments, post_subscriptions | - | contract, moderation |
-| `createQuillsPortalPost` | `POST /portal/posts` (20 per 10 min per client) | create | posts, post_votes, post_subscriptions, post_activity, kv_store | `post.created` | contract, rollback, idempotency, moderation |
+| `createQuillsPortalPost` | `POST /portal/posts` (20 per 10 min per client; optional `customFields`, 400 for a missing required or wrongly typed value) | create | posts, post_votes, post_subscriptions, post_activity, kv_store | `post.created` | contract, rollback, idempotency, moderation, `feedback/custom-fields-routes.test.ts` |
 | `editQuillsPortalOwnPost` | `PUT /portal/posts/{postId}` (30 per 10 min; a held edit goes back to review) | update | posts, post_edit_history | `post.updated` | contract, rollback, ownership, author rules |
 | `deleteQuillsPortalOwnPost` | `DELETE /portal/posts/{postId}` (30 per 10 min) | delete | posts, post_activity | `post.deleted` | contract, rollback, ownership |
 | `setQuillsPortalVote` | `PUT /portal/posts/{postId}/vote` `{voted, importance?}` (120 per 10 min) | update | post_votes, posts | `post.voted` / `post.unvoted` when changed; `post.vote_importance_set` when the importance changes | contract, rollback, desired state, voting |

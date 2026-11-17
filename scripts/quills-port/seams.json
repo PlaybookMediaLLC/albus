@@ -25,7 +25,13 @@
 		"tests/api-integration/helpers/run-alone.ts",
 		"tests/api-integration/helpers/run-alone.test.ts",
 		"charts/kaneo/values-production.yaml",
-		"scripts/security/check-helm-production-values.rb"
+		"scripts/security/check-helm-production-values.rb",
+		"apps/desktop",
+		"apps/api/src/desktop",
+		"scripts/dev-desktop",
+		".github/workflows/desktop.yml",
+		"tests/api-integration/desktop-session.test.ts",
+		".github/workflows/desktop-test.yml"
 	],
 	"seams": [
 		{
@@ -65,6 +71,18 @@
 			"plannedChange": "S5: no-referrer protects initial mail-token navigations before route bootstrap and token scrubbing"
 		},
 		{
+			"file": "apps/api/src/auth.ts",
+			"state": "existing",
+			"lines": "1 import + the oneTimeToken plugin (client requests off, hashed, one minute)",
+			"plannedChange": "none. Desktop sign-in: apps/api/src/desktop turns a device-flow token into the session cookie on the server"
+		},
+		{
+			"file": "apps/api/src/index.ts",
+			"state": "existing",
+			"lines": "1 import + api.route(\"/desktop\", desktop) before authenticateApiRequest",
+			"plannedChange": "none. The route reads its own bearer token; the handler lives in apps/api/src/desktop"
+		},
+		{
 			"file": "apps/api/src/index.ts",
 			"state": "existing",
 			"lines": "import + api.route(\"/quills\", quills) + 3 type-export entries + runQuillsMigrations at startup; import + api.route(\"/quills-public\", quillsPublic) before the session middleware + 3 type-export entries",
@@ -85,7 +103,7 @@
 		{
 			"file": "package.json",
 			"state": "existing",
-			"lines": "1 script: dev:demo",
+			"lines": "2 scripts: dev:demo, dev:desktop",
 			"plannedChange": "none. The script runs scripts/dev-demo/index.mjs"
 		},
 		{
@@ -195,6 +213,12 @@
 			"state": "existing",
 			"lines": "the production-values matrix case and its check step, which render charts/kaneo/values-production.yaml and run scripts/security/check-helm-production-values.rb",
 			"plannedChange": "none. New assertions belong in the Ruby check, not in the workflow"
+		},
+		{
+			"file": "pnpm-lock.yaml",
+			"state": "generated",
+			"lines": "the @quills/desktop importer and @tauri-apps/cli",
+			"plannedChange": "regenerate with pnpm install after an upstream conflict"
 		}
 	]
 }

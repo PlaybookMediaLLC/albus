@@ -34,6 +34,9 @@ export const portalPaths = {
   changelogEntry: (workspaceId: string, entryId: string) =>
     portalPath(workspaceId, `/changelog/${encodeURIComponent(entryId)}`),
   myFeedback: (workspaceId: string) => portalPath(workspaceId, "/my-feedback"),
+  /** Kaneo's sign-in page, back to My feedback after sign-in; a magic link error adds `error`. */
+  signIn: (workspaceId: string) =>
+    `${clientBase()}/auth/sign-in?${new URLSearchParams({ redirect: `/portal/${encodeURIComponent(workspaceId)}/my-feedback` })}`,
   helpCenter: (workspaceId: string, locale?: string) =>
     portalPath(
       workspaceId,
@@ -52,6 +55,9 @@ export const portalPaths = {
   // The conversation in the teammate app (RFC 0004).
   teammateConversation: (workspaceId: string, conversationId: string) =>
     `${clientBase()}/feedback/${encodeURIComponent(workspaceId)}/conversations/${encodeURIComponent(conversationId)}`,
+  // The request in the teammate app: the link back from a Kaneo task (RFC 0005).
+  teammatePost: (workspaceId: string, postId: string) =>
+    `${clientBase()}/feedback/${encodeURIComponent(workspaceId)}/posts/${encodeURIComponent(postId)}`,
 } as const;
 
 export const portalPathPatterns = [

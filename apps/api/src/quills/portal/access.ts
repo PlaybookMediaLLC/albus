@@ -2,6 +2,8 @@ import { apiRouter, z } from "../../openapi";
 import { defineQuillsRoute } from "../framework/define-route";
 import { evaluatePortalAccess } from "../framework/audience";
 import { requirePortal } from "./feedback/viewer";
+import { SIGN_IN_MODES } from "../framework/portal-sign-in";
+import { portalSignIn } from "./sign-in-settings";
 
 // The private-portal gate for the calling Kaneo account. Only the decision leaves the server;
 // the policy (allowed domains and segments) does not.
@@ -14,6 +16,7 @@ const decision = z.object({
     "domain",
     "segment",
     "invite",
+    "widget",
     "unauthenticated",
     "unauthorized",
   ]),
@@ -29,11 +32,21 @@ const myAccess = defineQuillsRoute({
   description:
     "A workspace member is granted with the reason team but still acts as a customer on portal routes.",
   action: "read",
-  response: decision,
-  responseDescription: "The access decision",
+  response: decision.extend({
+    /** How this portal's sign-in button works (gap G-24). ssoUrl is the host app's login page. */
+    signIn: z.object({
+      mode: z.enum(SIGN_IN_MODES),
+      ssoUrl: z.string().nullable(),
+    }),
+  }),
+  responseDescription: "The access decision and the sign-in mode",
   handler: async ({ db, caller }) => {
     await requirePortal(db);
-    return evaluatePortalAccess(db, caller);
+    const { mode, ssoUrl } = await portalSignIn(db);
+    return {
+      ...(await evaluatePortalAccess(db, caller)),
+      signIn: { mode, ssoUrl: mode === "sso" ? ssoUrl : null },
+    };
   },
 });
 

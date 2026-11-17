@@ -31,7 +31,11 @@ const runtime: PortalRuntimeValue = {
     },
   },
   viewer: { kind: "user", id: "account_test_1" },
-  access: { granted: true, reason: "public" },
+  access: {
+    granted: true,
+    reason: "public",
+    signIn: { mode: "account", ssoUrl: null },
+  },
   accessLoading: false,
   accessProblem: null,
 };
@@ -92,6 +96,45 @@ describe("FeedbackComposer", () => {
     });
   });
 
+  it("sends the board's field values typed, and leaves empty ones out", async () => {
+    const api = mockApi();
+    api.reply(createPortalPostFixture.ok());
+    const view = renderComponent(
+      <PortalRuntimeProvider value={runtime}>
+        <FeedbackComposer
+          workspaceId="workspace_test_1"
+          boards={[
+            {
+              id: "board_test_1",
+              name: "Ideas",
+              fields: [
+                {
+                  key: "seats",
+                  label: "Seats",
+                  type: "number",
+                  required: true,
+                },
+                { key: "note", label: "Note", type: "text", required: false },
+              ],
+            },
+          ]}
+          onTitleChange={vi.fn()}
+        />
+      </PortalRuntimeProvider>,
+    );
+    fireEvent.focus(view.getByLabelText("Title"));
+    fill("Title", "Export to CSV");
+    fireEvent.change(view.getByLabelText("Seats (required)"), {
+      target: { value: "12" },
+    });
+    press("Submit feedback");
+    await waitFor(() =>
+      expect(api.calls("createQuillsPortalPost")).toHaveLength(1),
+    );
+    const body = await api.calls("createQuillsPortalPost")[0]!.json();
+    expect(body.customFields).toEqual({ seats: 12 });
+  });
+
   it("offers no AI help when the instance has no AI provider", () => {
     const view = renderComponent(
       <PortalRuntimeProvider
@@ -112,17 +155,17 @@ describe("FeedbackComposer", () => {
       </PortalRuntimeProvider>,
     );
     expect(
-      view.queryByRole("button", { name: "Improve with AI" }),
+      view.queryByRole("button", { name: "Suggest a title with AI" }),
     ).not.toBeInTheDocument();
   });
 
-  it("replaces the title, details and board with an accepted AI suggestion", async () => {
+  it("replaces only the title and board with an accepted AI suggestion", async () => {
     const api = mockApi();
     api.reply(
       improvePortalPostDraftFixture.ok({
         title: "Export reports as CSV",
-        problem: "I cannot share a report with my team.",
         boardId: "board_test_2",
+        boardName: "Reports",
       }),
     );
     const view = renderComponent(
@@ -140,7 +183,7 @@ describe("FeedbackComposer", () => {
     fireEvent.focus(view.getByLabelText("Title"));
     fill("Title", "csv");
     fill("Details", "boss wants reports");
-    press("Improve with AI");
+    press("Suggest a title with AI");
     await view.findByRole("region", { name: "Suggestion from AI" });
     const [request] = api.calls("improveQuillsPortalPostDraft");
     expect(await request!.json()).toEqual({
@@ -150,9 +193,7 @@ describe("FeedbackComposer", () => {
     });
     press("Use this");
     expect(view.getByLabelText("Title")).toHaveValue("Export reports as CSV");
-    expect(view.getByLabelText("Details")).toHaveValue(
-      "I cannot share a report with my team.",
-    );
+    expect(view.getByLabelText("Details")).toHaveValue("boss wants reports");
     expect(view.getByRole("combobox", { name: "Board" })).toHaveTextContent(
       "Reports",
     );

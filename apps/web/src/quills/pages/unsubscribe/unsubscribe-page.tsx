@@ -1,20 +1,33 @@
-import { usePortalRuntime } from "../../portal/runtime";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { takeStashedToken } from "../../core/token-stash";
 import { usePreviewUnsubscribeToken } from "../../hooks/notifications/use-preview-unsubscribe-token";
 import { useProcessUnsubscribeToken } from "../../hooks/notifications/use-process-unsubscribe-token";
+import { usePortalViewer } from "../../core/use-portal-viewer";
 import { ConfirmAction } from "../../ui/confirm-action";
 import { PageFrame } from "../../ui/page-frame";
 import { ResultCard } from "../../ui/result-card";
 import { StateView } from "../../ui/state-view";
 import { meta } from "./meta";
+
+// What a link stops, named before the confirmation. Never the post title: the page needs no sign-in.
+const actionKeys = {
+  unsubscribe_post: "unsubscribe.action.post",
+  unsubscribe_all: "unsubscribe.action.all",
+  unsubscribe_changelog: "unsubscribe.action.changelog",
+  unsubscribe_status: "unsubscribe.action.status",
+  unsubscribe_shipped: "unsubscribe.action.shipped",
+  unsubscribe_digest: "unsubscribe.action.digest",
+} as const;
 export interface UnsubscribePageProps {
   workspaceId: string;
   params: Record<string, string>;
   search: Record<string, unknown>;
 }
 export function UnsubscribePage(props: UnsubscribePageProps) {
-  const { viewer } = usePortalRuntime();
+  const { t } = useTranslation("quills");
+  // The portal runtime is missing while the portal is off (portal/layout.tsx).
+  const viewer = usePortalViewer();
   const tokenScope = [
     props.workspaceId,
     ...Object.entries(props.params)
@@ -52,17 +65,22 @@ export function UnsubscribePage(props: UnsubscribePageProps) {
         {process.isSuccess ? (
           <ResultCard titleKey="unsubscribe.done" />
         ) : (
-          <ConfirmAction
-            labelKey="unsubscribe.confirm"
-            onConfirm={() =>
-              process
-                .mutateAsync({
-                  param: { workspace: props.workspaceId },
-                  json: { token: token ?? "" },
-                })
-                .then(() => undefined)
-            }
-          />
+          <>
+            {preview.data?.action ? (
+              <p>{t(actionKeys[preview.data.action])}</p>
+            ) : null}
+            <ConfirmAction
+              labelKey="unsubscribe.confirm"
+              onConfirm={() =>
+                process
+                  .mutateAsync({
+                    param: { workspace: props.workspaceId },
+                    json: { token: token ?? "" },
+                  })
+                  .then(() => undefined)
+              }
+            />
+          </>
         )}
       </StateView>
     </PageFrame>

@@ -26,6 +26,19 @@ export const findQuillsUsersByEmail = fixture({
   valid: ({ email }) => ({ query: { email } }),
 });
 
+export const findQuillsUserByExternalId = fixture({
+  seed: async (env) => {
+    const externalId = env.id("ext");
+    const foreignId = env.id("ext");
+    await customer(env, env.a, { externalId });
+    await customer(env, env.b, { externalId: foreignId });
+    return { externalId, foreignId };
+  },
+  valid: ({ externalId }) => ({ query: { externalId } }),
+  // Workspace B's app ID finds nobody in A.
+  foreign: ({ foreignId }) => ({ externalId: foreignId }),
+});
+
 export const createQuillsUser = fixture({
   seed: freshEmail,
   valid: ({ email }) => ({ body: { name: "New Customer", email } }),

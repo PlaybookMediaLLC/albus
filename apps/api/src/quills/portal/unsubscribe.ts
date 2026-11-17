@@ -4,6 +4,7 @@ import {
   liveToken,
   spendToken,
   UNSUBSCRIBE_ACTIONS,
+  unsubscribePageUrl,
 } from "./unsubscribe-token";
 
 // Emailed unsubscribe links (public, the token is the only credential). These routes do not
@@ -35,9 +36,12 @@ const preview = defineQuillsRoute({
   operationId: "previewQuillsUnsubscribeToken",
   summary: "Show what an unsubscribe link would do",
   description:
-    "Never writes and never spends the token, so a mail scanner that opens the link changes nothing.",
+    "Never writes and never spends the token, so a mail scanner that opens the link changes nothing. A browser that opens it goes to the portal's unsubscribe page, which asks before it unsubscribes.",
   action: "read",
   query: z.object({ token }),
+  // Some mail apps open the List-Unsubscribe URL in a browser instead of sending the POST.
+  browserPage: ({ workspace, query }) =>
+    unsubscribePageUrl(workspace, query.token),
   response: z.object({
     valid: z.boolean(),
     action,

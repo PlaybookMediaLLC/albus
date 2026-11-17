@@ -1,6 +1,8 @@
+import type { MessageKey } from "./i18n/messages/en.js";
 import type { FeedbackStatus } from "./types.js";
 
-export const feedbackStatusLabels: Record<FeedbackStatus, string> = {
+/** English labels; the views show them through `t`. */
+export const feedbackStatusLabels: Record<FeedbackStatus, MessageKey> = {
   open: "Open",
   planned: "Planned",
   in_progress: "In progress",

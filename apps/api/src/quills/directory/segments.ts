@@ -21,6 +21,7 @@ import {
   toStored,
   type Db,
 } from "./segment-rules";
+import { revenueDenied, seesRevenue } from "../feedback/schemas";
 
 const memberCount = sql<number>`(select count(*)::int from ${userSegments} m where m.segment_id = ${segments.id})`;
 const segmentFields = {
@@ -67,6 +68,9 @@ const evaluation = z.object({
   members: z.number(),
 });
 const tooLarge = `The rules match more than ${MAX_DYNAMIC_MEMBERS} people`;
+/** A rule on company revenue groups people by it, so it needs quills:view_revenue (#79). */
+const onRevenue = (rules?: { conditions: { attribute: string }[] }) =>
+  Boolean(rules?.conditions.some((c) => c.attribute === "company_mrr"));
 
 async function loadSegment(db: Db, id: string, lock = false) {
   const query = db
@@ -178,6 +182,7 @@ const createSegment = defineQuillsRoute({
   description:
     "A dynamic segment needs rules. Run the evaluate route to fill its members.",
   action: "manage_settings",
+  callerActions: true,
   body: z
     .object({
       name: z.string().trim().min(1).max(100),
@@ -196,7 +201,8 @@ const createSegment = defineQuillsRoute({
     entityType: "segment",
     entityId: result.id,
   }),
-  handler: async ({ db, body }) => {
+  handler: async ({ db, body, actions }) => {
+    if (onRevenue(body.rules) && !seesRevenue(actions)) throw revenueDenied();
     const [row] = await db
       .insert(segments)
       .values({
@@ -219,6 +225,7 @@ const updateSegment = defineQuillsRoute({
   summary: "Update a segment",
   description: "The type cannot change. Only a dynamic segment has rules.",
   action: "manage_settings",
+  callerActions: true,
   params,
   body: z
     .object({
@@ -236,7 +243,8 @@ const updateSegment = defineQuillsRoute({
     entityType: "segment",
     entityId: params.segmentId,
   }),
-  handler: async ({ db, params, body }) => {
+  handler: async ({ db, params, body, actions }) => {
+    if (onRevenue(body.rules) && !seesRevenue(actions)) throw revenueDenied();
     const current = await loadSegment(db, params.segmentId, true);
     if (body.rules && current.type !== "dynamic")
       throw new HTTPException(409, {

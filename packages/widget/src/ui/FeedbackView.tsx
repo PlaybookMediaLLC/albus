@@ -3,21 +3,33 @@ import { Icon } from "./Icon.js";
 import { SearchField } from "./SearchField.js";
 import { feedbackStatusLabels } from "./feedback.js";
 import { RoadmapView } from "./RoadmapView.js";
-import type { FeedbackPost, FeedbackFilters } from "./types.js";
+import type {
+  FeedbackPost,
+  FeedbackFilters,
+  WidgetViewProps,
+} from "./types.js";
+import { useT } from "./i18n/useT.js";
 
 export function FeedbackView({
   posts,
+  identified = false,
   onOpen,
   onCompose,
   filters,
   onFilters,
+  onVote,
+  offline,
 }: {
   posts: readonly FeedbackPost[];
+  identified?: boolean;
   onOpen: (id: string) => void;
   onCompose: () => void;
   filters: FeedbackFilters;
   onFilters: (filters: FeedbackFilters) => void;
+  onVote?: WidgetViewProps["onVoteFeedback"];
+  offline?: boolean;
 }) {
+  const t = useT();
   const { query, sort, status } = filters;
   const search = useRef<HTMLInputElement>(null);
   const term = query.trim().toLowerCase();
@@ -33,38 +45,41 @@ export function FeedbackView({
   return (
     <div className="qb-list-view">
       <div className="qb-title-row">
-        <h1>{sort === "roadmap" ? "Roadmap" : "Feedback"}</h1>
+        <h1>{sort === "roadmap" ? t("Roadmap") : t("Feedback")}</h1>
         <label
           className="qb-sort"
           data-active={sort !== "default"}
           title={
             sort === "votes"
-              ? "Sorted by most votes"
+              ? t("Sorted by most votes")
               : sort === "title"
-                ? "Sorted by title"
-                : "Sort feedback"
+                ? t("Sorted by title")
+                : t("Sort feedback")
           }
         >
           <Icon name="filter" />
           <select
-            aria-label="Sort feedback"
+            aria-label={t("Sort feedback")}
             value={sort}
             onChange={(event) =>
               onFilters({ ...filters, sort: event.target.value })
             }
           >
-            <option value="default">Default order</option>
-            <option value="votes">Most votes</option>
-            <option value="title">Title</option>
-            <option value="roadmap">Roadmap</option>
+            <option value="default">{t("Default order")}</option>
+            <option value="votes">{t("Most votes")}</option>
+            <option value="title">{t("Title")}</option>
+            <option value="roadmap">{t("Roadmap")}</option>
           </select>
         </label>
       </div>
       {sort === "roadmap" ? (
         <RoadmapView
           posts={posts}
+          identified={identified}
           onOpen={onOpen}
           expanded={filters.roadmapExpanded ?? []}
+          onVote={onVote}
+          offline={offline}
           onExpanded={(roadmapExpanded) =>
             onFilters({ ...filters, roadmapExpanded })
           }
@@ -72,7 +87,7 @@ export function FeedbackView({
       ) : (
         <>
           <SearchField
-            label="Search feedback"
+            label={t("Search feedback")}
             value={query}
             onChange={(query) => onFilters({ ...filters, query })}
             inputRef={search}
@@ -80,7 +95,7 @@ export function FeedbackView({
           <div
             className="qb-status-filters"
             role="group"
-            aria-label="Feedback status"
+            aria-label={t("Feedback status")}
           >
             {(
               ["all", "open", "planned", "in_progress", "shipped"] as const
@@ -91,7 +106,7 @@ export function FeedbackView({
                 aria-pressed={status === value}
                 onClick={() => onFilters({ ...filters, status: value })}
               >
-                {value === "all" ? "All" : feedbackStatusLabels[value]}
+                {value === "all" ? t("All") : t(feedbackStatusLabels[value])}
               </button>
             ))}
           </div>
@@ -109,12 +124,17 @@ export function FeedbackView({
                   <span>{post.body}</span>
                   <small>
                     {post.author}
-                    {post.status && <> · {feedbackStatusLabels[post.status]}</>}
-                    {post.following && " · Following"}
+                    {post.status && (
+                      <> · {t(feedbackStatusLabels[post.status])}</>
+                    )}
+                    {post.following && ` · ${t("Following")}`}
                   </small>
                 </span>
                 {post.votes !== undefined && (
-                  <span className="qb-votes" aria-label={`${post.votes} votes`}>
+                  <span
+                    className="qb-votes"
+                    aria-label={t("{count} votes", { count: post.votes })}
+                  >
                     <Icon name="up" />
                     {post.votes}
                   </span>
@@ -129,13 +149,13 @@ export function FeedbackView({
               </span>
               <h2>
                 {term
-                  ? "No feedback matches your search."
-                  : "Be the first to share an idea."}
+                  ? t("No feedback matches your search.")
+                  : t("Be the first to share an idea.")}
               </h2>
               <p>
                 {term
-                  ? "Try another word or clear your search."
-                  : "Have something in mind? Submit your feedback below."}
+                  ? t("Try another word or clear your search.")
+                  : t("Have something in mind? Submit your feedback below.")}
               </p>
             </div>
           )}
@@ -145,7 +165,7 @@ export function FeedbackView({
         <div className="qb-floating-action">
           <button type="button" className="qb-primary" onClick={onCompose}>
             <Icon name="plus" />
-            Submit feedback
+            {t("Submit feedback")}
           </button>
         </div>
       )}

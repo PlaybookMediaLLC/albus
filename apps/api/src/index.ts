@@ -39,6 +39,7 @@ import comment from "./comment";
 import config from "./config";
 import customField from "./custom-field";
 import db, { getDatabase, schema } from "./database";
+import desktop from "./desktop";
 import { apiErrorSchema } from "./errors/api-error-schema";
 import { httpExceptionResponse } from "./errors/http-exception-response";
 import { notFoundResponse } from "./errors/not-found-response";
@@ -656,6 +657,8 @@ export function createApp() {
   );
 
   const configApi = api.route("/config", config);
+  // The route reads its own bearer token, so it is mounted before authenticateApiRequest.
+  api.route("/desktop", desktop);
 
   api.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
     type: "http",

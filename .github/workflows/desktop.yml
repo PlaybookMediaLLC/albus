@@ -1,0 +1,138 @@
+name: Desktop release
+
+# Builds the Quills desktop app (apps/desktop) for macOS and Windows. A manual run adds the
+# installers to a draft GitHub release. A staging-to-main pull request that changes the app builds
+# the same installers and keeps them as workflow artifacts, so a release never meets an untested build.
+# Code signing, notarization and updates turn on only when their secrets and variables are set,
+# so a build without them still works. See apps/desktop/README.md.
+
+on:
+  workflow_dispatch:
+  # Branch policy lets only staging target main, so this runs on the staging-to-main pull request.
+  pull_request:
+    branches: [main]
+    paths:
+      - apps/desktop/**
+      - .github/workflows/desktop.yml
+
+permissions: {}
+
+concurrency:
+  group: desktop-release-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    if: ${{ github.repository == 'PlaybookMediaLLC/kaneo' }}
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Intel runner: GitHub often has no free Apple silicon runner. The universal build still
+          # compiles for both Mac CPUs.
+          - platform: macos-15-intel
+            rust-targets: aarch64-apple-darwin,x86_64-apple-darwin
+            args: --target universal-apple-darwin
+          - platform: windows-2025
+            rust-targets: ""
+            args: ""
+    runs-on: ${{ matrix.platform }}
+    timeout-minutes: 60
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          version: 12.18.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 24.22.2
+          cache: pnpm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+        with:
+          toolchain: stable
+          targets: ${{ matrix.rust-targets }}
+
+      # Pull requests only: a release build never restores a cache.
+      - name: Cache Rust builds
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: apps/desktop/src-tauri -> target
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --filter @quills/desktop
+
+      # Each value goes to the build only when its secret or variable is set.
+      - name: Configure signing and updates
+        shell: bash
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_PRIVATE_KEY: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          UPDATER_PUBKEY: ${{ vars.QUILLS_DESKTOP_UPDATER_PUBKEY }}
+          UPDATER_ENDPOINT: ${{ vars.QUILLS_DESKTOP_UPDATER_ENDPOINT }}
+        run: |
+          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY \
+            APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID APPLE_API_KEY APPLE_API_ISSUER \
+            TAURI_SIGNING_PRIVATE_KEY TAURI_SIGNING_PRIVATE_KEY_PASSWORD; do
+            if [ -n "${!name}" ]; then
+              delimiter="EOF_$(openssl rand -hex 8)"
+              { echo "$name<<$delimiter"; echo "${!name}"; echo "$delimiter"; } >> "$GITHUB_ENV"
+            fi
+          done
+          # Tauri reads the App Store Connect API key for notarization from a file.
+          if [ -n "$APPLE_API_PRIVATE_KEY" ]; then
+            key_path="$RUNNER_TEMP/AuthKey_$APPLE_API_KEY.p8"
+            (umask 077 && printf '%s\n' "$APPLE_API_PRIVATE_KEY" > "$key_path")
+            echo "APPLE_API_KEY_PATH=$key_path" >> "$GITHUB_ENV"
+          fi
+          config='{}'
+          if [ -n "$UPDATER_PUBKEY" ] && [ -n "$UPDATER_ENDPOINT" ] && [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            config=$(jq -nc --arg key "$UPDATER_PUBKEY" --arg url "$UPDATER_ENDPOINT" \
+              '{bundle: {createUpdaterArtifacts: true}, plugins: {updater: {pubkey: $key, endpoints: [$url]}}}')
+          fi
+          echo "QUILLS_DESKTOP_CONFIG=$config" >> "$GITHUB_ENV"
+          # A release still builds without these values, so say what its users lose.
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            if [ "$config" = '{}' ]; then
+              echo "::warning::No updates: set QUILLS_DESKTOP_UPDATER_PUBKEY, QUILLS_DESKTOP_UPDATER_ENDPOINT and TAURI_SIGNING_PRIVATE_KEY, or the installed app cannot update itself."
+            fi
+            if [ "$RUNNER_OS" = macOS ] && { [ -z "$APPLE_CERTIFICATE" ] ||
+              { [ -z "$APPLE_PASSWORD" ] && [ -z "$APPLE_API_PRIVATE_KEY" ]; }; }; then
+              echo "::warning::Not signed and notarized: set the APPLE_* secrets, or macOS blocks the downloaded app."
+            fi
+          fi
+
+      - name: Build and upload
+        uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          projectPath: apps/desktop
+          tauriScript: pnpm tauri
+          # A pull request only builds: no tag and no release name means no release.
+          tagName: ${{ github.event_name == 'workflow_dispatch' && 'desktop-v__VERSION__' || '' }}
+          releaseName: ${{ github.event_name == 'workflow_dispatch' && 'Quills desktop __VERSION__' || '' }}
+          releaseBody: The Quills desktop app. Download the installer for your system.
+          releaseDraft: true
+          uploadWorkflowArtifacts: ${{ github.event_name == 'pull_request' }}
+          args: ${{ matrix.args }} --config ${{ env.QUILLS_DESKTOP_CONFIG }}

@@ -11,6 +11,7 @@ import {
 import {
   sendNewCommentEmail,
   sendPortalInviteEmail,
+  sendPostUpdateEmail,
   sendStatusChangeEmail,
   sendVerifyAddressEmail,
   type EmailResult,
@@ -26,6 +27,7 @@ import { boards } from "../../database/quills/schema/boards";
 import { events, type EventRow } from "../../database/quills/schema/events";
 import { postSubscriptions } from "../../database/quills/schema/notifications";
 import { boardProjects } from "../../database/quills/schema/platform-links";
+import { postUpdates } from "../../database/quills/schema/post-updates";
 import { postComments, posts } from "../../database/quills/schema/posts";
 import { postStatuses } from "../../database/quills/schema/statuses";
 import { webhooks } from "../../database/quills/schema/webhooks";
@@ -45,11 +47,17 @@ import {
   unsubscribeUrl,
 } from "../portal/unsubscribe-token";
 import { crmNoteDue } from "../integrations/crm-notes";
+import { taskRuleDue } from "../integrations/task-rule-job";
+import { updateMailDue } from "./handlers/update-mail";
+import { taskFailureMessages } from "../integrations/post-task";
+import type { TaskFailure } from "../framework/platform-reads";
 import { githubCommentDue } from "./handlers/github-comment";
 import { shippedSubscribers } from "./handlers/shipped-mail";
 import { statusSubscribers } from "./handlers/status-mail";
 import { supportSubscribers } from "./handlers/support-mail";
 import { enqueueQuillsJob, type QuillsQueue } from "./queue";
+import { postReplyAddress } from "../framework/signed";
+import { recipientDirection } from "./handlers/recipient-language";
 
 /** Event type → the queue whose handler does the requested work after commit. */
 export const eventQueues: Partial<Record<string, QuillsQueue>> = {
@@ -130,6 +138,8 @@ export type Subscribers = {
    * decides at fan-out whether this event has such mail at all.
    */
   direct?: true | ((db: Database, event: DeliveryEvent) => Promise<boolean>);
+  /** Seconds the direct mail job waits before it runs; `mail` decides again when it does. */
+  directDelay?: (db: Database, event: DeliveryEvent) => Promise<number>;
   /**
    * Direct mail about other messages than the event's own: one mail job per message ID returned,
    * for example the copies a tracker's reply-all wrote on its linked tickets. `mail` gets the
@@ -177,7 +187,12 @@ const commentIdOf = (event: DeliveryEvent) =>
 async function livePost(db: Database, postId: PostId | undefined) {
   if (!postId) return undefined;
   const [post] = await db
-    .select({ id: posts.id, title: posts.title, statusId: posts.statusId })
+    .select({
+      id: posts.id,
+      title: posts.title,
+      statusId: posts.statusId,
+      authorId: posts.principalId,
+    })
     .from(posts)
     .where(and(eq(posts.id, postId), isNull(posts.deletedAt)));
   return post;
@@ -227,7 +242,11 @@ const clip = (text: string, length: number) =>
 /** The workspace's Kaneo ID and display name. */
 async function workspaceOf(db: Database) {
   const [row] = await db
-    .select({ id: settings.workspaceId, name: settings.name })
+    .select({
+      id: settings.workspaceId,
+      name: settings.name,
+      slug: settings.slug,
+    })
     .from(settings)
     .limit(1);
   return row;
@@ -304,6 +323,7 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
         "unsubscribe_post",
         post.id,
       );
+      const dir = await recipientDirection(db, principalId);
       return {
         type: "post_status_changed",
         emailType: "StatusChangeEmail",
@@ -311,6 +331,9 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
         send: (to) =>
           sendStatusChangeEmail({
             to,
+            // A reply by mail becomes the subscriber's comment (inbound/email.ts).
+            replyTo: postReplyAddress(workspace, post.id) ?? undefined,
+            dir,
             postTitle: post.title,
             postUrl: postUrl(workspace.id, post.id),
             // The event records only the new status.
@@ -319,6 +342,8 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
             workspaceName: workspace.name,
             unsubscribeUrl: unsubscribePageUrl(workspace.id, token),
             oneClickUnsubscribeUrl: unsubscribeUrl(workspace.id, token),
+            // Only the author reads "your feedback"; a follower gets their own copy.
+            yours: post.authorId === principalId,
           }),
       };
     },
@@ -338,6 +363,8 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
       };
     },
     mail: async (db, event, principalId) => {
+      // An update's page comment (#92): its own mail went to the followers that the sender chose.
+      if (payloadOf(event).update) return undefined;
       const comment = await liveComment(db, event);
       const post = comment && (await livePost(db, comment.postId));
       const workspace = await workspaceOf(db);
@@ -348,6 +375,7 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
         "unsubscribe_post",
         post.id,
       );
+      const dir = await recipientDirection(db, principalId);
       return {
         type: "comment_created",
         emailType: "NewCommentEmail",
@@ -356,11 +384,70 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
         send: (to) =>
           sendNewCommentEmail({
             to,
+            replyTo: postReplyAddress(workspace, post.id) ?? undefined,
+            dir,
             postTitle: post.title,
             postUrl: postUrl(workspace.id, post.id),
             commenterName: comment.author ?? "Someone",
             commentPreview: clip(comment.content, 150),
             isTeamMember: comment.authorKaneoUserId !== null,
+            workspaceName: workspace.name,
+            unsubscribeUrl: unsubscribePageUrl(workspace.id, token),
+            oneClickUnsubscribeUrl: unsubscribeUrl(workspace.id, token),
+          }),
+      };
+    },
+  },
+  // RFC 0005, 5.2: only the teammate whose status change the board rule could not turn into a task.
+  "post.task_create_failed": {
+    recipients: async (_db, event) => {
+      const { principalId } = payloadOf(event);
+      return {
+        principalIds: principalId ? [principalId as PrincipalId] : [],
+        postId: postIdOf(event),
+      };
+    },
+    notification: async (db, event) => {
+      const post = await livePost(db, postIdOf(event));
+      const reason = payloadOf(event).reason as TaskFailure | undefined;
+      if (!post || !reason || !(reason in taskFailureMessages))
+        return undefined;
+      return {
+        type: "task_create_failed",
+        title: clip(`No task was created for "${post.title}"`, 255),
+        body: clip(taskFailureMessages[reason], 500),
+        postId: post.id,
+      };
+    },
+  },
+  // #92: handlers/update-mail.ts queues the followers' mail jobs in pages; this entry writes each mail.
+  "post.update_sent": {
+    recipients: noRecipients,
+    customers: true,
+    mail: async (db, event, principalId) => {
+      const [update] = await db
+        .select({ postId: postUpdates.postId, body: postUpdates.body })
+        .from(postUpdates)
+        .where(eq(postUpdates.id, payloadOf(event).updateId ?? ""));
+      const post = update && (await livePost(db, update.postId));
+      const workspace = await workspaceOf(db);
+      if (!update || !post || !workspace || !principalId) return undefined;
+      const token = await mintUnsubscribeToken(
+        db,
+        principalId,
+        "unsubscribe_post",
+        post.id,
+      );
+      return {
+        type: "post_update",
+        emailType: "PostUpdateEmail",
+        postId: post.id,
+        send: (to) =>
+          sendPostUpdateEmail({
+            to,
+            postTitle: post.title,
+            postUrl: postUrl(workspace.id, post.id),
+            body: update.body,
             workspaceName: workspace.name,
             unsubscribeUrl: unsubscribePageUrl(workspace.id, token),
             oneClickUnsubscribeUrl: unsubscribeUrl(workspace.id, token),
@@ -482,6 +569,10 @@ export async function fanOut(workspaceId: string, eventId: string) {
         5,
       );
     await enqueueWorkflowRuns(db, event);
+    // RFC 0005: a teammate's status change can create a Kaneo task or comment on the linked tasks.
+    await taskRuleDue(db, event);
+    // #92: an update's mail goes out in pages.
+    await updateMailDue(db, event);
     // Private comments stay inside the workspace. A board filter applies only to events about a board.
     const { boardId, isPrivate } = await placeOf(db, event);
     const hooks = isPrivate
@@ -510,7 +601,7 @@ export async function fanOut(workspaceId: string, eventId: string) {
     const { principalIds, postId } = wanted
       ? await entry.recipients(db, event)
       : { principalIds: [] };
-    // Teammates; customers follow below, by mail only, for entries that set `customers`.
+    // Teammates; customers follow below, by mail and in-app, for entries that set `customers`.
     const teammates = principalIds.length
       ? await db
           .select({ id: principal.id, userId: principal.kaneoUserId })
@@ -563,6 +654,10 @@ export async function fanOut(workspaceId: string, eventId: string) {
           .from(boardProjects)
           .where(eq(boardProjects.boardId, post.boardId))
       : [];
+    const direct =
+      typeof entry?.direct === "function"
+        ? await entry.direct(db, event)
+        : Boolean(entry?.direct);
     return {
       hooks: hooks.map((hook) => hook.id),
       teammates: postId && !post ? [] : teammates,
@@ -570,10 +665,9 @@ export async function fanOut(workspaceId: string, eventId: string) {
       customers: postId && !post ? [] : customers.map((row) => row.id),
       links: links.map((link) => link.projectId),
       entry,
-      direct:
-        typeof entry?.direct === "function"
-          ? await entry.direct(db, event)
-          : Boolean(entry?.direct),
+      direct,
+      directDelay:
+        direct && entry?.directDelay ? await entry.directDelay(db, event) : 0,
       copies: entry?.copies && entry.mail ? await entry.copies(db, event) : [],
     };
   });
@@ -613,6 +707,7 @@ export async function fanOut(workspaceId: string, eventId: string) {
         { eventId },
         `${eventId}:direct`,
         5,
+        plan.directDelay,
       );
     for (const messageId of plan.copies)
       await enqueueQuillsJob(
@@ -649,7 +744,16 @@ export async function fanOut(workspaceId: string, eventId: string) {
           5,
         );
     }
-    for (const principalId of plan.customers)
+    for (const principalId of plan.customers) {
+      // The widget's activity feed reads these; it rechecks the post's visibility at read time.
+      if (plan.entry?.notification)
+        await enqueueQuillsJob(
+          db,
+          "quills.notification",
+          { eventId, principalId },
+          `${eventId}:${principalId}`,
+          3,
+        );
       await enqueueQuillsJob(
         db,
         "quills.mail",
@@ -657,5 +761,6 @@ export async function fanOut(workspaceId: string, eventId: string) {
         `${eventId}:${principalId}`,
         5,
       );
+    }
   });
 }

@@ -1,7 +1,14 @@
 import { HTTPException } from "hono/http-exception";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
-export type ApiErrorIssue = { path: string; message: string };
+export type ApiErrorIssue = {
+  path: string;
+  message: string;
+  code?: string;
+  origin?: string;
+  minimum?: number;
+  maximum?: number;
+};
 
 export type ApiErrorBody = {
   message: string;

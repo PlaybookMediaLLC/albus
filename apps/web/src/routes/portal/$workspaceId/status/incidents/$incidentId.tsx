@@ -8,9 +8,9 @@ export const Route = createFileRoute(
   "/portal/$workspaceId/status/incidents/$incidentId",
 )({
   validateSearch: searchSchema,
-  beforeLoad: async ({ context, params }) => {
-    if (!context.quillsPortal.portalAvailable) return;
-    await context.queryClient.prefetchQuery(
+  beforeLoad: ({ context, params }) => {
+    if (!context.quillsPortal.accessGranted) return;
+    void context.queryClient.prefetchQuery(
       getPublicStatusIncidentQuery(
         {
           param: {

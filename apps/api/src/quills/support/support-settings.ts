@@ -8,6 +8,7 @@ import {
 } from "../feedback/settings-json";
 import { defineQuillsRoute } from "../framework/define-route";
 import { resendInbound } from "../framework/signed";
+import { awayReplySchema, readAwayReply } from "./away-reply";
 
 // Support settings stored in the workspace settings row: office hours, routing, email auto-ack and
 // the spam filter. Each is one JSON key (or the spam-filter column), read with defaults for unset values.
@@ -192,6 +193,42 @@ const setAutoAck = defineQuillsRoute({
     })),
 });
 
+const getAwayReply = defineQuillsRoute({
+  method: "get",
+  path: "/support/away-reply",
+  operationId: "getQuillsAwayReply",
+  summary: "Get the away reply",
+  description:
+    "The automatic answer to a customer who writes while no teammate is online or outside office hours.",
+  action: "manage_settings",
+  response: awayReplySchema,
+  responseDescription: "The away reply",
+  handler: async ({ db }) => readAwayReply(db),
+});
+
+const setAwayReply = defineQuillsRoute({
+  method: "put",
+  path: "/support/away-reply",
+  operationId: "setQuillsAwayReply",
+  summary: "Set the away reply",
+  description:
+    "While enabled, a customer message in a widget or portal conversation gets this answer when no teammate is online or it is outside office hours, at most once every 12 hours per conversation.",
+  action: "manage_settings",
+  body: awayReplySchema,
+  response: awayReplySchema,
+  responseDescription: "The away reply",
+  event: ({ workspaceId }) => ({
+    type: "settings.away_reply_updated",
+    entityType: "settings",
+    entityId: workspaceId,
+  }),
+  handler: async ({ db, body }) =>
+    writeSettingsKey(db, "metadata", "awayReply", () => ({
+      enabled: body.enabled,
+      message: body.message,
+    })),
+});
+
 const MAX_TRUSTED = 500;
 /** Lower case, trimmed, and an address or a domain (optionally `@domain`); anything else is dropped. */
 const trusted = (raw: unknown) => {
@@ -344,6 +381,8 @@ export default apiRouter<BaseVariables & { workspaceId: string }>()
   .openapi(...setRouting)
   .openapi(...getAutoAck)
   .openapi(...setAutoAck)
+  .openapi(...getAwayReply)
+  .openapi(...setAwayReply)
   .openapi(...getSpam)
   .openapi(...setSpam)
   .openapi(...emailStatus);

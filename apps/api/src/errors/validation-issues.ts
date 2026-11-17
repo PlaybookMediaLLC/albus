@@ -3,6 +3,11 @@ import type { ApiErrorIssue } from "./api-error";
 export type ValidationIssueInput = {
   path?: readonly PropertyKey[];
   message?: string;
+  // zod's issue code and size bounds: a client translates from these, not from the English message.
+  code?: string;
+  origin?: string;
+  minimum?: number | bigint;
+  maximum?: number | bigint;
 };
 
 const TARGET_PREFIXES: Record<string, string> = {
@@ -35,6 +40,10 @@ export function formatValidationIssues(
       return {
         path: [prefix, field].filter(Boolean).join("."),
         message: issue.message ?? "Invalid value",
+        ...(issue.code && { code: issue.code }),
+        ...(issue.origin && { origin: issue.origin }),
+        ...(issue.minimum !== undefined && { minimum: Number(issue.minimum) }),
+        ...(issue.maximum !== undefined && { maximum: Number(issue.maximum) }),
       };
     }),
   };

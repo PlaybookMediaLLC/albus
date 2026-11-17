@@ -29,17 +29,21 @@ resource database 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2024-08-0
   properties: { charset: 'UTF8', collation: 'en_US.utf8' }
 }
 
-resource firewall 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2024-08-01' = [for (ip, index) in egressIps: {
-  parent: postgres
-  name: 'app-platform-${index}'
-  properties: { startIpAddress: ip, endIpAddress: ip }
-}]
-
+// Flexible Server rejects concurrent writes (ServerIsBusy), so child resources apply one at a time.
 resource extensions 'Microsoft.DBforPostgreSQL/flexibleServers/configurations@2024-08-01' = {
   parent: postgres
   name: 'azure.extensions'
   properties: { value: 'VECTOR,PGCRYPTO,PG_TRGM', source: 'user-override' }
+  dependsOn: [database]
 }
+
+@batchSize(1)
+resource firewall 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2024-08-01' = [for (ip, index) in egressIps: {
+  parent: postgres
+  name: 'app-platform-${index}'
+  properties: { startIpAddress: ip, endIpAddress: ip }
+  dependsOn: [extensions]
+}]
 
 resource redis 'Microsoft.Cache/redisEnterprise@2025-07-01' = {
   name: name

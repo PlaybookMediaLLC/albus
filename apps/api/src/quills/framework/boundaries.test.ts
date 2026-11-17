@@ -45,9 +45,13 @@ const allowedImport = (file: string, specifier: string) => {
         "framework/define-route",
         "framework/app",
         "framework/app-keys",
+        // Kaneo's own sign-in link, mailed by Kaneo's auth module (issue #129); never the database.
+        "framework/sign-in-link",
         "framework/files",
         "framework/integration-config",
         "framework/platform-reads",
+        // RFC 0005: Kaneo's own task and comment controllers, called as the acting teammate.
+        "framework/platform-writes",
         "framework/webhook-config",
         "framework/audience",
         "framework/signed",
@@ -63,11 +67,25 @@ const allowedImport = (file: string, specifier: string) => {
         "support/link-fetch",
         // Pure builders for every web URL emitted by API routes and mail.
         "portal/paths",
+        // Pure RFC 4180 CSV text helpers; never the database.
+        "transfer/runs/csv",
         // Pure: the widget tab defaults of a stored settings blob; never the database.
         "settings/widget-tabs",
         // Website branding: a guarded site fetch, a logo upload and the personal email domain list;
         // never the database (see the module).
         "settings/website-fetch",
+        // Pure search conditions over quills.posts (typos, prefixes, minus words); no database call.
+        "feedback/post-search",
+        // Pure text checks for spam and sensitive information.
+        "feedback/content-checks",
+        // Pure reply-time values of the widget settings.
+        "settings/widget-reply-time",
+        // The address hash and block check, on the route's own scoped transaction only.
+        "framework/ip-block",
+        // Portal token sign-in: signed grants and the stored policy; the route's own transaction only.
+        "framework/portal-sign-in",
+        // The customer a verified host token names, on the route's own scoped transaction only.
+        "widget/identify-customer",
         "../openapi",
       ].includes(target) ||
       target.startsWith("../database/quills/schema/"))

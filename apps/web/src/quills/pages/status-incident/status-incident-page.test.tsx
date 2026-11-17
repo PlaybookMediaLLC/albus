@@ -25,7 +25,7 @@ describe("StatusIncidentPage", () => {
         mockApi().reply(
           getPublicStatusIncidentFixture.ok({ title: "Delayed notifications" }),
         );
-        return { ...options, accessGranted: false };
+        return options;
       },
       assert: async (view) => {
         await view.findByText("Delayed notifications");
@@ -34,19 +34,63 @@ describe("StatusIncidentPage", () => {
   });
 
   describe("behavior", () => {
-    it("keeps a public incident visible when portal access is denied", async () => {
+    it("asks a signed-out visitor to sign in on a private portal and loads nothing", async () => {
       const api = mockApi();
-      api.reply(
-        getPublicStatusIncidentFixture.ok({ title: "Delayed notifications" }),
-      );
       const view = renderPage(StatusIncidentPage, meta, {
+        ...options,
         accessGranted: false,
-        params: { incidentId: "status_incident_test_1" },
+      });
+      expect(await view.findByRole("link", { name: /sign in/i })).toBeVisible();
+      expect(api.calls()).toHaveLength(0);
+    });
+
+    it("offers a retry when the access check fails, instead of denying a member", async () => {
+      const api = mockApi();
+      const view = renderPage(StatusIncidentPage, meta, {
+        ...options,
+        viewer: { kind: "user", id: "user_test_1" },
+        accessGranted: false,
+        accessProblem: { kind: "failed" },
+        retryAccess: () => undefined,
       });
       expect(
-        await view.findByText("Delayed notifications"),
-      ).toBeInTheDocument();
-      expect(api.calls("getQuillsPublicStatusIncident")).toHaveLength(1);
+        await view.findByRole("button", { name: "Try again" }),
+      ).toBeVisible();
+      expect(view.queryByText(/do not have access/i)).toBeNull();
+      expect(api.calls()).toHaveLength(0);
+    });
+
+    it("names the status, impact and component states in words", async () => {
+      mockApi().reply(
+        getPublicStatusIncidentFixture.ok({
+          title: "Exports are slow",
+          status: "in_progress",
+          impact: "major",
+          affectedComponents: [
+            { id: "c1", name: "API", componentStatus: "partial_outage" },
+          ] as never,
+          updates: [],
+        }),
+      );
+      const view = renderPage(StatusIncidentPage, meta, options);
+      await view.findByText("Exports are slow");
+      expect(view.getByText("Status: In progress")).toBeInTheDocument();
+      expect(view.getByText("Impact: Major")).toBeInTheDocument();
+      expect(view.getByText("API: Partial outage")).toBeInTheDocument();
+      expect(view.container.textContent).not.toMatch(
+        /in_progress|partial_outage/,
+      );
+    });
+
+    it("opens from a status mail while the portal is off", async () => {
+      mockApi().reply(
+        getPublicStatusIncidentFixture.ok({ title: "Exports are slow" }),
+      );
+      const view = renderPage(StatusIncidentPage, meta, {
+        ...options,
+        portalOff: true,
+      });
+      expect(await view.findByText("Exports are slow")).toBeInTheDocument();
     });
 
     it("shows a non-disclosing not-found state", async () => {

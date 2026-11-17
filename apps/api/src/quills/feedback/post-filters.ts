@@ -22,11 +22,12 @@ import {
 } from "../../database/quills/schema/posts";
 import type { Database } from "../framework/define-route";
 import { boardVisible, notTest } from "./visibility";
+import { postSearch } from "./post-search";
 
 /** How long a deleted post stays restorable and listed with showDeleted. */
 export const RESTORE_MS = 30 * 24 * 60 * 60 * 1000;
 
-const idList = <P extends IdPrefix>(prefix: P) =>
+export const idList = <P extends IdPrefix>(prefix: P) =>
   z
     .string()
     .max(2000)
@@ -106,9 +107,7 @@ export function filterConditions(
       : f.owner
         ? eq(posts.ownerPrincipalId, f.owner)
         : undefined,
-    f.search
-      ? sql`${posts.searchVector} @@ websearch_to_tsquery('english', ${f.search})`
-      : undefined,
+    f.search ? postSearch(f.search) : undefined,
     f.dateFrom ? gte(posts.createdAt, toDate(f.dateFrom)) : undefined,
     f.dateTo ? lte(posts.createdAt, toDate(f.dateTo, true)) : undefined,
   );

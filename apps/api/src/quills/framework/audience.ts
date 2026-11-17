@@ -25,7 +25,11 @@ import { portalInvites } from "../../database/quills/schema/portal-invites";
 import { segments, userSegments } from "../../database/quills/schema/segments";
 import { readClientIp } from "../../utils/client-ip";
 import type { ChangeActor } from "../events";
-import { isMemberOfNamedWorkspace } from "./platform-reads";
+import {
+  isMemberOfNamedWorkspace,
+  tokenCustomerOfNamedWorkspace,
+} from "./platform-reads";
+import { readPortalSignIn } from "./portal-sign-in";
 
 // One resolver per audience that is not a teammate. A resolver reads the caller's credential
 // from the request, then, inside the scoped transaction, returns the customer principal (or
@@ -44,6 +48,11 @@ export type PortalAccount = {
   image: string | null;
   /** A member of the named workspace. Only the private-portal team grant reads it. */
   member: boolean;
+  /**
+   * The workspace customer that portal token sign-in created this account for (gaps G-17, G-24),
+   * from the account's own Kaneo login record. Request callers only; null for any other account.
+   */
+  tokenCustomerId?: string | null;
 };
 
 export type QuillsCaller = {
@@ -103,6 +112,7 @@ async function portalAccount(
       emailVerified,
       image: image ?? null,
       member: await isMemberOfNamedWorkspace(workspace, id),
+      tokenCustomerId: await tokenCustomerOfNamedWorkspace(workspace, id),
     };
   } catch (error) {
     // A rejected credential is an anonymous caller; anything else is a server failure.
@@ -128,7 +138,8 @@ export async function readCredentials(
   return { account: null, tokenHash: token ? hashToken(token) : null };
 }
 
-async function portalCaller(
+/** The portal account's customer profile; with `ensure`, created when missing. */
+export async function portalCaller(
   db: Database,
   account: PortalAccount,
   ensure: boolean,
@@ -147,9 +158,25 @@ async function portalCaller(
         .limit(1)
     )[0];
   let row = await find();
+  // A token sign-in account takes over the widget profile it was created for, once: the votes and
+  // conversations carry over. The customer_membership trigger accepts this link only for the account
+  // that the session vouches for (migration 0036).
+  if (!row && account.tokenCustomerId) {
+    const linked = await db
+      .update(customer)
+      .set({ kaneoUserId: account.id })
+      .where(
+        and(
+          eq(customer.id, account.tokenCustomerId as CustomerId),
+          isNull(customer.kaneoUserId),
+        ),
+      )
+      .returning({ id: customer.id });
+    if (linked.length) row = await find();
+  }
   if (ensure && !row?.principalId) {
     // The customer_membership trigger accepts this link only for the account the entry point vouched for.
-    // The email stays on the Kaneo account: a profile is never matched to an account by email.
+    // A new profile carries no email. Only portal/widget-link.ts matches one by email: the account's verified email.
     if (!row)
       await db
         .insert(customer)
@@ -232,6 +259,14 @@ export function widgetEnabled(stored: string | null) {
   }
 }
 
+async function signInMode(db: Database) {
+  const [row] = await db
+    .select({ portalConfig: settings.portalConfig })
+    .from(settings)
+    .limit(1);
+  return readPortalSignIn(row?.portalConfig ?? null).mode;
+}
+
 /** Resolves the caller inside the scoped transaction. */
 export async function resolveCaller(
   db: Database,
@@ -244,12 +279,16 @@ export async function resolveCaller(
     customerId: null,
     account: credentials.account,
   };
-  if (audience === "portal" && credentials.account) {
-    const row = await portalCaller(
-      db,
-      credentials.account,
-      rules.ensureCustomer,
-    );
+  // Customer sign-in turned off (gap G-24): a non-member account is a signed-out caller here.
+  if (
+    audience === "portal" &&
+    credentials.account &&
+    !credentials.account.member &&
+    (await signInMode(db)) === "disabled"
+  )
+    caller.account = null;
+  if (audience === "portal" && caller.account) {
+    const row = await portalCaller(db, caller.account, rules.ensureCustomer);
     if (row?.blockedAt)
       throw new HTTPException(403, { message: "This account is blocked" });
     caller.customerId = row?.customerId ?? null;
@@ -323,8 +362,8 @@ export const callerActor = (caller: QuillsCaller): ChangeActor => ({
 
 /**
  * Mints a widget session for a customer that a token signed with `secret` identified. Only the
- * SHA-256 hash of the session token is stored. HMAC provenance for the portal handoff is not
- * recorded until the handoff exists.
+ * SHA-256 hash of the session token is stored. The portal link (issue #129, option C) proves the
+ * email by mail, so no HMAC provenance is recorded.
  */
 export async function mintWidgetSession(
   db: Database,
@@ -342,7 +381,15 @@ export async function mintWidgetSession(
   return { token };
 }
 
-/** The claims of an HS256 JWT signed with `secret`, or null. The token must carry exp. */
+/** The longest identify token lifetime, from iat (or from now without one). */
+export const IDENTITY_TOKEN_MAX_SECONDS = 3600;
+/** How far a host server's clock may run ahead when it sets iat. */
+const CLOCK_SKEW_SECONDS = 60;
+
+/**
+ * The claims of an HS256 JWT signed with `secret`, or null. The token must carry exp, at most an
+ * hour after iat (or after now without iat), and an iat that is not in the future.
+ */
 export function verifyIdentityToken(token: string, secret: string) {
   const [header, payload, signature, extra] = token.split(".");
   if (!header || !payload || !signature || extra !== undefined) return null;
@@ -359,11 +406,26 @@ export function verifyIdentityToken(token: string, secret: string) {
       Buffer.from(payload, "base64url").toString(),
     );
     if (!claims || typeof claims !== "object") return null;
-    const { exp, nbf } = claims as { exp?: unknown; nbf?: unknown };
+    const { exp, nbf, iat } = claims as {
+      exp?: unknown;
+      nbf?: unknown;
+      iat?: unknown;
+    };
     const now = Date.now() / 1000;
     // Stricter than the source: a token without exp would never expire.
     if (typeof exp !== "number" || now > exp) return null;
     if (typeof nbf === "number" && now < nbf) return null;
+    if (
+      iat !== undefined &&
+      (typeof iat !== "number" || iat > now + CLOCK_SKEW_SECONDS)
+    )
+      return null;
+    // A short lifetime limits what a leaked token can do.
+    if (
+      exp - (typeof iat === "number" ? iat : now) >
+      IDENTITY_TOKEN_MAX_SECONDS
+    )
+      return null;
     return claims as Record<string, unknown>;
   } catch {
     return null;
@@ -421,7 +483,7 @@ export async function enforceRateLimit(
 export type PortalAccessDecision =
   | {
       granted: true;
-      reason: "public" | "team" | "domain" | "segment" | "invite";
+      reason: "public" | "team" | "domain" | "segment" | "invite" | "widget";
     }
   | { granted: false; reason: "unauthenticated" | "unauthorized" };
 
@@ -432,8 +494,9 @@ const strings = (value: unknown) =>
 
 /**
  * What a portal caller may see: the private-portal gate. Fails closed on a malformed config.
- * A verified address with an accepted invite to this workspace is let in. The widget grant of
- * the source waits for the widget handoff decision.
+ * A verified address with an accepted invite to this workspace is let in, and so is an account
+ * that this workspace's token sign-in created (the host app vouched for that customer). Issue
+ * #129 also links profiles by verified email (portal/widget-link.ts).
  */
 export async function evaluatePortalAccess(
   db: Database,
@@ -456,6 +519,8 @@ export async function evaluatePortalAccess(
   const account = caller.account;
   if (!account) return { granted: false, reason: "unauthenticated" };
   if (account.member) return { granted: true, reason: "team" };
+  // The host app vouched for this customer, and a teammate turned token sign-in on (gap G-17).
+  if (account.tokenCustomerId) return { granted: true, reason: "widget" };
   if (account.emailVerified) {
     const domain = account.email.slice(account.email.lastIndexOf("@") + 1);
     if (strings(access.allowedDomains).includes(domain.toLowerCase()))

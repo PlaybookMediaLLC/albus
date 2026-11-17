@@ -1312,6 +1312,27 @@ describe("raw, textBody and prepare declaration rules", () => {
       }),
     ).toThrow(/browser redirect/);
   });
+  it("takes a browser page only on a public GET", () => {
+    const route = {
+      ...base,
+      audience: "public" as const,
+      response: z.object({ ok: z.boolean() }),
+      browserPage: () => "https://web.example.test/page",
+      handler: async () => ({ ok: true }),
+    };
+    expect(() => buildQuillsRoute(route)).not.toThrow();
+    expect(() =>
+      buildQuillsRoute({
+        ...route,
+        method: "post",
+        action: "update",
+        event: { none: "Rules" },
+      }),
+    ).toThrow(/browser page/);
+    expect(() =>
+      buildQuillsRoute({ ...route, audience: "portal" as const }),
+    ).toThrow(/browser page/);
+  });
   it("lets an HTML page run only the scripts that its route declares", () => {
     const policy = (scripts?: string[]) =>
       htmlHeaders(scripts)["content-security-policy"];

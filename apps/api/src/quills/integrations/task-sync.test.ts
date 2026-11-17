@@ -67,6 +67,8 @@ describe.skipIf(!url)("Board task sync setting", () => {
       voteDisplay: "hidden",
       defaultSort: null,
       taskSync: { statusOnTaskDone: statusId },
+      customFields: [],
+      delivery: null,
     });
     expect((await call(app, env, owner(), "GET", path)).body).toEqual(set.body);
     const cleared = await call(app, env, owner(), "PATCH", path, {

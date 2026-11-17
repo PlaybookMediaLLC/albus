@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { useGetAwayReply } from "../../hooks/team/use-get-away-reply";
 import { useGetConversationRouting } from "../../hooks/team/use-get-conversation-routing";
 import { useGetDefaultSlaPolicy } from "../../hooks/team/use-get-default-sla-policy";
 import { useGetEmailAutoAck } from "../../hooks/team/use-get-email-auto-ack";
@@ -48,9 +49,19 @@ export function SettingsConversationsGeneralPage({
     useGetDefaultSlaPolicy(input, team.viewer),
     useListSlaPolicyOptions(input, team.viewer),
     useGetPortalSettings(input, team.viewer),
+    useGetAwayReply(input, team.viewer),
   ] as const;
-  const [hours, routing, autoAck, abandoned, closeSpam, sla, policies, portal] =
-    queries;
+  const [
+    hours,
+    routing,
+    autoAck,
+    abandoned,
+    closeSpam,
+    sla,
+    policies,
+    portal,
+    away,
+  ] = queries;
   const setSla = useSetDefaultSlaPolicy(team.viewer);
   const update = useUpdatePortalSettings(team.viewer);
   const locked = !team.permissions.manageSettings;
@@ -75,6 +86,7 @@ export function SettingsConversationsGeneralPage({
             workspaceId={workspaceId}
             routing={routing.data?.enabled ?? false}
             autoAck={autoAck.data?.enabled ?? false}
+            awayReply={away.data ?? { enabled: false, message: "" }}
             abandoned={abandoned.data ?? { enabled: false, waitMinutes: 5 }}
             closeSpam={closeSpam.data?.enabled ?? false}
           />

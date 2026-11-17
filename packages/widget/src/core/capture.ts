@@ -6,6 +6,10 @@
 /** Fields whose content never leaves the page. A host can mark any element with data-private. */
 export const PRIVATE_FIELDS = [
   'input[type="password" i]',
+  'input[type="email" i]',
+  'input[type="tel" i]',
+  '[autocomplete*="email" i]',
+  '[autocomplete*="tel" i]',
   "[data-private]",
   '[autocomplete*="cc-" i]',
   'input[name*="card" i]',

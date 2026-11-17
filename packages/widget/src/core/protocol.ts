@@ -15,8 +15,11 @@ export const viewSchema = z.enum([
   "chat",
   "messages",
   "tickets",
+  "notifications",
 ]);
 const countSchema = z.number().check(z.int(), z.minimum(0));
+/** A token claim that identify received but did not apply. */
+export const warningSchema = z.object({ code: z.string(), field: z.string() });
 export const eventSchemas = {
   ready: z.object({}),
   open: z.object({
@@ -47,9 +50,27 @@ export const eventSchemas = {
     user: z.nullable(widgetUserSchema),
     anonymous: z.boolean(),
     error: z.optional(z.string()),
+    warnings: z.optional(z.array(warningSchema)),
   }),
   "email-submitted": z.object({ email: z.string() }),
   unread: z.object({ count: countSchema }),
+  /** The team's messenger availability, read when the panel opens. */
+  presence: z.object({ online: z.boolean(), withinOfficeHours: z.boolean() }),
+  /** Fired by the SDK itself (never by the iframe) whenever getState() changes. */
+  statechange: z.object({
+    initialized: z.boolean(),
+    open: z.boolean(),
+    placement: z.enum(["left", "right"]),
+    theme: z.enum(["auto", "light", "dark"]),
+    locale: z.nullable(z.string()),
+    unreadCount: countSchema,
+    user: z.nullable(widgetUserSchema),
+    identified: z.boolean(),
+  }),
+  /** A new update the visitor has not read; a custom launcher can announce it. */
+  announcement: z.object({ entryId: z.string(), title: z.string() }),
+  /** Fired by the SDK itself for a failure that has no other channel. */
+  error: z.object({ code: z.string(), message: z.string() }),
 };
 
 const eventMessageSchema = z.union([
@@ -98,6 +119,11 @@ const eventMessageSchema = z.union([
     name: z.literal("unread"),
     payload: eventSchemas.unread,
   }),
+  z.object({
+    type: z.literal("quackback:event"),
+    name: z.literal("presence"),
+    payload: eventSchemas.presence,
+  }),
 ]);
 
 export const outboundMessageSchema = z.union([
@@ -110,12 +136,20 @@ export const outboundMessageSchema = z.union([
     success: z.boolean(),
     user: z.optional(z.nullable(widgetUserSchema)),
     error: z.optional(z.string()),
+    warnings: z.optional(z.array(warningSchema)),
   }),
   z.object({
     type: z.literal("quackback:auth-change"),
     user: z.nullable(widgetUserSchema),
   }),
   z.object({ type: z.literal("quackback:unread"), count: countSchema }),
+  // A new changelog entry for the launcher: its title, or open it (#108).
+  z.object({
+    type: z.literal("quackback:announce"),
+    entryId: z.string().check(z.regex(/^[A-Za-z0-9_-]{1,64}$/)),
+    title: z.string().check(z.minLength(1), z.maxLength(300)),
+    open: z.boolean(),
+  }),
   // The visitor pressed "Capture screenshot" in the open panel (RFC 0003 feature 6).
   z.object({
     type: z.literal("quackback:capture"),

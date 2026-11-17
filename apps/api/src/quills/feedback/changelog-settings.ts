@@ -1,5 +1,5 @@
 import { apiRouter, z, type BaseVariables } from "../../openapi";
-import { defineQuillsRoute } from "../framework/define-route";
+import { defineQuillsRoute, type Database } from "../framework/define-route";
 import { someField } from "./schemas";
 import { readSettingsKey, writeSettingsKey } from "./settings-json";
 
@@ -12,6 +12,7 @@ const stored = z
     collaborationDisabled: z.boolean(),
     autoSubscribe: z.boolean(),
     emailsDisabled: z.boolean(),
+    widgetAutoOpen: z.boolean(),
   })
   .partial();
 const response = z
@@ -20,6 +21,10 @@ const response = z
     collaborationDisabled: z.boolean(),
     autoSubscribe: z.boolean(),
     emailsDisabled: z.boolean(),
+    widgetAutoOpen: z.boolean().openapi({
+      description:
+        "The widget opens the newest unread entry on a customer's next visit, once. Off by default.",
+    }),
   })
   .openapi("QuillsChangelogSettings");
 const DEFAULTS: z.output<typeof response> = {
@@ -27,12 +32,17 @@ const DEFAULTS: z.output<typeof response> = {
   collaborationDisabled: false,
   autoSubscribe: true,
   emailsDisabled: false,
+  widgetAutoOpen: false,
 };
 /** Stored values over the defaults; an invalid stored value reads as the default. */
 const resolve = (value: unknown) => ({
   ...DEFAULTS,
   ...stored.safeParse(value).data,
 });
+
+/** Whether the widget opens the newest unread entry on a customer's next visit (#108). */
+export const widgetAutoOpen = async (db: Database) =>
+  resolve(await readSettingsKey(db, "metadata", KEY)).widgetAutoOpen;
 
 const getSettings = defineQuillsRoute({
   method: "get",
@@ -59,6 +69,7 @@ const updateSettings = defineQuillsRoute({
       audience: audience.optional(),
       autoSubscribe: z.boolean().optional(),
       emailsDisabled: z.boolean().optional(),
+      widgetAutoOpen: z.boolean().optional(),
     })
     .refine(someField, "Change at least one field"),
   response,
@@ -72,6 +83,7 @@ const updateSettings = defineQuillsRoute({
       audience: result.audience,
       autoSubscribe: String(result.autoSubscribe),
       emailsDisabled: String(result.emailsDisabled),
+      widgetAutoOpen: String(result.widgetAutoOpen),
     },
   }),
   handler: async ({ db, body }) => {
@@ -80,6 +92,7 @@ const updateSettings = defineQuillsRoute({
         audience: body.audience,
         autoSubscribe: body.autoSubscribe,
         emailsDisabled: body.emailsDisabled,
+        widgetAutoOpen: body.widgetAutoOpen,
       }).filter(([, value]) => value !== undefined),
     );
     return resolve(

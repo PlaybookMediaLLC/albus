@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Icon.js";
 import type { UpdateEntry, WidgetViewProps } from "./types.js";
+import { useT } from "./i18n/useT.js";
 
 export function UpdateActions({
   entry,
@@ -11,6 +12,7 @@ export function UpdateActions({
   onReact?: WidgetViewProps["onReactToUpdate"];
   onShare?: WidgetViewProps["onShareUpdate"];
 }) {
+  const t = useT();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [shared, setShared] = useState(false);
@@ -32,7 +34,7 @@ export function UpdateActions({
       await action();
       if (active.current && sharing) setShared(true);
     } catch {
-      if (active.current) setError("That action failed. Please try again.");
+      if (active.current) setError(t("That action failed. Please try again."));
     } finally {
       busy.current = false;
       if (active.current) setPending(false);
@@ -41,12 +43,12 @@ export function UpdateActions({
   if (!entry.reactions?.length && !onShare) return null;
   return (
     <>
-      <div className="qb-update-actions" aria-label="Update reactions">
+      <div className="qb-update-actions" aria-label={t("Update reactions")}>
         {entry.reactions?.map((reaction) => (
           <button
             type="button"
             key={reaction.emoji}
-            aria-label={`React ${reaction.emoji}`}
+            aria-label={t("React {emoji}", { emoji: reaction.emoji })}
             aria-pressed={reaction.reacted ?? false}
             disabled={!onReact || pending}
             onClick={() => {
@@ -61,8 +63,8 @@ export function UpdateActions({
         <button
           type="button"
           className="qb-share"
-          aria-label="Share update"
-          title={onShare ? "Share update" : "Sharing is unavailable"}
+          aria-label={t("Share update")}
+          title={onShare ? t("Share update") : t("Sharing is unavailable")}
           disabled={!onShare || pending}
           onClick={() => {
             if (onShare) void perform(() => onShare(entry), true);
@@ -78,7 +80,7 @@ export function UpdateActions({
       )}
       {shared && (
         <p className="qb-action-status" role="status">
-          Update shared.
+          {t("Update shared.")}
         </p>
       )}
     </>

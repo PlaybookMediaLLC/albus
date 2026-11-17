@@ -10,6 +10,7 @@ import portalFeedback from "./portal/feedback/index";
 import contentPublic from "./content/public/index";
 import portal from "./portal/index";
 import portalSurveys from "./portal/surveys";
+import portalTokenSignIn from "./portal/token-sign-in";
 import track from "./reporting/track";
 import portalSupport from "./support/customer/portal";
 import widgetFeedback from "./widget/feedback/index";
@@ -35,6 +36,7 @@ export default apiRouter()
   .route("/", inboundEmail)
   .route("/", emailEvents)
   .route("/", jobWake)
+  .route("/", portalTokenSignIn)
   .route("/", portal)
   .route("/", widget)
   .route("/", portalFeedback)

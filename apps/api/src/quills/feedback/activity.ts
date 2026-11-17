@@ -7,7 +7,16 @@ type Text = string | null;
 
 /** The source's activity types and their metadata, as the post timeline reads them. */
 type Activity =
-  | { type: "post.created"; metadata: { boardName: string } }
+  | {
+      type: "post.created";
+      /** On behalf of a customer (#73): the author and where the teammate heard the request. */
+      metadata: {
+        boardName: string;
+        authorPrincipalId?: string;
+        authorName?: Text;
+        source?: string;
+      };
+    }
   | { type: "post.deleted" | "post.restored"; metadata?: undefined }
   | {
       type: "status.changed";
@@ -35,21 +44,26 @@ type Activity =
   | { type: "owner.unassigned"; metadata: { previousOwnerName: Text } }
   | { type: "tags.added" | "tags.removed"; metadata: { tagNames: string[] } }
   | { type: "comments.locked" | "comments.unlocked"; metadata?: undefined }
+  | { type: "post.hidden" | "post.shown"; metadata?: undefined }
   | {
       type: "vote.proxy" | "vote.removed";
-      metadata: { voterPrincipalId: string; voterName: Text };
+      metadata: { voterPrincipalId: string; voterName: Text; source?: string };
     }
   | { type: "comment.pinned"; metadata: { commentId: string } }
   | { type: "comment.unpinned"; metadata?: undefined }
   | {
       type: "comment.deleted" | "comment.removed" | "comment.restored";
       metadata: { commentId: string; commentAuthorPrincipalId: string };
-    };
+    }
+  // RFC 0005: a Kaneo task made from the request, or why the board rule made none. No task fields:
+  // the request page shows the task only to teammates who can open its project.
+  | { type: "task.created"; metadata: { source: "manual" | "rule" } }
+  | { type: "task.create_failed"; metadata: { reason: string } };
 
 /** Records one post activity row in the request transaction. */
 export async function recordActivity(
   db: Database,
-  actor: QuillsActor,
+  actor: Pick<QuillsActor, "principalId">,
   postId: TypeId<"post">,
   activity: Activity,
 ) {
@@ -79,6 +93,10 @@ export const activityMetadata = z.object({
   tagNames: z.array(z.string()).optional(),
   voterPrincipalId: text,
   voterName: text,
+  authorPrincipalId: text,
+  authorName: text,
+  source: text,
   commentId: text,
   commentAuthorPrincipalId: text,
+  reason: text,
 });

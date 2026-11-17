@@ -12,6 +12,7 @@ export {
   type RawEmailOptions,
 } from "./input";
 export { emailAttachmentSchema } from "./attachment";
+export { directionOf } from "./direction";
 /**
  * Email sending module for Quackback
  *
@@ -83,13 +84,17 @@ import {
   OnboardingEmail,
   type OnboardingEmailContent,
 } from "./templates/onboarding-email";
-import { StatusChangeEmail } from "./templates/status-change";
+import {
+  StatusChangeEmail,
+  statusChangeHeadline,
+} from "./templates/status-change";
 import { ShippedEmail } from "./templates/shipped";
 import {
   WeeklyDigestEmail,
   type WeeklyDigestItem,
 } from "./templates/weekly-digest";
 import { NewCommentEmail } from "./templates/new-comment";
+import { PostUpdateEmail } from "./templates/post-update";
 import { ConversationMessageEmail } from "./templates/conversation-message";
 import { ConversationReplyEmail } from "./templates/conversation-reply";
 import {
@@ -1042,7 +1047,11 @@ export async function sendSendingDomainAttentionEmail(
 // ============================================================================
 
 interface SendStatusChangeParams {
+  /** "rtl" lays the email out right to left (issue #117). */
+  dir?: "ltr" | "rtl";
   to: string;
+  /** A signed reply address: a reply by mail becomes a comment on the post. */
+  replyTo?: string;
   postTitle: string;
   postUrl: string;
   previousStatus: string;
@@ -1052,6 +1061,8 @@ interface SendStatusChangeParams {
   oneClickUnsubscribeUrl?: string;
   preferencesUrl?: string;
   logoUrl?: string;
+  /** The recipient wrote the feedback; anyone else gets copy for a follower. */
+  yours?: boolean;
 }
 
 export async function sendStatusChangeEmail(
@@ -1067,14 +1078,16 @@ export async function sendStatusChangeEmail(
     unsubscribeUrl,
     preferencesUrl,
     logoUrl,
+    yours,
   } = params;
 
   const formattedNewStatus = newStatus.replace(/_/g, " ");
 
   return sendEmail({
     to,
-    subject: `Your feedback is now ${formattedNewStatus}!`,
+    subject: statusChangeHeadline(formattedNewStatus, yours),
     react: StatusChangeEmail({
+      dir: params.dir,
       postTitle,
       postUrl,
       previousStatus,
@@ -1083,12 +1096,14 @@ export async function sendStatusChangeEmail(
       unsubscribeUrl,
       preferencesUrl,
       logoUrl,
+      yours,
     }),
     extraHeaders: listUnsubscribeHeaders(
       params.oneClickUnsubscribeUrl ?? unsubscribeUrl,
     ),
     emailType: "StatusChangeEmail",
     preview: { postUrl },
+    ...(params.replyTo && { replyTo: params.replyTo }),
   });
 }
 
@@ -1097,6 +1112,8 @@ export async function sendStatusChangeEmail(
 // ============================================================================
 
 interface SendShippedParams {
+  /** "rtl" lays the email out right to left (issue #117). */
+  dir?: "ltr" | "rtl";
   to: string;
   entryTitle: string;
   entryUrl: string;
@@ -1116,6 +1133,7 @@ export async function sendShippedEmail(
     to: params.to,
     subject: `Shipped: ${params.requestTitle}`,
     react: ShippedEmail({
+      dir: params.dir,
       entryTitle: params.entryTitle,
       entryUrl: params.entryUrl,
       requestTitle: params.requestTitle,
@@ -1137,6 +1155,8 @@ export async function sendShippedEmail(
 // ============================================================================
 
 interface SendWeeklyDigestParams {
+  /** "rtl" lays the email out right to left (issue #117). */
+  dir?: "ltr" | "rtl";
   to: string;
   items: readonly WeeklyDigestItem[];
   myFeedbackUrl: string;
@@ -1154,6 +1174,7 @@ export async function sendWeeklyDigestEmail(
     to: params.to,
     subject: `Your feedback at ${params.workspaceName} this week`,
     react: WeeklyDigestEmail({
+      dir: params.dir,
       items: params.items,
       myFeedbackUrl: params.myFeedbackUrl,
       organizationName: params.workspaceName,
@@ -1173,7 +1194,11 @@ export async function sendWeeklyDigestEmail(
 // ============================================================================
 
 interface SendNewCommentParams {
+  /** "rtl" lays the email out right to left (issue #117). */
+  dir?: "ltr" | "rtl";
   to: string;
+  /** A signed reply address: a reply by mail becomes a comment on the post. */
+  replyTo?: string;
   postTitle: string;
   postUrl: string;
   commenterName: string;
@@ -1206,6 +1231,7 @@ export async function sendNewCommentEmail(
     to,
     subject: `New comment on "${postTitle}"`,
     react: NewCommentEmail({
+      dir: params.dir,
       postTitle,
       postUrl,
       commenterName,
@@ -1221,6 +1247,42 @@ export async function sendNewCommentEmail(
     ),
     emailType: "NewCommentEmail",
     preview: { postUrl },
+    ...(params.replyTo && { replyTo: params.replyTo }),
+  });
+}
+
+interface SendPostUpdateParams {
+  to: string;
+  postTitle: string;
+  postUrl: string;
+  /** The team's update, as plain text. */
+  body: string;
+  workspaceName: string;
+  unsubscribeUrl: string;
+  oneClickUnsubscribeUrl?: string;
+  logoUrl?: string;
+}
+
+/** A team's update about a request that the recipient follows (#92). */
+export async function sendPostUpdateEmail(
+  params: SendPostUpdateParams,
+): Promise<EmailResult> {
+  return sendEmail({
+    to: params.to,
+    subject: `Update on "${params.postTitle}"`,
+    react: PostUpdateEmail({
+      postTitle: params.postTitle,
+      postUrl: params.postUrl,
+      body: params.body,
+      organizationName: params.workspaceName,
+      unsubscribeUrl: params.unsubscribeUrl,
+      logoUrl: params.logoUrl,
+    }),
+    extraHeaders: listUnsubscribeHeaders(
+      params.oneClickUnsubscribeUrl ?? params.unsubscribeUrl,
+    ),
+    emailType: "PostUpdateEmail",
+    preview: { postUrl: params.postUrl },
   });
 }
 
@@ -1238,8 +1300,9 @@ interface SendConversationMessageEmailParams {
   /** The full message body as pre-rendered, sanitized HTML. When present it is
    *  shown inline in place of the truncated `messagePreview` quote. */
   bodyHtml?: string;
-  /** Link to the conversation (admin inbox for agents; portal/widget for visitors). */
-  ctaUrl: string;
+  /** Link to the conversation (admin inbox for agents; portal/widget for visitors). Absent when
+   *  the visitor cannot open it, such as the sender of an inbound mail: they reply by mail. */
+  ctaUrl?: string;
   workspaceName: string;
   logoUrl?: string;
   /** Conversation-specific reply address so a visitor's reply routes back to
@@ -2038,6 +2101,7 @@ export {
   type WeeklyDigestItem,
 } from "./templates/weekly-digest";
 export { NewCommentEmail } from "./templates/new-comment";
+export { PostUpdateEmail } from "./templates/post-update";
 export { PostMentionEmail } from "./templates/post-mention";
 export { ChangelogPublishedEmail } from "./templates/changelog-published";
 export { FeedbackLinkedEmail } from "./templates/feedback-linked";

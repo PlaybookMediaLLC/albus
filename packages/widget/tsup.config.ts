@@ -46,6 +46,10 @@ export default defineConfig([
     env: { NODE_ENV: "production" },
     loader: { ".woff2": "dataurl" },
     minify: true,
+    // The language catalogs stay readable UTF-8 (served with charset=utf-8) instead of \u escapes.
+    esbuildOptions: (options) => {
+      options.charset = "utf8";
+    },
     banner: {
       js: "/*! @quills/widget | Based on @quackback/widget, Copyright (c) 2026 Quackback Ltd | MIT License: https://github.com/QuackbackIO/quackback/blob/main/packages/widget/LICENSE */",
     },

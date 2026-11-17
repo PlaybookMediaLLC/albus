@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
+import { useT } from "./i18n/useT.js";
 
 const idle = { pending: false, error: "" };
 
 /** Independent control groups keep pending state and failures with their own item. */
 export function useAction() {
+  const t = useT();
   const [states, setStates] = useState(new Map<string, typeof idle>());
   const busy = useRef(new Set<string>());
   const generation = useRef(0);
@@ -28,7 +30,7 @@ export function useAction() {
       try {
         await action();
       } catch {
-        error = "That action failed. Please try again.";
+        error = t("That action failed. Please try again.");
       } finally {
         if (token === generation.current) {
           busy.current.delete(key);

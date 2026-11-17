@@ -30,10 +30,20 @@ export async function enqueueQuillsJob(
   payload: Record<string, string>,
   dedupeKey: string,
   maxAttempts: number,
+  delaySeconds = 0,
 ) {
   const [row] = await db
     .insert(jobQueue)
-    .values({ jobId: createId("job"), queue, payload, dedupeKey, maxAttempts })
+    .values({
+      jobId: createId("job"),
+      queue,
+      payload,
+      dedupeKey,
+      maxAttempts,
+      ...(delaySeconds > 0 && {
+        runAt: sql`now()+${delaySeconds}*interval '1 second'`,
+      }),
+    })
     .onConflictDoNothing()
     .returning();
   return row;

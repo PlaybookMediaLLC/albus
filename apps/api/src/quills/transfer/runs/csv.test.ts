@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { csvLines, parseCsv } from "./csv";
-import { readRecords } from "./import-posts";
+import { importColumns, readRecords } from "./import-posts";
 
 describe("CSV for transfer runs", () => {
   it("quotes special characters and neutralizes formulas", () => {
@@ -39,8 +39,8 @@ describe("CSV for transfer runs", () => {
     expect(readRecords('title,content\n"open')).toEqual({
       error: "The file is not valid CSV",
     });
-    expect(readRecords("title,status\nA,B\n")).toEqual({
-      error: "Missing required columns: content",
+    expect(readRecords("content,status\nA,B\n")).toEqual({
+      error: "Missing required columns: title",
     });
     expect(readRecords("title,content\n")).toEqual({
       error: "The file has no rows",
@@ -48,5 +48,33 @@ describe("CSV for transfer runs", () => {
     expect(readRecords(`title,content\n${"a,b\n".repeat(10_001)}`)).toEqual({
       error: "The file has more than 10,000 rows",
     });
+  });
+
+  it("reads another tool's export headers, without letting an alias replace a real column", () => {
+    expect(
+      importColumns([
+        "Post Title",
+        "Post Details",
+        "Post Status",
+        "Author E-mail",
+        "Created",
+        "Score",
+        "URL",
+      ]),
+    ).toEqual([
+      "title",
+      "content",
+      "status",
+      "author_e_mail",
+      "created_at",
+      "score",
+      "source_id",
+    ]);
+    expect(importColumns(["Title", "Name", "Description", "Email"])).toEqual([
+      "title",
+      "name",
+      "content",
+      "author_email",
+    ]);
   });
 });

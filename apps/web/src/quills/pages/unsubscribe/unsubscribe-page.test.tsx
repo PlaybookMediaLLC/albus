@@ -80,6 +80,31 @@ describe("UnsubscribePage", () => {
       );
     });
 
+    it.each([
+      ["unsubscribe_post", /mail about this post/i],
+      ["unsubscribe_all", /all email/i],
+      ["unsubscribe_changelog", /changelog/i],
+      ["unsubscribe_status", /status page/i],
+      ["unsubscribe_shipped", /shipped/i],
+      ["unsubscribe_digest", /weekly digest/i],
+    ] as const)(
+      "says what %s stops before the customer confirms",
+      async (action, line) => {
+        mockApi().reply(
+          previewUnsubscribeTokenFixture.ok({
+            valid: true,
+            action,
+            postTitle: "Private roadmap item",
+          }),
+        );
+        stashToken("workspace_test_1:unsubscribe", "mail_link_value");
+        const view = renderPage(UnsubscribePage, meta);
+        await view.findByText(line);
+        // The preview names the kind of mail, never the post: the page needs no sign-in.
+        expect(view.queryByText(/Private roadmap item/)).toBeNull();
+      },
+    );
+
     it("refuses confirmation in a frame", async () => {
       const api = mockApi();
       api.reply(previewUnsubscribeTokenFixture.ok({ valid: true }));

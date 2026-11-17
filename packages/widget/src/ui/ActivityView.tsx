@@ -2,6 +2,7 @@ import { Icon } from "./Icon.js";
 import { messageTime } from "./message-time.js";
 import { useAction } from "./useAction.js";
 import type { RequestActivity, WidgetViewProps } from "./types.js";
+import { useLocale, useT } from "./i18n/useT.js";
 
 export function ActivityView({
   activities,
@@ -14,20 +15,24 @@ export function ActivityView({
   onRead?: WidgetViewProps["onReadActivity"];
   offline: boolean;
 }) {
+  const t = useT();
+  const locale = useLocale();
   const action = useAction();
   return (
     <section className="qb-activity-view">
-      <h1>Activity</h1>
+      <h1>{t("Activity")}</h1>
       <p className="qb-section-description">
-        Replies and progress on requests you follow.
+        {t("Replies and progress on requests you follow.")}
       </p>
       {!activities.length && (
-        <p className="qb-empty">Follow a request to see its updates here.</p>
+        <p className="qb-empty">
+          {t("Follow a request to see its updates here.")}
+        </p>
       )}
       <ul className="qb-activity-list">
         {activities.map((item) => {
           const state = action.forKey(item.id);
-          const stamp = messageTime(item.createdAt);
+          const stamp = messageTime(item.createdAt, locale);
           return (
             <li key={item.id} data-unread={item.unread}>
               <button
@@ -54,7 +59,7 @@ export function ActivityView({
                   )}
                 </span>
                 {item.unread && (
-                  <span className="qb-unread-dot" aria-label="Unread" />
+                  <span className="qb-unread-dot" aria-label={t("Unread")} />
                 )}
               </button>
               {item.unread && onRead && (
@@ -66,7 +71,7 @@ export function ActivityView({
                     void action.run(() => onRead(item.id), item.id)
                   }
                 >
-                  {state.pending ? "Marking as read…" : "Mark as read"}
+                  {state.pending ? t("Marking as read…") : t("Mark as read")}
                 </button>
               )}
               {state.error && (

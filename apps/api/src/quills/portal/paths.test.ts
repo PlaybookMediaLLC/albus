@@ -19,6 +19,9 @@ describe("portal paths", () => {
     expect(portalPaths.csat("w", "token&value", 5)).toBe(
       "https://client.example.test/portal/w/csat?token=token%26value&rating=5",
     );
+    expect(portalPaths.signIn("w/a")).toBe(
+      "https://client.example.test/auth/sign-in?redirect=%2Fportal%2Fw%252Fa%2Fmy-feedback",
+    );
   });
 
   it("links a teammate to the conversation in the teammate app", () => {
@@ -32,5 +35,12 @@ describe("portal paths", () => {
       id: "teammateConversation",
       pattern: "/feedback/$workspaceId/conversations/$conversationId",
     });
+  });
+
+  it("links a Kaneo task back to the request in the teammate app", () => {
+    process.env.KANEO_CLIENT_URL = "https://client.example.test";
+    expect(portalPaths.teammatePost("w/a", "p/b")).toBe(
+      "https://client.example.test/feedback/w%2Fa/posts/p%2Fb",
+    );
   });
 });

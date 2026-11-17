@@ -4,7 +4,9 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { boards } from "../../database/quills/schema/boards";
 import { conversationSummaries } from "../../database/quills/schema/conversation-summary";
+import { auditLog } from "../../database/quills/schema/audit-log";
 import { events } from "../../database/quills/schema/events";
+import { postSubscriptions } from "../../database/quills/schema/notifications";
 import { boardProjects } from "../../database/quills/schema/platform-links";
 import { posts, postVotes } from "../../database/quills/schema/posts";
 import * as kaneo from "../../database/schema";
@@ -116,6 +118,78 @@ describe.skipIf(!url)("Unlinking a request from a conversation", () => {
         [{ entityId: conversationId, payload: { postId } }],
       );
     });
+  });
+
+  it("subscribes the visitor as an author but not as a voter, and audits the customer and the source (#73)", async () => {
+    const { conversationId, boardId, visitor } = await setup();
+    const created = await world.request(
+      world.users.owner,
+      "POST",
+      `/conversations/${conversationId}/posts`,
+      { boardId, title: "Bulk export" },
+    );
+    expect(created.status).toBe(200);
+    const other = await setup();
+    const voted = await world.request(
+      world.users.owner,
+      "POST",
+      `/conversations/${other.conversationId}/posts`,
+      { asUpvoteOfPostId: created.body.postId },
+    );
+    expect(voted.body).toMatchObject({ voted: true, created: false });
+    const stored = await world.scoped(
+      world.a,
+      world.users.owner,
+      async (db, actor) => ({
+        actor: actor.principalId,
+        subscribed: await db
+          .select({ principalId: postSubscriptions.principalId })
+          .from(postSubscriptions)
+          .where(eq(postSubscriptions.postId, created.body.postId)),
+        votes: await db
+          .select({
+            principalId: postVotes.principalId,
+            source: postVotes.sourceType,
+            addedBy: postVotes.addedByPrincipalId,
+          })
+          .from(postVotes)
+          .where(eq(postVotes.postId, created.body.postId)),
+        audit: await db
+          .select({ type: auditLog.eventType, metadata: auditLog.metadata })
+          .from(auditLog)
+          .where(eq(auditLog.targetId, created.body.postId)),
+      }),
+    );
+    expect(stored.subscribed).toEqual([{ principalId: visitor }]);
+    expect(stored.votes).toHaveLength(2);
+    expect(stored.votes).toEqual(
+      expect.arrayContaining([
+        { principalId: visitor, source: "conversation", addedBy: stored.actor },
+        {
+          principalId: other.visitor,
+          source: "conversation",
+          addedBy: stored.actor,
+        },
+      ]),
+    );
+    expect(stored.audit).toEqual(
+      expect.arrayContaining([
+        {
+          type: "post.created",
+          metadata: expect.objectContaining({
+            onBehalfOf: visitor,
+            source: "conversation",
+          }),
+        },
+        {
+          type: "post.voted",
+          metadata: expect.objectContaining({
+            onBehalfOf: other.visitor,
+            source: "conversation",
+          }),
+        },
+      ]),
+    );
   });
 
   it("refuses a post on a board the caller cannot see and keeps its link", async () => {

@@ -90,7 +90,7 @@ describe.skipIf(!url)("Quills post visibility", () => {
     const hidden = await setVisible(a.postId, false);
     expect(hidden).toEqual({
       status: 200,
-      body: { id: a.postId, moderationState: "archived" },
+      body: { id: a.postId, moderationState: "archived", isHidden: false },
     });
     expect((await call(`/portal/posts/${a.postId}`)).status).toBe(404);
     const list = await call(`/portal/posts?boardId=${a.boardId}`);

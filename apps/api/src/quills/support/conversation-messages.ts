@@ -140,7 +140,7 @@ const reply = defineQuillsRoute({
       true,
     );
     const id = await insertReply(db, actor, conversation, body.content);
-    await attachMessageFiles(db, actor, id, body.attachmentIds);
+    await attachMessageFiles(db, actor.principalId, id, body.attachmentIds);
     return {
       message: await loadMessage(db, actor, id),
       conversation: await loadConversation(db, conversation.id),
@@ -205,7 +205,12 @@ const note = defineQuillsRoute({
         id: conversationMessages.id,
         createdAt: conversationMessages.createdAt,
       });
-    await attachMessageFiles(db, actor, message!.id, body.attachmentIds);
+    await attachMessageFiles(
+      db,
+      actor.principalId,
+      message!.id,
+      body.attachmentIds,
+    );
     if (mentioned.length)
       await db.insert(conversationMessageMentions).values(
         mentioned.map((teammate) => ({

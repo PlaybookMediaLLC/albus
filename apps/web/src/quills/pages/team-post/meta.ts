@@ -18,7 +18,7 @@ export const meta = {
     "listQuillsPosts",
     "listQuillsPostVoters",
     "getQuillsPostDemand",
-    "listQuillsLinks",
+    "listQuillsPostTasks",
     "getQuillsLinkedConversationsForPost",
     "listQuillsMergedPosts",
     "listQuillsTags",
@@ -34,6 +34,8 @@ export const meta = {
     "unmergeQuillsPost",
     "deleteQuillsPost",
     "summarizeQuillsPost",
+    // RFC 0005: the Tasks section. Its dialogs (team/post-tasks) read and write on their own.
+    "unlinkQuillsPostFromTask",
   ],
   states: ["loading", "failed", "ready", "done"],
 } satisfies PageMeta;

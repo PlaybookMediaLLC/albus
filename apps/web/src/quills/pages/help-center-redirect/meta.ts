@@ -3,7 +3,7 @@ export const meta = {
   id: "help-center-redirect",
   feature: "help-center",
   route: "/portal/$workspaceId/hc/$",
-  audience: "public",
+  audience: "portal",
   mailLinked: false,
   token: "none",
   operations: ["resolveQuillsPublicHelpCenterRedirect"],
