@@ -72,3 +72,37 @@ export async function waitHealthy(seconds = 120) {
 }
 
 export const stopContainer = () => docker(["stop", CONTAINER]);
+
+export const MAIL_CONTAINER = "kaneo-demo-mailpit";
+
+/** Starts the Mailpit catcher. It keeps no volume, so a stop clears the inbox. Returns true when this call started it. */
+export function startMail({ image, smtp, web }) {
+  const running = docker([
+    "inspect",
+    "-f",
+    "{{.State.Running}}",
+    MAIL_CONTAINER,
+  ]);
+  if (running.stdout.trim() === "true") return false;
+  // A run that failed to start can leave the container created but stopped.
+  if (running.status === 0) docker(["rm", "-f", MAIL_CONTAINER]);
+  const result = docker([
+    "run",
+    "--detach",
+    "--rm",
+    "--name",
+    MAIL_CONTAINER,
+    "--publish",
+    `127.0.0.1:${smtp}:1025`,
+    "--publish",
+    `127.0.0.1:${web}:8025`,
+    image,
+  ]);
+  if (result.status !== 0)
+    throw new Error(
+      `Docker could not start ${MAIL_CONTAINER}: ${result.stderr.trim()}`,
+    );
+  return true;
+}
+
+export const stopMail = () => docker(["stop", MAIL_CONTAINER]);

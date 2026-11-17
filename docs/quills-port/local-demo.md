@@ -8,15 +8,17 @@ pnpm dev:demo          # start, and seed the demo workspace if it has no demo da
 pnpm dev:demo --reset  # delete the demo workspace, then seed it again
 ```
 
-Press Ctrl-C to stop. The command stops the API, the web app and the container that it started.
-The volume keeps the data for the next start.
+Press Ctrl-C to stop. The command stops the API, the web app and the containers that it started.
+The volume keeps the data for the next start. The mail catcher keeps no volume, so a stop clears
+its inbox.
 
 ## What the command does
 
 1. It checks that the demo ports are free: API `1390`, web app `5190`.
 2. It creates or starts the container `kaneo-demo-postgres` (the PostgreSQL image of
    `compose.yml`, volume `kaneo-demo-postgres-data`, port `127.0.0.1:54480`) and waits until it
-   is healthy. It does not touch other containers.
+   is healthy. It also starts the mail catcher `kaneo-demo-mailpit` (`axllent/mailpit`, SMTP on
+   `127.0.0.1:54481`, inbox on `127.0.0.1:54482`). It does not touch other containers.
 3. It builds the workspace packages that the API and the web app import.
 4. It starts the API, which runs the Kaneo and Quills migrations, and the web app. Each log line
    has a prefix: `[api]`, `[web]`, `[seed]`, `[build]` or `[demo]`.
@@ -35,11 +37,13 @@ The URLs use `127.0.0.1`, not `localhost`. Thus the browser keeps the demo sessi
 | Teammate app | `http://127.0.0.1:5190/feedback/quills_portal_demo` |
 | Kaneo | `http://127.0.0.1:5190/dashboard/workspace/quills_portal_demo` |
 | API health | `http://127.0.0.1:1390/api/health` |
+| Mail inbox | `http://127.0.0.1:54482` |
 
 ## Sign-in
 
-Sign-in uses email and password. The demo needs no mail server. The accounts are local test
-accounts only:
+Sign-in uses email and password. Every mail the demo sends (sign-in codes, invites, comment,
+status, shipped, status-page, CSAT and support-reply mail) lands in the mail inbox, so a mail
+link can be opened from there. The accounts are local test accounts only:
 
 - Teammate (workspace owner): `portal-demo@example.test`
 - Customer (portal only, not a workspace member): `portal-customer@example.test`
@@ -58,10 +62,11 @@ Both use the password that the command prints at start.
   file's `QUILLS_AI_` values replace these defaults, and the command ignores its other keys. The command says "AI on" or "AI off" at start and never prints
   the key.
 
-The API loads a root `.env`, but values that the command sets win. The command sets the mail
-variables (`SMTP_HOST`, `EMAIL_SMTP_HOST`, the Resend keys and `EMAIL_SES_ACCESS_KEY_ID`), the
-Redis variables and, when AI is off, `QUILLS_AI_API_KEY` to empty values. Thus the demo sends no
-mail, uses no shared Redis, and AI stays off without the AI file. Only the API gets the AI key.
+The API loads a root `.env`, but values that the command sets win. The command points the mail
+variables (`SMTP_*` for Kaneo, `EMAIL_SMTP_*` and `EMAIL_FROM` for Quills) at the mail catcher,
+and sets the Resend keys, `EMAIL_SES_ACCESS_KEY_ID`, the Redis variables and, when AI is off,
+`QUILLS_AI_API_KEY` to empty values. Thus the demo never sends real mail, uses no shared Redis,
+and AI stays off without the AI file. Only the API gets the AI key.
 
 Only one demo runs at a time on a machine. The lock file is `~/.config/kaneo/dev-demo.lock`.
 
@@ -69,3 +74,4 @@ Only one demo runs at a time on a machine. The lock file is `~/.config/kaneo/dev
 
 The API reads its port from `KANEO_API_PORT` (default `1337`). The web app gets `--port 5190
 --strictPort`. If a demo port is in use, the command stops with a message that names the port.
+Docker reports a busy mail port (`54481` or `54482`) when it starts the mail catcher.

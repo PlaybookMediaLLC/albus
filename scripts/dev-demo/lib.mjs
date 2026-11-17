@@ -1,7 +1,14 @@
 import { connect } from "node:net";
 
 // Fixed demo ports. They differ from the usual dev ports, so the demo can run beside `pnpm dev`.
-export const PORTS = { db: 54480, api: 1390, web: 5190 };
+export const PORTS = {
+  db: 54480,
+  api: 1390,
+  web: 5190,
+  smtp: 54481,
+  mail: 54482,
+};
+export const MAIL_IMAGE = "axllent/mailpit:v1.33.1";
 export const WORKSPACE = "quills_portal_demo";
 export const AI_DEFAULTS = {
   QUILLS_AI_BASE_URL: "https://openrouter.ai/api/v1",
@@ -52,8 +59,19 @@ export function demoEnv(base, secrets, ai, ports = PORTS) {
     VITE_CLIENT_URL: web,
     // A root .env cannot turn on AI, send real mail or use a shared Redis: dotenv keeps set values.
     QUILLS_AI_API_KEY: "",
-    SMTP_HOST: "",
-    EMAIL_SMTP_HOST: "",
+    // All mail goes to the local Mailpit catcher, unencrypted and without a login.
+    SMTP_HOST: "127.0.0.1",
+    SMTP_PORT: String(ports.smtp),
+    SMTP_SECURE: "false",
+    SMTP_REQUIRE_TLS: "false",
+    SMTP_USER: "",
+    SMTP_FROM: "Kaneo demo <demo@example.test>",
+    EMAIL_SMTP_HOST: "127.0.0.1",
+    EMAIL_SMTP_PORT: String(ports.smtp),
+    EMAIL_SMTP_SECURE: "false",
+    EMAIL_SMTP_USER: "",
+    EMAIL_SMTP_PASS: "",
+    EMAIL_FROM: "Kaneo demo <demo@example.test>",
     EMAIL_RESEND_API_KEY: "",
     RESEND_API_KEY: "",
     EMAIL_SES_ACCESS_KEY_ID: "",
