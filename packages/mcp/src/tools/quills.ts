@@ -119,7 +119,7 @@ export function registerQuillsTools(
     "quills_get_post",
     {
       description:
-        "Get one Quills feedback post, with its tags, whether you voted, and the page and browser that the widget sent with it.",
+        "Get one Quills feedback post, with its tags, its custom field values (internal ones included), whether you voted, and the page and browser that the widget sent with it.",
       inputSchema: z.object({ workspaceId, postId: id("Post") }),
     },
     async ({ workspaceId: ws, postId }) =>
@@ -130,7 +130,7 @@ export function registerQuillsTools(
     "quills_create_post",
     {
       description:
-        "Create a Quills feedback post on a board. You are the author and its first voter, or authorPrincipalId makes a customer the author and first voter (for example after a sales call; that needs the update permission), with source recorded in the post history. Without statusId the post gets the default status.",
+        "Create a Quills feedback post on a board. You are the author and its first voter, or authorPrincipalId makes a customer the author and first voter (for example after a sales call; that needs the update permission), with source recorded in the post history. Without statusId the post gets the default status. customFields holds the board's custom field values, keyed by field key; each required field needs a value. Read the fields with the board settings route.",
       inputSchema: z.object({
         workspaceId,
         boardId: id("Board"),
@@ -139,9 +139,35 @@ export function registerQuillsTools(
         statusId: id("Status").optional(),
         authorPrincipalId: id("Customer (principal)").optional(),
         source,
+        customFields: z
+          .record(
+            z.string().max(40),
+            z.union([
+              z.string().max(2000),
+              z.number(),
+              z.boolean(),
+              z.array(z.string().max(100)).max(50),
+            ]),
+          )
+          .refine(
+            (values) => Object.keys(values).length <= 20,
+            "At most 20 fields",
+          )
+          .optional()
+          .describe(
+            "A string for text, select and date (YYYY-MM-DD) fields, a number, a boolean for a checkbox, and a list of options for multi-select",
+          ),
       }),
     },
-    async ({ workspaceId: ws, boardId, title, content, statusId, ...behalf }) =>
+    async ({
+      workspaceId: ws,
+      boardId,
+      title,
+      content,
+      statusId,
+      customFields,
+      ...behalf
+    }) =>
       run(() =>
         client.json(quills(ws, "/posts"), {
           method: "POST",
@@ -154,6 +180,7 @@ export function registerQuillsTools(
               authorPrincipalId: behalf.authorPrincipalId,
             }),
             ...(behalf.source && { source: behalf.source }),
+            ...(customFields && { customFields }),
           }),
         }),
       ),

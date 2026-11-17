@@ -13,6 +13,7 @@ import { StateView } from "../../ui/state-view";
 import { meta } from "./meta";
 import { PostActions } from "./parts/post-actions";
 import { PostAttachments } from "./parts/post-attachments";
+import { PostCustomFields } from "./parts/post-custom-fields";
 import { PostCommentsSection } from "./parts/post-comments-section";
 import { PostVote } from "./parts/post-vote";
 import { RelatedRequests } from "./parts/related-requests";
@@ -129,6 +130,7 @@ export function PostPage(props: PostPageProps) {
                   target={{ postId }}
                   content={data.content}
                 />
+                <PostCustomFields fields={data.customFields} />
                 <PostAttachments
                   workspaceId={props.workspaceId}
                   viewer={viewer}

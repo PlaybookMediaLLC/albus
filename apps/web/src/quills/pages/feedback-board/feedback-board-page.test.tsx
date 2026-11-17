@@ -26,6 +26,7 @@ describe("FeedbackBoardPage", () => {
     canComment: true,
     voteDisplay: "count" as const,
     defaultSort: null,
+    fields: [],
   };
   const prepareBoard = (signedIn = false) => {
     const api = mockApi();

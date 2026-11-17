@@ -38,6 +38,12 @@ import {
 import { memberUserIds } from "../framework/platform-reads";
 import { activityMetadata, recordActivity } from "./activity";
 import {
+  checkValues,
+  fieldsOf,
+  fieldValuesInput,
+  type FieldValue,
+} from "./custom-fields";
+import {
   demandOf,
   demandSchema,
   mrrOf,
@@ -76,6 +82,10 @@ const postParams = z.object({ postId: flexibleToTypeIdSchema("post") });
 const errors = {
   404: "Post, board, status, tag or teammate not found",
   409: "The post is not in the required state",
+};
+const fieldErrors = {
+  ...errors,
+  400: "A custom field value is missing, unknown or of the wrong type",
 };
 const page = {
   offset: pagingNumber(0, 1000000, 0),
@@ -419,9 +429,20 @@ export async function insertPost(
     tagIds: TypeId<"post_tag">[];
     author?: TypeId<"principal">;
     source?: BehalfSource;
+    /** Values of the board's fields, internal ones included. */
+    customFields?: Record<string, FieldValue | null>;
   },
 ) {
   const board = await findBoard(db, input.boardId, projects);
+  const [row] = await db
+    .select({ settings: boards.settings })
+    .from(boards)
+    .where(eq(boards.id, board.id));
+  const customFieldValues = checkValues(
+    fieldsOf(row?.settings),
+    input.customFields,
+    { team: true },
+  );
   const status = await findStatus(db, input.statusId);
   const tagIds = await checkTags(db, input.tagIds);
   const author = input.author ?? actor.principalId;
@@ -437,6 +458,7 @@ export async function insertPost(
       principalId: author,
       ...(behalf && { trackedByPrincipalId: actor.principalId }),
       voteCount: 1,
+      customFieldValues,
     })
     .returning({ id: posts.id });
   const postId = post!.id;
@@ -481,7 +503,7 @@ const createPost = defineQuillsRoute({
   operationId: "createQuillsPost",
   summary: "Create a feedback post",
   description:
-    "The author is the caller, or `authorPrincipalId` to post on behalf of a person of this workspace (that also needs the update action). The author is the first voter and is subscribed to the post. On behalf of a person, the post history and the audit log record you, the person and `source`. Without a status, the post gets the default status.",
+    "The author is the caller, or `authorPrincipalId` to post on behalf of a person of this workspace (that also needs the update action). The author is the first voter and is subscribed to the post. On behalf of a person, the post history and the audit log record you, the person and `source`. Without a status, the post gets the default status. customFields must hold a value for each required field of the board, internal fields included; 400 for a missing or wrongly typed value.",
   action: "create",
   callerActions: true,
   body: z.object({
@@ -492,10 +514,11 @@ const createPost = defineQuillsRoute({
     tagIds: z.array(flexibleToTypeIdSchema("post_tag")).max(50).default([]),
     authorPrincipalId: flexibleToTypeIdSchema("principal").optional(),
     source: behalfSource,
+    customFields: fieldValuesInput.optional(),
   }),
   response: postSchema,
   responseDescription: "Created post",
-  errors,
+  errors: fieldErrors,
   event: ({ body }, result, raw) => ({
     type: "post.created",
     entityType: "post",
@@ -531,13 +554,35 @@ const createPost = defineQuillsRoute({
   },
 });
 
+/** The post's field values with an update merged on, checked against its board's fields. */
+async function updatedValues(
+  db: Database,
+  postId: TypeId<"post">,
+  input: Record<string, FieldValue | null>,
+) {
+  // The row lock keeps a parallel update of other fields from being lost.
+  const [row] = await db
+    .select({ boardId: posts.boardId, current: posts.customFieldValues })
+    .from(posts)
+    .where(eq(posts.id, postId))
+    .for("update");
+  const [board] = await db
+    .select({ settings: boards.settings })
+    .from(boards)
+    .where(eq(boards.id, row!.boardId));
+  return checkValues(fieldsOf(board?.settings), input, {
+    team: true,
+    current: row!.current,
+  });
+}
+
 const updatePost = defineQuillsRoute({
   method: "patch",
   path: "/posts/{postId}",
   operationId: "updateQuillsPost",
-  summary: "Edit a post's title, content, ETA or comment lock",
+  summary: "Edit a post's title, content, ETA, comment lock or custom fields",
   description:
-    "A title or content change keeps the previous version in the edit history. An ETA is stored as the first day of its UTC month.",
+    "A title or content change keeps the previous version in the edit history. An ETA is stored as the first day of its UTC month. customFields changes the given fields only; null clears one, and a required field cannot be cleared.",
   action: "update",
   params: postParams,
   body: z
@@ -551,11 +596,12 @@ const updatePost = defineQuillsRoute({
         .nullable()
         .optional(),
       isCommentsLocked: z.boolean().optional(),
+      customFields: fieldValuesInput.optional(),
     })
     .refine(nonEmpty, { message: "Provide at least one field" }),
   response: postSchema,
   responseDescription: "Updated post",
-  errors,
+  errors: fieldErrors,
   event: ({ params, body }) => ({
     type: "post.updated",
     entityType: "post",
@@ -570,6 +616,9 @@ const updatePost = defineQuillsRoute({
   load: loadProjects,
   handler: async ({ db, actor, params, body, loaded: projects }) => {
     const post = await findPost(db, params.postId, projects);
+    const customFieldValues =
+      body.customFields &&
+      (await updatedValues(db, post.id, body.customFields));
     if (
       (body.title !== undefined && body.title !== post.title) ||
       (body.content !== undefined && body.content !== post.content)
@@ -596,6 +645,7 @@ const updatePost = defineQuillsRoute({
         }),
         eta,
         isCommentsLocked: body.isCommentsLocked,
+        ...(customFieldValues !== undefined && { customFieldValues }),
         updatedAt: new Date(),
       })
       .where(eq(posts.id, post.id));

@@ -9,6 +9,7 @@ import {
 import { postExternalLinks } from "../../database/quills/schema/external-links";
 import { posts } from "../../database/quills/schema/posts";
 import { identifyCustomer } from "../directory/identify-customer";
+import { fieldValuesInput } from "../feedback/custom-fields";
 import { insertPost } from "../feedback/posts";
 import { loadProjects } from "../feedback/visibility";
 import {
@@ -33,6 +34,7 @@ const createPost = defineQuillsRoute({
     content: z.string().trim().max(10000).default(""),
     link: z.object({ externalType, externalKey, externalUrl }).optional(),
     requester,
+    customFields: fieldValuesInput.optional(),
   }),
   response: z.object({
     id: z.string(),
@@ -46,6 +48,7 @@ const createPost = defineQuillsRoute({
   }),
   responseDescription: "The created post",
   errors: {
+    400: "A custom field value is missing, unknown or of the wrong type",
     404: "Board not found",
     409: "The requester's email belongs to a teammate",
   },
@@ -97,6 +100,7 @@ const createPost = defineQuillsRoute({
       tagIds: [],
       author: author ? author.principalId : undefined,
       source: "app",
+      customFields: body.customFields,
     });
     const [link] = body.link
       ? await db

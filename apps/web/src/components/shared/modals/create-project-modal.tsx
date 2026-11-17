@@ -155,7 +155,7 @@ function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
                   <SelectedIcon className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-64 p-2" align="start">
+              <PopoverContent variant="menu" className="w-64 p-2" align="start">
                 <div className="space-y-2">
                   <Input
                     value={iconSearch}

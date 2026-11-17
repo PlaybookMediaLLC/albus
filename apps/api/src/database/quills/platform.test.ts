@@ -158,10 +158,10 @@ describe.skipIf(!url)("Shared Kaneo and Quills platform", () => {
     );
     const upgrade = migration.split("--> statement-breakpoint").at(-1)!;
     expect(upgrade).toContain("FROM public.workspace_role");
-    // 0032 then gives untouched default roles quills:view_revenue (#79): the defaults of today.
+    // 0033 then gives untouched default roles quills:view_revenue (#79): the defaults of today.
     const revenue = (
       await readFile(
-        resolve("drizzle/quills/0032_quills_view_revenue.sql"),
+        resolve("drizzle/quills/0033_quills_view_revenue.sql"),
         "utf8",
       )
     ).split("--> statement-breakpoint")[0]!;
@@ -217,7 +217,7 @@ describe.skipIf(!url)("Shared Kaneo and Quills platform", () => {
   it("grants view_revenue only to member and admin roles with the previous default Quills actions", async () => {
     const revenue = (
       await readFile(
-        resolve("drizzle/quills/0032_quills_view_revenue.sql"),
+        resolve("drizzle/quills/0033_quills_view_revenue.sql"),
         "utf8",
       )
     ).split("--> statement-breakpoint")[0]!;

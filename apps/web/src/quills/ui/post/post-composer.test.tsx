@@ -33,6 +33,7 @@ describe("PostComposer", () => {
       boardId: "board_test_1",
       title: "CSV export",
       content: "Monthly",
+      customFields: {},
     });
     expect(view.getByLabelText("Title")).toHaveValue("");
   });
@@ -54,6 +55,55 @@ describe("PostComposer", () => {
     await waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({ boardId: "board_test_2" }),
+      ),
+    );
+  });
+
+  it("asks for the chosen board's public fields and names a missing required one", async () => {
+    const onSubmit = vi.fn(async () => undefined);
+    const view = renderComponent(
+      <PostComposer
+        workspaceName="Acme"
+        boards={[
+          {
+            id: "board_test_1",
+            name: "Ideas",
+            fields: [
+              {
+                key: "plan",
+                label: "Plan",
+                type: "select",
+                required: true,
+                options: ["Free", "Pro"],
+              },
+              { key: "seats", label: "Seats", type: "number", required: false },
+              {
+                key: "ok",
+                label: "I agree",
+                type: "checkbox",
+                required: false,
+              },
+            ],
+          },
+        ]}
+        autoFocus
+        onTitleChange={vi.fn()}
+        onSubmit={onSubmit}
+      />,
+    );
+    fill("Title", "Crash on save");
+    press("Submit feedback");
+    expect(await view.findByText("Plan is required")).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+    await choose("Plan (required)", "Pro");
+    fireEvent.change(view.getByLabelText("Seats"), { target: { value: "3" } });
+    fireEvent.click(view.getByRole("checkbox", { name: "I agree" }));
+    press("Submit feedback");
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customFields: { plan: "Pro", seats: "3", ok: true },
+        }),
       ),
     );
   });

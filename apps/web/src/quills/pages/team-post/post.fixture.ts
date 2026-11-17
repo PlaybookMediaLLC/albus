@@ -48,6 +48,7 @@ export const postDetail: GetPostResponse = {
   hasVoted: false,
   viewerPrincipalId: "principal_team",
   widgetMetadata: null,
+  customFields: [],
 };
 
 const comment = (

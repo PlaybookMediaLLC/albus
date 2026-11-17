@@ -14,12 +14,14 @@ import { useWidgetSession } from "./useWidgetSession.js";
 import { useHostCapture } from "./useHostCapture.js";
 import type { OutboundMessage } from "../core/protocol.js";
 import type { WidgetTab, WidgetViewProps } from "../ui/types.js";
+import { directionOf } from "../ui/direction.js";
 
 type Config = {
   theme: "light" | "dark" | "auto";
   surfaces: Surfaces;
   tabs: WidgetTab[];
   pollIntervalMs: number;
+  ai: boolean;
 };
 type Target = Extract<ParentMessage, { type: "open" }>["target"];
 type Navigation = NonNullable<WidgetViewProps["navigation"]>;
@@ -82,6 +84,7 @@ export function WidgetHost({
           config: {
             tabs: Surfaces & { home?: boolean };
             theme: { themeMode: "light" | "dark" | "user" };
+            ai?: boolean;
           } | null;
         }>("GET", "/widget/config.json"),
         api.request<{ chat: { pollIntervalMs: number } }>(
@@ -104,6 +107,7 @@ export function WidgetHost({
         surfaces: { feedback, changelog, help, messenger },
         tabs: (Object.keys(on) as WidgetTab[]).filter((tab) => on[tab]),
         pollIntervalMs: Math.max(5000, capabilities.chat.pollIntervalMs),
+        ai: stored.ai === true,
       });
     } catch (error) {
       setConfig(
@@ -154,6 +158,7 @@ export function WidgetHost({
     board: params.get("board") ?? undefined,
     pollIntervalMs: ready ? config.pollIntervalMs : 10_000,
     context,
+    ai: ready && config.ai,
     host: {
       event: (name, payload) =>
         bridge.current?.post({
@@ -180,11 +185,18 @@ export function WidgetHost({
       .catch(() => setNavigation({ tab: "help" }));
   }, [pending, data.loadState, api, locale]);
 
+  // A right-to-left language lays the panel out right to left (issue #117).
+  const dir = directionOf(locale ?? globalThis.navigator?.language ?? "en");
+  useEffect(() => {
+    document.documentElement.setAttribute("dir", dir);
+  }, [dir]);
+
   const close = () => bridge.current?.post({ type: "quackback:close" });
   if (config === "off") return <Unavailable onClose={close} />;
   return (
     <WidgetView
       key={visitor.visitor}
+      dir={dir}
       theme={ready ? config.theme : "auto"}
       // Until the config arrives no tab is known to be on.
       tabs={ready ? config.tabs : []}

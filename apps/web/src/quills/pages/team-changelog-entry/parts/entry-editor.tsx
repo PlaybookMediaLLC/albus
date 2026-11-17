@@ -12,6 +12,7 @@ import { saveProblem } from "../save-problem";
 import { useAutosave } from "../use-autosave";
 import { AiMenu, type RewriteTarget } from "./ai-menu";
 import { BodyEditor } from "./body-editor";
+import { EntryLanguages } from "./entry-languages";
 import { PublishPopover } from "./publish-popover";
 import { SaveIndicator } from "./save-indicator";
 
@@ -132,6 +133,13 @@ export function EntryEditor({
           textareaRef={body}
           readOnly={!canEdit}
         />
+        {entry ? (
+          <EntryLanguages
+            workspaceId={workspaceId}
+            entryId={entry.id}
+            canEdit={canEdit}
+          />
+        ) : null}
       </div>
       <SaveIndicator
         state={missing ? "unsaved" : autosave.state}

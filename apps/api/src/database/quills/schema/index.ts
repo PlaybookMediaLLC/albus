@@ -85,4 +85,5 @@ export * from "./portal-invites";
 export * from "./feedback-signals";
 export * from "./surveys";
 export * from "./changelog-engagement";
+export * from "./changelog-translations";
 export * from "./content-translations";

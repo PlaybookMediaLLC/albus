@@ -5,7 +5,7 @@ Imported from `quackback/packages/db/src` at source commit `42ef2e01b2b48db87f1a
 ## Ownership and identity
 
 Kaneo owns authentication, user accounts, workspaces, membership and workspace
-access. All 155 feature tables live in PostgreSQL schema `quills`.
+access. All 156 feature tables live in PostgreSQL schema `quills`.
 Every table has a text `workspace_id` referencing Kaneo's workspace. Domain IDs
 retain their UUID-backed TypeID representation. Keys, unique constraints and
 feature foreign keys include workspace ownership. Nullable composite foreign
@@ -119,7 +119,7 @@ resource with `read`, `create`, `update`, `delete`, `manage_settings` and
 and owners have all six actions. `view_revenue` (#79) covers customer revenue: without
 it, revenue fields read as null, and revenue sorts, filters, totals, writes, segment
 rules and the companies export column are refused or left out. Migration
-`0032_quills_view_revenue` gives it to stored member and admin roles whose Quills actions
+`0033_quills_view_revenue` gives it to stored member and admin roles whose Quills actions
 were still the previous default.
 Existing default roles gain these actions only if their stored permissions match
 the previous defaults exactly. Customized and custom roles remain unchanged;
@@ -391,7 +391,7 @@ reapplied. Runtime jobs, sessions, API keys, outbox history and other ephemeral
 tables listed in `omittedTables` are excluded. The translation cache
 `content_translations` is excluded too: the target translates again on request.
 Feedback signals, surveys and their responses, changelog reactions and changelog
-read times transfer. Their foreign keys are deferrable, like the older tables'. Restore settlement suppresses
+read times transfer, as do the teammate-written changelog versions (`changelog_translations`). Their foreign keys are deferrable, like the older tables'. Restore settlement suppresses
 pending external effects and records an audit entry. Unfinished integration operations
 are cancelled or marked uncertain, workflows are interrupted, and pending approvals
 expire. Historical page views within the 90-day retention window receive UTC daily
@@ -453,6 +453,7 @@ All entries are workspace-owned, including per-workspace reference catalogues.
 | `changelog_entry_posts` | `changelog.ts` |
 | `changelog_reactions` | `changelog-engagement.ts` |
 | `changelog_reads` | `changelog-engagement.ts` |
+| `changelog_translations` | `changelog-translations.ts` |
 | `email_sending_domains` | `channel-accounts.ts` |
 | `channel_accounts` | `channel-accounts.ts` |
 | `channel_identities` | `channel-identities.ts` |
@@ -584,6 +585,7 @@ no SDK and no other dependency. Set these server variables in the root `.env`:
 | `QUILLS_AI_MODEL` | Chat model name. Required. |
 | `QUILLS_AI_API_KEY` | Sent as `Authorization: Bearer`. Leave it empty for a local server that needs no key. |
 | `QUILLS_AI_EMBEDDING_MODEL` | Embedding model. It must return 1536 dimensions (the `vector(1536)` columns). Optional: without it, similar posts, duplicate checks and semantic search stay off. |
+| `QUILLS_AI_MONTHLY_TOKEN_LIMIT` | Tokens that each workspace may use in a UTC calendar month, counted from `ai_usage_log`. Optional: without it there is no limit. Before each provider call, the customer AI routes (post draft, translation) reserve the most the call can cost (its prompt's UTF-8 bytes plus its output limit) under a workspace lock, and return 409 when that would pass the limit; the customer keeps the manual path. So parallel calls cannot pass the limit together. The handler replaces the reservation with the real usage; a failed call's reservation stops counting after 5 minutes. |
 
 Without `QUILLS_AI_BASE_URL` and `QUILLS_AI_MODEL`, every AI route returns 409
 ("AI is not configured") and the rest of Quills works as before. Background AI work then

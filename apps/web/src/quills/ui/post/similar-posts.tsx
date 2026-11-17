@@ -71,7 +71,7 @@ export function SimilarPosts({
                   )}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium">
+                  <span className="block truncate font-medium" dir="auto">
                     {post.title}
                   </span>
                   {status ? (

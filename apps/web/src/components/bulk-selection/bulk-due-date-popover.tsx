@@ -51,10 +51,11 @@ export function BulkDueDatePopover({
         </PopoverTrigger>
       </BarTooltip>
       <PopoverContent
+        variant="menu"
         side="top"
         align="start"
         sideOffset={8}
-        className="w-65 p-0"
+        className="w-65"
         finalFocus={() => (openedByRequest() && returnFocus?.()) || true}
       >
         <DatePickerMenu

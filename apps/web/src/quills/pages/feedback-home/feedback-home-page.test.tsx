@@ -23,6 +23,7 @@ describe("FeedbackHomePage", () => {
     canComment: true,
     voteDisplay: "count" as const,
     defaultSort: null,
+    fields: [],
   };
   const prepareHome = (signedIn = false) => {
     const api = mockApi();

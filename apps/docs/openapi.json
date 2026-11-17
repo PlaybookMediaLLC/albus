@@ -14459,7 +14459,7 @@
           "Quills"
         ],
         "summary": "Translate a post or a comment into the viewer's language",
-        "description": "Exactly one of postId and commentId. Only content that the caller may see. A cached translation of the same text is returned without an AI call. 409 when AI is not configured and nothing is cached, 502 when the provider fails.",
+        "description": "Exactly one of postId and commentId. Only content that the caller may see. A cached translation of the same text is returned without an AI call. The workspace's protected terms (the help center's list) stay unchanged. 409 when AI is not configured or the workspace reached its monthly AI limit and nothing is cached, 502 when the provider fails or changes a protected term.",
         "security": [],
         "parameters": [
           {
@@ -14550,7 +14550,7 @@
             }
           },
           "409": {
-            "description": "AI is not configured, or the text changed during the request; The caller changed during the request; retry",
+            "description": "AI is not configured, the workspace reached its monthly AI limit, or the text changed during the request; The caller changed during the request; retry",
             "content": {
               "application/json": {
                 "schema": {
@@ -14570,7 +14570,7 @@
             }
           },
           "502": {
-            "description": "The AI provider failed",
+            "description": "The AI provider failed or changed a protected term",
             "content": {
               "application/json": {
                 "schema": {
@@ -14656,6 +14656,10 @@
                         "hmacRequired": {
                           "type": "boolean"
                         },
+                        "ai": {
+                          "type": "boolean",
+                          "description": "True when the instance has an AI provider: the feedback composer can suggest a title and a board."
+                        },
                         "visitorAnalytics": {
                           "type": "boolean"
                         },
@@ -14723,6 +14727,7 @@
                       "required": [
                         "tabs",
                         "hmacRequired",
+                        "ai",
                         "visitorAnalytics",
                         "visitorDeviceTracking",
                         "launcherGreeting",
@@ -15901,6 +15906,47 @@
                               null
                             ],
                             "description": "The board's post order when the caller names none. Null: no board default."
+                          },
+                          "fields": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "text",
+                                    "number",
+                                    "select",
+                                    "multi_select",
+                                    "checkbox",
+                                    "date"
+                                  ]
+                                },
+                                "required": {
+                                  "type": "boolean"
+                                },
+                                "options": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              "required": [
+                                "key",
+                                "label",
+                                "type",
+                                "required"
+                              ]
+                            },
+                            "description": "The public custom fields that a new post on this board fills in. Internal fields are never listed."
                           }
                         },
                         "required": [
@@ -15913,7 +15959,8 @@
                           "canVote",
                           "canComment",
                           "voteDisplay",
-                          "defaultSort"
+                          "defaultSort",
+                          "fields"
                         ]
                       }
                     }
@@ -16445,7 +16492,7 @@
           "Quills"
         ],
         "summary": "Submit a feedback post",
-        "description": "Without boardId, the first board (by name) that accepts the caller's submissions. Without title, the first line of content. The author's vote and subscription are added. A held post waits for review and is visible only to its author. idempotencyKey returns the first post for a repeated request; another payload under the same key is 409.",
+        "description": "Without boardId, the first board (by name) that accepts the caller's submissions. Without title, the first line of content. customFields must hold a value for each required public field of the board (see the board list); 400 for a missing, unknown or wrongly typed value. The author's vote and subscription are added. A held post waits for review and is visible only to its author. idempotencyKey returns the first post for a repeated request; another payload under the same key is 409.",
         "security": [],
         "parameters": [
           {
@@ -16490,6 +16537,35 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 128
+                  },
+                  "customFields": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2000
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 100
+                          },
+                          "maxItems": 50
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "description": "Values of the board's custom fields, keyed by field key: a string for text, select and date (YYYY-MM-DD), a number, a boolean for a checkbox, and a list of options for multi-select."
                   }
                 },
                 "required": [
@@ -16662,6 +16738,16 @@
                     "createdAt",
                     "replayed"
                   ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A custom field value is missing, unknown or of the wrong type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -17111,6 +17197,54 @@
                         null
                       ],
                       "description": "How much the caller needs the post, when the caller voted and said so"
+                    },
+                    "customFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "A text, select or date (YYYY-MM-DD) string, a number, or a checkbox boolean; null for multi-select"
+                          },
+                          "values": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "The chosen options of a multi-select field; null for other types"
+                          },
+                          "label": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "value",
+                          "values",
+                          "label"
+                        ]
+                      },
+                      "description": "The post's values of the board's public custom fields, in the board's order. Internal fields are never included."
                     }
                   },
                   "required": [
@@ -17136,7 +17270,8 @@
                     "isCommentsLocked",
                     "authorOnlyReplies",
                     "mergedInto",
-                    "importance"
+                    "importance",
+                    "customFields"
                   ]
                 }
               }
@@ -19797,7 +19932,7 @@
           "Quills"
         ],
         "summary": "List the published changelog entries that the caller may see",
-        "description": "Newest first by the shown date. content is the stored text, not sanitized HTML.",
+        "description": "Newest first by the shown date. content is the stored text, not sanitized HTML. With locale, an entry that has a version in the reader's language returns it.",
         "security": [],
         "parameters": [
           {
@@ -19833,6 +19968,18 @@
             "required": false,
             "name": "limit",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 35,
+              "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$",
+              "description": "The reader's language. An entry with a version in this language returns it; others return their own text."
+            },
+            "required": false,
+            "description": "The reader's language. An entry with a version in this language returns it; others return their own text.",
+            "name": "locale",
+            "in": "query"
           }
         ],
         "responses": {
@@ -19856,6 +20003,13 @@
                           },
                           "content": {
                             "type": "string"
+                          },
+                          "locale": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "description": "The language of the version that a teammate wrote for the reader's `locale` (issue #76); null for the entry's own text, the default language"
                           },
                           "publishedAt": {
                             "type": "string",
@@ -19975,6 +20129,7 @@
                           "id",
                           "title",
                           "content",
+                          "locale",
                           "publishedAt",
                           "author",
                           "categories",
@@ -20030,6 +20185,7 @@
           "Quills"
         ],
         "summary": "Get a published changelog entry",
+        "description": "With locale, the entry's version in the reader's language when a teammate wrote one.",
         "security": [],
         "parameters": [
           {
@@ -20051,6 +20207,18 @@
             "required": true,
             "name": "entryId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 35,
+              "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$",
+              "description": "The reader's language. An entry with a version in this language returns it; others return their own text."
+            },
+            "required": false,
+            "description": "The reader's language. An entry with a version in this language returns it; others return their own text.",
+            "name": "locale",
+            "in": "query"
           }
         ],
         "responses": {
@@ -20069,6 +20237,13 @@
                     },
                     "content": {
                       "type": "string"
+                    },
+                    "locale": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The language of the version that a teammate wrote for the reader's `locale` (issue #76); null for the entry's own text, the default language"
                     },
                     "publishedAt": {
                       "type": "string",
@@ -20188,6 +20363,7 @@
                     "id",
                     "title",
                     "content",
+                    "locale",
                     "publishedAt",
                     "author",
                     "categories",
@@ -20343,8 +20519,8 @@
         "tags": [
           "Quills"
         ],
-        "summary": "Suggest a clearer title, problem statement and board for a draft post",
-        "description": "The model rewrites only the customer's text and picks one of the boards that take the caller's posts. Nothing is saved. 409 when AI is not configured, 502 when the provider fails.",
+        "summary": "Suggest a title and a board for a draft post",
+        "description": "The model writes a title from the customer's own words and picks one of the boards that take the caller's posts. The customer's text is not changed and nothing is saved. 409 when AI is not configured or the workspace reached its monthly AI limit, 502 when the provider fails.",
         "security": [],
         "parameters": [
           {
@@ -20388,7 +20564,7 @@
         },
         "responses": {
           "200": {
-            "description": "The suggestion; nothing is saved",
+            "description": "The suggested title and board; nothing is saved",
             "content": {
               "application/json": {
                 "schema": {
@@ -20398,11 +20574,13 @@
                       "type": "string",
                       "maxLength": 200
                     },
-                    "problem": {
-                      "type": "string",
-                      "maxLength": 1000
-                    },
                     "boardId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "boardName": {
                       "type": [
                         "string",
                         "null"
@@ -20411,8 +20589,8 @@
                   },
                   "required": [
                     "title",
-                    "problem",
-                    "boardId"
+                    "boardId",
+                    "boardName"
                   ]
                 }
               }
@@ -20449,7 +20627,7 @@
             }
           },
           "409": {
-            "description": "AI is not configured; The caller changed during the request; retry",
+            "description": "AI is not configured, or the workspace reached its monthly AI limit; The caller changed during the request; retry",
             "content": {
               "application/json": {
                 "schema": {
@@ -20649,6 +20827,47 @@
                               null
                             ],
                             "description": "The board's post order when the caller names none. Null: no board default."
+                          },
+                          "fields": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "text",
+                                    "number",
+                                    "select",
+                                    "multi_select",
+                                    "checkbox",
+                                    "date"
+                                  ]
+                                },
+                                "required": {
+                                  "type": "boolean"
+                                },
+                                "options": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              "required": [
+                                "key",
+                                "label",
+                                "type",
+                                "required"
+                              ]
+                            },
+                            "description": "The public custom fields that a new post on this board fills in. Internal fields are never listed."
                           }
                         },
                         "required": [
@@ -20661,7 +20880,8 @@
                           "canVote",
                           "canComment",
                           "voteDisplay",
-                          "defaultSort"
+                          "defaultSort",
+                          "fields"
                         ]
                       }
                     }
@@ -21019,7 +21239,7 @@
           "Quills"
         ],
         "summary": "Submit a feedback post",
-        "description": "Without boardId, the first board (by name) that accepts the caller's submissions. Without title, the first line of content. The author's vote and subscription are added. A held post waits for review and is visible only to its author. idempotencyKey returns the first post for a repeated request; another payload under the same key is 409.",
+        "description": "Without boardId, the first board (by name) that accepts the caller's submissions. Without title, the first line of content. customFields must hold a value for each required public field of the board (see the board list); 400 for a missing, unknown or wrongly typed value. The author's vote and subscription are added. A held post waits for review and is visible only to its author. idempotencyKey returns the first post for a repeated request; another payload under the same key is 409.",
         "security": [],
         "parameters": [
           {
@@ -21064,6 +21284,35 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 128
+                  },
+                  "customFields": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2000
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 100
+                          },
+                          "maxItems": 50
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "description": "Values of the board's custom fields, keyed by field key: a string for text, select and date (YYYY-MM-DD), a number, a boolean for a checkbox, and a list of options for multi-select."
                   },
                   "metadata": {
                     "type": "object",
@@ -21244,6 +21493,16 @@
                     "createdAt",
                     "replayed"
                   ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A custom field value is missing, unknown or of the wrong type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -21703,6 +21962,54 @@
                         null
                       ],
                       "description": "How much the caller needs the post, when the caller voted and said so"
+                    },
+                    "customFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "A text, select or date (YYYY-MM-DD) string, a number, or a checkbox boolean; null for multi-select"
+                          },
+                          "values": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "The chosen options of a multi-select field; null for other types"
+                          },
+                          "label": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "value",
+                          "values",
+                          "label"
+                        ]
+                      },
+                      "description": "The post's values of the board's public custom fields, in the board's order. Internal fields are never included."
                     }
                   },
                   "required": [
@@ -21728,7 +22035,8 @@
                     "isCommentsLocked",
                     "authorOnlyReplies",
                     "mergedInto",
-                    "importance"
+                    "importance",
+                    "customFields"
                   ]
                 }
               }
@@ -23159,7 +23467,7 @@
           "Quills"
         ],
         "summary": "List the published changelog entries that the caller may see",
-        "description": "Newest first by the shown date. content is the stored text, not sanitized HTML.",
+        "description": "Newest first by the shown date. content is the stored text, not sanitized HTML. With locale, an entry that has a version in the reader's language returns it.",
         "security": [],
         "parameters": [
           {
@@ -23195,6 +23503,18 @@
             "required": false,
             "name": "limit",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 35,
+              "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$",
+              "description": "The reader's language. An entry with a version in this language returns it; others return their own text."
+            },
+            "required": false,
+            "description": "The reader's language. An entry with a version in this language returns it; others return their own text.",
+            "name": "locale",
+            "in": "query"
           }
         ],
         "responses": {
@@ -23218,6 +23538,13 @@
                           },
                           "content": {
                             "type": "string"
+                          },
+                          "locale": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "description": "The language of the version that a teammate wrote for the reader's `locale` (issue #76); null for the entry's own text, the default language"
                           },
                           "publishedAt": {
                             "type": "string",
@@ -23337,6 +23664,7 @@
                           "id",
                           "title",
                           "content",
+                          "locale",
                           "publishedAt",
                           "author",
                           "categories",
@@ -23402,6 +23730,7 @@
           "Quills"
         ],
         "summary": "Get a published changelog entry",
+        "description": "With locale, the entry's version in the reader's language when a teammate wrote one.",
         "security": [],
         "parameters": [
           {
@@ -23423,6 +23752,18 @@
             "required": true,
             "name": "entryId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 35,
+              "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$",
+              "description": "The reader's language. An entry with a version in this language returns it; others return their own text."
+            },
+            "required": false,
+            "description": "The reader's language. An entry with a version in this language returns it; others return their own text.",
+            "name": "locale",
+            "in": "query"
           }
         ],
         "responses": {
@@ -23441,6 +23782,13 @@
                     },
                     "content": {
                       "type": "string"
+                    },
+                    "locale": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The language of the version that a teammate wrote for the reader's `locale` (issue #76); null for the entry's own text, the default language"
                     },
                     "publishedAt": {
                       "type": "string",
@@ -23560,6 +23908,7 @@
                     "id",
                     "title",
                     "content",
+                    "locale",
                     "publishedAt",
                     "author",
                     "categories",
@@ -23594,6 +23943,152 @@
           },
           "404": {
             "description": "Changelog entry not found, or the portal changelog tab is off; Workspace not found or archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quills-public/{workspace}/widget/post-draft/improve": {
+      "post": {
+        "operationId": "improveQuillsWidgetPostDraft",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Suggest a title and a board for a draft post",
+        "description": "The model writes a title from the customer's own words and picks one of the boards that take the caller's posts. The customer's text is not changed and nothing is saved. 409 when AI is not configured or the workspace reached its monthly AI limit, 502 when the provider fails.",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Workspace ID or slug"
+            },
+            "required": true,
+            "description": "Workspace ID or slug",
+            "name": "workspace",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "details": {
+                    "type": "string",
+                    "maxLength": 4000
+                  },
+                  "boardId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "title",
+                  "details"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The suggested title and board; nothing is saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "boardId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "boardName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "boardId",
+                    "boardName"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Valid widget session required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Blocked account, no portal access, or submissions are not open to you",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Board not found; Workspace not found or archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "AI is not configured, or the workspace reached its monthly AI limit; The caller changed during the request; retry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The AI provider failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -68316,6 +68811,50 @@
                               ]
                             }
                           },
+                          "customFields": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "value": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "boolean"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "A text, select or date (YYYY-MM-DD) string, a number, or a checkbox boolean; null for multi-select"
+                                },
+                                "values": {
+                                  "type": [
+                                    "array",
+                                    "null"
+                                  ],
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "The chosen options of a multi-select field; null for other types"
+                                }
+                              },
+                              "required": [
+                                "key",
+                                "value",
+                                "values"
+                              ]
+                            },
+                            "description": "The post's values of its board's custom fields, internal fields included, in the board's order"
+                          },
                           "score": {
                             "type": "object",
                             "properties": {
@@ -68451,6 +68990,7 @@
                           "updatedAt",
                           "deletedAt",
                           "tags",
+                          "customFields",
                           "score",
                           "factorValues",
                           "demand",
@@ -68528,7 +69068,7 @@
           "Quills"
         ],
         "summary": "Create a feedback post",
-        "description": "The author is the caller, or `authorPrincipalId` to post on behalf of a person of this workspace (that also needs the update action). The author is the first voter and is subscribed to the post. On behalf of a person, the post history and the audit log record you, the person and `source`. Without a status, the post gets the default status.",
+        "description": "The author is the caller, or `authorPrincipalId` to post on behalf of a person of this workspace (that also needs the update action). The author is the first voter and is subscribed to the post. On behalf of a person, the post history and the audit log record you, the person and `source`. Without a status, the post gets the default status. customFields must hold a value for each required field of the board, internal fields included; 400 for a missing or wrongly typed value.",
         "parameters": [
           {
             "schema": {
@@ -68585,6 +69125,35 @@
                     ],
                     "default": "other",
                     "description": "Where you heard it: call, meeting, email, chat or other. The post history and the audit log record it."
+                  },
+                  "customFields": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2000
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 100
+                          },
+                          "maxItems": 50
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "description": "Values of the board's custom fields, keyed by field key: a string for text, select and date (YYYY-MM-DD), a number, a boolean for a checkbox, and a list of options for multi-select."
                   }
                 },
                 "required": [
@@ -68710,6 +69279,50 @@
                         ]
                       }
                     },
+                    "customFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "A text, select or date (YYYY-MM-DD) string, a number, or a checkbox boolean; null for multi-select"
+                          },
+                          "values": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "The chosen options of a multi-select field; null for other types"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "value",
+                          "values"
+                        ]
+                      },
+                      "description": "The post's values of its board's custom fields, internal fields included, in the board's order"
+                    },
                     "score": {
                       "type": "object",
                       "properties": {
@@ -68794,9 +69407,20 @@
                     "updatedAt",
                     "deletedAt",
                     "tags",
+                    "customFields",
                     "score",
                     "factorValues"
                   ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A custom field value is missing, unknown or of the wrong type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -69377,6 +70001,50 @@
                         ]
                       }
                     },
+                    "customFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "A text, select or date (YYYY-MM-DD) string, a number, or a checkbox boolean; null for multi-select"
+                          },
+                          "values": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "The chosen options of a multi-select field; null for other types"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "value",
+                          "values"
+                        ]
+                      },
+                      "description": "The post's values of its board's custom fields, internal fields included, in the board's order"
+                    },
                     "score": {
                       "type": "object",
                       "properties": {
@@ -69476,6 +70144,7 @@
                     "updatedAt",
                     "deletedAt",
                     "tags",
+                    "customFields",
                     "score",
                     "factorValues",
                     "hasVoted",
@@ -69536,8 +70205,8 @@
         "tags": [
           "Quills"
         ],
-        "summary": "Edit a post's title, content, ETA or comment lock",
-        "description": "A title or content change keeps the previous version in the edit history. An ETA is stored as the first day of its UTC month.",
+        "summary": "Edit a post's title, content, ETA, comment lock or custom fields",
+        "description": "A title or content change keeps the previous version in the edit history. An ETA is stored as the first day of its UTC month. customFields changes the given fields only; null clears one, and a required field cannot be cleared.",
         "parameters": [
           {
             "schema": {
@@ -69583,6 +70252,35 @@
                   },
                   "isCommentsLocked": {
                     "type": "boolean"
+                  },
+                  "customFields": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2000
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 100
+                          },
+                          "maxItems": 50
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "description": "Values of the board's custom fields, keyed by field key: a string for text, select and date (YYYY-MM-DD), a number, a boolean for a checkbox, and a list of options for multi-select."
                   }
                 }
               }
@@ -69704,6 +70402,50 @@
                         ]
                       }
                     },
+                    "customFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "A text, select or date (YYYY-MM-DD) string, a number, or a checkbox boolean; null for multi-select"
+                          },
+                          "values": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "The chosen options of a multi-select field; null for other types"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "value",
+                          "values"
+                        ]
+                      },
+                      "description": "The post's values of its board's custom fields, internal fields included, in the board's order"
+                    },
                     "score": {
                       "type": "object",
                       "properties": {
@@ -69788,9 +70530,20 @@
                     "updatedAt",
                     "deletedAt",
                     "tags",
+                    "customFields",
                     "score",
                     "factorValues"
                   ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A custom field value is missing, unknown or of the wrong type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -69982,6 +70735,50 @@
                         ]
                       }
                     },
+                    "customFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "A text, select or date (YYYY-MM-DD) string, a number, or a checkbox boolean; null for multi-select"
+                          },
+                          "values": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "The chosen options of a multi-select field; null for other types"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "value",
+                          "values"
+                        ]
+                      },
+                      "description": "The post's values of its board's custom fields, internal fields included, in the board's order"
+                    },
                     "score": {
                       "type": "object",
                       "properties": {
@@ -70066,6 +70863,7 @@
                     "updatedAt",
                     "deletedAt",
                     "tags",
+                    "customFields",
                     "score",
                     "factorValues"
                   ]
@@ -70278,6 +71076,50 @@
                         ]
                       }
                     },
+                    "customFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "A text, select or date (YYYY-MM-DD) string, a number, or a checkbox boolean; null for multi-select"
+                          },
+                          "values": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "The chosen options of a multi-select field; null for other types"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "value",
+                          "values"
+                        ]
+                      },
+                      "description": "The post's values of its board's custom fields, internal fields included, in the board's order"
+                    },
                     "score": {
                       "type": "object",
                       "properties": {
@@ -70362,6 +71204,7 @@
                     "updatedAt",
                     "deletedAt",
                     "tags",
+                    "customFields",
                     "score",
                     "factorValues"
                   ]
@@ -70575,6 +71418,50 @@
                         ]
                       }
                     },
+                    "customFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "A text, select or date (YYYY-MM-DD) string, a number, or a checkbox boolean; null for multi-select"
+                          },
+                          "values": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "The chosen options of a multi-select field; null for other types"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "value",
+                          "values"
+                        ]
+                      },
+                      "description": "The post's values of its board's custom fields, internal fields included, in the board's order"
+                    },
                     "score": {
                       "type": "object",
                       "properties": {
@@ -70659,6 +71546,7 @@
                     "updatedAt",
                     "deletedAt",
                     "tags",
+                    "customFields",
                     "score",
                     "factorValues"
                   ]
@@ -70875,6 +71763,50 @@
                         ]
                       }
                     },
+                    "customFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "A text, select or date (YYYY-MM-DD) string, a number, or a checkbox boolean; null for multi-select"
+                          },
+                          "values": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "The chosen options of a multi-select field; null for other types"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "value",
+                          "values"
+                        ]
+                      },
+                      "description": "The post's values of its board's custom fields, internal fields included, in the board's order"
+                    },
                     "score": {
                       "type": "object",
                       "properties": {
@@ -70959,6 +71891,7 @@
                     "updatedAt",
                     "deletedAt",
                     "tags",
+                    "customFields",
                     "score",
                     "factorValues"
                   ]
@@ -71176,6 +72109,50 @@
                         ]
                       }
                     },
+                    "customFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "A text, select or date (YYYY-MM-DD) string, a number, or a checkbox boolean; null for multi-select"
+                          },
+                          "values": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "The chosen options of a multi-select field; null for other types"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "value",
+                          "values"
+                        ]
+                      },
+                      "description": "The post's values of its board's custom fields, internal fields included, in the board's order"
+                    },
                     "score": {
                       "type": "object",
                       "properties": {
@@ -71260,6 +72237,7 @@
                     "updatedAt",
                     "deletedAt",
                     "tags",
+                    "customFields",
                     "score",
                     "factorValues"
                   ]
@@ -71456,6 +72434,50 @@
                         ]
                       }
                     },
+                    "customFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "A text, select or date (YYYY-MM-DD) string, a number, or a checkbox boolean; null for multi-select"
+                          },
+                          "values": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "The chosen options of a multi-select field; null for other types"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "value",
+                          "values"
+                        ]
+                      },
+                      "description": "The post's values of its board's custom fields, internal fields included, in the board's order"
+                    },
                     "score": {
                       "type": "object",
                       "properties": {
@@ -71540,6 +72562,7 @@
                     "updatedAt",
                     "deletedAt",
                     "tags",
+                    "customFields",
                     "score",
                     "factorValues"
                   ]
@@ -74510,7 +75533,7 @@
           "Quills"
         ],
         "summary": "Accept a signal as a new post",
-        "description": "Creates a post on a board that you can see, as createQuillsPost does: the customer is its author and first voter, you are the teammate who tracks it, and the excerpt is its content. The post and the decision commit together. 409 when the signal is not pending.",
+        "description": "Creates a post on a board that you can see, as createQuillsPost does: the customer is its author and first voter, you are the teammate who tracks it, and the excerpt is its content. The board's custom fields are checked as on createQuillsPost, so a required field needs a value. The post and the decision commit together. 409 when the signal is not pending.",
         "parameters": [
           {
             "schema": {
@@ -74544,6 +75567,35 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 200
+                  },
+                  "customFields": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2000
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 100
+                          },
+                          "maxItems": 50
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "description": "Values of the board's custom fields, keyed by field key: a string for text, select and date (YYYY-MM-DD), a number, a boolean for a checkbox, and a list of options for multi-select."
                   }
                 },
                 "required": [
@@ -74585,6 +75637,16 @@
                     "status",
                     "resultingPostId"
                   ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A custom field value is missing, unknown or of the wrong type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -75187,6 +76249,8 @@
                         "changelog.updated",
                         "changelog.published",
                         "changelog.deleted",
+                        "changelog.translation_saved",
+                        "changelog.translation_deleted",
                         "changelog.category_created",
                         "changelog.category_updated",
                         "changelog.category_deleted",
@@ -75757,6 +76821,8 @@
                         "changelog.updated",
                         "changelog.published",
                         "changelog.deleted",
+                        "changelog.translation_saved",
+                        "changelog.translation_deleted",
                         "changelog.category_created",
                         "changelog.category_updated",
                         "changelog.category_deleted",
@@ -144273,6 +145339,8 @@
                             "changelog.updated",
                             "changelog.published",
                             "changelog.deleted",
+                            "changelog.translation_saved",
+                            "changelog.translation_deleted",
                             "changelog.category_created",
                             "changelog.category_updated",
                             "changelog.category_deleted",
@@ -148514,6 +149582,35 @@
                       "email"
                     ],
                     "description": "The customer who asked: identified, then the post's voter"
+                  },
+                  "customFields": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2000
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 100
+                          },
+                          "maxItems": 50
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "description": "Values of the board's custom fields, keyed by field key: a string for text, select and date (YYYY-MM-DD), a number, a boolean for a checkbox, and a list of options for multi-select."
                   }
                 },
                 "required": [
@@ -148574,6 +149671,16 @@
                     "createdAt",
                     "linkId"
                   ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A custom field value is missing, unknown or of the wrong type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -151058,13 +152165,345 @@
         }
       }
     },
+    "/quills/{workspaceId}/changelog/{entryId}/translations": {
+      "get": {
+        "operationId": "listQuillsChangelogTranslations",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "List the other-language versions of a changelog entry",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "entryId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Versions by language",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "locale": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "content": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "locale",
+                          "title",
+                          "content",
+                          "updatedAt"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Changelog entry not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      },
+      "put": {
+        "operationId": "saveQuillsChangelogTranslation",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Write a changelog entry's version in one language",
+        "description": "Creates or replaces the version in `locale`. Readers whose language it is get it in the portal, the widget and the changelog mail; others get the entry's own text.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "entryId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "locale": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 35,
+                    "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$",
+                    "description": "A BCP 47 tag. It is stored as its language (de-AT is de; Chinese keeps zh-cn or zh-tw)."
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "content": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100000
+                  }
+                },
+                "required": [
+                  "locale",
+                  "title",
+                  "content"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The saved version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "locale": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "content": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "locale",
+                    "title",
+                    "content",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Changelog entry not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
+    "/quills/{workspaceId}/changelog/{entryId}/translations/{locale}": {
+      "delete": {
+        "operationId": "deleteQuillsChangelogTranslation",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Delete a changelog entry's version in one language",
+        "description": "Readers of that language then get the entry's own text.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "entryId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 35,
+              "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$",
+              "description": "A BCP 47 tag. It is stored as its language (de-AT is de; Chinese keeps zh-cn or zh-tw)."
+            },
+            "required": true,
+            "description": "A BCP 47 tag. It is stored as its language (de-AT is de; Chinese keeps zh-cn or zh-tw).",
+            "name": "locale",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The version was deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deleted": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "deleted"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Changelog entry or version not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
     "/quills/{workspaceId}/boards/{boardId}/settings": {
       "get": {
         "operationId": "getQuillsBoardSettings",
         "tags": [
           "Quills"
         ],
-        "summary": "Get a board's voting and task sync settings",
+        "summary": "Get a board's voting, task sync and custom field settings",
         "parameters": [
           {
             "schema": {
@@ -151087,7 +152526,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Voting and task sync settings",
+            "description": "Voting, task sync and custom field settings",
             "content": {
               "application/json": {
                 "schema": {
@@ -151131,13 +152570,64 @@
                       "required": [
                         "statusOnTaskDone"
                       ]
+                    },
+                    "customFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "pattern": "^[a-z][a-z0-9_]{0,39}$"
+                          },
+                          "label": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 100
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "text",
+                              "number",
+                              "select",
+                              "multi_select",
+                              "checkbox",
+                              "date"
+                            ]
+                          },
+                          "required": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "internal": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "options": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 100
+                            },
+                            "maxItems": 50
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "label",
+                          "type"
+                        ]
+                      }
                     }
                   },
                   "required": [
                     "boardId",
                     "voteDisplay",
                     "defaultSort",
-                    "taskSync"
+                    "taskSync",
+                    "customFields"
                   ]
                 }
               }
@@ -151183,8 +152673,8 @@
         "tags": [
           "Quills"
         ],
-        "summary": "Change a board's voting and task sync settings",
-        "description": "Changes only the given keys and keeps every other board setting. defaultSort null removes the board's default. taskSync.statusOnTaskDone must be a live post status of the workspace; null turns the sync off.",
+        "summary": "Change a board's voting, task sync and custom field settings",
+        "description": "Changes only the given keys and keeps every other board setting. defaultSort null removes the board's default. taskSync.statusOnTaskDone must be a live post status of the workspace; null turns the sync off. customFields replaces the board's whole field list; values that posts already hold stay stored.",
         "parameters": [
           {
             "schema": {
@@ -151246,6 +152736,58 @@
                     "required": [
                       "statusOnTaskDone"
                     ]
+                  },
+                  "customFields": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "pattern": "^[a-z][a-z0-9_]{0,39}$"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "text",
+                            "number",
+                            "select",
+                            "multi_select",
+                            "checkbox",
+                            "date"
+                          ]
+                        },
+                        "required": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "internal": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "options": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 100
+                          },
+                          "maxItems": 50
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "label",
+                        "type"
+                      ]
+                    },
+                    "maxItems": 20,
+                    "description": "The fields that the board asks for (at most 20). An internal field is for teammates only: the portal, the widget and customer responses never include it. A required checkbox must be checked."
                   }
                 }
               }
@@ -151254,7 +152796,7 @@
         },
         "responses": {
           "200": {
-            "description": "Voting and task sync settings",
+            "description": "Voting, task sync and custom field settings",
             "content": {
               "application/json": {
                 "schema": {
@@ -151298,13 +152840,64 @@
                       "required": [
                         "statusOnTaskDone"
                       ]
+                    },
+                    "customFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "pattern": "^[a-z][a-z0-9_]{0,39}$"
+                          },
+                          "label": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 100
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "text",
+                              "number",
+                              "select",
+                              "multi_select",
+                              "checkbox",
+                              "date"
+                            ]
+                          },
+                          "required": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "internal": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "options": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 100
+                            },
+                            "maxItems": 50
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "label",
+                          "type"
+                        ]
+                      }
                     }
                   },
                   "required": [
                     "boardId",
                     "voteDisplay",
                     "defaultSort",
-                    "taskSync"
+                    "taskSync",
+                    "customFields"
                   ]
                 }
               }
@@ -151784,6 +153377,50 @@
                         ]
                       }
                     },
+                    "customFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "A text, select or date (YYYY-MM-DD) string, a number, or a checkbox boolean; null for multi-select"
+                          },
+                          "values": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "The chosen options of a multi-select field; null for other types"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "value",
+                          "values"
+                        ]
+                      },
+                      "description": "The post's values of its board's custom fields, internal fields included, in the board's order"
+                    },
                     "score": {
                       "type": "object",
                       "properties": {
@@ -151868,6 +153505,7 @@
                     "updatedAt",
                     "deletedAt",
                     "tags",
+                    "customFields",
                     "score",
                     "factorValues"
                   ]

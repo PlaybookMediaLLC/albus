@@ -170,6 +170,7 @@ export function TeamAutopilotPage({ workspaceId }: TeamAutopilotPageProps) {
         </SignalList>
       )}
       <AcceptPostSheet
+        workspaceId={workspaceId}
         signal={accepting}
         boards={boards.data?.items ?? []}
         onClose={() => setAccepting(null)}

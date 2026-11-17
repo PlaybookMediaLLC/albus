@@ -60,7 +60,7 @@ export function FilterMenu({ subjects, activeCount }: FilterMenuProps) {
           <ShortcutTooltipLabel label={label} shortcutId="addFilter" />
         </TooltipContent>
       </Tooltip>
-      <PopoverContent align="end" className="w-60">
+      <PopoverContent variant="menu" align="end" className="w-60">
         <FilterRootPanel subjects={subjects} onApplied={() => setOpen(false)} />
       </PopoverContent>
     </Popover>

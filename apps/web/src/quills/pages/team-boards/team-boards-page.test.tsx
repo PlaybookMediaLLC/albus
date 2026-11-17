@@ -145,6 +145,69 @@ describe("TeamBoardsPage", () => {
     });
   });
 
+  it("adds, edits and removes a board's custom fields", async () => {
+    const api = mockApi();
+    api.reply(listBoardsFixture.ok({ items: [board] }));
+    api.reply(listSegmentsFixture.ok({ segments: [segment] }));
+    api.reply(
+      getBoardSettingsFixture.ok({
+        boardId: board.id,
+        customFields: [
+          {
+            key: "old",
+            label: "Old",
+            type: "text",
+            required: false,
+            internal: false,
+          },
+        ],
+      }),
+    );
+    api.reply(listStatusesFixture.ok({ statuses: [complete] }));
+    api.reply(updateBoardSettingsFixture.ok({ boardId: board.id }));
+    api.reply(getBoardSettingsFixture.ok({ boardId: board.id }));
+    const view = renderPage(TeamBoardsPage, meta);
+    await view.findByRole("heading", { name: "Custom fields" });
+    press("Remove field Old");
+    press("Add field");
+    fireEvent.change(view.getByLabelText("Label"), {
+      target: { value: "Plan" },
+    });
+    await choose("Type", "Select");
+    fireEvent.change(await view.findByLabelText("Options"), {
+      target: { value: "Free\nPro" },
+    });
+    fireEvent.click(view.getByRole("checkbox", { name: "Required" }));
+    press("Add field");
+    fireEvent.change(view.getAllByLabelText("Label")[1]!, {
+      target: { value: "MRR" },
+    });
+    fireEvent.click(view.getAllByRole("checkbox", { name: "Internal" })[1]!);
+    press("Save fields");
+    await waitFor(() =>
+      expect(api.calls("updateQuillsBoardSettings")).toHaveLength(1),
+    );
+    expect(await api.calls("updateQuillsBoardSettings")[0]!.json()).toEqual({
+      customFields: [
+        {
+          key: "plan",
+          label: "Plan",
+          type: "select",
+          required: true,
+          internal: false,
+          options: ["Free", "Pro"],
+        },
+        {
+          key: "mrr",
+          label: "MRR",
+          type: "text",
+          required: false,
+          internal: true,
+        },
+      ],
+    });
+  });
+
   it("shows the visibility read-only to a teammate without manage_settings", async () => {
     const api = mockApi();
     api.reply(listBoardsFixture.ok({ items: [board] }));
