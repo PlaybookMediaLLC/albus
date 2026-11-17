@@ -232,6 +232,10 @@ const F = {
     "Portal: SSO sign-in through the host app",
     "SSO mode with the host's /sso page; portal → Sign in → Continue as Grace",
   ],
+  "portal-login-csrf": [
+    "Portal: a sign-in link works only in the browser that started it",
+    "Attacker browser opens the sign-in start and gets Grace's one-time link; a second browser opens the link",
+  ],
 };
 const esc = (s) =>
   String(s ?? "")

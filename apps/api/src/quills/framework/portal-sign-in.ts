@@ -31,6 +31,8 @@ export type HandoffGrant = {
   workspaceId: string;
   customerId: string;
   next: string;
+  /** Binds the grant to the browser that started the sign-in (utils/quills-portal-browser.ts). */
+  state: string;
 };
 export type SessionGrant = HandoffGrant & { email: string; name: string };
 type Claims = { handoff: HandoffGrant; session: SessionGrant };
@@ -80,8 +82,8 @@ export function readGrant<P extends Purpose>(
   }
   const fields =
     purpose === "session"
-      ? ["workspaceId", "customerId", "next", "nonce", "email", "name"]
-      : ["workspaceId", "customerId", "next", "nonce"];
+      ? ["workspaceId", "customerId", "next", "state", "nonce", "email", "name"]
+      : ["workspaceId", "customerId", "next", "state", "nonce"];
   if (
     fields.some((field) => typeof value[field] !== "string") ||
     typeof value.expiresAt !== "number" ||

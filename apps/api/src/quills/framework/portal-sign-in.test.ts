@@ -10,7 +10,12 @@ describe("portal token sign-in grants", () => {
   beforeAll(() => {
     vi.stubEnv("AUTH_SECRET", "unit-auth-secret-of-at-least-32-characters");
   });
-  const claims = { workspaceId: "w1", customerId: "c1", next: "/boards" };
+  const claims = {
+    workspaceId: "w1",
+    customerId: "c1",
+    next: "/boards",
+    state: "c".repeat(64),
+  };
 
   it("reads a grant only for its own purpose, unchanged and before it expires", () => {
     const handoff = mintGrant("handoff", claims);
@@ -22,6 +27,11 @@ describe("portal token sign-in grants", () => {
     ).toString("base64url");
     expect(readGrant("handoff", `${forged}.${signature}`)).toBeNull();
     expect(readGrant("handoff", mintGrant("handoff", claims, -1))).toBeNull();
+    // A grant from before the browser binding (no state) is not accepted.
+    const { state: _state, ...unbound } = claims;
+    expect(
+      readGrant("handoff", mintGrant("handoff", unbound as typeof claims)),
+    ).toBeNull();
     const session = mintGrant("session", {
       ...claims,
       email: "ada@example.test",

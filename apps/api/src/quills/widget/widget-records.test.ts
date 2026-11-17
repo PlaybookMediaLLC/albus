@@ -767,10 +767,12 @@ describe.skipIf(!url)("widget records and ownership", () => {
     );
     try {
       const ada = await visitor();
+      // The state from the browser's sign-in start page (utils/quills-portal-sign-in-start.ts).
+      const state = "b".repeat(64);
       const link = () =>
         call("POST", "/widget/portal-sign-in", {
           bearer: ada.token,
-          body: { next: "/my-feedback" },
+          body: { next: "/my-feedback", state },
         });
       // Off by default.
       expect((await link()).status).toBe(403);
@@ -802,7 +804,12 @@ describe.skipIf(!url)("widget records and ownership", () => {
           ada.principal,
         ])
       ).rows[0].user_id as string;
-      expect(claims).toMatchObject({ workspaceId: a, next: "/my-feedback" });
+      // The grant carries the browser state for the last step's browser check.
+      expect(claims).toMatchObject({
+        workspaceId: a,
+        next: "/my-feedback",
+        state,
+      });
       expect(uuid(claims.customerId)).toBe(customerId);
       expect((await (await signed({ workspace: a, code })).json()).grant).toBe(
         "",
@@ -872,15 +879,23 @@ describe.skipIf(!url)("widget records and ownership", () => {
           },
           secret,
         );
-        const sso = await signed({ workspace: a, token, next: "/changelog" });
+        // Without the browser state that the sign-in page put in return_to, the token is refused.
+        expect((await signed({ workspace: a, token })).status).toBe(401);
+        const sso = await signed({
+          workspace: a,
+          token,
+          next: "/changelog",
+          state,
+        });
         expect(sso.status).toBe(200);
         expect(readGrant("session", (await sso.json()).grant)).toMatchObject({
           email: `${grace}@example.test`,
           name: "Grace",
           next: "/changelog",
+          state,
         });
         expect(
-          (await (await signed({ workspace: a, token })).json()).grant,
+          (await (await signed({ workspace: a, token, state })).json()).grant,
         ).toBe("");
         expect(
           (
@@ -890,6 +905,7 @@ describe.skipIf(!url)("widget records and ownership", () => {
                 { sub: grace, email: `${grace}@example.test`, exp: exp() },
                 "wrong-secret",
               ),
+              state,
             })
           ).status,
         ).toBe(401);

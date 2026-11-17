@@ -11,6 +11,8 @@ import {
   readGrant,
 } from "../quills/framework/portal-sign-in";
 import { portalPaths } from "../quills/portal/paths";
+import { isPortalBrowser, portalBrowserCookie } from "./quills-portal-browser";
+import { quillsPortalSignInStart } from "./quills-portal-sign-in-start";
 
 // Kaneo's half of the Quills portal token sign-in (gaps G-17 and G-24). Kaneo accounts stay the
 // one login system: the host app's token (checked by quills/portal/token-sign-in.ts) reaches the
@@ -100,6 +102,7 @@ const clientHome = () =>
 export const quillsPortalSession = {
   id: "quills-portal-session",
   endpoints: {
+    quillsPortalSignInStart,
     quillsPortalSession: createAuthEndpoint(
       QUILLS_PORTAL_SESSION_PATH,
       {
@@ -112,6 +115,20 @@ export const quillsPortalSession = {
         if (!grant) throw ctx.redirect(clientHome());
         const home = portalPaths.home(grant.workspaceId);
         const signInRequired = `${home}?signIn=required`;
+        // Only the browser that started this sign-in may finish it (login CSRF). Its cookie is
+        // used up here, whatever the outcome.
+        const secure = ctx.context.baseURL.startsWith("https:");
+        const cookie = portalBrowserCookie(secure);
+        const browser = ctx.getCookie(cookie);
+        ctx.setCookie(cookie, "", {
+          path: "/",
+          maxAge: 0,
+          httpOnly: true,
+          sameSite: "lax",
+          secure,
+        });
+        if (!isPortalBrowser(browser, grant.workspaceId, grant.state))
+          throw ctx.redirect(`${home}?signIn=failed`);
         const adapter = ctx.context.internalAdapter;
         // A grant works once: the reservation is atomic, a repeat gets false.
         const first = await adapter.reserveVerificationValue({

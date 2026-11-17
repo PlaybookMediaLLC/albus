@@ -22,14 +22,17 @@ import { portalSignIn } from "./sign-in-settings";
 // The first step of a portal token sign-in (gaps G-17 and G-24). The browser arrives with either
 // the widget's one-time code (widget/portal-sign-in.ts) or, in SSO mode, a token that the host app
 // signed with the widget secret. This route checks it, finds the customer, and hands Kaneo's
-// sign-in (auth/quills-portal-session.ts) a one-minute grant. Each code or token works once.
+// sign-in (utils/quills-portal-session.ts) a one-minute grant. Each code or token works once. The
+// grant carries the browser state from the start page (utils/quills-portal-sign-in-start.ts), so
+// only the browser that started the sign-in can finish it.
 
 type Credential =
-  | { kind: "handoff"; customerId: string; next: string }
+  | { kind: "handoff"; customerId: string; next: string; state: string }
   | {
       kind: "sso";
       raw: NonNullable<ReturnType<typeof verifyIdentityToken>>;
       next: string;
+      state: string;
     };
 
 const portalTokenSignIn: SignedVerifier<Credential> = {
@@ -42,10 +45,20 @@ const portalTokenSignIn: SignedVerifier<Credential> = {
       return {
         scope: { workspace: code.workspaceId },
         deliveryId: `handoff:${code.nonce}`,
-        claims: { customerId: code.customerId, next: code.next },
+        claims: {
+          customerId: code.customerId,
+          next: code.next,
+          state: code.state,
+        },
       };
     }
-    if (!query.token || !query.workspace) throw unauthorized();
+    // The SSO return carries the state that the browser's sign-in page added to return_to.
+    if (
+      !query.token ||
+      !query.workspace ||
+      !/^[0-9a-f]{64}$/.test(query.state ?? "")
+    )
+      throw unauthorized();
     // The token is checked against the named workspace's widget secret in `verify`.
     return {
       scope: { workspace: query.workspace },
@@ -58,6 +71,7 @@ const portalTokenSignIn: SignedVerifier<Credential> = {
         kind: "handoff",
         customerId: located.claims.customerId,
         next: located.claims.next ?? "",
+        state: located.claims.state ?? "",
       };
     const [row] = await db
       .select({ widgetSecret: settings.widgetSecret })
@@ -67,7 +81,12 @@ const portalTokenSignIn: SignedVerifier<Credential> = {
       ? verifyIdentityToken(query.token ?? "", row.widgetSecret)
       : null;
     if (!raw) throw unauthorized();
-    return { kind: "sso", raw, next: safePortalPath(query.next) };
+    return {
+      kind: "sso",
+      raw,
+      next: safePortalPath(query.next),
+      state: query.state!,
+    };
   },
 };
 
@@ -84,13 +103,14 @@ const tokenSignIn = defineQuillsRoute({
   operationId: "startQuillsPortalTokenSignIn",
   summary: "Sign in to the portal with a widget link or an SSO token",
   description:
-    "A browser navigation. `code` is the widget's one-time link (widget sign-in on). `token` is a token that the host app signed with the widget secret, as for widget identify, when the portal's sign-in mode is sso; `next` is then the portal path to open. Each works once. The browser continues to the account sign-in, which signs in only to a portal-only account that token sign-in created for this customer; another account with the email means the sign-in page.",
+    "A browser navigation. `code` is the widget's one-time link (widget sign-in on). `token` is a token that the host app signed with the widget secret, as for widget identify, when the portal's sign-in mode is sso; `next` is then the portal path to open, and `state` the value that the browser's sign-in page put in return_to. Each works once. The browser continues to the account sign-in, which finishes only in the browser that started the sign-in (login CSRF) and signs in only to a portal-only account that token sign-in created for this customer; another account with the email means the sign-in page.",
   action: "create",
   query: z.object({
     workspace: z.string().min(1).max(100),
     code: z.string().max(2000).optional(),
     token: z.string().max(8192).optional(),
     next: z.string().max(300).optional(),
+    state: z.string().max(64).optional(),
   }),
   response: z.object({ grant: z.string() }),
   responseDescription: "The grant for the account sign-in",
@@ -142,6 +162,7 @@ const tokenSignIn = defineQuillsRoute({
         workspaceId,
         customerId,
         next: credential.next,
+        state: credential.state,
         email: person.email.toLowerCase(),
         name: person.name,
       }),

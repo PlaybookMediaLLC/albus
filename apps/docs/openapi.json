@@ -11724,7 +11724,7 @@
           "Quills"
         ],
         "summary": "Sign in to the portal with a widget link or an SSO token",
-        "description": "A browser navigation. `code` is the widget's one-time link (widget sign-in on). `token` is a token that the host app signed with the widget secret, as for widget identify, when the portal's sign-in mode is sso; `next` is then the portal path to open. Each works once. The browser continues to the account sign-in, which signs in only to a portal-only account that token sign-in created for this customer; another account with the email means the sign-in page.",
+        "description": "A browser navigation. `code` is the widget's one-time link (widget sign-in on). `token` is a token that the host app signed with the widget secret, as for widget identify, when the portal's sign-in mode is sso; `next` is then the portal path to open, and `state` the value that the browser's sign-in page put in return_to. Each works once. The browser continues to the account sign-in, which finishes only in the browser that started the sign-in (login CSRF) and signs in only to a portal-only account that token sign-in created for this customer; another account with the email means the sign-in page.",
         "security": [],
         "parameters": [
           {
@@ -11762,6 +11762,15 @@
             },
             "required": false,
             "name": "next",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "state",
             "in": "query"
           }
         ],
@@ -15697,7 +15706,7 @@
           "Quills"
         ],
         "summary": "Get a link that opens the portal signed in",
-        "description": "For a visitor that the host app identified, when widget sign-in is on. The link works once, for two minutes. `next` is a portal path such as /boards/b1; an empty or other value opens the portal home.",
+        "description": "For a visitor that the host app identified, when widget sign-in is on. The link works once, for two minutes, and only in the browser whose sign-in page sent `state`: the tab that the widget opened at the account sign-in start. `next` is a portal path such as /boards/b1; an empty or other value opens the portal home.",
         "security": [],
         "parameters": [
           {
@@ -15722,10 +15731,15 @@
                   "next": {
                     "type": "string",
                     "maxLength": 300
+                  },
+                  "state": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
                   }
                 },
                 "required": [
-                  "next"
+                  "next",
+                  "state"
                 ]
               }
             }

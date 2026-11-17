@@ -21,6 +21,8 @@ async function side(env: ContractEnv, workspaceId: string) {
   });
   return { ...visitor, secret, workspaceId };
 }
+// Any browser state: the browser check is the last step's, in the account sign-in.
+const STATE = "a".repeat(64);
 const seed = async (env: ContractEnv) => ({
   a: await side(env, env.a),
   b: await side(env, env.b),
@@ -32,7 +34,12 @@ const code = (
 ) =>
   mintGrant(
     "handoff",
-    { workspaceId: side.workspaceId, customerId: side.customerId, next: "" },
+    {
+      workspaceId: side.workspaceId,
+      customerId: side.customerId,
+      next: "",
+      state: STATE,
+    },
     ttlMs,
   );
 const request = (side: Sides["a"], value = code(side)) => ({
@@ -41,7 +48,10 @@ const request = (side: Sides["a"], value = code(side)) => ({
 
 export const createQuillsWidgetPortalSignIn = fixture({
   seed,
-  valid: ({ a }: Sides) => ({ bearer: a.token, body: { next: "/boards" } }),
+  valid: ({ a }: Sides) => ({
+    bearer: a.token,
+    body: { next: "/boards", state: STATE },
+  }),
   own: () => [],
 });
 
@@ -66,7 +76,7 @@ export const startQuillsPortalTokenSignIn = fixture({
       // A's code under B's name.
       { query: { workspace: b.workspaceId, code: good } },
       // An SSO token that A's widget secret did not sign.
-      { query: { workspace: a.workspaceId, token: "a.b.c" } },
+      { query: { workspace: a.workspaceId, token: "a.b.c", state: STATE } },
     ];
   },
   crossed: ({ b }: Sides) => [request(b)],
