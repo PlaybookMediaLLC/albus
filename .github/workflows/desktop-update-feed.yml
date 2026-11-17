@@ -1,0 +1,34 @@
+name: Desktop update feed
+
+# The desktop app reads latest.json from the fixed desktop-latest release. The address of GitHub's
+# "latest" release does not work, because Kaneo's own releases replace it. When a person publishes
+# a desktop release, this job copies its latest.json to desktop-latest. A draft or a pre-release does
+# not start this job: installed apps cannot download the files of a draft.
+
+on:
+  release:
+    # Also when a person changes a pre-release to a release.
+    types: [released]
+
+permissions: {}
+
+jobs:
+  feed:
+    if: ${{ github.repository == 'PlaybookMediaLLC/kaneo' && startsWith(github.event.release.tag_name, 'desktop-v') }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+      - name: Copy latest.json to desktop-latest
+        run: |
+          gh release download "$TAG" --pattern latest.json --dir "$RUNNER_TEMP"
+          if ! gh release view desktop-latest >/dev/null 2>&1; then
+            gh release create desktop-latest --latest=false --title "Quills desktop updates" \
+              --notes "The installed desktop apps read latest.json from this release. Do not delete it."
+          fi
+          gh release upload desktop-latest "$RUNNER_TEMP/latest.json" --clobber

@@ -129,11 +129,18 @@ secrets, but the result is not signed. Add these to sign it and turn on updates:
 |---|---|---|
 | `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY` | secret | Sign the macOS app with a Developer ID certificate. |
 | `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` | secret | Notarize the macOS app. `APPLE_PASSWORD` is an app-specific password. |
+| `APPLE_API_KEY`, `APPLE_API_ISSUER`, `APPLE_API_PRIVATE_KEY` | secret | Notarize without a password: the key ID, the issuer ID and the `.p8` file of an App Store Connect API key with Developer access. Tauri uses `APPLE_PASSWORD` first when both are set. |
 | `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | secret | Sign the update files. Make the key pair with `pnpm --filter @quills/desktop tauri signer generate`. |
 | `QUILLS_DESKTOP_UPDATER_PUBKEY` | variable | The public key of that pair. |
 | `QUILLS_DESKTOP_UPDATER_ENDPOINT` | variable | The URL of `latest.json`. The app must reach it without sign-in. A release of a private repository is not reachable. |
 
 Change `version` in `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml` before each release.
+
+Set the endpoint to
+`https://github.com/PlaybookMediaLLC/kaneo/releases/download/desktop-latest/latest.json`. Kaneo's own
+releases take GitHub's "latest" release, so that address does not work. Installed apps see an
+update only after a person publishes the draft. Then `.github/workflows/desktop-update-feed.yml`
+copies its `latest.json` to the `desktop-latest` release.
 
 ## Limits
 
