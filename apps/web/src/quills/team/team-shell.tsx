@@ -11,6 +11,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "../ui/upstream";
+import { AppBadge } from "./app-badge";
 import { useTeamRuntime } from "./runtime";
 import { SettingsSidebar } from "./settings-sidebar";
 import { shellMode } from "./shell-mode";
@@ -79,6 +80,7 @@ export function TeamShell({ children, ...rail }: TeamShellProps) {
   );
   return (
     <div className="flex h-svh min-h-0 w-full flex-col bg-sidebar md:flex-row">
+      <AppBadge workspaceId={rail.workspaceId} viewer={team.viewer} quills />
       {mode === "focus" ? null : (
         <>
           <div className="flex items-center gap-2 border-b border-border px-2 py-1.5 md:hidden">

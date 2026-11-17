@@ -27,6 +27,21 @@ describe("openDownload", () => {
     expect(tab.location.href).toBe("https://storage.example.test/a.pdf");
   });
 
+  it("opens the browser with the URL in the desktop app", async () => {
+    vi.spyOn(window, "open").mockReturnValue(null);
+    (window as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__ = {};
+    try {
+      await openDownload(async () => "https://storage.example.test/a.pdf");
+    } finally {
+      delete (window as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
+    }
+    expect(window.open).toHaveBeenCalledOnce();
+    expect(window.open).toHaveBeenCalledWith(
+      "https://storage.example.test/a.pdf",
+      "_blank",
+    );
+  });
+
   it("closes the empty tab when the URL fails, and fails when the tab is blocked", async () => {
     const tab = fakeTab();
     vi.spyOn(window, "open").mockReturnValue(tab);

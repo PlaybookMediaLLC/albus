@@ -29,6 +29,8 @@ export { HttpError, handleUnauthorized } from "@/lib/http-error";
 export { authClient } from "@/lib/auth-client";
 export { i18n } from "@/lib/i18n";
 export { getSafeRedirectPath } from "@/components/auth/auth-methods";
+export { formatDeviceCode } from "@/components/auth/device-code";
+export { default as useGetNotifications } from "@/hooks/queries/notification/use-get-notifications";
 export { default as Markdown } from "react-markdown";
 
 export {

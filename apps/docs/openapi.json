@@ -36679,6 +36679,32 @@
         }
       }
     },
+    "/desktop/session": {
+      "post": {
+        "operationId": "createDesktopSession",
+        "tags": [
+          "Desktop"
+        ],
+        "summary": "Create the desktop session cookie",
+        "description": "Send the device-flow access token as `Authorization: Bearer <token>`. The response sets the session cookie for that session, so the desktop app's web view is signed in. Cookies and API keys on the request are ignored.",
+        "security": [],
+        "responses": {
+          "204": {
+            "description": "The session cookie is set"
+          },
+          "401": {
+            "description": "The bearer token is missing or not valid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/organization/accept-invitation": {
       "post": {
         "tags": [

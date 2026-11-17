@@ -1,0 +1,31 @@
+{
+	"title": "Sign in to the desktop app",
+	"description": "Sign in with your browser. You can use every sign-in method there, for example Google or single sign-on.",
+	"continue": "Continue in browser",
+	"starting": "Opening your browser…",
+	"email": "Sign in with email and password in the app",
+	"waiting": "Approve the sign-in in your browser. Make sure that the browser shows this code:",
+	"codeLabel": "Sign-in code",
+	"waitingStatus": "Waiting for your approval…",
+	"openAgain": "Open the browser again",
+	"cancel": "Cancel",
+	"failed": {
+		"denied": "The sign-in was denied in the browser.",
+		"expired": "The sign-in code expired. Start again."
+	},
+	"already": "You are already signed in.",
+	"back": "Back to Quills",
+	"googleInApp": "Google does not allow sign-in inside an app. Link your Google account in your browser.",
+	"linkInBrowser": "Link Google in your browser",
+	"link": {
+		"title": "Link a Google account",
+		"intro": "Link a Google account to {{email}}.",
+		"button": "Link Google",
+		"signIn": "Sign in in this browser with the account that you use in the desktop app.",
+		"signInButton": "Sign in",
+		"wrongUser": "This browser is signed in as {{email}}. Sign in with the account that you use in the desktop app.",
+		"switch": "Use another account",
+		"done": "Google is linked. Go back to the Quills desktop app.",
+		"failed": "Google was not linked. Try again."
+	}
+}

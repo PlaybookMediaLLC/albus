@@ -26,6 +26,7 @@ import { Route as DeviceApproveRouteImport } from './routes/device/approve'
 import { Route as McpAuthorizeRouteImport } from './routes/mcp.authorize'
 import { Route as PortalWorkspaceIdRouteImport } from './routes/portal/$workspaceId'
 import { Route as PublicProjectProjectIdRouteImport } from './routes/public-project.$projectId'
+import { Route as QuillsDesktopRouteImport } from './routes/quills/desktop'
 import { Route as QuillsKitRouteImport } from './routes/quills/kit'
 import { Route as LayoutAuthenticatedDashboardRouteImport } from './routes/_layout/_authenticated/dashboard'
 import { Route as LayoutAuthenticatedInvitationsRouteImport } from './routes/_layout/_authenticated/invitations'
@@ -234,6 +235,11 @@ const PortalWorkspaceIdRoute = PortalWorkspaceIdRouteImport.update({
 const PublicProjectProjectIdRoute = PublicProjectProjectIdRouteImport.update({
   id: '/public-project/$projectId',
   path: '/public-project/$projectId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QuillsDesktopRoute = QuillsDesktopRouteImport.update({
+  id: '/quills/desktop',
+  path: '/quills/desktop',
   getParentRoute: () => rootRouteImport,
 } as any)
 const QuillsKitRoute = QuillsKitRouteImport.update({
@@ -1079,6 +1085,7 @@ export interface FileRoutesByFullPath {
   '/mcp/authorize': typeof McpAuthorizeRoute
   '/portal/$workspaceId': typeof PortalWorkspaceIdRouteWithChildren
   '/public-project/$projectId': typeof PublicProjectProjectIdRoute
+  '/quills/desktop': typeof QuillsDesktopRoute
   '/quills/kit': typeof QuillsKitRoute
   '/device/': typeof DeviceIndexRoute
   '/dashboard': typeof LayoutAuthenticatedDashboardRouteWithChildren
@@ -1220,6 +1227,7 @@ export interface FileRoutesByTo {
   '/device/approve': typeof DeviceApproveRoute
   '/mcp/authorize': typeof McpAuthorizeRoute
   '/public-project/$projectId': typeof PublicProjectProjectIdRoute
+  '/quills/desktop': typeof QuillsDesktopRoute
   '/quills/kit': typeof QuillsKitRoute
   '/device': typeof DeviceIndexRoute
   '/invitations': typeof LayoutAuthenticatedInvitationsRoute
@@ -1362,6 +1370,7 @@ export interface FileRoutesById {
   '/mcp/authorize': typeof McpAuthorizeRoute
   '/portal/$workspaceId': typeof PortalWorkspaceIdRouteWithChildren
   '/public-project/$projectId': typeof PublicProjectProjectIdRoute
+  '/quills/desktop': typeof QuillsDesktopRoute
   '/quills/kit': typeof QuillsKitRoute
   '/device/': typeof DeviceIndexRoute
   '/_layout/_authenticated/dashboard': typeof LayoutAuthenticatedDashboardRouteWithChildren
@@ -1507,6 +1516,7 @@ export interface FileRouteTypes {
     | '/mcp/authorize'
     | '/portal/$workspaceId'
     | '/public-project/$projectId'
+    | '/quills/desktop'
     | '/quills/kit'
     | '/device/'
     | '/dashboard'
@@ -1648,6 +1658,7 @@ export interface FileRouteTypes {
     | '/device/approve'
     | '/mcp/authorize'
     | '/public-project/$projectId'
+    | '/quills/desktop'
     | '/quills/kit'
     | '/device'
     | '/invitations'
@@ -1789,6 +1800,7 @@ export interface FileRouteTypes {
     | '/mcp/authorize'
     | '/portal/$workspaceId'
     | '/public-project/$projectId'
+    | '/quills/desktop'
     | '/quills/kit'
     | '/device/'
     | '/_layout/_authenticated/dashboard'
@@ -1927,6 +1939,7 @@ export interface RootRouteChildren {
   McpAuthorizeRoute: typeof McpAuthorizeRoute
   PortalWorkspaceIdRoute: typeof PortalWorkspaceIdRouteWithChildren
   PublicProjectProjectIdRoute: typeof PublicProjectProjectIdRoute
+  QuillsDesktopRoute: typeof QuillsDesktopRoute
   QuillsKitRoute: typeof QuillsKitRoute
   InvitationAcceptInviteIdRoute: typeof InvitationAcceptInviteIdRoute
   QuillsOauthResultRoute: typeof QuillsOauthResultRoute
@@ -2051,6 +2064,13 @@ declare module '@tanstack/react-router' {
       path: '/public-project/$projectId'
       fullPath: '/public-project/$projectId'
       preLoaderRoute: typeof PublicProjectProjectIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quills/desktop': {
+      id: '/quills/desktop'
+      path: '/quills/desktop'
+      fullPath: '/quills/desktop'
+      preLoaderRoute: typeof QuillsDesktopRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/quills/kit': {
@@ -3454,6 +3474,7 @@ const rootRouteChildren: RootRouteChildren = {
   McpAuthorizeRoute: McpAuthorizeRoute,
   PortalWorkspaceIdRoute: PortalWorkspaceIdRouteWithChildren,
   PublicProjectProjectIdRoute: PublicProjectProjectIdRoute,
+  QuillsDesktopRoute: QuillsDesktopRoute,
   QuillsKitRoute: QuillsKitRoute,
   InvitationAcceptInviteIdRoute: InvitationAcceptInviteIdRoute,
   QuillsOauthResultRoute: QuillsOauthResultRoute,
