@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { portalHref } from "../../core/portal-href";
 import { useGetPublicStatusIncident } from "../../hooks/status/use-get-public-status-incident";
-import { usePortalRuntime } from "../../portal/runtime";
+import { usePortalViewer } from "../../core/use-portal-viewer";
+import { useOptionalPortalRuntime } from "../../portal/runtime";
 import { PageFrame } from "../../ui/page-frame";
 import { PortalGate } from "../../ui/portal-gate";
 import { StateView } from "../../ui/state-view";
@@ -39,12 +40,14 @@ export interface StatusIncidentPageProps {
 }
 export function StatusIncidentPage(props: StatusIncidentPageProps) {
   const { t } = useTranslation("quills");
-  const portal = usePortalRuntime();
-  // As on the feedback pages: no request until the private-portal gate admits the caller.
-  const workspace =
-    !portal.accessLoading && portal.access?.granted === true
-      ? props.workspaceId
-      : "";
+  const portal = useOptionalPortalRuntime();
+  const viewer = usePortalViewer();
+  // As on the feedback pages: no request until the private-portal gate admits the caller. With the
+  // portal off there is no decision to wait for, and the status API applies the gate itself.
+  const granted = portal
+    ? !portal.accessLoading && portal.access?.granted === true
+    : true;
+  const workspace = granted ? props.workspaceId : "";
   const incident = useGetPublicStatusIncident(
     {
       param: {
@@ -52,7 +55,7 @@ export function StatusIncidentPage(props: StatusIncidentPageProps) {
         incidentId: props.params.incidentId ?? "",
       },
     },
-    portal.viewer,
+    viewer,
   );
 
   return (
@@ -64,9 +67,9 @@ export function StatusIncidentPage(props: StatusIncidentPageProps) {
       persistToken={false}
     >
       <StateView
-        loading={portal.accessLoading}
-        problem={portal.accessProblem}
-        onRetry={portal.retryAccess}
+        loading={portal?.accessLoading ?? false}
+        problem={portal?.accessProblem ?? null}
+        onRetry={portal?.retryAccess}
       >
         <PortalGate
           workspaceId={props.workspaceId}
@@ -76,8 +79,8 @@ export function StatusIncidentPage(props: StatusIncidentPageProps) {
           )}
           audience={meta.audience}
           portalEnabled
-          accessGranted={portal.access?.granted ?? false}
-          signedIn={portal.viewer.kind === "user"}
+          accessGranted={granted}
+          signedIn={viewer.kind === "user"}
         >
           <StateView
             loading={incident.isLoading}

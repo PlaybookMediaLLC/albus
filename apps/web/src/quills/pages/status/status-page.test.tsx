@@ -36,5 +36,15 @@ describe("StatusPage", () => {
       expect(await view.findByRole("link", { name: /sign in/i })).toBeVisible();
       expect(api.calls()).toHaveLength(0);
     });
+
+    it("opens while the portal is off: the status API applies the private-portal gate", async () => {
+      const api = mockApi();
+      api.reply(getPublicStatusPageFixture.ok());
+      api.reply(listPublicStatusHistoryFixture.ok());
+      const view = renderPage(StatusPage, meta, { portalOff: true });
+      expect(
+        await view.findByText("All systems operational"),
+      ).toBeInTheDocument();
+    });
   });
 });

@@ -43,6 +43,7 @@ describe("PortalLayout", () => {
   it.each([
     ["unsubscribe", true],
     ["csat", true],
+    ["status", true],
     ["roadmap", false],
   ])(
     "opens the mail-linked %s page while the portal is off: %s",

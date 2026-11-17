@@ -63,10 +63,11 @@ export function PortalRoute() {
     nav.tabs.feedback &&
     ["", "boards", "posts", "roadmap", "changelog"].includes(section);
 
-  // Mail links must open while the portal is off: these pages need only the token in the link.
+  // Mail links must open while the portal is off: the token pages need only the link's token, and
+  // the status page has its own publish switch (its API applies the private-portal gate).
   if (
     config.error?.kind === "notFound" &&
-    ["unsubscribe", "csat"].includes(section)
+    ["unsubscribe", "csat", "status"].includes(section)
   )
     return <Outlet />;
 

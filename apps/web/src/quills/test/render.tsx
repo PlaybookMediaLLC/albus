@@ -69,6 +69,8 @@ export interface RenderPageOptions {
   permissions?: Partial<TeamPermissions>;
   /** Portal pages: the portal tabs to turn off or on. All are on by default. */
   tabs?: Partial<PortalRuntimeValue["config"]["nav"]["tabs"]>;
+  /** A page that also opens while the portal is off: render it without the portal runtime. */
+  portalOff?: boolean;
 }
 
 export function renderPage(
@@ -153,28 +155,32 @@ export function renderPage(
   const result = render(
     <Providers client={client}>
       <RouterContextProvider router={router}>
-        <PortalRuntimeProvider value={runtime}>
-          {teammate && viewer.kind === "user" ? (
-            <TeamRuntimeProvider
-              value={{
-                workspaceId,
-                viewer,
-                permissions: {
-                  read: true,
-                  create: true,
-                  update: true,
-                  delete: true,
-                  manageSettings: true,
-                  ...options.permissions,
-                },
-              }}
-            >
-              {page}
-            </TeamRuntimeProvider>
-          ) : (
-            page
-          )}
-        </PortalRuntimeProvider>
+        {options.portalOff ? (
+          page
+        ) : (
+          <PortalRuntimeProvider value={runtime}>
+            {teammate && viewer.kind === "user" ? (
+              <TeamRuntimeProvider
+                value={{
+                  workspaceId,
+                  viewer,
+                  permissions: {
+                    read: true,
+                    create: true,
+                    update: true,
+                    delete: true,
+                    manageSettings: true,
+                    ...options.permissions,
+                  },
+                }}
+              >
+                {page}
+              </TeamRuntimeProvider>
+            ) : (
+              page
+            )}
+          </PortalRuntimeProvider>
+        )}
       </RouterContextProvider>
     </Providers>,
   );

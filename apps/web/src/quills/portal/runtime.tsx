@@ -35,6 +35,9 @@ export function PortalRuntimeProvider({
   );
 }
 
+/** Null on a page that the layout renders bare while the portal is off. */
+export const useOptionalPortalRuntime = () => useContext(PortalRuntimeContext);
+
 export function usePortalRuntime() {
   const value = useContext(PortalRuntimeContext);
   if (!value)

@@ -2,7 +2,8 @@ import { portalHref } from "../../core/portal-href";
 import { useGetPublicStatusPage } from "../../hooks/status/use-get-public-status-page";
 import { useGetPublicStatusUptime } from "../../hooks/status/use-get-public-status-uptime";
 import { useListPublicStatusHistory } from "../../hooks/status/use-list-public-status-history";
-import { usePortalRuntime } from "../../portal/runtime";
+import { usePortalViewer } from "../../core/use-portal-viewer";
+import { useOptionalPortalRuntime } from "../../portal/runtime";
 import { PageFrame } from "../../ui/page-frame";
 import { PortalGate } from "../../ui/portal-gate";
 import { StateView } from "../../ui/state-view";
@@ -16,13 +17,14 @@ export interface StatusPageProps {
 }
 
 export function StatusPage(props: StatusPageProps) {
-  const portal = usePortalRuntime();
-  // As on the feedback pages: no request until the private-portal gate admits the caller.
-  const workspace =
-    !portal.accessLoading && portal.access?.granted === true
-      ? props.workspaceId
-      : "";
-  const { viewer } = portal;
+  const portal = useOptionalPortalRuntime();
+  const viewer = usePortalViewer();
+  // As on the feedback pages: no request until the private-portal gate admits the caller. With the
+  // portal off there is no decision to wait for, and the status API applies the gate itself.
+  const granted = portal
+    ? !portal.accessLoading && portal.access?.granted === true
+    : true;
+  const workspace = granted ? props.workspaceId : "";
   const page = useGetPublicStatusPage({ param: { workspace } }, viewer);
   const componentIds = [
     ...(page.data?.groups.flatMap((group) => group.components) ?? []),
@@ -51,17 +53,17 @@ export function StatusPage(props: StatusPageProps) {
   return (
     <PageFrame titleKey="status.title">
       <StateView
-        loading={gated && portal.accessLoading}
-        problem={gated ? portal.accessProblem : null}
-        onRetry={gated ? portal.retryAccess : undefined}
+        loading={gated && (portal?.accessLoading ?? false)}
+        problem={gated ? (portal?.accessProblem ?? null) : null}
+        onRetry={gated ? portal?.retryAccess : undefined}
       >
         <PortalGate
           workspaceId={props.workspaceId}
           currentPath={portalHref(props.workspaceId, "status")}
           audience={meta.audience}
           portalEnabled
-          accessGranted={portal.access?.granted ?? false}
-          signedIn={portal.viewer.kind === "user"}
+          accessGranted={granted}
+          signedIn={viewer.kind === "user"}
         >
           <StateView
             loading={page.isLoading || uptime.isLoading || history.isLoading}

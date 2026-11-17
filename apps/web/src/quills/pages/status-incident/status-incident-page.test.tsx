@@ -82,6 +82,17 @@ describe("StatusIncidentPage", () => {
       );
     });
 
+    it("opens from a status mail while the portal is off", async () => {
+      mockApi().reply(
+        getPublicStatusIncidentFixture.ok({ title: "Exports are slow" }),
+      );
+      const view = renderPage(StatusIncidentPage, meta, {
+        ...options,
+        portalOff: true,
+      });
+      expect(await view.findByText("Exports are slow")).toBeInTheDocument();
+    });
+
     it("shows a non-disclosing not-found state", async () => {
       const api = mockApi();
       api.reply({ message: "Missing" }, 404);
