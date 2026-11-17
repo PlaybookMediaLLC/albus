@@ -3,8 +3,12 @@
 		"copy": "Copy link",
 		"help": "Share it with your users, add it to your docs or link it from your website.",
 		"live": "The {{name}} board is live",
+		"off": "The {{name}} board is off",
+		"offHelp": "Customers see “not found” at this link until you turn the board on.",
 		"text": "Bring {{name}} to the people who use it.",
 		"title": "Collect feedback",
+		"turnOn": "Turn on",
+		"turnOnFailed": "The board could not be turned on. Try again.",
 		"visit": "Visit"
 	},
 	"copy": "Copy",

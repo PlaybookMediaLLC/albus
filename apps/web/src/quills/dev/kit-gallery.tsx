@@ -22,6 +22,8 @@ import { ComposerTitle } from "../ui/post/composer-title";
 import { SimilarPosts } from "../ui/post/similar-posts";
 import { StatusIcon } from "../ui/post/status-icon";
 import { ArrowUpIcon } from "../ui/arrow-up-icon";
+import { BrandIcon } from "../ui/brand-icon";
+import { brandMarks } from "../ui/brand-marks";
 import { PersonAvatar } from "../ui/person-avatar";
 import { PageContext } from "../ui/page-context";
 import { ShareActions } from "../ui/share-actions";
@@ -552,6 +554,11 @@ export function KitGallery() {
               )}
               <ArrowUpIcon />
               <PersonAvatar name={empty ? null : demo} />
+            </p>
+            <p className="flex flex-wrap gap-2">
+              {Object.keys(brandMarks).map((id) => (
+                <BrandIcon key={id} id={id} className="size-4" />
+              ))}
             </p>
             <ShareActions />
             <ShareActions compact />

@@ -71,8 +71,10 @@ describe("DesktopSignInPage", () => {
       const view = renderPage(DesktopSignInPage, meta, {
         search: { start: true },
       });
-      expect(await view.findByRole("status")).toHaveTextContent(
-        /already signed in/i,
+      await waitFor(() =>
+        expect(view.getByRole("status")).toHaveTextContent(
+          /already signed in/i,
+        ),
       );
       expect(auth.device.code).not.toHaveBeenCalled();
       expect(
@@ -89,8 +91,10 @@ describe("DesktopSignInPage", () => {
       const view = renderPage(DesktopSignInPage, meta, {
         search: { start: true, provider: "google" },
       });
-      expect(await view.findByRole("status")).toHaveTextContent(
-        /google does not allow/i,
+      await waitFor(() =>
+        expect(view.getByRole("status")).toHaveTextContent(
+          /google does not allow/i,
+        ),
       );
       press(/link google in your browser/i);
       expect(window.open).toHaveBeenCalledWith(

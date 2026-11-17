@@ -1,3 +1,4 @@
+import { waitFor } from "@testing-library/react";
 import {
   createMemoryHistory,
   createRootRoute,
@@ -54,8 +55,10 @@ describe("SignInFlow", () => {
   it("offers a Google link in the browser to a signed-in person", async () => {
     auth.getSession.mockResolvedValue({ data: { user: { id: "user-1" } } });
     const view = render({ start: true, provider: "google" });
-    expect(await view.findByRole("status")).toHaveTextContent(
-      /google does not allow/i,
+    await waitFor(() =>
+      expect(view.getByRole("status")).toHaveTextContent(
+        /google does not allow/i,
+      ),
     );
     press(/link google in your browser/i);
     expect(window.open).toHaveBeenCalledWith(

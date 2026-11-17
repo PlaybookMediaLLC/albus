@@ -42,10 +42,14 @@ describe("StateView", () => {
     expect(retry).toHaveBeenCalledOnce();
   });
 
-  it("delays the spinner and shows placeholder rows for a list", () => {
-    const spinner = renderComponent(<StateView loading>{null}</StateView>);
-    expect(spinner.container.firstElementChild).toHaveClass("delayed-reveal");
-    spinner.unmount();
+  it("shows a delayed skeleton, not a spinner, and placeholder rows for a list", () => {
+    const page = renderComponent(<StateView loading>{null}</StateView>);
+    const placeholder = page.getByRole("status");
+    expect(placeholder).toHaveClass("delayed-reveal");
+    expect(placeholder.querySelector("[data-slot=skeleton]")).not.toBeNull();
+    expect(placeholder.querySelector(".animate-spin")).toBeNull();
+    expect(placeholder).toHaveTextContent("Loading…");
+    page.unmount();
     const rows = renderComponent(
       <StateView loading rows={3}>
         {null}

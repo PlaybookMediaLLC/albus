@@ -110,6 +110,22 @@ describe("SettingsFeedbackPage", () => {
     },
   });
 
+  it("turns the public board on", async () => {
+    ready();
+    api.reply(updatePortalSettingsFixture.ok({ enabled: true }));
+    api.reply({ ...portal, enabled: true });
+    const view = renderPage(SettingsFeedbackPage, meta);
+    const board = await view.findByRole("switch", { name: "Public board" });
+    expect(board).not.toBeChecked();
+    fireEvent.click(board);
+    await waitFor(() =>
+      expect(view.getByRole("switch", { name: "Public board" })).toBeChecked(),
+    );
+    expect(await api.calls("updateQuillsPortalSettings")[0]!.json()).toEqual({
+      enabled: true,
+    });
+  });
+
   it("shows the settings read-only to a teammate without manage_settings", async () => {
     ready();
     const view = renderPage(SettingsFeedbackPage, meta, {

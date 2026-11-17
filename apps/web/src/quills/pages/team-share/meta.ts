@@ -9,6 +9,7 @@ export const meta = {
   operations: [
     "listQuillsSettings",
     "getQuillsPortalSettings",
+    "updateQuillsPortalSettings",
     "listQuillsCustomDomains",
     "mintQuillsWidgetInstallCode",
   ],
