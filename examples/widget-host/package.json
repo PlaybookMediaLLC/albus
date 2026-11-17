@@ -8,7 +8,7 @@
     "start": "node .output/server/index.mjs",
     "test": "node --test src/*.test.ts",
     "typecheck": "tsc --noEmit",
-    "e2e": "node e2e/run.cjs identity feedback changelog help conversations privacy negative extras sdk script unsigned teammate",
+    "e2e": "node e2e/run.cjs identity feedback changelog help conversations privacy negative extras sdk script unsigned teammate portal",
     "e2e:report": "node e2e/report.cjs"
   },
   "dependencies": {

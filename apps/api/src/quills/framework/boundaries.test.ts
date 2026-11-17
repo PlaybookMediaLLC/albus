@@ -76,6 +76,10 @@ const allowedImport = (file: string, specifier: string) => {
         "settings/widget-reply-time",
         // The address hash and block check, on the route's own scoped transaction only.
         "framework/ip-block",
+        // Portal token sign-in: signed grants and the stored policy; the route's own transaction only.
+        "framework/portal-sign-in",
+        // The customer a verified host token names, on the route's own scoped transaction only.
+        "widget/identify-customer",
         "../openapi",
       ].includes(target) ||
       target.startsWith("../database/quills/schema/"))

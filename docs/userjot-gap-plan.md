@@ -65,8 +65,8 @@ All gaps were approved for one pull request. Each row names the proof: unit or i
 | G-29 | done | `widget-records.test.ts`, contract |
 | G-31 | done | `assistant/engine/customer-agent.ts`, quiet-close sweep (migration `0032`), feedback-card route: `widget-records.test.ts` (fake AI), contract, widget `feedback-card.test.tsx`, web settings and portal tests |
 | G-32 | done | `widget-records.test.ts`; E2E conversation-away-reply |
-| G-17 | blocked | Decision #129 is open. Its security limit forbids signing a person in from the host's token alone, and a widget portal session needs an explicit waiver of the one-authentication-model rule. Choose option A, B or C there |
-| G-24 | blocked | The SSO mode signs people in from a host token: same decision as G-17 (#129). Portal pages: #130 |
+| G-17 | done | Decision #129, as chosen: Kaneo accounts stay the one login system, and the host token signs in only to a portal-only account that token sign-in created for that workspace's customer (an existing email gets the Kaneo sign-in page). `widget/portal-sign-in.ts`, `portal/token-sign-in.ts`, `utils/quills-portal-session.ts` (Kaneo), migration `0033`. Tests: `widget-records.test.ts`, contract, `quills-portal-session.test.ts`, `portal-sign-in.test.ts`, widget adapter-host; E2E portal-widget-sign-in (widget history shows on the portal) |
+| G-24 | done | Login modes kaneo, sso (the host app's login page returns a widget-secret token) and disabled, set in Settings → Privacy → Customer sign-in. Same account rule as G-17. Tests: `widget-records.test.ts` (SSO token once, disabled = signed out), web sign-in link and settings tests; E2E portal-sso-sign-in through the host app's `/sso` page |
 | G-30 | not done | A native iOS SDK (Swift, WKWebView/UIKit) cannot be compiled or run in this Linux environment, so it would ship untested. Needs a macOS run |
 
 ## Gaps

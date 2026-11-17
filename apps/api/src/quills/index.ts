@@ -11,6 +11,7 @@ import integrations from "./integrations/index";
 import jobs from "./jobs/routes";
 import links from "./links";
 import portalAccessSettings from "./portal/access-settings";
+import portalSignInSettings from "./portal/sign-in-settings";
 import operations from "./operations/index";
 import portalInvites from "./portal/invites";
 import { profileTeamContext } from "./portal/public-profile";
@@ -93,6 +94,7 @@ export default apiRouter<BaseVariables & { workspaceId: string }>()
   .route("/", delivery)
   .route("/", taxonomy)
   .route("/", portalAccessSettings)
+  .route("/", portalSignInSettings)
   .route("/", content)
   .route("/", integrations)
   .route("/", operations)

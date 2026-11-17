@@ -266,6 +266,7 @@ const fr: Catalog = {
   Assistant: "Assistant",
   "Submit request": "Envoyer la demande",
   "Request submitted": "Demande envoyée",
+  "Open the full board": "Ouvrir le tableau complet",
 };
 
 export default fr;

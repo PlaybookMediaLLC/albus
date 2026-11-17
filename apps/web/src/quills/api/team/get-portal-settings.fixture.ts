@@ -26,6 +26,7 @@ export const getPortalSettingsFixture = {
         },
         nav: [],
         supportEnabled: false,
+        signIn: { mode: "kaneo", widgetSignIn: false, ssoUrl: null },
       },
       ...overrides,
     }) satisfies GetPortalSettingsResponse,

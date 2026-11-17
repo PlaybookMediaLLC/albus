@@ -272,6 +272,7 @@ const uk: Catalog = {
   Assistant: "Асистент",
   "Submit request": "Надіслати запит",
   "Request submitted": "Запит надіслано",
+  "Open the full board": "Відкрити всю дошку",
 };
 
 export default uk;

@@ -1,3 +1,4 @@
+import { readPortalSignIn, SIGN_IN_MODES } from "../framework/portal-sign-in";
 import { z } from "../../openapi";
 import { bool, parseJson, record, settingsArea, str } from "./area";
 
@@ -77,8 +78,15 @@ export default settingsArea({
     access: z.object({
       visibility: z.string(),
       allowedDomains: z.array(z.string()),
+      /** signIn.widgetSignIn, kept here for older clients. */
       widgetSignIn: z.boolean(),
       allowedSegmentIds: z.array(z.string()),
+    }),
+    /** How customers sign in (gaps G-17, G-24); PUT /settings/portal/sign-in writes it. */
+    signIn: z.object({
+      mode: z.enum(SIGN_IN_MODES),
+      widgetSignIn: z.boolean(),
+      ssoUrl: z.string().nullable(),
     }),
     nav: z.array(navOut),
     supportEnabled: z.boolean(),
@@ -112,10 +120,11 @@ export default settingsArea({
         holdSpam: bool(moderation.holdSpam, false),
         holdSensitive: bool(moderation.holdSensitive, false),
       },
+      signIn: readPortalSignIn(row.portalConfig),
       access: {
         visibility: access.visibility === "private" ? "private" : "public",
         allowedDomains: strings(access.allowedDomains),
-        widgetSignIn: bool(access.widgetSignIn, false),
+        widgetSignIn: readPortalSignIn(row.portalConfig).widgetSignIn,
         allowedSegmentIds: strings(access.allowedSegmentIds),
       },
       nav: (Array.isArray(record(config.nav).items)

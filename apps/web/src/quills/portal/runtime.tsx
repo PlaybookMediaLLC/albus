@@ -35,6 +35,9 @@ export function PortalRuntimeProvider({
   );
 }
 
+/** The runtime inside a portal page, or null in a page that renders without one. */
+export const useOptionalPortalRuntime = () => useContext(PortalRuntimeContext);
+
 export function usePortalRuntime() {
   const value = useContext(PortalRuntimeContext);
   if (!value)

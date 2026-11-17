@@ -62,6 +62,8 @@ export interface RenderPageOptions {
   search?: Record<string, unknown>;
   viewer?: Viewer;
   accessGranted?: boolean;
+  /** Portal pages: how the sign-in button works. The Kaneo sign-in page by default. */
+  signIn?: NonNullable<PortalRuntimeValue["access"]>["signIn"];
   accessLoading?: boolean;
   accessProblem?: PortalRuntimeValue["accessProblem"];
   retryAccess?: () => void;
@@ -120,6 +122,7 @@ export function renderPage(
     access: {
       granted: options.accessGranted ?? true,
       reason: options.accessGranted === false ? "unauthorized" : "public",
+      signIn: options.signIn ?? { mode: "kaneo", ssoUrl: null },
     },
     accessLoading: options.accessLoading ?? false,
     accessProblem: options.accessProblem ?? null,

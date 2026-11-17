@@ -268,6 +268,7 @@ const de: Catalog = {
   Assistant: "Assistent",
   "Submit request": "Anfrage senden",
   "Request submitted": "Anfrage gesendet",
+  "Open the full board": "Vollständiges Board öffnen",
 };
 
 export default de;

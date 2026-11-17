@@ -3,6 +3,7 @@ import activity from "./activity";
 import config from "./config";
 import contactEmail from "./contact-email";
 import identify from "./identify";
+import portalSignIn from "./portal-sign-in";
 import install from "./install";
 import session from "./session";
 
@@ -12,6 +13,7 @@ export default apiRouter()
   .route("/", config)
   .route("/", install)
   .route("/", identify)
+  .route("/", portalSignIn)
   .route("/", contactEmail)
   .route("/", session)
   .route("/", activity);

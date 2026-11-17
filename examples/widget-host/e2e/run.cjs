@@ -2155,6 +2155,119 @@ const groups = {
       };
     });
   },
+
+  // Gaps G-17 and G-24: portal sign-in from the host app's identity, always into a Kaneo account.
+  async portal() {
+    const tm = await L.teammate(require("playwright"));
+    const policy = `${L.API}/api/quills/${L.WS}/settings/portal/sign-in`;
+    const setPolicy = (data) => tm.put(policy, { data });
+    const accountOf = (email) =>
+      L.sql(
+        `select u.id, a.account_id, (select count(*) from public.workspace_member m where m.user_id = u.id) from public."user" u left join public.account a on a.user_id = u.id and a.provider_id = 'quills-portal' where u.email = ${L.q(email)}`,
+      )[0] ?? [];
+    const pageShot = async (target, name) => {
+      await target.screenshot({ path: `${SHOTS}/${name}.png` });
+      return `widget-e2e/${name}.png`;
+    };
+    try {
+      await step("portal-widget-sign-in", async () => {
+        const saved = await setPolicy({
+          mode: "kaneo",
+          widgetSignIn: true,
+          ssoUrl: null,
+        });
+        await page.goto(L.HOST + "/");
+        await page.waitForSelector("[data-event=ready]");
+        await signIn("ada");
+        await sleep(1500);
+        await openView("home");
+        await nav("Feedback").click();
+        const [portal] = await Promise.all([
+          page.context().waitForEvent("page"),
+          frame.getByRole("button", { name: "Open the full board" }).click(),
+        ]);
+        await portal.waitForURL(/\/portal\//, { timeout: 30000 });
+        await portal.waitForLoadState("networkidle");
+        const signInLinks = await portal
+          .getByRole("link", { name: "Sign in" })
+          .count();
+        const [userId, accountId, memberships] = accountOf(
+          "ada@widget-host.test",
+        );
+        const [linked] =
+          L.sql(
+            `select kaneo_user_id from quills.customer_identity where external_id = 'host-ada'`,
+          )[0] ?? [];
+        const shotPath = await pageShot(portal, "39-portal-widget-sign-in");
+        await portal.close();
+        return {
+          expected:
+            "Widget sign-in on: Feedback → Open the full board opens the portal signed in with a portal-only Kaneo account created for this workspace's customer (a quills-portal account row, no team membership), and the widget profile links to it",
+          actual: `settings PUT ${saved.status()}; portal ${portal.url().replace(/\?.*$/, "")}; Sign in links ${signInLinks}; Kaneo user ${userId ?? "none"} quills-portal ${accountId ?? "none"} memberships ${memberships}; customer_identity.kaneo_user_id ${linked ?? "none"}`,
+          rows: {
+            "public.user": userId,
+            "quills.customer_identity (host-ada)": linked,
+          },
+          shot: shotPath,
+          result:
+            saved.ok() &&
+            signInLinks === 0 &&
+            userId &&
+            accountId &&
+            memberships === "0" &&
+            linked === userId
+              ? "pass"
+              : "fail",
+        };
+      });
+
+      await step("portal-sso-sign-in", async () => {
+        const saved = await setPolicy({
+          mode: "sso",
+          widgetSignIn: false,
+          ssoUrl: `${L.HOST}/sso`,
+        });
+        const context = await browser.newContext({
+          viewport: { width: 1360, height: 900 },
+        });
+        const portal = await context.newPage();
+        await portal.goto(`${L.WEB}/portal/${L.WS}`);
+        await portal.getByRole("link", { name: "Sign in" }).first().click();
+        await portal.waitForURL(/\/sso\?return_to=/, { timeout: 20000 });
+        const host = portal.url().split("?")[0];
+        await portal.getByRole("button", { name: /Continue as Grace/ }).click();
+        await portal.waitForURL(/\/portal\//, { timeout: 30000 });
+        await portal.waitForLoadState("networkidle");
+        const signInLinks = await portal
+          .getByRole("link", { name: "Sign in" })
+          .count();
+        const [userId, accountId, memberships] = accountOf(
+          "grace@widget-host.test",
+        );
+        const shotPath = await pageShot(portal, "40-portal-sso-sign-in");
+        await context.close();
+        return {
+          expected:
+            "SSO mode: the portal's Sign in goes to the host app's login page, which returns a widget-secret token; the portal is then signed in with a portal-only Kaneo account for that customer",
+          actual: `settings PUT ${saved.status()}; login page ${host}; back on ${portal.url().replace(/\?.*$/, "")}; Sign in links ${signInLinks}; Kaneo user ${userId ?? "none"} quills-portal ${accountId ?? "none"} memberships ${memberships}`,
+          rows: { "public.user": userId },
+          shot: shotPath,
+          result:
+            saved.ok() &&
+            host === `${L.HOST}/sso` &&
+            signInLinks === 0 &&
+            userId &&
+            accountId &&
+            memberships === "0"
+              ? "pass"
+              : "fail",
+        };
+      });
+    } finally {
+      await setPolicy({ mode: "kaneo", widgetSignIn: false, ssoUrl: null });
+      await tm.dispose();
+    }
+  },
 };
 
 (async () => {

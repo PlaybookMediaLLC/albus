@@ -79,6 +79,7 @@ function WidgetViewBody({
   onVoteComment,
   onClose,
   closable = true,
+  onOpenPortal,
   onSendMessage,
   onSubmitFeedback,
   onReplyMessage,
@@ -543,6 +544,7 @@ function WidgetViewBody({
             onOpen={(id) => open("feedback", id)}
             onCompose={() => compose("feedback")}
             onVote={onVoteFeedback}
+            onOpenPortal={onOpenPortal}
             offline={offline}
             filters={feedbackFilters}
             onFilters={(filters) => {

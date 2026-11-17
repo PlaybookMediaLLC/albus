@@ -221,6 +221,57 @@ describe("widget host page", () => {
     expect(call!.init.headers).toMatchObject({ authorization: "Bearer anon" });
   });
 
+  it("opens the portal signed in for an identified visitor when the workspace allows it", async () => {
+    table["POST /widget/identify"] = () => ({
+      body: { sessionToken: "known", user, canPortalHandoff: true },
+    });
+    table["POST /widget/portal-sign-in"] = () => ({
+      body: {
+        url: "https://kaneo.test/api/quills-public/signed/portal-sign-in?code=c",
+      },
+    });
+    const tab = { opener: window, location: { href: "" }, close: vi.fn() };
+    const open = vi
+      .spyOn(window, "open")
+      .mockReturnValue(tab as unknown as Window);
+    mount();
+    fromParent({ type: "quackback:identify", data: { ssoToken: "a.b.c" } });
+    fromParent({ type: "quackback:open", data: { postId: "p1" } });
+    await screen.findByRole("button", { name: "Vote · 3" });
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Feedback" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open the full board" }),
+    );
+    // The tab opens on the click, then goes to the one-time link.
+    expect(open).toHaveBeenCalledWith("", "_blank");
+    await waitFor(() =>
+      expect(tab.location.href).toBe(
+        "https://kaneo.test/api/quills-public/signed/portal-sign-in?code=c",
+      ),
+    );
+    expect(tab.opener).toBeNull();
+    expect(
+      JSON.parse(
+        requested("POST /widget/portal-sign-in")[0]!.init.body as string,
+      ),
+    ).toEqual({ next: "" });
+    open.mockRestore();
+  });
+
+  it("offers no portal link when the workspace has widget sign-in off", async () => {
+    mount();
+    fromParent({ type: "quackback:identify", data: { ssoToken: "a.b.c" } });
+    fromParent({ type: "quackback:open", data: { postId: "p1" } });
+    await screen.findByRole("button", { name: "Vote · 3" });
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Feedback" }));
+    await screen.findByRole("combobox", { name: "Sort feedback" });
+    expect(
+      screen.queryByRole("button", { name: "Open the full board" }),
+    ).toBeNull();
+  });
+
   it("keeps the anonymous session when the host's token is refused", async () => {
     mount();
     fromParent({ type: "quackback:identify", data: { anonymous: true } });

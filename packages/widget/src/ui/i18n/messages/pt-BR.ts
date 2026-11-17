@@ -265,6 +265,7 @@ const pt_BR: Catalog = {
   Assistant: "Assistente",
   "Submit request": "Enviar solicitação",
   "Request submitted": "Solicitação enviada",
+  "Open the full board": "Abrir o quadro completo",
 };
 
 export default pt_BR;

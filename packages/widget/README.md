@@ -341,6 +341,8 @@ Session rules:
 
 When a teammate turns on the away reply (Settings → Conversations → General), a message sent while no teammate is online, or outside office hours, gets that answer as a system message; the adapter reads it right after the send.
 
+When a teammate turns on widget sign-in (Settings → Privacy → Customer sign-in), an identified visitor sees **Open the full board** on the Feedback tab. It opens the portal in a new tab, signed in with a portal-only Kaneo account that this sign-in created for them in the workspace, so their votes and conversations are there. An email that already has a Kaneo account gets the Kaneo sign-in page instead.
+
 When a teammate turns on the customer agent (Settings → Conversations → AI → Answer customers) on an instance with an AI provider, the assistant answers new messenger conversations from the help center and documents. Its messages are labelled Assistant. It hands the conversation to the team when it cannot help, and it can offer one feedback request per conversation as a card: **Submit request** posts it as the visitor (`post:created` fires) and marks the card submitted. A conversation the agent answered last that stays quiet for a day closes on its own.
 
 With messages on, Home's message card shows up to four teammate avatars (`GET /widget/team-avatars`, empty while Home's team avatars are off), a green dot and "We’re online now." while a teammate has the inbox open (`GET /widget/presence`), and the reply time a teammate chose in Settings → Widget ("Usually replies in a few hours."). Home's greeting and subtitle come from the same settings. The host hears the availability as a `presence` event.

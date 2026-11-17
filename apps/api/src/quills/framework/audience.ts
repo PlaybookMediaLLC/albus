@@ -25,7 +25,11 @@ import { portalInvites } from "../../database/quills/schema/portal-invites";
 import { segments, userSegments } from "../../database/quills/schema/segments";
 import { readClientIp } from "../../utils/client-ip";
 import type { ChangeActor } from "../events";
-import { isMemberOfNamedWorkspace } from "./platform-reads";
+import {
+  isMemberOfNamedWorkspace,
+  tokenCustomerOfNamedWorkspace,
+} from "./platform-reads";
+import { readPortalSignIn, tokenLinkKey } from "./portal-sign-in";
 
 // One resolver per audience that is not a teammate. A resolver reads the caller's credential
 // from the request, then, inside the scoped transaction, returns the customer principal (or
@@ -44,6 +48,11 @@ export type PortalAccount = {
   image: string | null;
   /** A member of the named workspace. Only the private-portal team grant reads it. */
   member: boolean;
+  /**
+   * The workspace customer that portal token sign-in created this account for (gaps G-17, G-24),
+   * from the account's own Kaneo login record. Request callers only; null for any other account.
+   */
+  tokenCustomerId?: string | null;
 };
 
 export type QuillsCaller = {
@@ -103,6 +112,7 @@ async function portalAccount(
       emailVerified,
       image: image ?? null,
       member: await isMemberOfNamedWorkspace(workspace, id),
+      tokenCustomerId: await tokenCustomerOfNamedWorkspace(workspace, id),
     };
   } catch (error) {
     // A rejected credential is an anonymous caller; anything else is a server failure.
@@ -147,6 +157,37 @@ async function portalCaller(
         .limit(1)
     )[0];
   let row = await find();
+  // A token sign-in account takes over the widget profile it was created for, once: the votes and
+  // conversations carry over. The customer_membership trigger accepts this link only for the account
+  // that the session vouches for (migration 0033).
+  if (!row && account.tokenCustomerId) {
+    const linked = await db
+      .update(customer)
+      .set({ kaneoUserId: account.id })
+      .where(
+        and(
+          eq(customer.id, account.tokenCustomerId as CustomerId),
+          isNull(customer.kaneoUserId),
+        ),
+      )
+      .returning({ id: customer.id });
+    if (linked.length) {
+      await db
+        .insert(kvStore)
+        .values({
+          workspaceKey: "_",
+          key: tokenLinkKey(account.tokenCustomerId),
+          value: { userId: account.id },
+          // As long as the link: the profile keeps its token sign-in account.
+          expiresAt: new Date("9999-12-31T00:00:00Z"),
+        })
+        .onConflictDoUpdate({
+          target: [kvStore.workspaceId, kvStore.workspaceKey, kvStore.key],
+          set: { value: { userId: account.id } },
+        });
+      row = await find();
+    }
+  }
   if (ensure && !row?.principalId) {
     // The customer_membership trigger accepts this link only for the account the entry point vouched for.
     // The email stays on the Kaneo account: a profile is never matched to an account by email.
@@ -232,6 +273,14 @@ export function widgetEnabled(stored: string | null) {
   }
 }
 
+async function signInMode(db: Database) {
+  const [row] = await db
+    .select({ portalConfig: settings.portalConfig })
+    .from(settings)
+    .limit(1);
+  return readPortalSignIn(row?.portalConfig ?? null).mode;
+}
+
 /** Resolves the caller inside the scoped transaction. */
 export async function resolveCaller(
   db: Database,
@@ -244,12 +293,16 @@ export async function resolveCaller(
     customerId: null,
     account: credentials.account,
   };
-  if (audience === "portal" && credentials.account) {
-    const row = await portalCaller(
-      db,
-      credentials.account,
-      rules.ensureCustomer,
-    );
+  // Customer sign-in turned off (gap G-24): a non-member account is a signed-out caller here.
+  if (
+    audience === "portal" &&
+    credentials.account &&
+    !credentials.account.member &&
+    (await signInMode(db)) === "disabled"
+  )
+    caller.account = null;
+  if (audience === "portal" && caller.account) {
+    const row = await portalCaller(db, caller.account, rules.ensureCustomer);
     if (row?.blockedAt)
       throw new HTTPException(403, { message: "This account is blocked" });
     caller.customerId = row?.customerId ?? null;
@@ -444,7 +497,7 @@ export async function enforceRateLimit(
 export type PortalAccessDecision =
   | {
       granted: true;
-      reason: "public" | "team" | "domain" | "segment" | "invite";
+      reason: "public" | "team" | "domain" | "segment" | "invite" | "widget";
     }
   | { granted: false; reason: "unauthenticated" | "unauthorized" };
 
@@ -455,8 +508,8 @@ const strings = (value: unknown) =>
 
 /**
  * What a portal caller may see: the private-portal gate. Fails closed on a malformed config.
- * A verified address with an accepted invite to this workspace is let in. The widget grant of
- * the source waits for the widget handoff decision.
+ * A verified address with an accepted invite to this workspace is let in, and so is an account
+ * that this workspace's token sign-in created (the host app vouched for that customer).
  */
 export async function evaluatePortalAccess(
   db: Database,
@@ -479,6 +532,8 @@ export async function evaluatePortalAccess(
   const account = caller.account;
   if (!account) return { granted: false, reason: "unauthenticated" };
   if (account.member) return { granted: true, reason: "team" };
+  // The host app vouched for this customer, and a teammate turned token sign-in on (gap G-17).
+  if (account.tokenCustomerId) return { granted: true, reason: "widget" };
   if (account.emailVerified) {
     const domain = account.email.slice(account.email.lastIndexOf("@") + 1);
     if (strings(access.allowedDomains).includes(domain.toLowerCase()))

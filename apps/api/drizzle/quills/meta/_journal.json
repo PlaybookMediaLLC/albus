@@ -232,6 +232,13 @@
 			"when": 1794883887378,
 			"tag": "0032_assistant_quiet_sweep",
 			"breakpoints": true
+		},
+		{
+			"idx": 33,
+			"version": "7",
+			"when": 1794901898764,
+			"tag": "0033_portal_token_link",
+			"breakpoints": true
 		}
 	]
 }

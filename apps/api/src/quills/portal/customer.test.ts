@@ -182,7 +182,7 @@ describe.skipIf(!url)("Quills portal invites and customer routes", () => {
 
     await setPortal({ enabled: true, access: { visibility: "private" } });
     const access = () => call("GET", "/portal/access", { user: env.customerA });
-    expect((await access()).body).toEqual({
+    expect((await access()).body).toMatchObject({
       granted: false,
       reason: "unauthorized",
     });
@@ -223,7 +223,10 @@ describe.skipIf(!url)("Quills portal invites and customer routes", () => {
         )
       ).rows,
     ).toEqual(members.rows);
-    expect((await access()).body).toEqual({ granted: true, reason: "invite" });
+    expect((await access()).body).toMatchObject({
+      granted: true,
+      reason: "invite",
+    });
     expect((await accept(env.customerA)).body).toEqual({
       accepted: true,
       alreadyAccepted: true,

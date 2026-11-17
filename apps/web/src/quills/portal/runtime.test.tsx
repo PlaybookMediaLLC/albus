@@ -27,7 +27,11 @@ const value: PortalRuntimeValue = {
     },
   },
   viewer: { kind: "anonymous" },
-  access: { granted: true, reason: "public" },
+  access: {
+    granted: true,
+    reason: "public",
+    signIn: { mode: "kaneo", ssoUrl: null },
+  },
   accessLoading: false,
   accessProblem: null,
 };

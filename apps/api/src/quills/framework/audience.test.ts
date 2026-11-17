@@ -237,7 +237,7 @@ describe.skipIf(!url)("Quills audiences", () => {
     );
     const access = (workspace: string) =>
       call("GET", "/portal/access", { workspace, user: env.customerB });
-    expect((await access(c)).body).toEqual({
+    expect((await access(c)).body).toMatchObject({
       granted: false,
       reason: "unauthorized",
     });
@@ -249,7 +249,7 @@ describe.skipIf(!url)("Quills audiences", () => {
         }),
       }),
     );
-    expect((await access(`audience_d_${suffix}`)).body).toEqual({
+    expect((await access(`audience_d_${suffix}`)).body).toMatchObject({
       granted: true,
       reason: "team",
     });
@@ -300,6 +300,43 @@ describe.skipIf(!url)("Quills audiences", () => {
           .returning({ id: customer.id }),
     );
     expect(row!.id).toMatch(/^user_/);
+  });
+
+  it("lets an unlinked profile link only to the vouched account, and never moves a link", async () => {
+    const env = contractEnv();
+    // A portal-only account that a token sign-in created (migration 0033).
+    const account = env.id("token_account");
+    await pool.query(
+      'INSERT INTO public."user" (id, name, email, email_verified, created_at, updated_at) VALUES ($1, $2, $3, false, now(), now())',
+      [account, "Token", `${account}@example.test`],
+    );
+    try {
+      const [plain] = await withQuillsAudience({ workspace: env.a }, (db) =>
+        db
+          .insert(customer)
+          .values({ name: "Widget visitor" })
+          .returning({ id: customer.id }),
+      );
+      const linkTo = (vouched: string | undefined, target: string) =>
+        withQuillsAudience(
+          { workspace: env.a, ...(vouched && { kaneoUserId: vouched }) },
+          (db) =>
+            db
+              .update(customer)
+              .set({ kaneoUserId: target })
+              .where(eq(customer.id, plain!.id)),
+        );
+      await expect(linkTo(undefined, account)).rejects.toThrow();
+      await expect(linkTo(env.customerB, account)).rejects.toThrow();
+      await linkTo(account, account);
+      await expect(linkTo(env.customerB, env.customerB)).rejects.toThrow();
+    } finally {
+      await pool.query(
+        "UPDATE quills.customer_identity SET kaneo_user_id = NULL WHERE kaneo_user_id = $1",
+        [account],
+      );
+      await pool.query('DELETE FROM public."user" WHERE id = $1', [account]);
+    }
   });
 
   it("signs a Kaneo account in as a customer without workspace membership", async () => {
@@ -391,7 +428,7 @@ describe.skipIf(!url)("Quills audiences", () => {
     const access = async (user?: string) =>
       (await call("GET", "/portal/access", { user })).body;
     await portalAccess({ visibility: "public" });
-    expect(await access()).toEqual({ granted: true, reason: "public" });
+    expect(await access()).toMatchObject({ granted: true, reason: "public" });
 
     // The teammate writer normalizes domains and drops segments that do not exist.
     const written = await teammate("PUT", "/settings/portal/access", {
@@ -404,13 +441,16 @@ describe.skipIf(!url)("Quills audiences", () => {
       allowedDomains: ["example.test"],
       allowedSegmentIds: [],
     });
-    expect(await access()).toEqual({
+    expect(await access()).toMatchObject({
       granted: false,
       reason: "unauthenticated",
     });
-    expect(await access(env.owner)).toEqual({ granted: true, reason: "team" });
+    expect(await access(env.owner)).toMatchObject({
+      granted: true,
+      reason: "team",
+    });
     // The email is not verified yet: no domain grant.
-    expect(await access(env.customerA)).toEqual({
+    expect(await access(env.customerA)).toMatchObject({
       granted: false,
       reason: "unauthorized",
     });
@@ -418,7 +458,7 @@ describe.skipIf(!url)("Quills audiences", () => {
       .update(kaneo.userTable)
       .set({ emailVerified: true })
       .where(eq(kaneo.userTable.id, env.customerA));
-    expect(await access(env.customerA)).toEqual({
+    expect(await access(env.customerA)).toMatchObject({
       granted: true,
       reason: "domain",
     });
@@ -439,11 +479,11 @@ describe.skipIf(!url)("Quills audiences", () => {
       allowedDomains: [],
       allowedSegmentIds: [segment.id],
     });
-    expect(await access(env.customerA)).toEqual({
+    expect(await access(env.customerA)).toMatchObject({
       granted: true,
       reason: "segment",
     });
-    expect(await access(env.customerB)).toEqual({
+    expect(await access(env.customerB)).toMatchObject({
       granted: false,
       reason: "unauthorized",
     });

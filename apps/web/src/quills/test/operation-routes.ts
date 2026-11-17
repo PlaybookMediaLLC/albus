@@ -561,6 +561,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills-public/{workspace}/widget/tickets",
   },
   {
+    operationId: "createQuillsWidgetPortalSignIn",
+    method: "POST",
+    path: "/api/quills-public/{workspace}/widget/portal-sign-in",
+  },
+  {
     operationId: "createQuillsWidgetPost",
     method: "POST",
     path: "/api/quills-public/{workspace}/widget/posts",
@@ -3476,6 +3481,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/oauth/notion/connect",
   },
   {
+    operationId: "startQuillsPortalTokenSignIn",
+    method: "GET",
+    path: "/api/quills-public/signed/portal-sign-in",
+  },
+  {
     operationId: "startQuillsSalesforceOAuthConnect",
     method: "GET",
     path: "/api/quills/{workspaceId}/oauth/salesforce/connect",
@@ -3849,6 +3859,11 @@ export const quillsOperationRoutes = [
     operationId: "updateQuillsPortalSettings",
     method: "PUT",
     path: "/api/quills/{workspaceId}/settings/portal",
+  },
+  {
+    operationId: "updateQuillsPortalSignIn",
+    method: "PUT",
+    path: "/api/quills/{workspaceId}/settings/portal/sign-in",
   },
   {
     operationId: "updateQuillsPost",

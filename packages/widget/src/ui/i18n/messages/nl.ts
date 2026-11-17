@@ -266,6 +266,7 @@ const nl: Catalog = {
   Assistant: "Assistent",
   "Submit request": "Verzoek indienen",
   "Request submitted": "Verzoek ingediend",
+  "Open the full board": "Volledig bord openen",
 };
 
 export default nl;

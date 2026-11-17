@@ -8,6 +8,7 @@ It is not part of the pnpm workspace or CI. It has its own `package.json` and lo
 
 - `/` embeds the widget with `useQuillsInit` from `@quills/widget/react`.
 - `/script` embeds it with the script tag only: `{instanceUrl}/api/quills-public/{workspace}/widget/sdk.js`.
+- `/sso` is the host app's login page for the portal's SSO sign-in (Settings → Privacy → Customer sign-in, with this page as the login page). The portal sends people here with `return_to`; after a pretend sign-in, the server signs their token with the widget secret and the page redirects back to `return_to` with `&token=`. It accepts only the Kaneo instance's signed sign-in step as `return_to`.
 - A select signs you in as one of three fake users, or leaves you anonymous. There is no real authentication.
 - A TanStack Start server function signs the identify token (an HS256 JWT) with the workspace widget secret. The secret stays in the server's environment. The browser gets only the signed token.
 - The token select also makes bad tokens (bad signature, expired, no `sub`, no `email`), to check that Kaneo refuses them.

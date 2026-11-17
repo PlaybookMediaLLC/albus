@@ -265,6 +265,7 @@ const es: Catalog = {
   Assistant: "Asistente",
   "Submit request": "Enviar solicitud",
   "Request submitted": "Solicitud enviada",
+  "Open the full board": "Abrir el tablero completo",
 };
 
 export default es;

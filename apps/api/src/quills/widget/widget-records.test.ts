@@ -23,6 +23,7 @@ import {
 } from "../assistant/provider-edge.fixture";
 import { titleUntitledPost } from "../assistant/engine/post-title";
 import { checkPostImages } from "../assistant/engine/post-images";
+import { readGrant } from "../framework/portal-sign-in";
 import { answerCustomer } from "../assistant/engine/customer-agent";
 import { runQuillsSweeps } from "../jobs/handlers/sweeps";
 import { loadEvent } from "../jobs/fanout";
@@ -730,6 +731,199 @@ describe.skipIf(!url)("widget records and ownership", () => {
     const before = provider.requests.length;
     await run("conversation.created", off.body.conversation.id);
     expect(provider.requests.length).toBe(before);
+  });
+
+  it("signs an identified visitor in to the portal through a Kaneo account, with their widget history", async () => {
+    // The grants are signed with the instance's AUTH_SECRET, which every deployment sets.
+    if (!process.env.AUTH_SECRET)
+      vi.stubEnv("AUTH_SECRET", "test-auth-secret-of-at-least-32-characters");
+    const a = contractEnv().a;
+    const owner = contractEnv().owner;
+    const signIn = (body: object) =>
+      app.request(`/quills/${a}/settings/portal/sign-in`, {
+        method: "PUT",
+        headers: { "x-test-user": owner, "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    const portal = async (path: string, user: string) => {
+      const res = await app.request(`/quills-public/${a}${path}`, {
+        headers: { "x-test-user": user },
+      });
+      return { status: res.status, body: await res.json() };
+    };
+    const signed = (query: Record<string, string>) =>
+      app.request(
+        `/quills-public/signed/portal-sign-in?${new URLSearchParams(query)}`,
+      );
+    const before = (
+      await pool.query(
+        "SELECT portal_config FROM quills.settings WHERE workspace_id = $1",
+        [a],
+      )
+    ).rows[0].portal_config as string | null;
+    await pool.query(
+      "UPDATE quills.settings SET portal_config = $2 WHERE workspace_id = $1",
+      [a, JSON.stringify({ ...JSON.parse(before || "{}"), enabled: true })],
+    );
+    try {
+      const ada = await visitor();
+      const link = () =>
+        call("POST", "/widget/portal-sign-in", {
+          bearer: ada.token,
+          body: { next: "/my-feedback" },
+        });
+      // Off by default.
+      expect((await link()).status).toBe(403);
+      expect(
+        (await signIn({ mode: "kaneo", widgetSignIn: true, ssoUrl: null }))
+          .status,
+      ).toBe(200);
+      const started = await call("POST", "/widget/conversations", {
+        bearer: ada.token,
+        body: {
+          content: "Before the portal",
+          idempotencyKey: contractEnv().id("key"),
+        },
+      });
+      const issued = await link();
+      expect(issued.status).toBe(200);
+      const code = new URL(issued.body.url).searchParams.get("code")!;
+
+      // The signed step checks the code once and hands Kaneo's sign-in a grant for this customer.
+      const first = await signed({ workspace: a, code });
+      expect(first.status).toBe(200);
+      const { grant } = await first.json();
+      expect(first.headers.get("x-quills-result-location")).toContain(
+        "/api/auth/quills/portal-session?grant=",
+      );
+      const claims = readGrant("session", grant)!;
+      const customerId = (
+        await pool.query("SELECT user_id FROM quills.principal WHERE id = $1", [
+          ada.principal,
+        ])
+      ).rows[0].user_id as string;
+      expect(claims).toMatchObject({ workspaceId: a, next: "/my-feedback" });
+      expect(uuid(claims.customerId)).toBe(customerId);
+      expect((await (await signed({ workspace: a, code })).json()).grant).toBe(
+        "",
+      );
+
+      // Kaneo's sign-in (utils/quills-portal-session.ts) creates the account and its link row.
+      const userId = contractEnv().id("portal_token_user");
+      await pool.query(
+        "INSERT INTO public.\"user\" (id, name, email, email_verified, created_at, updated_at) VALUES ($1, 'Ada', $2, false, now(), now())",
+        [userId, claims.email],
+      );
+      await pool.query(
+        "INSERT INTO public.account (id, account_id, provider_id, user_id, created_at, updated_at) VALUES ($1, $2, 'quills-portal', $3, now(), now())",
+        [contractEnv().id("acct"), `${a}:${claims.customerId}`, userId],
+      );
+      try {
+        // The account's first portal request takes over the widget profile: one history.
+        const mine = await portal("/support/conversations", userId);
+        expect(mine.status).toBe(200);
+        expect(mine.body.items.map((c: { id: string }) => c.id)).toContain(
+          started.body.conversation.id,
+        );
+        const linked = (
+          await pool.query(
+            "SELECT kaneo_user_id FROM quills.customer_identity WHERE id = $1",
+            [customerId],
+          )
+        ).rows[0].kaneo_user_id;
+        expect(linked).toBe(userId);
+        // The host app keeps identifying the same person in the widget.
+        expect(
+          (
+            await identify({
+              sub: ada.sub,
+              email: `${ada.sub}@example.test`,
+              exp: exp(),
+            })
+          ).status,
+        ).toBe(200);
+        // A private portal lets the host's customer in.
+        expect((await portal("/portal/access", userId)).body).toMatchObject({
+          granted: true,
+          signIn: { mode: "kaneo", ssoUrl: null },
+        });
+
+        // SSO mode: the host app's login page sends the person back with a signed token, once.
+        expect(
+          (
+            await signIn({
+              mode: "sso",
+              widgetSignIn: false,
+              ssoUrl: "https://app.example.test/login",
+            })
+          ).status,
+        ).toBe(200);
+        expect((await portal("/portal/access", userId)).body.signIn).toEqual({
+          mode: "sso",
+          ssoUrl: "https://app.example.test/login",
+        });
+        const grace = contractEnv().id("sso");
+        const token = signIdentity(
+          {
+            sub: grace,
+            email: `${grace}@example.test`,
+            name: "Grace",
+            exp: exp(),
+          },
+          secret,
+        );
+        const sso = await signed({ workspace: a, token, next: "/changelog" });
+        expect(sso.status).toBe(200);
+        expect(readGrant("session", (await sso.json()).grant)).toMatchObject({
+          email: `${grace}@example.test`,
+          name: "Grace",
+          next: "/changelog",
+        });
+        expect(
+          (await (await signed({ workspace: a, token })).json()).grant,
+        ).toBe("");
+        expect(
+          (
+            await signed({
+              workspace: a,
+              token: signIdentity(
+                { sub: grace, email: `${grace}@example.test`, exp: exp() },
+                "wrong-secret",
+              ),
+            })
+          ).status,
+        ).toBe(401);
+
+        // Customer sign-in turned off: the account is a signed-out caller.
+        expect(
+          (
+            await signIn({
+              mode: "disabled",
+              widgetSignIn: false,
+              ssoUrl: null,
+            })
+          ).status,
+        ).toBe(200);
+        expect((await portal("/support/conversations", userId)).status).toBe(
+          401,
+        );
+        expect((await link()).status).toBe(403);
+      } finally {
+        await pool.query(
+          "UPDATE quills.customer_identity SET kaneo_user_id = NULL WHERE id = $1",
+          [customerId],
+        );
+        await pool.query("DELETE FROM public.account WHERE user_id = $1", [
+          userId,
+        ]);
+        await pool.query('DELETE FROM public."user" WHERE id = $1', [userId]);
+      }
+    } finally {
+      await pool.query(
+        "UPDATE quills.settings SET portal_config = $2 WHERE workspace_id = $1",
+        [a, before],
+      );
+    }
   });
 
   it("answers a visitor with the away reply while the team is away, once per conversation", async () => {

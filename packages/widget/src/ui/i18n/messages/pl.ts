@@ -274,6 +274,7 @@ const pl: Catalog = {
   Assistant: "Asystent",
   "Submit request": "Wyślij prośbę",
   "Request submitted": "Prośba wysłana",
+  "Open the full board": "Otwórz pełną tablicę",
 };
 
 export default pl;

@@ -90,6 +90,7 @@ export function createApi(base: string, fetchImpl: typeof fetch = fetch) {
         sessionToken: string;
         user: WidgetUserView;
         warnings?: Array<{ code: string; field: string }>;
+        canPortalHandoff?: boolean;
       }>(
         "POST",
         "/widget/identify",
@@ -101,6 +102,8 @@ export function createApi(base: string, fetchImpl: typeof fetch = fetch) {
         token: result.sessionToken,
         user: result.user,
         warnings: result.warnings ?? [],
+        /** The portal can open with this person signed in (gap G-17). */
+        canOpenPortal: result.canPortalHandoff === true,
       };
     },
   };

@@ -270,6 +270,7 @@ const ru: Catalog = {
   Assistant: "Ассистент",
   "Submit request": "Отправить запрос",
   "Request submitted": "Запрос отправлен",
+  "Open the full board": "Открыть всю доску",
 };
 
 export default ru;

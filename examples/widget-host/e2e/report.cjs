@@ -224,6 +224,14 @@ const F = {
     "Search: typos, partial words and minus words",
     "GET /widget/posts?search= with a typo, a prefix and a minus word",
   ],
+  "portal-widget-sign-in": [
+    "Portal: open signed in from the widget",
+    "Widget sign-in on; sign in as Ada; Feedback → Open the full board",
+  ],
+  "portal-sso-sign-in": [
+    "Portal: SSO sign-in through the host app",
+    "SSO mode with the host's /sso page; portal → Sign in → Continue as Grace",
+  ],
 };
 const esc = (s) =>
   String(s ?? "")

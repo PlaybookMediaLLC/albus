@@ -17,6 +17,7 @@ import {
   SettingsSection,
 } from "../../ui/upstream";
 import { DomainsForm } from "./parts/domains-form";
+import { SignInSection } from "./parts/sign-in-section";
 
 export interface SettingsPrivacyPageProps {
   workspaceId: string;
@@ -181,6 +182,13 @@ export function SettingsPrivacyPage({ workspaceId }: SettingsPrivacyPageProps) {
               {t("settings-product.privacy.membersNote")}
             </SettingsNote>
           </SettingsSection>
+          {data ? (
+            <SignInSection
+              workspaceId={workspaceId}
+              locked={locked}
+              data={data.signIn}
+            />
+          ) : null}
         </TeamStateView>
       </SettingsPage>
     </PageFrame>

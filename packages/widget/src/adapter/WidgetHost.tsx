@@ -10,6 +10,7 @@ import { loadArticle, type Surfaces } from "./load.js";
 import { useWidgetSurvey } from "./surveys.js";
 import { useWidgetActivity } from "./activity.js";
 import { useWidgetContactEmail } from "./contact-email.js";
+import { openPortalSignedIn } from "./portal-link.js";
 import { useUpdatesSubscription } from "./updates-subscription.js";
 import { useWidgetTeam } from "./team.js";
 import { Unavailable } from "./Unavailable.js";
@@ -304,6 +305,10 @@ export function WidgetHost({
         greeting: config.greeting,
       })}
       {...data}
+      {...(ready &&
+        visitor.canOpenPortal && {
+          onOpenPortal: () => openPortalSignedIn(api),
+        })}
       // Images go with feedback and messages, from a visitor that the host app identified: the
       // upload routes refuse an anonymous session (RFC 0003 feature 6). The camera is feedback only.
       {...(data.onSubmitFeedback &&

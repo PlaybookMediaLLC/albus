@@ -243,6 +243,7 @@ const zh_CN: Catalog = {
   Assistant: "助手",
   "Submit request": "提交请求",
   "Request submitted": "请求已提交",
+  "Open the full board": "打开完整看板",
 };
 
 export default zh_CN;

@@ -244,6 +244,7 @@ const th: Catalog = {
   Assistant: "ผู้ช่วย",
   "Submit request": "ส่งคำขอ",
   "Request submitted": "ส่งคำขอแล้ว",
+  "Open the full board": "เปิดบอร์ดฉบับเต็ม",
 };
 
 export default th;

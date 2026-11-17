@@ -146,6 +146,7 @@ export const changeSchema = z.object({
     "post_view.created",
     "post_view.deleted",
     "settings.portal_access_updated",
+    "settings.portal_sign_in_updated",
     "settings.widget_install_code_redeemed",
     "portal.access_denied",
     "customer.profile_updated",

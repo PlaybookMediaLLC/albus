@@ -267,6 +267,7 @@ const ar: Catalog = {
   Assistant: "المساعد",
   "Submit request": "إرسال الطلب",
   "Request submitted": "تم إرسال الطلب",
+  "Open the full board": "فتح اللوحة الكاملة",
 };
 
 export default ar;

@@ -41,6 +41,8 @@ export function useWidgetSession(
   const [failed, setFailed] = useState(false);
   /** The session belongs to a visitor that the host app identified with a signed token. */
   const [identified, setIdentified] = useState(false);
+  /** The workspace lets this identified visitor open the portal signed in. */
+  const [canOpenPortal, setCanOpenPortal] = useState(false);
   const epoch = useRef(0);
   const counter = useRef(0);
   const ssoToken = useRef<string | null>(null);
@@ -57,15 +59,22 @@ export function useWidgetSession(
     setSession(null);
     setFailed(false);
     setIdentified(false);
+    setCanOpenPortal(false);
     setVisitor((value) => value + 1);
     return mine;
   };
-  const begin = (mine: number, token: string, signed = true) => {
+  const begin = (
+    mine: number,
+    token: string,
+    signed = true,
+    portal = false,
+  ) => {
     if (mine !== epoch.current) return;
     api.setToken(token);
     anonymous.current = signed ? null : token;
     starting.current = false;
     setIdentified(signed);
+    setCanOpenPortal(signed && portal);
     setSession(++counter.current);
   };
   /** The host's signed token when it still verifies, else an anonymous session. */
@@ -77,9 +86,11 @@ export function useWidgetSession(
     try {
       if (ssoToken.current) {
         try {
-          const { token, user } = await api.identify(ssoToken.current);
+          const { token, user, canOpenPortal } = await api.identify(
+            ssoToken.current,
+          );
           if (mine === epoch.current) onAuthChange(toUser(user));
-          return begin(mine, token);
+          return begin(mine, token, true, canOpenPortal);
         } catch (error) {
           // Only a refused token ends the identity; a transient error keeps it for a retry.
           if (!refused(error)) throw error;
@@ -102,6 +113,7 @@ export function useWidgetSession(
     visitor,
     failed,
     identified,
+    canOpenPortal,
     establish,
     /** The panel opened: from now on the visitor needs a session. */
     activate() {
@@ -133,14 +145,14 @@ export function useWidgetSession(
         // Blocks an anonymous start from the panel while the signed identify runs.
         starting.current = true;
         try {
-          const { token, user, warnings } = await api.identify(
+          const { token, user, warnings, canOpenPortal } = await api.identify(
             signed,
             undefined,
             previous ?? undefined,
           );
           if (mine !== epoch.current)
             return { success: false, user: null, error: "Superseded" };
-          begin(mine, token);
+          begin(mine, token, true, canOpenPortal);
           return {
             success: true,
             user: toUser(user),

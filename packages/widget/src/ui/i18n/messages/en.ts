@@ -259,6 +259,7 @@ export const en = {
   Assistant: "Assistant",
   "Submit request": "Submit request",
   "Request submitted": "Request submitted",
+  "Open the full board": "Open the full board",
 } as const;
 
 export type MessageKey = keyof typeof en;

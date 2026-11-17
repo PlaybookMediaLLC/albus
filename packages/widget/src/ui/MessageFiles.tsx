@@ -26,9 +26,10 @@ export function MessageFiles({
       setFailed({ id: fileId, blocked: true });
       return;
     }
-    tab.opener = null;
     try {
       tab.location.href = await onOpen!(fileId);
+      // After the navigation starts: a sandboxed widget frame may navigate only a tab it opened.
+      tab.opener = null;
     } catch {
       tab.close();
       setFailed({ id: fileId, blocked: false });

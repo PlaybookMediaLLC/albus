@@ -30,7 +30,11 @@ const runtime = (viewer: Viewer): PortalRuntimeValue => ({
     },
   },
   viewer,
-  access: { granted: true, reason: "public" },
+  access: {
+    granted: true,
+    reason: "public",
+    signIn: { mode: "kaneo", ssoUrl: null },
+  },
   accessLoading: false,
   accessProblem: null,
 });

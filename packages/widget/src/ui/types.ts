@@ -255,6 +255,8 @@ export interface WidgetViewProps {
   onClose: () => void;
   /** False hides the close button: the widget is inline in the host page. */
   closable?: boolean;
+  /** Opens the portal in a new tab with the identified visitor signed in. */
+  onOpenPortal?: () => Promise<unknown>;
   /** Resolve only after the action succeeds. Rejections keep the draft and show an error. */
   onSendMessage?: (
     body: string,
