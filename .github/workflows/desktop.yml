@@ -28,7 +28,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: macos-15
+          # Intel runner: GitHub often has no free Apple silicon runner. The universal build still
+          # compiles for both Mac CPUs.
+          - platform: macos-15-intel
             rust-targets: aarch64-apple-darwin,x86_64-apple-darwin
             args: --target universal-apple-darwin
           - platform: windows-2025
