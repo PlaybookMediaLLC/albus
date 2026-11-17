@@ -809,7 +809,8 @@ const groups = {
       await page.waitForSelector("[data-event=ready]");
       await signIn("ada");
       await openView("home");
-      const card = frame.locator(".qb-contact-card");
+      // A survey on Home uses the same card style.
+      const card = frame.locator(".qb-contact-card:not(.qb-survey)");
       await card.waitFor({ timeout: 15000 });
       await frame
         .getByText(/Usually replies in a few hours/)
@@ -1841,6 +1842,9 @@ const groups = {
   async extras() {
     const adaUuid = L.toUuid(state.ada.principalId);
     await step("survey-response", async (since) => {
+      // The negative checks leave a blocked visitor; surveys ask an identified person.
+      if ((await page.inputValue("[data-testid=user]")) !== "ada")
+        await signIn("ada");
       await openView("home");
       const survey = frame
         .getByRole("region", { name: /improve next|recommend/ })
@@ -2084,11 +2088,14 @@ const groups = {
         { data: { content: "Thanks Ada, a teammate here." } },
       );
       await tm.dispose();
+      // The log is newest first: wait for the latest unread event, not an older one.
       await page.waitForFunction(
         () =>
-          /unread \{"count":[1-9]/.test(
-            document.querySelector("[data-testid=event-log]").innerText,
-          ),
+          Number(
+            document
+              .querySelector("[data-testid=event-log]")
+              .innerText.match(/unread \{"count":(\d+)\}/)?.[1] ?? 0,
+          ) >= 1,
         null,
         { timeout: 40000 },
       );
@@ -2269,6 +2276,20 @@ const groups = {
   },
 };
 
+// The demo seed leaves the widget's Help tab off and defines no user attributes; the checks need
+// Help and the "plan" attribute.
+async function prepare() {
+  const tm = await L.teammate(require("playwright"));
+  const base = `${L.API}/api/quills/${L.WS}`;
+  const defined = await (await tm.get(`${base}/user-attributes`)).text();
+  if (!defined.includes('"key":"plan"'))
+    await tm.post(`${base}/user-attributes`, {
+      data: { key: "plan", label: "Plan", type: "string" },
+    });
+  await tm.put(`${base}/settings/widget`, { data: { tabs: { help: true } } });
+  await tm.dispose();
+}
+
 (async () => {
   browser = await chromium.launch();
   page = await browser.newPage({ viewport: { width: 1360, height: 900 } });
@@ -2277,6 +2298,7 @@ const groups = {
   page.on("pageerror", (e) =>
     console.log("pageerror:", e.message.slice(0, 200)),
   );
+  await prepare();
   for (const name of process.argv.slice(2)) await groups[name]();
   await browser.close();
 })();
