@@ -36,13 +36,10 @@ export const postUpdates = quillsSchema
       languages: jsonb("languages").$type<string[]>().notNull().default([]),
       /** The sender confirmed that the change shipped (no verified release record exists yet, #11). */
       releaseConfirmed: boolean("release_confirmed").notNull(),
-      /** What the send queued per channel. */
-      counts: jsonb("counts").$type<Record<string, number>>().notNull(),
-      /** The customers the mail goes to, decided at the send as the preview decides them. */
-      recipientIds: jsonb("recipient_ids")
-        .$type<string[]>()
-        .notNull()
-        .default([]),
+      /** What the send counted per channel (see integrations/post-update.ts#updateCountsOf). */
+      counts: jsonb("counts")
+        .$type<Record<string, number | boolean>>()
+        .notNull(),
       idempotencyKey: text("idempotency_key").notNull(),
       createdAt: timestamp("created_at", { withTimezone: true })
         .notNull()

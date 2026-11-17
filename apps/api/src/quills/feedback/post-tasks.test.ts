@@ -1,12 +1,14 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vite-plus/test";
-import { eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import type { TypeId } from "@kaneo/ids";
 import { postActivity } from "../../database/quills/schema/activity";
 import { boards } from "../../database/quills/schema/boards";
+import { events } from "../../database/quills/schema/events";
 import { postTasks } from "../../database/quills/schema/platform-links";
 import { posts } from "../../database/quills/schema/posts";
+import { postStatuses } from "../../database/quills/schema/statuses";
 import * as kaneo from "../../database/schema";
 import { startFeature } from "./harness.fixture";
 
@@ -200,5 +202,62 @@ describe.skipIf(!url)("Requests become Kaneo tasks", () => {
       failLink = false;
     }
     expect(await tasksIn(world.projects.open)).toEqual(before);
+  });
+
+  it("records the task actions that a scoped API key allows on a status change", async () => {
+    const owner = world.users.owner;
+    await world.db.insert(kaneo.apikeyTable).values({
+      id: `${owner}_key`,
+      key: `${owner}_key`,
+      name: "Scoped",
+      referenceId: owner,
+      enabled: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const statuses = await world.scoped(world.a, owner, (db) =>
+      db.select({ id: postStatuses.id }).from(postStatuses).limit(2),
+    );
+    const keyTasks = async () => {
+      const rows = await world.scoped(world.a, owner, (db) =>
+        db
+          .select({ payload: events.payload })
+          .from(events)
+          .where(
+            and(
+              eq(events.type, "post.status_changed"),
+              eq(events.entityId, postId),
+            ),
+          )
+          .orderBy(desc(events.id))
+          .limit(1),
+      );
+      return (rows[0]!.payload as Record<string, string>).keyTasks;
+    };
+    // The rule may comment with this key (update) but not create a task.
+    const scoped = await world.request(
+      owner,
+      "PUT",
+      `/posts/${postId}/status`,
+      { statusId: statuses[0]!.id },
+      {
+        "x-test-scope": JSON.stringify({
+          workspace: ["read"],
+          quills: ["read", "update"],
+          task: ["update"],
+        }),
+      },
+    );
+    expect(scoped.status).toBe(200);
+    expect(await keyTasks()).toBe("update");
+    // A session (no key) leaves the rule the teammate's own permissions.
+    expect(
+      (
+        await world.request(owner, "PUT", `/posts/${postId}/status`, {
+          statusId: statuses[1]!.id,
+        })
+      ).status,
+    ).toBe(200);
+    expect(await keyTasks()).toBeUndefined();
   });
 });

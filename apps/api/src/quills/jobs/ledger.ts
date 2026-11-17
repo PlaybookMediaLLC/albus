@@ -40,6 +40,24 @@ export async function claimDelivery(
   return "uncertain";
 }
 
+/**
+ * An attempt that checked the external system and found that the uncertain attempt delivered
+ * nothing takes the delivery back to `processing` and may send. Returns whether it did.
+ */
+export async function reclaimVerified(db: Database, key: string) {
+  const rows = await db
+    .update(hookDeliveries)
+    .set({ outcome: "processing", processedAt: sql`now()` })
+    .where(
+      and(
+        eq(hookDeliveries.jobId, key),
+        eq(hookDeliveries.outcome, "uncertain"),
+      ),
+    )
+    .returning({ key: hookDeliveries.jobId });
+  return rows.length > 0;
+}
+
 /** Records the outcome of the attempt that holds the `processing` row. */
 export async function settleDelivery(
   db: Database,

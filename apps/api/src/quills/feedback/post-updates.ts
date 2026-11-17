@@ -67,7 +67,7 @@ const preview = defineQuillsRoute({
   operationId: "previewQuillsPostUpdate",
   summary: "Count who a post update reaches on each channel",
   description:
-    "Writes nothing. The counts are what sendQuillsPostUpdate queues for the same channels and targets, unless followers or conversations change in between.",
+    "Writes nothing. The counts are what sendQuillsPostUpdate sends for the same channels and targets, unless followers or conversations change in between. Above 1,000 matching followers, counts.emailEstimated is true and counts.email is the number of matching followers, before each one's address and access are checked at send time.",
   action: "update",
   alsoRequires: ["manage_settings"],
   params: postParams,
@@ -124,7 +124,7 @@ const send = defineQuillsRoute({
   summary:
     "Send an update about a post to its followers on every chosen channel",
   description:
-    "Needs Quills update and manage_settings, and confirmRelease: true (no verified release record exists yet; a merged PR or a status change is not one). Page: a public team comment. Email: the followers that previewQuillsPostUpdate counts, each once. Conversations: a reply in each linked conversation, without reopening or claiming it; its customer gets no update mail. Slack: the page comment, through Slack connections that send the board's comments. A repeated idempotency key returns the first send.",
+    "Needs Quills update and manage_settings, and confirmRelease: true (no verified release record exists yet; a merged PR or a status change is not one). Page: a public team comment. Email: every follower that matches the targets, each once and with no cap; each one's address and access are checked when the mail is sent. Conversations: a reply in each linked conversation, without reopening or claiming it; its customer gets no update mail. Slack: the page comment, through Slack connections that send the board's comments. A repeated idempotency key returns the first send.",
   action: "update",
   alsoRequires: ["manage_settings"],
   params: postParams,
@@ -148,14 +148,19 @@ const send = defineQuillsRoute({
     return prepare(args);
   },
   call,
-  event: ({ params, body }, result) => {
+  event: ({ params, body }, result, raw) => {
     if (result.replayed) return false;
+    // The customers who got the update as a conversation reply: its mail pages leave them out.
+    const replied = (raw as { replied?: string[] }).replied ?? [];
     const changes: QuillsChange[] = [
       {
         type: "post.update_sent",
         entityType: "post",
         entityId: params.postId,
-        payload: { updateId: result.updateId },
+        payload: {
+          updateId: result.updateId,
+          ...(replied.length && { replied: replied.join(",") }),
+        },
       },
     ];
     if (result.commentId)
@@ -196,7 +201,11 @@ const send = defineQuillsRoute({
         });
       return {
         updateId: earlier.id,
-        counts: earlier.counts as z.output<typeof updateCounts>,
+        // Updates sent before emailEstimated existed counted every recipient.
+        counts: {
+          emailEstimated: false,
+          ...earlier.counts,
+        } as z.output<typeof updateCounts>,
         replayed: true,
         commentId: null,
         replies: [],
@@ -224,7 +233,6 @@ const send = defineQuillsRoute({
         languages: body.languages,
         releaseConfirmed: true,
         counts,
-        recipientIds: recipients,
         idempotencyKey: body.idempotencyKey,
       })
       .onConflictDoNothing()
@@ -273,6 +281,7 @@ const send = defineQuillsRoute({
       replayed: false,
       commentId,
       replies,
+      replied: candidates.replied,
     };
   },
 });

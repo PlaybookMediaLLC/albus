@@ -4,7 +4,10 @@ import { Checkbox, Label } from "../../ui/upstream";
 
 export type UpdateChannel = "page" | "email" | "conversations" | "slack";
 export type UpdateChannels = Record<UpdateChannel, boolean>;
-export type UpdateCounts = Record<UpdateChannel, number>;
+export type UpdateCounts = Record<UpdateChannel, number> & {
+  /** Above 1,000 followers the email count is an upper bound, before each send-time check. */
+  emailEstimated: boolean;
+};
 
 const CHANNELS = ["page", "email", "conversations", "slack"] as const;
 const LABELS = {
@@ -55,7 +58,12 @@ export function UpdateChannelsField(props: UpdateChannelsFieldProps) {
             </Label>
             <span className="text-sm text-muted-foreground tabular-nums">
               {props.counts
-                ? t(COUNTS[channel], { count: props.counts[channel] })
+                ? t(
+                    channel === "email" && props.counts.emailEstimated
+                      ? "team-post.updateEmailEstimate"
+                      : COUNTS[channel],
+                    { count: props.counts[channel] },
+                  )
                 : null}
             </span>
           </div>

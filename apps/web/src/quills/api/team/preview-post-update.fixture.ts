@@ -3,7 +3,13 @@ export const previewPostUpdateFixture = {
   ok: (overrides: Partial<PreviewPostUpdateResponse> = {}) =>
     ({
       ...{
-        counts: { page: 0, email: 0, conversations: 0, slack: 0 },
+        counts: {
+          page: 0,
+          email: 0,
+          emailEstimated: false,
+          conversations: 0,
+          slack: 0,
+        },
         slackConnected: false,
       },
       ...overrides,

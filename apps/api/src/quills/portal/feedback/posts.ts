@@ -47,6 +47,7 @@ import {
   valuesFor,
 } from "../../feedback/custom-fields";
 import { notFound, notTest, relatedPosts } from "../../feedback/visibility";
+import { unfollowPost } from "../../delivery/post-subscriptions";
 import { claimReceipt } from "./receipts";
 import {
   activity,
@@ -227,6 +228,7 @@ async function present(
               and(
                 eq(postSubscriptions.principalId, viewer.principalId),
                 inArray(postSubscriptions.postId, ids),
+                eq(postSubscriptions.notifyStatusChanges, true),
               ),
             )
         ).map((row) => String(row.id))
@@ -976,16 +978,21 @@ export const setFollow = (audience: Customer) =>
         await db
           .insert(postSubscriptions)
           .values({ postId: post.id, principalId: me, reason: "manual" })
-          .onConflictDoNothing();
-      else
-        await db
-          .delete(postSubscriptions)
-          .where(
-            and(
-              eq(postSubscriptions.postId, post.id),
-              eq(postSubscriptions.principalId, me),
-            ),
-          );
+          // Following again after an unsubscribe turns the notices back on; a follower keeps their level.
+          .onConflictDoUpdate({
+            target: [
+              postSubscriptions.workspaceId,
+              postSubscriptions.postId,
+              postSubscriptions.principalId,
+            ],
+            set: {
+              notifyComments: true,
+              notifyStatusChanges: true,
+              updatedAt: new Date(),
+            },
+            setWhere: eq(postSubscriptions.notifyStatusChanges, false),
+          });
+      else await unfollowPost(db, post.id, me);
       return { postId: post.id, following: body.following };
     },
   });

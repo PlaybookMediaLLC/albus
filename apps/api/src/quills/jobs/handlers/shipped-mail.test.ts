@@ -36,6 +36,7 @@ import {
   enablePortal,
   verifyEmail,
 } from "../../portal/customer-seed.fixture";
+import { mintUnsubscribeToken } from "../../portal/unsubscribe-token";
 import { drainQuillsWorkspace } from "../worker";
 import { runQuillsSweeps } from "./sweeps";
 
@@ -512,5 +513,53 @@ describe.skipIf(!url)("Quills shipped notices", () => {
     );
     await drain();
     expect(mail.shipped).toEqual([]);
+  });
+
+  it("sends no shipped notice to a voter who unsubscribed from the post", async () => {
+    const env = contractEnv();
+    const post = await customerPost(env, env.a);
+    const voter = async () => {
+      const visitor = await env.widgetVisitor(env.a);
+      const principalId = visitor.principalId as PrincipalId;
+      const [row] = await env.scoped(env.a, async (db) => {
+        await db
+          .insert(postVotes)
+          .values({ postId: post.postId as PostId, principalId });
+        return db
+          .select({ email: customer.email })
+          .from(principal)
+          .innerJoin(customer, eq(customer.id, principal.userId))
+          .where(eq(principal.id, principalId));
+      });
+      return { principalId, email: row!.email! };
+    };
+    const stays = await voter();
+    const leaves = await voter();
+    // The unsubscribe link of a status or update mail about this post.
+    const token = await env.scoped(env.a, (db) =>
+      mintUnsubscribeToken(
+        db,
+        leaves.principalId,
+        "unsubscribe_post",
+        post.postId as PostId,
+      ),
+    );
+    const confirmed = await app.request(
+      `/quills-public/${env.a}/unsubscribe/confirm`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-kaneo-client-ip": "203.0.113.8",
+        },
+        body: JSON.stringify({ token }),
+      },
+    );
+    expect(await confirmed.json()).toMatchObject({ processed: true });
+    mail.shipped.length = 0;
+    expect((await publish([post.postId])).status).toBe(200);
+    await drain();
+    expect(to()).toContain(stays.email);
+    expect(to()).not.toContain(leaves.email);
   });
 });

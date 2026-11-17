@@ -10,7 +10,13 @@ import { renderComponent } from "../../test/render";
 import { toast } from "../../ui/upstream";
 import { SendUpdateDialog } from "./send-update-dialog";
 
-const counts = { page: 1, email: 3, conversations: 1, slack: 0 };
+const counts = {
+  page: 1,
+  email: 3,
+  emailEstimated: false,
+  conversations: 1,
+  slack: 0,
+};
 const render = (onClose = vi.fn()) =>
   renderComponent(
     <TeamRuntimeProvider value={postTeam}>

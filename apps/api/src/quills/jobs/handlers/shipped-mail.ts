@@ -87,6 +87,9 @@ const shippedPosts = (db: Database, entryId: ChangelogId) =>
     )
     .orderBy(asc(changelogEntryPosts.createdAt), asc(posts.id));
 
+/** A voter who unsubscribed from the post they voted for, or from the post it was merged into. */
+const unsubscribed = sql`exists (select 1 from ${postSubscriptions} s where s.principal_id = ${postVotes.principalId} and not s.notify_status_changes and (s.post_id = ${postVotes.postId} or s.post_id = (select p.canonical_post_id from ${posts} p where p.id = ${postVotes.postId})))`;
+
 /** Voters and status followers of the posts, each once. */
 const recipients: Subscribers["recipients"] = async (db, event) => {
   const entry = await shippedEntry(db, event);
@@ -95,7 +98,12 @@ const recipients: Subscribers["recipients"] = async (db, event) => {
   const rows = await db
     .select({ id: postVotes.principalId })
     .from(postVotes)
-    .where(inArray(postVotes.postId, withDuplicates(db, ids)))
+    .where(
+      and(
+        inArray(postVotes.postId, withDuplicates(db, ids)),
+        sql`not ${unsubscribed}`,
+      ),
+    )
     .union(
       db
         .select({ id: postSubscriptions.principalId })

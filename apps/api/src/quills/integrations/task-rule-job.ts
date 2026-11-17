@@ -19,6 +19,7 @@ import {
   accessibleProjectIds,
   assignable,
   linkedTasks,
+  recentTaskWithMarker,
   taskTarget,
   teammateHolds,
   teammateMayAct,
@@ -30,7 +31,7 @@ import {
   deleteKaneoTask,
 } from "../framework/platform-writes";
 import type { DeliveryEvent } from "../jobs/fanout";
-import { claimDelivery, settleDelivery } from "../jobs/ledger";
+import { claimDelivery, reclaimVerified, settleDelivery } from "../jobs/ledger";
 import { enqueueQuillsJob, finishQuillsJob } from "../jobs/queue";
 import { portalPaths } from "../portal/paths";
 import { deliveryOf, linkCreatedTask, taskDraft } from "./post-task";
@@ -50,9 +51,15 @@ export const taskRulePayloadSchema = z
     postId: typeIdSchema("post"),
     principalId: typeIdSchema("principal"),
     statusId: typeIdSchema("post_status"),
+    /** The task actions that the change's scoped API key allows; absent without a key. */
+    keyTasks: z.string().max(40).optional(),
   })
   .strict();
 type Payload = z.output<typeof taskRulePayloadSchema>;
+/** The change came with a scoped API key that does not allow this task action. */
+const keyDenies = (payload: Payload, action: "create" | "update") =>
+  payload.keyTasks !== undefined &&
+  !payload.keyTasks.split(",").includes(action);
 
 /** True when the request moved back: to a closed status, from complete to active, or to an earlier active one. */
 async function movedBack(db: Database, fromId: string, toId: string) {
@@ -90,7 +97,7 @@ export async function taskRuleDue(db: Database, event: DeliveryEvent) {
   )
     return;
   const payload = event.payload as Record<string, string | undefined>;
-  const { statusId, previousStatusId } = payload;
+  const { statusId, previousStatusId, keyTasks } = payload;
   if (payload.source || !statusId || statusId === previousStatusId) return;
   const [post] = await db
     .select({ settings: boards.settings })
@@ -114,6 +121,7 @@ export async function taskRuleDue(db: Database, event: DeliveryEvent) {
         postId: event.entityId,
         principalId: event.actorId!,
         statusId,
+        ...(keyTasks !== undefined && { keyTasks }),
       },
       `task-rule:${rule}:${event.eventId}`,
       3,
@@ -217,14 +225,16 @@ async function createFromRule(
   if (linked.items.some((task) => task.projectId === delivery.projectId))
     return finish(workspaceId, job);
   const projects = await accessibleProjectIds(workspaceId, userId);
-  const target = (await teammateMayAct(workspaceId, userId, "update"))
-    ? await taskTarget(
-        workspaceId,
-        userId,
-        delivery.projectId,
-        delivery.columnId,
-      )
-    : ({ reason: "forbidden" } as const);
+  const target =
+    !keyDenies(payload, "create") &&
+    (await teammateMayAct(workspaceId, userId, "update"))
+      ? await taskTarget(
+          workspaceId,
+          userId,
+          delivery.projectId,
+          delivery.columnId,
+        )
+      : ({ reason: "forbidden" } as const);
   const draft = await withQuillsSystemWorkspace(workspaceId, (db) =>
     taskDraft(db, payload.postId, projects),
   );
@@ -239,39 +249,58 @@ async function createFromRule(
   const claim = await withQuillsSystemWorkspace(workspaceId, (db) =>
     claimDelivery(db, key, "task_rule"),
   );
-  if (claim !== "send") return finish(workspaceId, job);
-  let task: Awaited<ReturnType<typeof createKaneoTask>>;
-  try {
-    const owner = draft.ownerUserId;
-    task = await createKaneoTask({
-      userId,
-      projectId: delivery.projectId,
-      status: target.status,
-      title: draft.title,
-      description: draft.description,
-      priority: delivery.priority,
-      assigneeId:
-        owner && (await assignable(workspaceId, delivery.projectId, owner))
-          ? owner
-          : undefined,
-      dueDate: draft.dueDate,
-    });
-  } catch (error) {
-    // Kaneo commits the task in one transaction before anything that can throw after it, so a
-    // throw means no task. A refusal (4xx) or the last attempt is final and told to the teammate.
-    const final =
-      (error instanceof HTTPException && error.status < 500) ||
-      job.attempts >= job.maxAttempts;
-    await withQuillsSystemWorkspace(workspaceId, async (db) => {
-      await settleDelivery(db, key, "failed");
-      if (final) {
-        await recordFailure(db, payload, "failed");
-        await finishQuillsJob(db, job.id, job.leaseToken!);
-      }
-    });
-    if (final) return;
-    throw error;
-  }
+  if (claim === "completed") return finish(workspaceId, job);
+  // An earlier attempt stopped after Kaneo may have created the task: link the task that Kaneo has
+  // (its description links the request), or create it when Kaneo has none.
+  const found =
+    claim === "uncertain"
+      ? await recentTaskWithMarker(
+          workspaceId,
+          delivery.projectId,
+          portalPaths.teammatePost(workspaceId, payload.postId),
+        )
+      : undefined;
+  if (
+    claim === "uncertain" &&
+    !(await withQuillsSystemWorkspace(workspaceId, (db) =>
+      reclaimVerified(db, key),
+    ))
+  )
+    return finish(workspaceId, job);
+  let task: { id: string };
+  if (found) task = { id: found };
+  else
+    try {
+      const owner = draft.ownerUserId;
+      task = await createKaneoTask({
+        userId,
+        projectId: delivery.projectId,
+        status: target.status,
+        title: draft.title,
+        description: draft.description,
+        priority: delivery.priority,
+        assigneeId:
+          owner && (await assignable(workspaceId, delivery.projectId, owner))
+            ? owner
+            : undefined,
+        dueDate: draft.dueDate,
+      });
+    } catch (error) {
+      // Kaneo commits the task in one transaction before anything that can throw after it, so a
+      // throw means no task. A refusal (4xx) or the last attempt is final and told to the teammate.
+      const final =
+        (error instanceof HTTPException && error.status < 500) ||
+        job.attempts >= job.maxAttempts;
+      await withQuillsSystemWorkspace(workspaceId, async (db) => {
+        await settleDelivery(db, key, "failed");
+        if (final) {
+          await recordFailure(db, payload, "failed");
+          await finishQuillsJob(db, job.id, job.leaseToken!);
+        }
+      });
+      if (final) return;
+      throw error;
+    }
   let done: boolean;
   try {
     done = await withQuillsSystemWorkspace(workspaceId, async (db) => {
@@ -320,6 +349,7 @@ async function commentMovedBack(
     !userId ||
     !post?.status ||
     post.statusId !== payload.statusId ||
+    keyDenies(payload, "update") ||
     !(await teammateHolds(workspaceId, userId, { task: ["update"] }))
   )
     return finish(workspaceId, job);
