@@ -59,6 +59,13 @@ jobs:
           toolchain: stable
           targets: ${{ matrix.rust-targets }}
 
+      # Pull requests only: a release build never restores a cache.
+      - name: Cache Rust builds
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: apps/desktop/src-tauri -> target
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --filter @quills/desktop
 
@@ -91,6 +98,15 @@ jobs:
               '{bundle: {createUpdaterArtifacts: true}, plugins: {updater: {pubkey: $key, endpoints: [$url]}}}')
           fi
           echo "QUILLS_DESKTOP_CONFIG=$config" >> "$GITHUB_ENV"
+          # A release still builds without these values, so say what its users lose.
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            if [ "$config" = '{}' ]; then
+              echo "::warning::No updates: set QUILLS_DESKTOP_UPDATER_PUBKEY, QUILLS_DESKTOP_UPDATER_ENDPOINT and TAURI_SIGNING_PRIVATE_KEY, or the installed app cannot update itself."
+            fi
+            if [ "$RUNNER_OS" = macOS ] && { [ -z "$APPLE_CERTIFICATE" ] || [ -z "$APPLE_ID" ]; }; then
+              echo "::warning::Not signed and notarized: set the APPLE_* secrets, or macOS blocks the downloaded app."
+            fi
+          fi
 
       - name: Build and upload
         uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
