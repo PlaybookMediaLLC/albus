@@ -44,6 +44,25 @@ const doctl = (...args) =>
 const one = (value) => (Array.isArray(value) ? value[0] : value);
 const az = (...args) =>
   JSON.parse(run("az", [...args, "--only-show-errors", "--output", "json"]));
+// Error codes and resource names only: provider messages may echo parameter values.
+function failedAzureOperations(target) {
+  try {
+    const failed = az("deployment", "operation", "group", "list", ...target)
+      .filter(
+        (operation) => operation.properties.provisioningState === "Failed",
+      )
+      .map(({ properties: { targetResource, statusMessage } }) => {
+        const error = statusMessage?.error ?? {};
+        const codes = [error.code, ...(error.details ?? []).map((d) => d.code)];
+        return `${targetResource?.resourceType}/${targetResource?.resourceName} (${codes.filter(Boolean).join(", ")})`;
+      });
+    return failed.length
+      ? `. Failed Azure operations: ${failed.join("; ")}`
+      : "";
+  } catch {
+    return "";
+  }
+}
 function privateFile(name, value) {
   const file = path.join(temporary, name);
   writeFileSync(file, JSON.stringify(value), { mode: 0o600 });
@@ -271,23 +290,32 @@ try {
         }).map(([key, value]) => [key, { value }]),
       ),
     );
-    const deployment = az(
-      "deployment",
-      "group",
-      "create",
+    const target = [
       "--subscription",
       config.subscription,
       "--resource-group",
       config.group,
       "--name",
       "kaneo-data",
-      "--mode",
-      "Incremental",
-      "--template-file",
-      path.join(root, "deploy/digitalocean/azure.bicep"),
-      "--parameters",
-      `@${parameters}`,
-    );
+    ];
+    let deployment;
+    try {
+      deployment = az(
+        "deployment",
+        "group",
+        "create",
+        ...target,
+        "--mode",
+        "Incremental",
+        "--template-file",
+        path.join(root, "deploy/digitalocean/azure.bicep"),
+        "--parameters",
+        `@${parameters}`,
+      );
+    } catch (error) {
+      error.message += failedAzureOperations(target);
+      throw error;
+    }
     const outputs = Object.fromEntries(
       Object.entries(deployment.properties.outputs).map(([key, output]) => [
         key,
