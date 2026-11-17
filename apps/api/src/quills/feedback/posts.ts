@@ -671,10 +671,16 @@ const setStatus = defineQuillsRoute({
   response: postSchema,
   responseDescription: "Updated post",
   errors,
-  // The previous status lets the board task rule tell a move back (RFC 0005, decision 3).
-  event: ({ params, body }, _result, raw) => {
+  // The previous status lets the board task rule tell a move back (RFC 0005, decision 3), and
+  // keyTasks the task actions that a scoped API key allows the rule (create, update).
+  event: ({ params, body, apiKeyScope }, _result, raw) => {
     const previous = (raw as { previousStatusId?: string | null })
       .previousStatusId;
+    const keyTasks = apiKeyScope
+      ? (apiKeyScope.task ?? [])
+          .filter((action) => action === "create" || action === "update")
+          .join(",")
+      : undefined;
     return {
       type: "post.status_changed",
       entityType: "post",
@@ -682,6 +688,7 @@ const setStatus = defineQuillsRoute({
       payload: {
         statusId: body.statusId,
         ...(previous && { previousStatusId: previous }),
+        ...(keyTasks !== undefined && { keyTasks }),
       },
     };
   },

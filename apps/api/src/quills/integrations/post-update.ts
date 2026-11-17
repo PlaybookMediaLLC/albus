@@ -1,5 +1,13 @@
 // Route-module helper: framework/boundaries.test.ts checks its imports like a module that uses ../framework/define-route.
-import { and, eq, inArray, isNull, sql, type SQL } from "drizzle-orm";
+import {
+  and,
+  eq,
+  inArray,
+  isNull,
+  notInArray,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import type { PostId, PrincipalId, TypeId } from "@kaneo/ids";
 import { flexibleToTypeIdSchema } from "@kaneo/ids/zod";
@@ -11,30 +19,36 @@ import {
   integrationEventMappings,
   integrations,
 } from "../../database/quills/schema/integrations";
-import { postSubscriptions } from "../../database/quills/schema/notifications";
+import {
+  notificationPreferences,
+  postSubscriptions,
+} from "../../database/quills/schema/notifications";
 import { posts } from "../../database/quills/schema/posts";
 import { segments, userSegments } from "../../database/quills/schema/segments";
 import { realEmail } from "../directory/customer";
 import type { Database } from "../framework/define-route";
 import { portalAccount } from "../framework/platform-reads";
-import { wants } from "../jobs/preferences";
 import {
   postVisible,
   viewerFor,
   visibleBoards,
 } from "../portal/feedback/viewer";
 
-// One "send update" of a request (#92): who it reaches on each channel. The preview and the send run
-// the same three steps, so the preview's counts are what the send queues:
-// 1. candidates (scoped transaction): followers and linked conversations that match the targets;
-// 2. accounts (no transaction): the Kaneo account of each portal customer;
-// 3. recipients (scoped transaction): the followers who may see the request now, with a real address,
-//    as the mail worker's send-time check (handlers/support-mail.ts#customerPostAddress) decides.
+// One "send update" of a request (#92): who it reaches on each channel.
+// - followerWhere: the followers who may get the mail, in SQL, with no cap. The send's mail pages
+//   (jobs/handlers/update-mail.ts) queue a mail job for each; the mail worker then checks each address
+//   and whether the request is visible to them (handlers/support-mail.ts#customerPostAddress).
+// - The preview and the send count with the same steps. Up to PREVIEW_EXACT followers they run that
+//   send-time check for each, so the email count is exact; above it, the count is an upper bound:
+//   1. candidates (scoped transaction): the followers and linked conversations that match the targets;
+//   2. accounts (no transaction): the Kaneo account of each portal customer;
+//   3. recipients (scoped transaction): the followers who may see the request now, with a real address.
 
 /** The mail preference type of an update. */
 export const UPDATE_MAIL_TYPE = "post_update";
-/** ponytail: at most 1,000 followers and 100 conversations per update; page them when requests grow past that. */
-const MAX_FOLLOWERS = 1000;
+/** Above this many followers, the email count is an upper bound: checking each one would slow the preview. */
+export const PREVIEW_EXACT = 1000;
+/** shortcut: replies go to at most 100 linked conversations per update; page them if requests link more. */
 const MAX_CONVERSATIONS = 100;
 const LANGUAGE = /^[a-z]{2,3}(-[a-z0-9]{2,8})*$/;
 
@@ -83,6 +97,8 @@ export type UpdateChannels = z.output<typeof updateChannels>;
 export const updateCounts = z.object({
   page: z.number(),
   email: z.number(),
+  /** True above PREVIEW_EXACT followers: `email` counts the followers, before each send-time check. */
+  emailEstimated: z.boolean(),
   conversations: z.number(),
   slack: z.number(),
 });
@@ -127,52 +143,66 @@ async function checkSegments(db: Database, ids: readonly TypeId<"segment">[]) {
     throw new HTTPException(404, { message: "Segment not found" });
 }
 
-/**
- * Step 1, in the request's scoped transaction: the live request, its followers and its linked conversations
- * whose customer matches the targets and is no teammate, test customer or blocked person, and the Slack
- * connections that send its comments. A follower who turned update mail off is left out.
- */
-export async function updateCandidates(
-  db: Database,
-  postId: PostId,
-  targets: UpdateTargets,
-) {
-  await checkSegments(db, targets.segmentIds);
-  const [post] = await db
-    .select({ id: posts.id, title: posts.title, boardId: posts.boardId })
-    .from(posts)
-    .where(and(eq(posts.id, postId), isNull(posts.deletedAt)));
-  if (!post) throw new HTTPException(404, { message: "Post not found" });
-  const person = {
-    principalId: principal.id,
-    customerId: customer.id,
-    kaneoUserId: customer.kaneoUserId,
-    email: customer.email,
-  };
-  const customerOnly = and(
+/** A customer who matches the targets and is no teammate, test customer or blocked person. */
+const customerOnly = (targets: UpdateTargets) =>
+  and(
     isNull(principal.kaneoUserId),
     isNull(principal.blockedAt),
     isNull(principal.testOwnerPrincipalId),
     matches(targets),
   );
-  const followers = await db
+
+/**
+ * The followers who may get the update mail, over `followers(db)`: customers who follow the request's
+ * status and match the targets, minus those who turned update mail off and those whose linked
+ * conversation gets the update as a reply (`replied`), so nobody hears it twice.
+ */
+export const followerWhere = (
+  postId: PostId,
+  targets: UpdateTargets,
+  replied: readonly string[],
+) =>
+  and(
+    eq(postSubscriptions.postId, postId),
+    eq(postSubscriptions.notifyStatusChanges, true),
+    customerOnly(targets),
+    // jobs/preferences.ts#wants for this type: mail muted, or this type's email cell turned off.
+    sql`not exists (select 1 from ${notificationPreferences} where ${notificationPreferences.principalId} = ${principal.id} and (${notificationPreferences.emailMuted} or ${notificationPreferences.matrix} -> ${UPDATE_MAIL_TYPE} ->> 'email' = 'false'))`,
+    replied.length
+      ? notInArray(principal.id, replied as PrincipalId[])
+      : undefined,
+  );
+
+const person = {
+  principalId: principal.id,
+  customerId: customer.id,
+  kaneoUserId: customer.kaneoUserId,
+  email: customer.email,
+};
+/** Follows joined to their principal and customer profile, for followerWhere. */
+export const followers = (db: Database) =>
+  db
     .select(person)
     .from(postSubscriptions)
     .innerJoin(principal, eq(principal.id, postSubscriptions.principalId))
-    .innerJoin(customer, eq(customer.id, principal.userId))
-    .where(
-      and(
-        eq(postSubscriptions.postId, post.id),
-        eq(postSubscriptions.notifyStatusChanges, true),
-        customerOnly,
-      ),
-    )
-    .orderBy(principal.id)
-    .limit(MAX_FOLLOWERS);
-  const wanted: Person[] = [];
-  for (const follower of followers)
-    if (await wants(db, follower.principalId, UPDATE_MAIL_TYPE, "email"))
-      wanted.push(follower);
+    .innerJoin(customer, eq(customer.id, principal.userId));
+
+/**
+ * Step 1, in the request's scoped transaction: the live request, its linked conversations whose customer
+ * matches the targets, the followers who may get the mail (each one only up to PREVIEW_EXACT), and the
+ * Slack connections that send its comments.
+ */
+export async function updateCandidates(
+  db: Database,
+  postId: PostId,
+  input: UpdateTargets & { channels: UpdateChannels },
+) {
+  await checkSegments(db, input.segmentIds);
+  const [post] = await db
+    .select({ id: posts.id, title: posts.title, boardId: posts.boardId })
+    .from(posts)
+    .where(and(eq(posts.id, postId), isNull(posts.deletedAt)));
+  if (!post) throw new HTTPException(404, { message: "Post not found" });
   const links = await db
     .select({ externalId: postExternalLinks.externalId })
     .from(postExternalLinks)
@@ -202,10 +232,21 @@ export async function updateCandidates(
           and(
             inArray(conversations.id, conversationIds),
             isNull(conversations.archivedAt),
-            customerOnly,
+            customerOnly(input),
           ),
         )
     : [];
+  const replied = input.channels.conversations
+    ? linked.map((row) => row.principalId)
+    : [];
+  const where = followerWhere(post.id, input, replied);
+  const [counted] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(postSubscriptions)
+    .innerJoin(principal, eq(principal.id, postSubscriptions.principalId))
+    .innerJoin(customer, eq(customer.id, principal.userId))
+    .where(where);
+  const followerCount = counted?.count ?? 0;
   const [slack] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(integrationEventMappings)
@@ -225,7 +266,12 @@ export async function updateCandidates(
     );
   return {
     post,
-    followers: wanted,
+    followerCount,
+    followers:
+      followerCount <= PREVIEW_EXACT
+        ? await followers(db).where(where).orderBy(principal.id)
+        : [],
+    replied,
     conversations: linked,
     slack: slack?.count ?? 0,
   };
@@ -251,8 +297,7 @@ export async function followerAccounts(
 
 /**
  * Step 3, in a scoped transaction: the followers who get the mail, by the worker's rule: a verified account
- * address (or a widget profile's real address), and the request visible to them now. A follower whose
- * linked conversation gets the update as a reply is left out, so nobody hears it twice.
+ * address (or a widget profile's real address), and the request visible to them now.
  */
 export async function updateRecipients(
   db: Database,
@@ -260,15 +305,9 @@ export async function updateRecipients(
   accounts: Awaited<ReturnType<typeof followerAccounts>>,
   channels: UpdateChannels,
 ) {
-  const replied = new Set(
-    channels.conversations
-      ? candidates.conversations.map((row) => row.principalId)
-      : [],
-  );
   const recipients: PrincipalId[] = [];
   if (!channels.email) return recipients;
   for (const follower of candidates.followers) {
-    if (replied.has(follower.principalId)) continue;
     const account = follower.kaneoUserId
       ? accounts.get(follower.kaneoUserId)
       : undefined;
@@ -307,9 +346,13 @@ export const updateCountsOf = (
   candidates: UpdateCandidates,
   recipients: readonly PrincipalId[],
   channels: UpdateChannels,
-) => ({
-  page: channels.page ? 1 : 0,
-  email: recipients.length,
-  conversations: channels.conversations ? candidates.conversations.length : 0,
-  slack: channels.page && channels.slack ? candidates.slack : 0,
-});
+) => {
+  const estimated = channels.email && candidates.followerCount > PREVIEW_EXACT;
+  return {
+    page: channels.page ? 1 : 0,
+    email: estimated ? candidates.followerCount : recipients.length,
+    emailEstimated: estimated,
+    conversations: channels.conversations ? candidates.conversations.length : 0,
+    slack: channels.page && channels.slack ? candidates.slack : 0,
+  };
+};

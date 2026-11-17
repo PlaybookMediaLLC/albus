@@ -15,12 +15,14 @@ import * as kaneo from "../../database/schema";
 import { postActivity } from "../../database/quills/schema/activity";
 import { boards } from "../../database/quills/schema/boards";
 import { events } from "../../database/quills/schema/events";
+import { hookDeliveries } from "../../database/quills/schema/hook-deliveries";
 import { jobQueue } from "../../database/quills/schema/job-queue";
 import { inAppNotifications } from "../../database/quills/schema/notifications";
 import { postTasks } from "../../database/quills/schema/platform-links";
 import { posts } from "../../database/quills/schema/posts";
 import { postStatuses } from "../../database/quills/schema/statuses";
 import { harness } from "../jobs/handlers/harness.fixture";
+import { portalPaths } from "../portal/paths";
 
 let pool: Pool;
 vi.mock("../../database/index", () => ({
@@ -265,6 +267,49 @@ describe.skipIf(!url)("Quills board task rule", () => {
     expect(await tasksIn(projectId)).toHaveLength(1);
   });
 
+  it("links the task of an attempt that stopped before its link write, and creates one only when Kaneo has none", async () => {
+    const owner = await h.principal(h.a, h.owner);
+    /** The state an attempt leaves when it stops between Kaneo's commit and the link write. */
+    const stopped = async (projectId: string, postId: string) =>
+      h.system(h.a, (db) =>
+        db.insert(hookDeliveries).values({
+          jobId: `task-rule:${postId}:${projectId}`,
+          hookType: "task_rule",
+          outcome: "processing",
+        }),
+      );
+
+    const projectId = await project(h.a);
+    const postId = await request(projectId);
+    await h
+      .db()
+      .insert(kaneo.taskTable)
+      .values({
+        id: `${projectId}_orphan`,
+        projectId,
+        title: "Dark mode",
+        number: 1,
+        description: `Please add a dark theme.\n\n---\n\n**Feedback request:** [Dark mode](${portalPaths.teammatePost(h.a, postId)})`,
+      });
+    await stopped(projectId, postId);
+    await move(postId, open, planned, owner);
+    expect(await tasksIn(projectId)).toHaveLength(1);
+    expect(await links(postId)).toEqual([
+      { taskId: `${projectId}_orphan`, source: "rule" },
+    ]);
+
+    // The attempt stopped before Kaneo committed: the retry creates the task.
+    const emptyProject = await project(h.a);
+    const second = await request(emptyProject);
+    await stopped(emptyProject, second);
+    await move(second, open, planned, owner);
+    const [created, ...more] = await tasksIn(emptyProject);
+    expect(more).toEqual([]);
+    expect(await links(second)).toEqual([
+      { taskId: created!.id, source: "rule" },
+    ]);
+  });
+
   it("deletes the new task when the request is gone at the link write", async () => {
     const projectId = await project(h.a);
     const postId = await request(projectId);
@@ -306,6 +351,23 @@ describe.skipIf(!url)("Quills board task rule", () => {
         title: 'No task was created for "Dark mode"',
         body: "You cannot create tasks in this project",
       },
+    ]);
+  });
+
+  it("creates no task when the change's API key does not allow task:create", async () => {
+    const projectId = await project(h.a);
+    const denied = await request(projectId);
+    const actor = await h.principal(h.a, h.mate);
+    await move(denied, open, planned, actor, { keyTasks: "update" });
+    expect(await tasksIn(projectId)).toEqual([]);
+    expect(await activity(denied)).toEqual([
+      { type: "task.create_failed", metadata: { reason: "forbidden" } },
+    ]);
+    // The same teammate with a key that allows it gets the task.
+    const allowed = await request(projectId);
+    await move(allowed, open, planned, actor, { keyTasks: "create,update" });
+    expect(await links(allowed)).toEqual([
+      { taskId: expect.any(String), source: "rule" },
     ]);
   });
 

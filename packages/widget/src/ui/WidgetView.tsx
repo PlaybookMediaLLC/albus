@@ -40,6 +40,7 @@ export function WidgetView({
   brandName = "Quills",
   dir = "ltr",
   identified = false,
+  locale,
   theme = "auto",
   initialTab = "home",
   tabs: enabledTabs,
@@ -486,6 +487,7 @@ export function WidgetView({
           <FeedbackView
             posts={feedback}
             identified={identified}
+            locale={locale}
             onOpen={(id) => open("feedback", id)}
             onCompose={() => compose("feedback")}
             filters={feedbackFilters}

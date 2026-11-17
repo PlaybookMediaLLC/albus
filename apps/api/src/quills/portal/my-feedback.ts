@@ -31,7 +31,7 @@ const FILTERS = ["all", "mine", "voted", "following"] as const;
 const voted = (me: PrincipalId) =>
   sql`exists (select 1 from ${postVotes} where ${postVotes.postId} = ${posts.id} and ${postVotes.principalId} = ${sql.param(me, postVotes.principalId)})`;
 const following = (me: PrincipalId) =>
-  sql`exists (select 1 from ${postSubscriptions} where ${postSubscriptions.postId} = ${posts.id} and ${postSubscriptions.principalId} = ${sql.param(me, postSubscriptions.principalId)})`;
+  sql`exists (select 1 from ${postSubscriptions} where ${postSubscriptions.postId} = ${posts.id} and ${postSubscriptions.principalId} = ${sql.param(me, postSubscriptions.principalId)} and ${postSubscriptions.notifyStatusChanges})`;
 
 /** Posts that `me` created, voted for or follows, by filter. */
 export function myPosts(

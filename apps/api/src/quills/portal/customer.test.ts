@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vite-plus/test";
 import { openPublic } from "../content/public/seed.fixture";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import type { PostId, PrincipalId } from "@kaneo/ids";
@@ -374,7 +374,13 @@ describe.skipIf(!url)("Quills portal invites and customer routes", () => {
           db
             .select({ id: postSubscriptions.id })
             .from(postSubscriptions)
-            .where(eq(postSubscriptions.postId, postId as PostId)),
+            // The row stays with its notices off, so a vote's shipped notice stays off too.
+            .where(
+              and(
+                eq(postSubscriptions.postId, postId as PostId),
+                eq(postSubscriptions.notifyStatusChanges, true),
+              ),
+            ),
         )
       ).length;
     const stored = await pool.query(
@@ -424,6 +430,36 @@ describe.skipIf(!url)("Quills portal invites and customer routes", () => {
       action: null,
       postTitle: null,
     });
+  });
+
+  it("keeps an unfollow as an opt-out that a later follow lifts", async () => {
+    const env = contractEnv();
+    await enablePortal(env, env.a);
+    const { postId } = await customerPost(env, env.a);
+    const follow = (following: boolean) =>
+      call("PUT", `/portal/posts/${postId}/follow`, {
+        user: env.customerA,
+        body: { following },
+      });
+    const level = async () =>
+      (
+        await call("GET", `/posts/${postId}/subscription`, {
+          user: env.customerA,
+        })
+      ).body.level;
+    expect((await follow(true)).status).toBe(200);
+    expect(await level()).toBe("all");
+    expect((await follow(false)).status).toBe(200);
+    expect(await level()).toBe("none");
+    const rows = await env.scoped(env.a, (db) =>
+      db
+        .select({ status: postSubscriptions.notifyStatusChanges })
+        .from(postSubscriptions)
+        .where(eq(postSubscriptions.postId, postId as PostId)),
+    );
+    expect(rows).toEqual([{ status: false }]);
+    expect((await follow(true)).status).toBe(200);
+    expect(await level()).toBe("all");
   });
 
   it("gives each status-change mail recipient its own one-click link", async () => {

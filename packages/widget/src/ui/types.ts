@@ -166,6 +166,8 @@ export interface WidgetViewProps {
   dir?: "ltr" | "rtl";
   /** The host app identified the visitor (a signed token): the roadmap marks what they voted for. */
   identified?: boolean;
+  /** The visitor's language for the widget's own translated labels (core/copy.ts); else the browser's. */
+  locale?: string;
   theme?: "light" | "dark" | "auto";
   initialTab?: WidgetTab;
   /** The tabs that the workspace turned on; omit for all. A route to another tab shows the first of these. */

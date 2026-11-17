@@ -95,7 +95,14 @@ export function SendUpdateDialog(props: SendUpdateDialogProps) {
         param,
         json: { ...values, channels, segmentIds, languages, idempotencyKey },
       });
-      toast.success(t("team-post.updateSent", { count: result.counts.email }));
+      toast.success(
+        t(
+          result.counts.emailEstimated
+            ? "team-post.updateSentEstimate"
+            : "team-post.updateSent",
+          { count: result.counts.email },
+        ),
+      );
       props.onClose();
     } catch (error) {
       return error as PortalProblem;

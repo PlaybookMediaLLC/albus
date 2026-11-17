@@ -260,6 +260,13 @@
 			"when": 1794910771728,
 			"tag": "0036_post_updates",
 			"breakpoints": true
+		},
+		{
+			"idx": 37,
+			"version": "7",
+			"when": 1794924537493,
+			"tag": "0037_drop_update_recipients",
+			"breakpoints": true
 		}
 	]
 }

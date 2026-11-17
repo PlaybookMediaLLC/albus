@@ -539,3 +539,29 @@ export async function linkedTasks(
     hidden: rows.length - visible.length,
   };
 }
+
+/**
+ * The newest task of the workspace's project, created in the last day, whose description contains
+ * `marker` (a request's URL): the rule's task when an attempt stopped before its link write.
+ */
+export async function recentTaskWithMarker(
+  workspaceId: string,
+  projectId: string,
+  marker: string,
+) {
+  const [task] = await platformDb
+    .select({ id: taskTable.id })
+    .from(taskTable)
+    .innerJoin(projectTable, eq(projectTable.id, taskTable.projectId))
+    .where(
+      and(
+        eq(taskTable.projectId, projectId),
+        eq(projectTable.workspaceId, workspaceId),
+        sql`strpos(${taskTable.description}, ${marker}) > 0`,
+        sql`${taskTable.createdAt} > now() - interval '1 day'`,
+      ),
+    )
+    .orderBy(sql`${taskTable.createdAt} desc`)
+    .limit(1);
+  return task?.id;
+}

@@ -92,6 +92,8 @@ export type QuillsRouteInput<P, Q, B> = {
   query: Output<Q>;
   body: Output<B>;
   workspaceId: string;
+  /** Teammate routes: the request's API-key scope; null without a key or for an unscoped key. */
+  apiKeyScope?: PermissionMap | null;
 };
 
 type SignedRedirectInput<P, Q> = {
@@ -1052,6 +1054,9 @@ export function buildQuillsRoute<
           ? c.req.valid("json")
           : emptyBody(d.body)),
       workspaceId: c.get("workspaceId"),
+      apiKeyScope:
+        (c.get("apiKey") as { permissions?: PermissionMap | null } | undefined)
+          ?.permissions ?? null,
     } as QuillsRouteInput<P, Q, B>;
     const { load, project, callerActions } = d;
     let loaded = undefined as L;

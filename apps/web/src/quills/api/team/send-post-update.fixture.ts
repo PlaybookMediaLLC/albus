@@ -4,7 +4,13 @@ export const sendPostUpdateFixture = {
     ({
       ...{
         updateId: "update_id_test_1",
-        counts: { page: 0, email: 0, conversations: 0, slack: 0 },
+        counts: {
+          page: 0,
+          email: 0,
+          emailEstimated: false,
+          conversations: 0,
+          slack: 0,
+        },
         replayed: false,
         commentId: null,
         replies: [],

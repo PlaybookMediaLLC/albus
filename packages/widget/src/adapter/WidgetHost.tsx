@@ -205,6 +205,7 @@ export function WidgetHost({
       key={visitor.visitor}
       dir={dir}
       identified={visitor.identified}
+      locale={locale}
       theme={ready ? config.theme : "auto"}
       // Until the config arrives no tab is known to be on.
       tabs={ready ? config.tabs : []}

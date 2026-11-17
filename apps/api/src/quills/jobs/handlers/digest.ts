@@ -123,7 +123,7 @@ async function changedPosts(db: Database, from: Date, to: Date) {
 
 /** The customer voted for or follows a live duplicate that was merged into the post. */
 const askedOnDuplicate = (me: PrincipalId) =>
-  sql`exists (select 1 from ${posts} d where d.canonical_post_id = ${posts.id} and d.deleted_at is null and (exists (select 1 from ${postVotes} v where v.post_id = d.id and v.principal_id = ${sql.param(me, postVotes.principalId)}) or exists (select 1 from ${postSubscriptions} s where s.post_id = d.id and s.principal_id = ${sql.param(me, postSubscriptions.principalId)})))`;
+  sql`exists (select 1 from ${posts} d where d.canonical_post_id = ${posts.id} and d.deleted_at is null and (exists (select 1 from ${postVotes} v where v.post_id = d.id and v.principal_id = ${sql.param(me, postVotes.principalId)}) or exists (select 1 from ${postSubscriptions} s where s.post_id = d.id and s.principal_id = ${sql.param(me, postSubscriptions.principalId)} and s.notify_status_changes)))`;
 
 const progressKey = (week: string) => `digest:${week}`;
 const progressSchema = z.object({
@@ -156,7 +156,12 @@ export async function queueWeeklyDigests(db: Database, now = new Date()) {
       db
         .select({ id: postSubscriptions.principalId })
         .from(postSubscriptions)
-        .where(inArray(postSubscriptions.postId, withDuplicates(db, changed))),
+        .where(
+          and(
+            inArray(postSubscriptions.postId, withDuplicates(db, changed)),
+            eq(postSubscriptions.notifyStatusChanges, true),
+          ),
+        ),
     )
     .as("askers");
   const due = changed.length

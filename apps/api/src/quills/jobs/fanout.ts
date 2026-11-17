@@ -48,6 +48,7 @@ import {
 } from "../portal/unsubscribe-token";
 import { crmNoteDue } from "../integrations/crm-notes";
 import { taskRuleDue } from "../integrations/task-rule-job";
+import { updateMailDue } from "./handlers/update-mail";
 import { taskFailureMessages } from "../integrations/post-task";
 import type { TaskFailure } from "../framework/platform-reads";
 import { githubCommentDue } from "./handlers/github-comment";
@@ -411,21 +412,9 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
       };
     },
   },
-  // #92: the followers that the send decided, each once; the mail worker checks each again at send time.
+  // #92: handlers/update-mail.ts queues the followers' mail jobs in pages; this entry writes each mail.
   "post.update_sent": {
-    recipients: async (db, event) => {
-      const [update] = await db
-        .select({
-          postId: postUpdates.postId,
-          recipientIds: postUpdates.recipientIds,
-        })
-        .from(postUpdates)
-        .where(eq(postUpdates.id, payloadOf(event).updateId ?? ""));
-      return {
-        principalIds: (update?.recipientIds ?? []) as PrincipalId[],
-        postId: update?.postId,
-      };
-    },
+    recipients: noRecipients,
     customers: true,
     mail: async (db, event, principalId) => {
       const [update] = await db
@@ -574,6 +563,8 @@ export async function fanOut(workspaceId: string, eventId: string) {
     await enqueueWorkflowRuns(db, event);
     // RFC 0005: a teammate's status change can create a Kaneo task or comment on the linked tasks.
     await taskRuleDue(db, event);
+    // #92: an update's mail goes out in pages.
+    await updateMailDue(db, event);
     // Private comments stay inside the workspace. A board filter applies only to events about a board.
     const { boardId, isPrivate } = await placeOf(db, event);
     const hooks = isPrivate

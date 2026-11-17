@@ -9,6 +9,7 @@ import { posts } from "../../database/quills/schema/posts";
 import type { QuillsCaller } from "../framework/audience";
 import { defineQuillsRoute, type Database } from "../framework/define-route";
 import { postVisible, viewerFor, visibleBoards } from "./feedback/viewer";
+import { unfollowPost } from "../delivery/post-subscriptions";
 import { requirePortalAccess } from "./gate";
 
 // A portal customer's own subscriptions: posts, the changelog and the status page. Each route
@@ -141,18 +142,16 @@ const deletePostSubscription = defineQuillsRoute({
   action: "update",
   params: postParams,
   response: z.object({ changed: z.boolean() }),
-  responseDescription: "Whether a subscription was removed",
+  responseDescription: "Whether the caller followed the post",
   errors: { 403: "Portal access denied", 404: "Post or portal not found" },
   event: personal,
   handler: async ({ db, caller, params }) => {
     await requirePortalAccess(db, caller);
     await customerPost(db, caller, params.postId);
     if (!caller.principalId) return { changed: false };
-    const rows = await db
-      .delete(postSubscriptions)
-      .where(mine(params.postId, caller))
-      .returning({ id: postSubscriptions.id });
-    return { changed: rows.length > 0 };
+    return {
+      changed: await unfollowPost(db, params.postId, caller.principalId),
+    };
   },
 });
 

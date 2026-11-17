@@ -1,3 +1,4 @@
+import { widgetCopy } from "./copy.js";
 import { ensureStyles } from "./style.js";
 import { CHAT_CIRCLE, X } from "../icons/phosphor.js";
 
@@ -10,6 +11,8 @@ export interface LauncherOptions {
    * the fake page instead of `position: fixed` on the viewport.
    */
   root?: HTMLElement;
+  /** The visitor's language for the launcher's own labels (core/copy.ts); else the browser's. */
+  locale?: () => string | undefined;
 }
 
 export interface LauncherHandle {
@@ -305,7 +308,7 @@ export function createLauncher(opts: LauncherOptions): LauncherHandle {
     },
     announce(title, onOpen) {
       announcement = { title, onOpen };
-      bubbleText.textContent = `New: ${title}`;
+      bubbleText.textContent = widgetCopy("newEntry", opts.locale?.(), title);
       renderGreeting();
     },
     setLabel(text) {

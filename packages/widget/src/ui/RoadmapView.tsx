@@ -1,3 +1,4 @@
+import { widgetCopy } from "../core/copy.js";
 import { Avatar } from "./Avatar.js";
 import { Icon } from "./Icon.js";
 import { feedbackStatusLabels } from "./feedback.js";
@@ -6,6 +7,7 @@ import type { FeedbackPost, FeedbackStatus } from "./types.js";
 export function RoadmapView({
   posts,
   identified = false,
+  locale,
   onOpen,
   expanded,
   onExpanded,
@@ -13,6 +15,7 @@ export function RoadmapView({
   posts: readonly FeedbackPost[];
   /** A signed-in customer: each shipped request that they voted for gets the "For you" mark (#109). */
   identified?: boolean;
+  locale?: string;
   onOpen: (id: string) => void;
   expanded: readonly FeedbackStatus[];
   onExpanded: (statuses: readonly FeedbackStatus[]) => void;
@@ -46,7 +49,7 @@ export function RoadmapView({
                     {identified && status === "shipped" && post.voted && (
                       <span className="qb-for-you">
                         <Icon name="check" />
-                        For you
+                        {widgetCopy("forYou", locale)}
                       </span>
                     )}
                     <span>{post.body}</span>

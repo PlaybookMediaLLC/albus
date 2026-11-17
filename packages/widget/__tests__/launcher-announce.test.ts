@@ -45,4 +45,14 @@ describe("launcher announcement", () => {
     expect(bubble().style.display).toBe("flex");
     expect(text().textContent).toBe("Hi there");
   });
+
+  it("writes the announcement in the visitor's language", () => {
+    const launcher = createLauncher({
+      placement: "right",
+      onClick: vi.fn(),
+      locale: () => "fr-CA",
+    });
+    launcher.announce("Export CSV", vi.fn());
+    expect(text().textContent).toBe("Nouveau : Export CSV");
+  });
 });

@@ -109,12 +109,14 @@ export async function startFeature(pool: Pool, url: string, name: string) {
     method: string,
     path: string,
     body?: unknown,
+    headers: Record<string, string> = {},
   ) => {
     const res = await app.request(`/quills/${a}${path}`, {
       method,
       headers: {
         "x-test-user": user,
         ...(body !== undefined && { "content-type": "application/json" }),
+        ...headers,
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     });

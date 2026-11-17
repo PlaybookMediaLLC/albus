@@ -4,7 +4,13 @@ import { renderComponent } from "../../test/render";
 import { UpdateChannelsField } from "./update-channels";
 
 const value = { page: true, email: true, conversations: false, slack: true };
-const counts = { page: 1, email: 4, conversations: 0, slack: 2 };
+const counts = {
+  page: 1,
+  email: 4,
+  emailEstimated: false,
+  conversations: 0,
+  slack: 2,
+};
 
 describe("UpdateChannelsField", () => {
   it("shows each channel's count and reports a change", () => {
@@ -21,6 +27,18 @@ describe("UpdateChannelsField", () => {
     expect(view.getByText("2 channels")).toBeVisible();
     fireEvent.click(view.getByRole("checkbox", { name: "Email followers" }));
     expect(onChange).toHaveBeenCalledWith({ ...value, email: false });
+  });
+
+  it("marks the email count as an upper bound above 1,000 followers", () => {
+    const view = renderComponent(
+      <UpdateChannelsField
+        value={value}
+        onChange={vi.fn()}
+        counts={{ ...counts, email: 1500, emailEstimated: true }}
+        slackConnected
+      />,
+    );
+    expect(view.getByText("Up to 1500 people")).toBeVisible();
   });
 
   it("turns Slack off without the page channel, and shows no counts while they load", () => {
