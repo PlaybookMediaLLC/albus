@@ -1,6 +1,6 @@
 import { readPortalSignIn, SIGN_IN_MODES } from "../framework/portal-sign-in";
 import { z } from "../../openapi";
-import { bool, parseJson, record, settingsArea, str } from "./area";
+import { bool, parseJson, portalOn, record, settingsArea, str } from "./area";
 
 // Routes come from settingsArea, which declares them with ../framework/define-route.
 // Writable fields match Quackback's updatePortalConfigFn. Access, moderation and the
@@ -59,7 +59,7 @@ export default settingsArea({
   title: "Portal",
   label: "portal",
   response: z.object({
-    /** Portals are opt-in: every portal and public route is 404 until a teammate turns this on. */
+    /** On by default. While a teammate has it off, every portal and public route is 404. */
     enabled: z.boolean(),
     features: z.object({
       allowAnonymous: z.boolean(),
@@ -97,7 +97,7 @@ export default settingsArea({
     const moderation = record(config.moderationDefault);
     const access = record(config.access);
     return {
-      enabled: config.enabled === true,
+      enabled: portalOn(row.portalConfig),
       features: {
         // A missing flag denies anonymous interaction, as the portal gate does.
         allowAnonymous: features.allowAnonymous === true,

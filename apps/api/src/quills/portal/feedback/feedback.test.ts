@@ -208,11 +208,23 @@ describe.skipIf(!url)("Quills customer feedback", () => {
     expect((await call("GET", "/portal/config")).status).toBe(404);
     expect((await settingsCall(true)).body.enabled).toBe(true);
     expect((await call("GET", "/portal/config")).status).toBe(200);
-    // A workspace that never stored the flag (every existing install) is off.
+    // A workspace that never stored the flag (every existing install) is on.
     await portal({ enabled: undefined });
+    expect((await call("GET", "/portal/config")).status).toBe(200);
+    expect((await settingsCall(true)).body.enabled).toBe(true);
+    // A malformed config keeps the portal closed.
+    const stored = await env.scoped(env.a, async (db) => {
+      const [row] = await db
+        .select({ text: settings.portalConfig })
+        .from(settings);
+      await db.update(settings).set({ portalConfig: "not json" });
+      return row?.text ?? null;
+    });
     expect((await call("GET", "/portal/config")).status).toBe(404);
     expect((await call("GET", "/portal/boards")).status).toBe(404);
-    await portal({ enabled: true });
+    await env.scoped(env.a, (db) =>
+      db.update(settings).set({ portalConfig: stored }),
+    );
   });
 
   it("returns safe public branding without custom CSS", async () => {
