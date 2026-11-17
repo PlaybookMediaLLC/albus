@@ -13,6 +13,7 @@ import { PortalShell } from "../ui/portal-shell";
 import { StateView } from "../ui/state-view";
 import { PortalAccountMenu } from "./portal-account-menu";
 import { PortalSearch } from "./portal-search";
+import { PortalWidgetLink } from "./widget-link";
 import { PortalRuntimeProvider } from "./runtime";
 
 export interface PortalLayoutProps {
@@ -112,6 +113,12 @@ export function PortalRoute() {
               </>
             }
           >
+            {viewer.kind === "user" ? (
+              <PortalWidgetLink
+                workspaceId={workspaceId}
+                workspaceName={config.data.name}
+              />
+            ) : null}
             <Outlet />
             {floatSubmit ? (
               <a

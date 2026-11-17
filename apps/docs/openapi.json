@@ -14579,13 +14579,86 @@
       }
     },
     "/quills-public/{workspace}/portal/widget-link": {
+      "get": {
+        "operationId": "getQuillsPortalWidgetLink",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Whether a widget profile waits for the caller to link it",
+        "description": "pending is true when a widget profile with the signed-in account's verified email asked for a portal sign-in link (POST /widget/portal-link) in the last 15 minutes and can be linked. The portal then asks the person to confirm (POST) or refuse (DELETE). 404 while the portal is off.",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Workspace ID or slug"
+            },
+            "required": true,
+            "description": "Workspace ID or slug",
+            "name": "workspace",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Whether a link waits for the caller's answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pending": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "pending"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This account is blocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found or archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "operationId": "linkQuillsPortalWidgetProfile",
         "tags": [
           "Quills"
         ],
         "summary": "Link the caller's widget profile to their portal profile",
-        "description": "When the signed-in account's email is verified and equals the email of a widget profile that the host app identified in this workspace, and that widget profile asked for a portal sign-in link (POST /widget/portal-link) in the last 15 minutes, the widget profile's votes, comments, conversations, tickets, survey answers, subscriptions and other activity move to the caller's portal profile in one transaction. A duplicate vote or subscription is dropped and the post's vote count is lowered, so counts do not grow. The widget profile is removed and its sub identifies the portal profile from then on. A blocked or test profile, an unverified email, a workspace member and a portal profile that an earlier link gave another sub are never linked. Each request links once. Without a match nothing changes. 404 while the portal is off.",
+        "description": "The person confirmed the link in the portal. When the signed-in account's email is verified and equals the email of a widget profile that the host app identified in this workspace, and that widget profile asked for a portal sign-in link (POST /widget/portal-link) in the last 15 minutes, the widget profile's votes, comments, conversations, tickets, survey answers, subscriptions and other activity move to the caller's portal profile in one transaction. A duplicate vote, rating or subscription is dropped and its count lowered, so counts do not grow; an opt-out on either profile wins. The widget profile is removed and its sub identifies the portal profile from then on. A blocked or test profile, an unverified email, a workspace member and a portal profile that an earlier link gave another sub are never linked. Each request links once. Without a match nothing changes. 404 while the portal is off.",
         "security": [],
         "parameters": [
           {
@@ -14625,6 +14698,89 @@
                   "required": [
                     "principalId",
                     "mergedPrincipalId"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This account is blocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found or archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "declineQuillsPortalWidgetLink",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Refuse the link that a widget profile asked for",
+        "description": "The person did not ask to open the portal from the widget: the pending request for the signed-in account's email ends, and nothing is linked. 404 while the portal is off.",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Workspace ID or slug"
+            },
+            "required": true,
+            "description": "Workspace ID or slug",
+            "name": "workspace",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Whether a pending request ended",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "declined": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "declined"
                   ]
                 }
               }
@@ -15900,7 +16056,7 @@
           "Quills"
         ],
         "summary": "Mail the identified visitor a sign-in link to the portal",
-        "description": "Sends Kaneo's sign-in link to the email of the visitor that the host app identified. The link works once, expires after 5 minutes and opens the portal's My feedback page signed in; when the account's verified email matches, the portal links this widget profile (POST /portal/widget-link). For the next 15 minutes, a portal sign-in with that verified address links this widget profile, once. A used or expired link opens Kaneo's sign-in page with the error. Kaneo's registration rules may drop the mail for an address with no account, without an error. 403 for an anonymous visitor, or when Kaneo cannot mail a sign-in link (no mail delivery, login form off, captcha on); 404 while the portal is closed.",
+        "description": "Sends Kaneo's sign-in link to the email of the visitor that the host app identified. The link works once, expires after 5 minutes and opens the portal's My feedback page signed in. For the next 15 minutes, the portal asks a signed-in account with that verified address to confirm linking this widget profile (GET, POST and DELETE /portal/widget-link). A used or expired link opens Kaneo's sign-in page with the error. With registration closed, Kaneo mails only an address that has an account, and delivery is if_account. 403 for an anonymous visitor, or when Kaneo cannot mail a sign-in link (no mail delivery, login form off, captcha on); 404 while the portal is closed.",
         "security": [],
         "parameters": [
           {
@@ -15926,10 +16082,19 @@
                   "properties": {
                     "sent": {
                       "type": "boolean"
+                    },
+                    "delivery": {
+                      "type": "string",
+                      "enum": [
+                        "sent",
+                        "if_account"
+                      ],
+                      "description": "sent: Kaneo mails any address. if_account: registration is closed, so Kaneo mails only an address that has an account; the API never says which, so the visitor is told so."
                     }
                   },
                   "required": [
-                    "sent"
+                    "sent",
+                    "delivery"
                   ]
                 }
               }

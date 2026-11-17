@@ -28,7 +28,7 @@ export function HomeView({
   /** A waiting survey, shown under the greeting. */
   survey?: ReactNode;
   /** Mails a portal sign-in link; only for a visitor that the host app identified. */
-  openPortal?: () => Promise<unknown>;
+  openPortal?: () => Promise<"sent" | "if_account">;
 }) {
   const recent = has("messages")
     ? (conversations.find((item) => (item.unreadCount ?? 0) > 0) ??

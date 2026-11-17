@@ -5,7 +5,7 @@ import { principal, user as customer } from "../../database/quills/schema/auth";
 import { kvStore } from "../../database/quills/schema/kv";
 import { defineQuillsRoute } from "../framework/define-route";
 import { hashToken } from "../framework/audience";
-import { sendSignInLink } from "../framework/sign-in-link";
+import { sendSignInLink, signInDelivery } from "../framework/sign-in-link";
 import { requirePortal } from "../portal/feedback/viewer";
 
 // "Open in portal" (issue #129, option C). The widget session never signs anyone in: Kaneo's own
@@ -25,10 +25,16 @@ const portalLink = defineQuillsRoute({
   operationId: "sendQuillsWidgetPortalLink",
   summary: "Mail the identified visitor a sign-in link to the portal",
   description:
-    "Sends Kaneo's sign-in link to the email of the visitor that the host app identified. The link works once, expires after 5 minutes and opens the portal's My feedback page signed in; when the account's verified email matches, the portal links this widget profile (POST /portal/widget-link). For the next 15 minutes, a portal sign-in with that verified address links this widget profile, once. A used or expired link opens Kaneo's sign-in page with the error. Kaneo's registration rules may drop the mail for an address with no account, without an error. 403 for an anonymous visitor, or when Kaneo cannot mail a sign-in link (no mail delivery, login form off, captcha on); 404 while the portal is closed.",
+    "Sends Kaneo's sign-in link to the email of the visitor that the host app identified. The link works once, expires after 5 minutes and opens the portal's My feedback page signed in. For the next 15 minutes, the portal asks a signed-in account with that verified address to confirm linking this widget profile (GET, POST and DELETE /portal/widget-link). A used or expired link opens Kaneo's sign-in page with the error. With registration closed, Kaneo mails only an address that has an account, and delivery is if_account. 403 for an anonymous visitor, or when Kaneo cannot mail a sign-in link (no mail delivery, login form off, captcha on); 404 while the portal is closed.",
   action: "create",
   rateLimit: { limit: 10, windowSeconds: 15 * 60 },
-  response: z.object({ sent: z.boolean() }),
+  response: z.object({
+    sent: z.boolean(),
+    delivery: z.enum(["sent", "if_account"]).openapi({
+      description:
+        "sent: Kaneo mails any address. if_account: registration is closed, so Kaneo mails only an address that has an account; the API never says which, so the visitor is told so.",
+    }),
+  }),
   responseDescription: "The sign-in link was handed to Kaneo's mail delivery",
   errors: {
     403: "Anonymous visitor, blocked person, or Kaneo cannot send a sign-in link",
@@ -59,11 +65,12 @@ const portalLink = defineQuillsRoute({
     return { email: row.email };
   },
   call: async ({ email }, { workspaceId }) => {
+    const delivery = await signInDelivery();
     await sendSignInLink(email, workspaceId);
-    return email;
+    return { email, delivery };
   },
   // Only this widget profile, for this address, may be linked by the next portal sign-in.
-  handler: async ({ db, caller, called: email }) => {
+  handler: async ({ db, caller, called: { email, delivery } }) => {
     const request = {
       value: { principalId: caller.principalId },
       expiresAt: new Date(Date.now() + REQUEST_TTL_MS),
@@ -75,7 +82,7 @@ const portalLink = defineQuillsRoute({
         target: [kvStore.workspaceId, kvStore.workspaceKey, kvStore.key],
         set: request,
       });
-    return { sent: true };
+    return { sent: true, delivery };
   },
 });
 

@@ -87,9 +87,16 @@ export function createApi(base: string, fetchImpl: typeof fetch = fetch) {
         canPortalHandoff: result.canPortalHandoff,
       };
     },
-    /** Mails Kaneo's sign-in link for the portal to the identified visitor's email. */
+    /**
+     * Asks Kaneo to mail its portal sign-in link to the identified visitor's email. "if_account":
+     * registration is closed, so only an address with an account gets the mail.
+     */
     async sendPortalLink() {
-      await request("POST", "/widget/portal-link");
+      const result = await request<{ delivery: "sent" | "if_account" }>(
+        "POST",
+        "/widget/portal-link",
+      );
+      return result.delivery;
     },
   };
 }

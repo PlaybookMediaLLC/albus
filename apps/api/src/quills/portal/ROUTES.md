@@ -69,7 +69,9 @@ Merged: `identify.ts#POST`; `session.ts#GET` and `widget-auth.ts`; `device.ts#PO
 |---|---|---|---|---|---|---|
 | `evaluateQuillsMyPortalAccess` | `GET /portal/access` | portal, sign-in optional | read | `settings`, `user_segments`; reads `public.workspace_member` | - | contract, audience, read-leak |
 | `recordQuillsPortalAccessDenied` | `POST /portal/access-denied` (records only a denial that the server evaluates) | portal | update | `audit_log`, `events`, `job_queue`, `rate_bucket` | `portal.access_denied` | contract, audience, rollback |
-| `linkQuillsPortalWidgetProfile` | `POST /portal/widget-link` (the portal calls it once per page load; 30 per 10 min per account and per client) | portal | update | `customer_identity`, `principal` and every table of `directory/lead-merge.ts#repoint` | `user.lead_merged` | contract, audience, rollback, `widget-link.test.ts` |
+| `getQuillsPortalWidgetLink` | `GET /portal/widget-link` (whether a widget profile waits for the caller's answer) | portal | read | `kv_store`, `customer_identity`, `principal` | - | contract, audience, `widget-link.test.ts` |
+| `declineQuillsPortalWidgetLink` | `DELETE /portal/widget-link` ("This wasn't me": the pending request ends; 30 per 10 min per account and per client) | portal | update | `kv_store` | none (a pending request only) | contract, audience, rollback, `widget-link.test.ts` |
+| `linkQuillsPortalWidgetProfile` | `POST /portal/widget-link` (the person confirmed the link in the portal; 30 per 10 min per account and per client) | portal | update | `customer_identity`, `principal` and every table of `directory/lead-merge.ts#repoint` | `user.lead_merged` | contract, audience, rollback, `widget-link.test.ts` |
 | `getQuillsCustomerProfile` | `GET /user/profile` | portal | read | `customer_identity`, `principal` | - | contract, audience |
 | `updateQuillsCustomerProfile` | `PUT /user/profile` (creates the link when missing; 30 per 10 min per client) | portal | update | `customer_identity`, `principal` | `customer.profile_updated` | contract, audience, rollback |
 | `unlinkQuillsCustomerProfile` | `DELETE /user/profile` (removes the link, keeps the profile and the Kaneo account; 30 per 10 min per client) | portal | delete | `customer_identity` | `customer.profile_unlinked` | contract, audience, rollback |
@@ -168,10 +170,16 @@ session model, and the host app's token never signs anyone into a Kaneo account.
    opens `/portal/{workspace}/my-feedback` and marks the account's email verified; a used or expired
    link opens Kaneo's sign-in page with the error. The widget offers the action
    (`canPortalHandoff`) only while the portal is on and Kaneo can mail the link: mail delivery on,
-   login form on, no captcha. Kaneo's registration rules may still drop the mail for an address with
-   no account, without an error.
-2. `linkQuillsPortalWidgetProfile` (the portal calls it once per page load) merges only the widget
-   profile of a live pending request for the account's email, when that email is verified and the
+   login form on, no captcha. The response's `delivery` comes from the instance's registration
+   settings: `sent` (Kaneo mails any address) or `if_account` (registration is closed, so only an
+   address with an account gets the mail). The widget words its message to match. The API never
+   checks the address, so the answer reveals no account.
+2. The portal asks first. For a signed-in viewer it reads `getQuillsPortalWidgetLink`; while a
+   request is pending it shows "Link your activity from the support widget?" with "Link my
+   activity" and "This wasn't me" (both refuse a framed click). "This wasn't me" calls
+   `declineQuillsPortalWidgetLink`, which ends the request. "Link my activity" calls
+   `linkQuillsPortalWidgetProfile`, which merges only the widget profile of a live pending request
+   for the account's email, when that email is verified and the
    widget profile is still the address's (`external_id` set, verified, not linked, not blocked, not a
    test customer) in the path's workspace. A host app's claim about an email never joins history
    without that request. A workspace member is never linked: the people directory hides a member's

@@ -561,6 +561,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/automation/workflows",
   },
   {
+    operationId: "declineQuillsPortalWidgetLink",
+    method: "DELETE",
+    path: "/api/quills-public/{workspace}/portal/widget-link",
+  },
+  {
     operationId: "declineQuillsWebsiteBrandingOffer",
     method: "POST",
     path: "/api/quills/{workspaceId}/settings/website-branding/decline",
@@ -1319,6 +1324,11 @@ export const quillsOperationRoutes = [
     operationId: "getQuillsPortalUserStats",
     method: "GET",
     path: "/api/quills-public/{workspace}/portal/user/stats",
+  },
+  {
+    operationId: "getQuillsPortalWidgetLink",
+    method: "GET",
+    path: "/api/quills-public/{workspace}/portal/widget-link",
   },
   {
     operationId: "getQuillsPost",

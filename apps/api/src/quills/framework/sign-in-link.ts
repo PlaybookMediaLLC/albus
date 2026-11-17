@@ -19,6 +19,21 @@ export const signInLinkAvailable = () =>
   !resolveFileSecret("TURNSTILE_SECRET_KEY");
 
 /**
+ * Whether Kaneo mails its sign-in link to any address ("sent") or, with registration closed, only
+ * to an address that has an account ("if_account"). It comes from the instance's settings, never
+ * from the address, so the answer reveals no account.
+ */
+export async function signInDelivery(): Promise<"sent" | "if_account"> {
+  // Loaded on use, like the auth module below.
+  const { getInstanceSettings } =
+    await import("../../instance-settings/get-instance-settings");
+  const settings = await getInstanceSettings();
+  return settings.registrationEnabled && settings.passwordRegistrationEnabled
+    ? "sent"
+    : "if_account";
+}
+
+/**
  * Mails Kaneo's sign-in link for `email`. It opens the workspace portal's My feedback page signed
  * in; a used or expired link opens Kaneo's sign-in page with the error, then the same page.
  */

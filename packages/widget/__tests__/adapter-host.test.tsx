@@ -216,7 +216,7 @@ describe("widget host page", () => {
             status: 403,
             body: { message: "A sign-in link cannot be sent now" },
           })
-        : { body: { sent: true } };
+        : { body: { sent: true, delivery: "sent" } };
     mount();
     fromParent({ type: "quackback:identify", data: { ssoToken: "a.b.c" } });
     fromParent({ type: "quackback:open", data: {} });
@@ -238,6 +238,24 @@ describe("widget host page", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open in portal" }));
     await waitFor(() =>
       expect(requested("POST /widget/portal-link")).toHaveLength(3),
+    );
+  });
+
+  it("says the link reaches only an account while the portal's registration is closed", async () => {
+    table["POST /widget/identify"] = () => ({
+      body: { sessionToken: "known", user, canPortalHandoff: true },
+    });
+    table["POST /widget/portal-link"] = () => ({
+      body: { sent: true, delivery: "if_account" },
+    });
+    mount();
+    fromParent({ type: "quackback:identify", data: { ssoToken: "a.b.c" } });
+    fromParent({ type: "quackback:open", data: {} });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open in portal" }),
+    );
+    expect((await screen.findByRole("status")).textContent).toBe(
+      "If your email has an account on the portal, a sign-in link is on its way. Check your email.",
     );
   });
 

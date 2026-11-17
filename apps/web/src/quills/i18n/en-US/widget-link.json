@@ -1,0 +1,8 @@
+{
+	"body": "Someone asked from the {{workspace}} support widget to open this portal with your email address. If that was you, add the votes, conversations and tickets from the widget to your account.",
+	"confirm": "Link my activity",
+	"decline": "This wasn't me",
+	"declined": "Nothing was linked.",
+	"linked": "Your activity from the support widget is now in the portal.",
+	"title": "Link your activity from the support widget?"
+}

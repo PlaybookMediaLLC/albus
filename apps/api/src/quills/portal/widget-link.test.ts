@@ -137,6 +137,8 @@ const identify = (sub: string, email: string, key = secret) =>
   });
 const link = (user: string, workspace?: string) =>
   call("POST", "/portal/widget-link", { user, workspace });
+const pendingOf = (user: string) =>
+  call("GET", "/portal/widget-link", { user });
 
 async function vote(postId: string, principalId: string) {
   await env().scoped(env().a, async (db) => {
@@ -426,7 +428,10 @@ describe.skipIf(!url)(
       const sent = await call("POST", "/widget/portal-link", {
         bearer: widgetSession,
       });
-      expect(sent).toEqual({ status: 200, body: { sent: true } });
+      expect(sent).toEqual({
+        status: 200,
+        body: { sent: true, delivery: "sent" },
+      });
 
       // An unverified email links nothing, even with the request open.
       expect((await link(person.id)).body).toEqual({
@@ -454,7 +459,8 @@ describe.skipIf(!url)(
       expect(replayed.location).toContain("error=INVALID_TOKEN");
       expect(replayed.session).toBe(false);
 
-      // The portal links the profiles.
+      // The portal asks first; the person confirms, and the portal links the profiles.
+      expect((await pendingOf(person.id)).body).toEqual({ pending: true });
       const linked = await link(person.id);
       expect(linked).toEqual({
         status: 200,
@@ -493,6 +499,8 @@ describe.skipIf(!url)(
         [env().a, portal.principalId, person.id],
       );
       expect(audit[0].n).toBe(1);
+
+      expect((await pendingOf(person.id)).body).toEqual({ pending: false });
 
       // A second link of the same profiles changes nothing.
       expect((await link(person.id)).body).toEqual({
@@ -562,6 +570,35 @@ describe.skipIf(!url)(
       expect(
         (await call("GET", `/users/${widget}`, { teammate: true })).status,
       ).toBe(404);
+    });
+
+    it("asks before it links, and a refusal ends the request", async () => {
+      const person = await account(true);
+      const widget = await widgetProfile(env(), env().a, person.email);
+      expect((await pendingOf(person.id)).body).toEqual({ pending: true });
+      expect(
+        (await call("DELETE", "/portal/widget-link", { user: person.id })).body,
+      ).toEqual({ declined: true });
+      expect((await pendingOf(person.id)).body).toEqual({ pending: false });
+      expect((await link(person.id)).body.mergedPrincipalId).toBeNull();
+      expect(await profileOf(widget.principalId)).toMatchObject({
+        kaneoUserId: null,
+      });
+    });
+
+    it("tells the widget that mail goes only to an account while registration is closed", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      const person = await account(false);
+      const identified = await identify(env().id("sub"), person.email);
+      vi.stubEnv("DISABLE_REGISTRATION", "true");
+      try {
+        const sent = await call("POST", "/widget/portal-link", {
+          bearer: identified.body.sessionToken,
+        });
+        expect(sent.body).toEqual({ sent: true, delivery: "if_account" });
+      } finally {
+        vi.stubEnv("DISABLE_REGISTRATION", "");
+      }
     });
 
     it("links only a widget profile that asked from the widget, once", async () => {
