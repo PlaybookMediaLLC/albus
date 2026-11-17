@@ -1,9 +1,14 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { PortalProblem } from "../../core/types";
 import { ArrowUpIcon } from "../arrow-up-icon";
 import { ConfirmAction } from "../confirm-action";
-import { cn } from "../upstream";
 import { StateView } from "../state-view";
+import { cn } from "../upstream";
+
+// A changed count and a new vote settle into place; nothing moves on the first render.
+const settle =
+  "transition duration-150 ease-out motion-reduce:transition-none starting:translate-y-0.5 starting:opacity-0";
 
 export interface PostVoteButtonProps {
   voted: boolean;
@@ -18,6 +23,10 @@ export interface PostVoteButtonProps {
 
 export function PostVoteButton(props: PostVoteButtonProps) {
   const { t } = useTranslation("quills");
+  const [first] = useState([props.voted, props.voteCount]);
+  const [moved, setMoved] = useState(false);
+  if (!moved && (props.voted !== first[0] || props.voteCount !== first[1]))
+    setMoved(true);
   return (
     <div className="portal-vote relative z-10 shrink-0 text-xs">
       <StateView problem={props.problem ?? null} onRetry={props.onRetry}>
@@ -25,16 +34,23 @@ export function PostVoteButton(props: PostVoteButtonProps) {
           labelKey={props.voted ? "post.removeVote" : "post.vote"}
           pressed={props.voted}
           disabled={props.disabled || props.loading}
-          className={cn(
-            "h-7 min-w-13 gap-1.5 rounded-full px-2.5 text-xs tabular-nums shadow-none sm:h-7 sm:text-xs",
-            props.voted &&
-              "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15",
-          )}
+          variant="pill"
+          size="default"
+          className="min-w-13"
           onConfirm={() => props.onVote(!props.voted)}
         >
-          <ArrowUpIcon className="size-[11px]" />
+          <ArrowUpIcon
+            key={String(props.voted)}
+            className={cn("size-3", moved && settle)}
+          />
           {props.voteCount === undefined ? null : (
-            <span aria-hidden="true">{props.voteCount}</span>
+            <span
+              key={props.voteCount}
+              aria-hidden="true"
+              className={moved ? settle : undefined}
+            >
+              {props.voteCount}
+            </span>
           )}
         </ConfirmAction>
       </StateView>

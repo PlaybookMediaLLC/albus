@@ -189,6 +189,21 @@ describe("API to view mapping", () => {
     );
   });
 
+  it("lists a message's files that have an ID, and leaves out older refs", () => {
+    expect(
+      toMessage({
+        ...message("m3", "2026-11-01T10:00:00.000Z"),
+        attachments: [
+          { fileId: "file_1", name: "invoice.pdf" },
+          { fileId: null, name: "old.pdf" },
+        ],
+      }).files,
+    ).toEqual([{ id: "file_1", name: "invoice.pdf" }]);
+    expect(
+      toMessage(message("m4", "2026-11-01T10:00:00.000Z")),
+    ).not.toHaveProperty("files");
+  });
+
   it("maps conversations and messages", () => {
     expect(toMessage(message("m1", "2026-11-01T10:00:00.000Z", true))).toEqual({
       id: "m1",

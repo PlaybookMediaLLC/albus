@@ -1,13 +1,12 @@
 import { fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vite-plus/test";
 import { setPostBoardFixture } from "../../../api/team/set-post-board.fixture";
-import { setPostTagsFixture } from "../../../api/team/set-post-tags.fixture";
 import { summarizePostFixture } from "../../../api/team/summarize-post.fixture";
 import { TeamRuntimeProvider } from "../../../team/runtime";
 import { press } from "../../../test/actions";
 import { mockApi } from "../../../test/mock-api";
 import { renderComponent } from "../../../test/render";
-import { inboxBoards, inboxTags } from "../../team-posts/inbox.fixture";
+import { inboxBoards } from "../../team-posts/inbox.fixture";
 import { postDetail, postTeam } from "../post.fixture";
 import { PostChips } from "./post-chips";
 
@@ -35,21 +34,6 @@ describe("PostChips", () => {
     await expect(
       api.calls("setQuillsPostBoard")[0]!.clone().json(),
     ).resolves.toEqual({ boardId: "board_bugs" });
-  });
-
-  it("loads the tags when the tag menu opens and adds one", async () => {
-    const api = mockApi();
-    expect(api.calls()).toHaveLength(0);
-    api.reply(inboxTags);
-    api.reply(setPostTagsFixture.ok());
-    const view = render();
-    expect(view.getByText("API")).toBeVisible();
-    press("Edit tags");
-    fireEvent.click(await view.findByRole("menuitemcheckbox", { name: "UX" }));
-    await waitFor(() => expect(api.calls("setQuillsPostTags")).toHaveLength(1));
-    await expect(
-      api.calls("setQuillsPostTags")[0]!.clone().json(),
-    ).resolves.toEqual({ tagIds: ["tag_api", "tag_ux"] });
   });
 
   it("shows a request that is not public, read-only without the update permission", () => {

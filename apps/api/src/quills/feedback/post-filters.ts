@@ -15,7 +15,11 @@ import { flexibleToTypeIdSchema } from "@kaneo/ids/zod";
 import type { IdPrefix, TypeId } from "@kaneo/ids";
 import { z } from "../../openapi";
 import { postTags } from "../../database/quills/schema/boards";
-import { posts, postTagAssignments } from "../../database/quills/schema/posts";
+import {
+  posts,
+  postTagAssignments,
+  postVotes,
+} from "../../database/quills/schema/posts";
 import type { Database } from "../framework/define-route";
 import { boardVisible, notTest } from "./visibility";
 
@@ -114,6 +118,14 @@ export function filterConditions(
 const rice = (row: SQL) =>
   sql`coalesce(${row}.score_reach::float8 * ${row}.score_impact * ${row}.score_confidence / 100 / ${row}.score_effort, -1)`;
 
+/**
+ * The people who voted in the last 7 days on a `posts` row and on the posts merged into it. As
+ * voteCount does, it counts a person once and leaves out test customers. The
+ * post_votes_workspace_post_created_idx index keeps each count to the recent votes.
+ */
+const recentVotes = (row: SQL) =>
+  sql`(select count(distinct recent_vote.principal_id)::int from ${postVotes} recent_vote where recent_vote.workspace_id = ${row}.workspace_id and recent_vote.created_at > now() - interval '7 days' and ${notTest(sql`recent_vote.principal_id`)} and recent_vote.post_id in (select merged.id from ${posts} merged where merged.workspace_id = ${row}.workspace_id and (merged.id = ${row}.id or (merged.canonical_post_id = ${row}.id and merged.deleted_at is null))))`;
+
 export const sorts = {
   newest: {
     order: [desc(posts.createdAt), desc(posts.id)],
@@ -135,6 +147,22 @@ export const sorts = {
     order: [desc(rice(sql`${posts}`)), desc(posts.createdAt), desc(posts.id)],
     key: sql`(${rice(sql`${posts}`)}, ${posts.createdAt}, ${posts.id}) <`,
     cursor: sql`${rice(sql`cursor_post`)}, cursor_post.created_at, cursor_post.id`,
+  },
+  // D3 of the Requests parity plan: the most votes in the last 7 days, then the most votes.
+  trending: {
+    order: [
+      desc(recentVotes(sql`${posts}`)),
+      desc(posts.voteCount),
+      desc(posts.id),
+    ],
+    key: sql`(${recentVotes(sql`${posts}`)}, ${posts.voteCount}, ${posts.id}) <`,
+    cursor: sql`${recentVotes(sql`cursor_post`)}, cursor_post.vote_count, cursor_post.id`,
+  },
+  // The posts that changed least recently first.
+  stale: {
+    order: [asc(posts.updatedAt), asc(posts.id)],
+    key: sql`(${posts.updatedAt}, ${posts.id}) >`,
+    cursor: sql`cursor_post.updated_at, cursor_post.id`,
   },
 };
 export type Sort = (typeof sorts)[keyof typeof sorts];

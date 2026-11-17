@@ -4,6 +4,7 @@ import { CommentReactions } from "../ui/post/comment-reactions";
 import { ReactionBar } from "../ui/reaction-bar";
 import { ComposerDetails } from "../ui/post/composer-details";
 import { FeedbackEditor } from "../ui/feedback-editor";
+import { BoardFilters } from "../ui/board-filters";
 import { BoardNavigation } from "../ui/board-navigation";
 import { PortalSheetContent } from "../ui/portal-sheet-content";
 import { PortalSelectContent } from "../ui/portal-select-content";
@@ -20,6 +21,7 @@ import { SimilarPosts } from "../ui/post/similar-posts";
 import { StatusIcon } from "../ui/post/status-icon";
 import { ArrowUpIcon } from "../ui/arrow-up-icon";
 import { PersonAvatar } from "../ui/person-avatar";
+import { PageContext } from "../ui/page-context";
 import { ShareActions } from "../ui/share-actions";
 import { PortalDialogContent } from "../ui/portal-dialog-content";
 import { ChangelogEntry } from "../ui/changelog-entry";
@@ -50,18 +52,25 @@ import { ConversationRow } from "../ui/inbox/conversation-row";
 import { DateSeparator } from "../ui/inbox/date-separator";
 import { DetailHeader } from "../ui/inbox/detail-header";
 import { DetailLayout } from "../ui/inbox/detail-layout";
+import { DetailPaneContext } from "../ui/inbox/detail-pane-context";
 import { EmptySelection } from "../ui/inbox/empty-selection";
 import { FloatingActionBar } from "../ui/inbox/floating-action-bar";
 import { GroupedList } from "../ui/inbox/grouped-list";
 import { ListHeader } from "../ui/inbox/list-header";
 import { ListPane } from "../ui/inbox/list-pane";
+import { ListResizer } from "../ui/inbox/list-resizer";
 import { MessageBubble } from "../ui/inbox/message-bubble";
 import { PostStatusIcon } from "../ui/inbox/post-status-icon";
+import { PanelSection } from "../ui/inbox/panel-section";
 import { PropertyRow } from "../ui/inbox/property-row";
 import { RequestFilters } from "../ui/inbox/request-filters";
 import { RequestRow } from "../ui/inbox/request-row";
+import { PropertySelect } from "../ui/inbox/property-select";
 import { RowBadge } from "../ui/inbox/row-badge";
+import { BoardDot } from "../ui/inbox/board-dot";
+import { EmojiMenu } from "../ui/inbox/emoji-menu";
 import { SearchField } from "../ui/inbox/search-field";
+import { ShowListButton } from "../ui/inbox/show-list-button";
 import { StatusTabs } from "../ui/inbox/status-tabs";
 import { SystemEvent } from "../ui/inbox/system-event";
 import { CopyField } from "../ui/copy-field";
@@ -121,6 +130,7 @@ export function KitGallery() {
   const [confirmed, setConfirmed] = useState(false);
   const [outcome, setOutcome] = useState<keyof typeof outcomes>("success");
   const [text, setText] = useState("");
+  const [listWidth, setListWidth] = useState(360);
   const [palette, setPalette] = useState(false);
   const [mode, setMode] = useState("reply");
   const [naming, setNaming] = useState(false);
@@ -397,6 +407,13 @@ export function KitGallery() {
               boards={
                 empty ? [] : [{ id: "board_test_1", name: demo, postCount: 3 }]
               }
+              workspaceId="gallery"
+              stages={[{ value: "planned", label: demo, color: null }]}
+              stage={pending ? "planned" : ""}
+              onStageChange={() => setPending(!pending)}
+            />
+            <BoardFilters
+              boards={empty ? [] : [{ id: "board_test_1", name: demo }]}
               workspaceId="gallery"
               stages={[{ value: "planned", label: demo, color: null }]}
               stage={pending ? "planned" : ""}
@@ -709,6 +726,7 @@ export function KitGallery() {
                   votes={3}
                   comments={1}
                   board={demo}
+                  boardId="board_demo"
                   time="2026-01-01T00:00:00.000Z"
                   person={{ name: demo }}
                 />
@@ -719,15 +737,53 @@ export function KitGallery() {
               headingLevel={2}
               filters={
                 <RequestFilters
-                  status="active"
-                  board=""
+                  boards={[{ id: "board_demo", label: demo }]}
+                  statuses={[{ id: "status_demo", label: demo }]}
+                  tags={[]}
+                  checked={{ board: [], status: ["status_demo"], tags: [] }}
                   sort="newest"
-                  boards={[{ id: "board_demo", name: demo }]}
-                  onChange={() => setEmpty(!empty)}
+                  onFacet={() => setEmpty(!empty)}
+                  onSort={() => setEmpty(!empty)}
+                  onClear={() => setEmpty(!empty)}
                 />
               }
             />
             <RowBadge badge={{ id: "badge", label: demo, tone: "success" }} />
+            <DetailPaneContext.Provider
+              value={{
+                hideList: () => undefined,
+                showList: () => setVoted(!voted),
+                panel: null,
+              }}
+            >
+              <ShowListButton />
+            </DetailPaneContext.Provider>
+            <div
+              id="gallery-list"
+              className="relative h-10 w-full max-w-md rounded-lg border border-border px-3 py-2 text-sm"
+            >
+              {listWidth}
+              <ListResizer
+                label={t("inbox.resizeList")}
+                controls="gallery-list"
+                width={listWidth}
+                onResize={setListWidth}
+              />
+            </div>
+            <PropertySelect
+              ghost
+              label={demo}
+              value="one"
+              options={[
+                { value: "one", label: demo },
+                { value: "two", label: demo },
+              ]}
+              onChange={() => {}}
+            />
+            <span className="inline-flex items-center gap-1.5 text-xs">
+              <BoardDot boardId="board_demo" />
+              {demo}
+            </span>
             <CommandPalette
               open={palette}
               onOpenChange={setPalette}
@@ -747,9 +803,11 @@ export function KitGallery() {
                 itemOpen={!empty}
                 propertiesLabel={demo}
                 properties={
-                  <PropertyRow label={demo}>
-                    {t("inbox.unassigned")}
-                  </PropertyRow>
+                  <PanelSection title={demo} count={1}>
+                    <PropertyRow label={demo}>
+                      {t("inbox.unassigned")}
+                    </PropertyRow>
+                  </PanelSection>
                 }
                 list={
                   <ListPane
@@ -787,14 +845,25 @@ export function KitGallery() {
                     <div className="grid flex-1 content-start gap-3 overflow-y-auto p-4">
                       <DateSeparator date="2026-01-01T00:00:00.000Z" />
                       <MessageBubble
-                        kind="customer"
+                        kind="other"
                         author={{ name: demo }}
                         time="2026-01-01T00:00:00.000Z"
                       >
                         {demo}
+                        <PageContext
+                          context={
+                            empty
+                              ? null
+                              : {
+                                  pageUrl: "https://example.test/pricing",
+                                  browser: "Chrome 150 on macOS",
+                                }
+                          }
+                          className="mt-1 opacity-80"
+                        />
                       </MessageBubble>
                       <MessageBubble
-                        kind="team"
+                        kind="self"
                         author={{ name: demo }}
                         time="2026-01-01T00:00:00.000Z"
                         failure={pending ? demo : null}
@@ -828,6 +897,11 @@ export function KitGallery() {
                         ]}
                         mode={mode}
                         onModeChange={setMode}
+                        tools={
+                          <EmojiMenu
+                            onPick={(emoji) => setText(text + emoji)}
+                          />
+                        }
                       />
                     </div>
                     <FloatingActionBar

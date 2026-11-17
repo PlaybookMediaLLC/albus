@@ -79,6 +79,17 @@ describe("list filters", () => {
       { field: "waiting", value: true },
     ]);
     expect(viewRules({ view: "all", status: "spam" })).toBeNull();
+    expect(viewRules({ view: "all", status: "unread" })).toEqual([
+      { field: "unread", value: true },
+    ]);
+    expect(viewRules({ view: "all", status: "archived" })).toEqual([
+      { field: "archived", value: true },
+    ]);
+    // The assignee scope stays with the unread rule.
+    expect(viewRules({ view: "unassigned", status: "unread" })).toEqual([
+      { field: "assignee", value: "unassigned" },
+      { field: "unread", value: true },
+    ]);
     expect(
       viewRules({ view: "all", status: "any", search: "refund" }),
     ).toBeNull();

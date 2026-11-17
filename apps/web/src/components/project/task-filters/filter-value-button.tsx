@@ -54,6 +54,7 @@ export function FilterValueButton({ subject }: { subject: FilterSubject }) {
         </span>
       </PopoverTrigger>
       <PopoverContent
+        variant="menu"
         align="start"
         className={subject.onDateApply ? "w-80" : "w-64"}
       >

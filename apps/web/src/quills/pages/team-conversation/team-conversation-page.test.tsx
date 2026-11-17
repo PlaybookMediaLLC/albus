@@ -123,6 +123,9 @@ describe("TeamConversationPage", () => {
                 authorName: null,
                 content: "The export button does nothing.",
                 systemKind: null,
+                systemActorPrincipalId: null,
+                emailAuth: null,
+                widgetMetadata: null,
                 embeds: [],
                 attachments: [],
                 reactions: [],
@@ -143,7 +146,7 @@ describe("TeamConversationPage", () => {
       ).toBeInTheDocument();
       expect(
         view.getByRole("complementary", { name: "Customer and details" }),
-      ).toHaveTextContent("Details");
+      ).toHaveTextContent("Conversation");
       expect(
         view.getByRole("heading", { level: 2, name: "Mine" }),
       ).toBeInTheDocument();
@@ -154,6 +157,42 @@ describe("TeamConversationPage", () => {
         api.calls("listQuillsConversationMessages")[0]!.url,
       ).searchParams;
       expect(messages.get("includeInternal")).toBe("true");
+    });
+
+    it("shows the email security checks of the newest checked mail", async () => {
+      const mail = (id: string, spf: "pass" | "fail") => ({
+        id,
+        conversationId: "conversation_test_1",
+        senderType: "visitor" as const,
+        isInternal: false,
+        authorPrincipalId: null,
+        authorName: null,
+        content: id,
+        systemKind: null,
+        systemActorPrincipalId: null,
+        emailAuth: { spf, dkim: "pass" as const, dmarc: "pass" as const },
+        widgetMetadata: null,
+        embeds: [],
+        attachments: [],
+        reactions: [],
+        flaggedAt: null,
+        createdAt: "2026-11-01T10:00:00.000Z",
+        editedAt: null,
+      });
+      answer(
+        mockApi(),
+        reads({
+          listQuillsConversationMessages: listConversationMessagesFixture.ok({
+            items: [mail("newest", "fail"), mail("older", "pass")],
+          }),
+        }),
+      );
+      const view = renderPage(TeamConversationPage, meta, options);
+      const panel = await view.findByRole("complementary", {
+        name: "Customer and details",
+      });
+      await waitFor(() => expect(panel).toHaveTextContent("Email security"));
+      expect(panel).toHaveTextContent("SPFFailed");
     });
 
     it("does not mark the conversation read without the update permission", async () => {
@@ -190,6 +229,19 @@ describe("TeamConversationPage", () => {
           "/feedback/workspace_test_1/conversations/mine?status=open",
         ),
       );
+    });
+
+    it("saves the list as a view beside the open conversation", async () => {
+      answer(mockApi());
+      const view = renderPage(TeamConversationPage, meta, options);
+      await view.findByRole("heading", { level: 1, name: "Grace" });
+      press("Filters");
+      fireEvent.click(
+        await view.findByRole("menuitem", { name: "Save as view…" }),
+      );
+      expect(
+        await view.findByRole("dialog", { name: "Save as view" }),
+      ).toBeInTheDocument();
     });
 
     it("replies from the composer that R focuses", async () => {

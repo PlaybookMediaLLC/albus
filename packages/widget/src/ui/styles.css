@@ -431,6 +431,8 @@
 .qb-widget .qb-image-remove { position: absolute; right: -5px; top: -5px; display: grid; place-items: center; width: 22px; height: 22px; border: 2px solid var(--qb-bg); border-radius: 50%; background: var(--qb-active); color: var(--qb-on-active); }
 .qb-image-remove svg { width: 12px; height: 12px; }
 .qb-attachment-gallery > button { color: inherit; text-decoration: none; font-size: 11px; max-width: 100px; }
+.qb-message-files { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 2px; font-size: 12px; }
+.qb-message-files button { color: inherit; background: none; border: 0; padding: 0; font: inherit; text-decoration: underline; cursor: pointer; text-align: start; overflow-wrap: anywhere; }
 .qb-annotation { width: min(580px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow: auto; margin: auto; border: 1px solid var(--qb-line); border-radius: 18px; padding: 20px; background: var(--qb-bg); color: var(--qb-text); box-shadow: 0 16px 48px rgb(0 0 0 / 20%); }
 .qb-annotation::backdrop { background: rgb(0 0 0 / 35%); }
 .qb-annotation header, .qb-annotation footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }

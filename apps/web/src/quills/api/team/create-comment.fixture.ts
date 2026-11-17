@@ -8,6 +8,7 @@ export const createCommentFixture = {
         parentId: null,
         principalId: "principal_id_test_1",
         authorName: null,
+        authorAvatarUrl: null,
         content: "value",
         isTeamMember: false,
         isPrivate: false,

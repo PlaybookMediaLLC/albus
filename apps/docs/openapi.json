@@ -5951,7 +5951,10 @@
                   "newest",
                   "oldest",
                   "votes",
-                  "priority"
+                  "priority",
+                  "rice",
+                  "trending",
+                  "stale"
                 ]
               },
               "dateFrom": {
@@ -20481,7 +20484,7 @@
           "Quills"
         ],
         "summary": "Start an anonymous widget session",
-        "description": "Needs the widget on and a widget secret. Each call creates a new anonymous person. Identify with this token as previousToken (and as the Bearer token) moves its activity to the identified person.",
+        "description": "Needs the widget on; creates the widget secret when it is missing. Each call creates a new anonymous person. Identify with this token as previousToken (and as the Bearer token) moves its activity to the identified person.",
         "security": [],
         "parameters": [
           {
@@ -20521,7 +20524,7 @@
             }
           },
           "404": {
-            "description": "Widget off or without a secret; Workspace not found or archived",
+            "description": "Widget off; Workspace not found or archived",
             "content": {
               "application/json": {
                 "schema": {
@@ -27382,6 +27385,12 @@
                           "items": {
                             "type": "object",
                             "properties": {
+                              "fileId": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
                               "name": {
                                 "type": "string"
                               },
@@ -27393,6 +27402,7 @@
                               }
                             },
                             "required": [
+                              "fileId",
                               "name",
                               "contentType",
                               "size"
@@ -27810,6 +27820,12 @@
                             "items": {
                               "type": "object",
                               "properties": {
+                                "fileId": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
                                 "name": {
                                   "type": "string"
                                 },
@@ -27821,6 +27837,7 @@
                                 }
                               },
                               "required": [
+                                "fileId",
                                 "name",
                                 "contentType",
                                 "size"
@@ -28041,6 +28058,12 @@
                             "items": {
                               "type": "object",
                               "properties": {
+                                "fileId": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
                                 "name": {
                                   "type": "string"
                                 },
@@ -28052,6 +28075,7 @@
                                 }
                               },
                               "required": [
+                                "fileId",
                                 "name",
                                 "contentType",
                                 "size"
@@ -28262,6 +28286,12 @@
                           "items": {
                             "type": "object",
                             "properties": {
+                              "fileId": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
                               "name": {
                                 "type": "string"
                               },
@@ -28273,6 +28303,7 @@
                               }
                             },
                             "required": [
+                              "fileId",
                               "name",
                               "contentType",
                               "size"
@@ -28426,6 +28457,118 @@
           },
           "429": {
             "description": "Too many attempts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quills-public/{workspace}/support/conversations/{conversationId}/files/{fileId}": {
+      "get": {
+        "operationId": "getQuillsMyConversationFile",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Get a file of a conversation of the signed-in customer and a short-lived download URL",
+        "description": "Only a file of a live message that the customer reads: never one of an internal note, of a deleted message or of another conversation.",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Workspace ID or slug"
+            },
+            "required": true,
+            "description": "Workspace ID or slug",
+            "name": "workspace",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "conversationId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "fileId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "contentType": {
+                      "type": "string"
+                    },
+                    "size": {
+                      "type": "number"
+                    },
+                    "downloadUrl": {
+                      "type": "string"
+                    },
+                    "downloadExpiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "contentType",
+                    "size",
+                    "downloadUrl",
+                    "downloadExpiresAt"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This account is blocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation, message or support surface not found; Workspace not found or archived",
             "content": {
               "application/json": {
                 "schema": {
@@ -30644,6 +30787,14 @@
                     "minLength": 8,
                     "maxLength": 128,
                     "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "description": "Context from the host page, such as pageUrl and browser, and keys that the host app set with the widget's metadata command. Stored with the message for the team; never returned to the visitor."
                   }
                 },
                 "required": [
@@ -30732,6 +30883,12 @@
                           "items": {
                             "type": "object",
                             "properties": {
+                              "fileId": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
                               "name": {
                                 "type": "string"
                               },
@@ -30743,6 +30900,7 @@
                               }
                             },
                             "required": [
+                              "fileId",
                               "name",
                               "contentType",
                               "size"
@@ -31160,6 +31318,12 @@
                             "items": {
                               "type": "object",
                               "properties": {
+                                "fileId": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
                                 "name": {
                                   "type": "string"
                                 },
@@ -31171,6 +31335,7 @@
                                 }
                               },
                               "required": [
+                                "fileId",
                                 "name",
                                 "contentType",
                                 "size"
@@ -31391,6 +31556,12 @@
                             "items": {
                               "type": "object",
                               "properties": {
+                                "fileId": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
                                 "name": {
                                   "type": "string"
                                 },
@@ -31402,6 +31573,7 @@
                                 }
                               },
                               "required": [
+                                "fileId",
                                 "name",
                                 "contentType",
                                 "size"
@@ -31524,6 +31696,14 @@
                     "minLength": 8,
                     "maxLength": 128,
                     "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "description": "Context from the host page, such as pageUrl and browser, and keys that the host app set with the widget's metadata command. Stored with the message for the team; never returned to the visitor."
                   }
                 },
                 "required": [
@@ -31612,6 +31792,12 @@
                           "items": {
                             "type": "object",
                             "properties": {
+                              "fileId": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
                               "name": {
                                 "type": "string"
                               },
@@ -31623,6 +31809,7 @@
                               }
                             },
                             "required": [
+                              "fileId",
                               "name",
                               "contentType",
                               "size"
@@ -31776,6 +31963,118 @@
           },
           "429": {
             "description": "Too many attempts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quills-public/{workspace}/widget/conversations/{conversationId}/files/{fileId}": {
+      "get": {
+        "operationId": "getQuillsWidgetConversationFile",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Get a file of a conversation of the widget visitor and a short-lived download URL",
+        "description": "Only a file of a live message that the customer reads: never one of an internal note, of a deleted message or of another conversation.",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Workspace ID or slug"
+            },
+            "required": true,
+            "description": "Workspace ID or slug",
+            "name": "workspace",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "conversationId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "fileId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "contentType": {
+                      "type": "string"
+                    },
+                    "size": {
+                      "type": "number"
+                    },
+                    "downloadUrl": {
+                      "type": "string"
+                    },
+                    "downloadExpiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "contentType",
+                    "size",
+                    "downloadUrl",
+                    "downloadExpiresAt"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Valid widget session required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This account is blocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation, message or support surface not found; Workspace not found or archived",
             "content": {
               "application/json": {
                 "schema": {
@@ -52129,7 +52428,7 @@
           "Quills"
         ],
         "summary": "Register an uploaded file",
-        "description": "Verifies an object uploaded with a URL from POST /files/uploads or POST /files/settings-uploads (assistant avatar) and registers it in the workspace's files.",
+        "description": "Verifies an object uploaded with a URL from POST /files/uploads or POST /files/settings-uploads (assistant avatar) and registers it in the workspace's files. A file of the `file` purpose that no reply or note attaches within a day is removed.",
         "parameters": [
           {
             "schema": {
@@ -64907,7 +65206,7 @@
           "Quills"
         ],
         "summary": "Get the widget signing secret",
-        "description": "Null until the secret is created with the rotate route. Requires quills:manage_settings.",
+        "description": "Null until the secret is created: turning the widget on creates it, and the rotate route creates or replaces it. Requires quills:manage_settings.",
         "parameters": [
           {
             "schema": {
@@ -67696,13 +67995,15 @@
                 "oldest",
                 "votes",
                 "rice",
-                "mrr"
+                "mrr",
+                "trending",
+                "stale"
               ],
               "default": "newest",
-              "description": "rice: the RICE score, posts without one last. mrr: the monthly revenue of the voters' companies."
+              "description": "rice: the RICE score, posts without one last. mrr: the monthly revenue of the voters' companies. trending: the most votes in the last 7 days. stale: the least recently changed first."
             },
             "required": false,
-            "description": "rice: the RICE score, posts without one last. mrr: the monthly revenue of the voters' companies.",
+            "description": "rice: the RICE score, posts without one last. mrr: the monthly revenue of the voters' companies. trending: the most votes in the last 7 days. stale: the least recently changed first.",
             "name": "sort",
             "in": "query"
           },
@@ -67769,6 +68070,12 @@
                             "type": "string"
                           },
                           "authorName": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "authorAvatarUrl": {
                             "type": [
                               "string",
                               "null"
@@ -67941,6 +68248,7 @@
                           "statusId",
                           "principalId",
                           "authorName",
+                          "authorAvatarUrl",
                           "ownerPrincipalId",
                           "voteCount",
                           "commentCount",
@@ -68118,6 +68426,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -68244,6 +68558,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",
@@ -68758,6 +69073,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -68878,6 +69199,9 @@
                     "hasVoted": {
                       "type": "boolean"
                     },
+                    "viewerPrincipalId": {
+                      "type": "string"
+                    },
                     "widgetMetadata": {
                       "type": [
                         "object",
@@ -68896,6 +69220,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",
@@ -68910,6 +69235,7 @@
                     "tags",
                     "score",
                     "hasVoted",
+                    "viewerPrincipalId",
                     "widgetMetadata"
                   ]
                 }
@@ -69054,6 +69380,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -69180,6 +69512,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",
@@ -69305,6 +69638,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -69431,6 +69770,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",
@@ -69574,6 +69914,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -69700,6 +70046,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",
@@ -69844,6 +70191,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -69970,6 +70323,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",
@@ -70117,6 +70471,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -70243,6 +70603,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",
@@ -70391,6 +70752,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -70517,6 +70884,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",
@@ -70644,6 +71012,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -70770,6 +71144,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",
@@ -71641,6 +72016,12 @@
                               "null"
                             ]
                           },
+                          "authorAvatarUrl": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
                           "content": {
                             "type": "string"
                           },
@@ -71703,6 +72084,7 @@
                           "parentId",
                           "principalId",
                           "authorName",
+                          "authorAvatarUrl",
                           "content",
                           "isTeamMember",
                           "isPrivate",
@@ -71860,6 +72242,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "content": {
                       "type": "string"
                     },
@@ -71922,6 +72310,7 @@
                     "parentId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "content",
                     "isTeamMember",
                     "isPrivate",
@@ -72038,6 +72427,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "content": {
                       "type": "string"
                     },
@@ -72100,6 +72495,7 @@
                     "parentId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "content",
                     "isTeamMember",
                     "isPrivate",
@@ -72234,6 +72630,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "content": {
                       "type": "string"
                     },
@@ -72296,6 +72698,7 @@
                     "parentId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "content",
                     "isTeamMember",
                     "isPrivate",
@@ -72411,6 +72814,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "content": {
                       "type": "string"
                     },
@@ -72473,6 +72882,7 @@
                     "parentId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "content",
                     "isTeamMember",
                     "isPrivate",
@@ -72590,6 +73000,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "content": {
                       "type": "string"
                     },
@@ -72652,6 +73068,7 @@
                     "parentId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "content",
                     "isTeamMember",
                     "isPrivate",
@@ -74552,6 +74969,7 @@
                         "post.tags_backfill_requested",
                         "conversation.summary_requested",
                         "conversation.summarized",
+                        "conversation.post_unlinked",
                         "ticket.summary_requested",
                         "ticket.summarized",
                         "help_center.article_translation_requested",
@@ -75119,6 +75537,7 @@
                         "post.tags_backfill_requested",
                         "conversation.summary_requested",
                         "conversation.summarized",
+                        "conversation.post_unlinked",
                         "ticket.summary_requested",
                         "ticket.summarized",
                         "help_center.article_translation_requested",
@@ -81394,6 +81813,120 @@
         }
       }
     },
+    "/quills/{workspaceId}/posts/{postId}/visibility": {
+      "put": {
+        "operationId": "setQuillsPostVisibility",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Show a post on its board or hide it",
+        "description": "Moves a published post to archived (hidden) or back. A post that waits for review uses approveQuillsPost. Sends no mail or notification.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "visible": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "visible"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The post and its new moderation state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "moderationState": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "moderationState"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Post not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The post is neither published nor hidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
     "/quills/{workspaceId}/moderation/comments/{commentId}/approve": {
       "post": {
         "operationId": "approveQuillsComment",
@@ -82509,7 +83042,10 @@
                           "newest",
                           "oldest",
                           "votes",
-                          "priority"
+                          "priority",
+                          "rice",
+                          "trending",
+                          "stale"
                         ]
                       },
                       "dateFrom": {
@@ -108691,10 +109227,23 @@
             "schema": {
               "type": "string",
               "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "required": false,
+            "name": "unreadOnly",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
                 "all",
                 "mentions",
                 "spam",
-                "created_by_me"
+                "created_by_me",
+                "archived"
               ],
               "default": "all"
             },
@@ -108868,6 +109417,13 @@
                             ],
                             "format": "date-time"
                           },
+                          "archivedAt": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date-time"
+                          },
                           "endReason": {
                             "type": [
                               "string",
@@ -108950,6 +109506,7 @@
                           "waitingSince",
                           "snoozedUntil",
                           "resolvedAt",
+                          "archivedAt",
                           "endReason",
                           "endNote",
                           "spamReason",
@@ -109185,6 +109742,13 @@
                           ],
                           "format": "date-time"
                         },
+                        "archivedAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        },
                         "endReason": {
                           "type": [
                             "string",
@@ -109267,6 +109831,7 @@
                         "waitingSince",
                         "snoozedUntil",
                         "resolvedAt",
+                        "archivedAt",
                         "endReason",
                         "endNote",
                         "spamReason",
@@ -109316,6 +109881,58 @@
                             "string",
                             "null"
                           ]
+                        },
+                        "systemActorPrincipalId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "emailAuth": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "spf": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "none"
+                              ]
+                            },
+                            "dkim": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "none"
+                              ]
+                            },
+                            "dmarc": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "none"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "spf",
+                            "dkim",
+                            "dmarc"
+                          ]
+                        },
+                        "widgetMetadata": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "additionalProperties": {
+                            "type": "string"
+                          }
                         },
                         "embeds": {
                           "type": "array",
@@ -109414,6 +110031,9 @@
                         "authorName",
                         "content",
                         "systemKind",
+                        "systemActorPrincipalId",
+                        "emailAuth",
+                        "widgetMetadata",
                         "embeds",
                         "attachments",
                         "reactions",
@@ -109621,6 +110241,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -109764,6 +110391,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -109792,6 +110426,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -109802,6 +110437,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment"
                   ]
                 }
@@ -110205,6 +110841,58 @@
                               "null"
                             ]
                           },
+                          "systemActorPrincipalId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "emailAuth": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "spf": {
+                                "type": "string",
+                                "enum": [
+                                  "pass",
+                                  "fail",
+                                  "none"
+                                ]
+                              },
+                              "dkim": {
+                                "type": "string",
+                                "enum": [
+                                  "pass",
+                                  "fail",
+                                  "none"
+                                ]
+                              },
+                              "dmarc": {
+                                "type": "string",
+                                "enum": [
+                                  "pass",
+                                  "fail",
+                                  "none"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "spf",
+                              "dkim",
+                              "dmarc"
+                            ]
+                          },
+                          "widgetMetadata": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          },
                           "embeds": {
                             "type": "array",
                             "items": {
@@ -110302,6 +110990,9 @@
                           "authorName",
                           "content",
                           "systemKind",
+                          "systemActorPrincipalId",
+                          "emailAuth",
+                          "widgetMetadata",
                           "embeds",
                           "attachments",
                           "reactions",
@@ -110383,7 +111074,7 @@
           "Quills"
         ],
         "summary": "Reply to the customer",
-        "description": "Plain text. Reopens a closed conversation and assigns an unassigned one to the caller. The reply reaches the customer through the delivery worker, never in the request.",
+        "description": "Plain text, with up to 10 of the caller's registered uploads (createQuillsFiles) as attachments. Reopens a closed conversation and assigns an unassigned one to the caller. The reply reaches the customer through the delivery worker, never in the request.",
         "parameters": [
           {
             "schema": {
@@ -110414,6 +111105,14 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 10000
+                  },
+                  "attachmentIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "maxItems": 10,
+                    "default": []
                   }
                 },
                 "required": [
@@ -110471,6 +111170,58 @@
                             "string",
                             "null"
                           ]
+                        },
+                        "systemActorPrincipalId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "emailAuth": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "spf": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "none"
+                              ]
+                            },
+                            "dkim": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "none"
+                              ]
+                            },
+                            "dmarc": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "none"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "spf",
+                            "dkim",
+                            "dmarc"
+                          ]
+                        },
+                        "widgetMetadata": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "additionalProperties": {
+                            "type": "string"
+                          }
                         },
                         "embeds": {
                           "type": "array",
@@ -110569,6 +111320,9 @@
                         "authorName",
                         "content",
                         "systemKind",
+                        "systemActorPrincipalId",
+                        "emailAuth",
+                        "widgetMetadata",
                         "embeds",
                         "attachments",
                         "reactions",
@@ -110688,6 +111442,13 @@
                           ],
                           "format": "date-time"
                         },
+                        "archivedAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        },
                         "endReason": {
                           "type": [
                             "string",
@@ -110770,6 +111531,7 @@
                         "waitingSince",
                         "snoozedUntil",
                         "resolvedAt",
+                        "archivedAt",
                         "endReason",
                         "endNote",
                         "spamReason",
@@ -110841,7 +111603,7 @@
           "Quills"
         ],
         "summary": "Add an internal note",
-        "description": "Team-only: never sent to the customer and never changes the customer-facing preview. Each mentioned principal must be a teammate of a current workspace member.",
+        "description": "Team-only: never sent to the customer and never changes the customer-facing preview. Each mentioned principal must be a teammate of a current workspace member. Up to 10 of the caller's registered uploads can ride along as attachments.",
         "parameters": [
           {
             "schema": {
@@ -110872,6 +111634,14 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 10000
+                  },
+                  "attachmentIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "maxItems": 10,
+                    "default": []
                   },
                   "mentionPrincipalIds": {
                     "type": "array",
@@ -110937,6 +111707,58 @@
                             "string",
                             "null"
                           ]
+                        },
+                        "systemActorPrincipalId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "emailAuth": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "spf": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "none"
+                              ]
+                            },
+                            "dkim": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "none"
+                              ]
+                            },
+                            "dmarc": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "none"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "spf",
+                            "dkim",
+                            "dmarc"
+                          ]
+                        },
+                        "widgetMetadata": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "additionalProperties": {
+                            "type": "string"
+                          }
                         },
                         "embeds": {
                           "type": "array",
@@ -111035,6 +111857,9 @@
                         "authorName",
                         "content",
                         "systemKind",
+                        "systemActorPrincipalId",
+                        "emailAuth",
+                        "widgetMetadata",
                         "embeds",
                         "attachments",
                         "reactions",
@@ -111321,6 +112146,58 @@
                         "null"
                       ]
                     },
+                    "systemActorPrincipalId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "emailAuth": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "spf": {
+                          "type": "string",
+                          "enum": [
+                            "pass",
+                            "fail",
+                            "none"
+                          ]
+                        },
+                        "dkim": {
+                          "type": "string",
+                          "enum": [
+                            "pass",
+                            "fail",
+                            "none"
+                          ]
+                        },
+                        "dmarc": {
+                          "type": "string",
+                          "enum": [
+                            "pass",
+                            "fail",
+                            "none"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "spf",
+                        "dkim",
+                        "dmarc"
+                      ]
+                    },
+                    "widgetMetadata": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
                     "embeds": {
                       "type": "array",
                       "items": {
@@ -111418,6 +112295,9 @@
                     "authorName",
                     "content",
                     "systemKind",
+                    "systemActorPrincipalId",
+                    "emailAuth",
+                    "widgetMetadata",
                     "embeds",
                     "attachments",
                     "reactions",
@@ -112450,6 +113330,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -112593,6 +113480,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -112624,6 +113518,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -112634,6 +113529,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -112853,6 +113749,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -112996,6 +113899,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -113027,6 +113937,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -113037,6 +113948,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -113263,6 +114175,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -113406,6 +114325,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -113437,6 +114363,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -113447,6 +114374,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -113644,6 +114572,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -113787,6 +114722,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -113818,6 +114760,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -113828,6 +114771,801 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
+                    "csatComment",
+                    "changed"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation or related record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The conversation is not in the required state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
+    "/quills/{workspaceId}/conversations/{conversationId}/archive": {
+      "post": {
+        "operationId": "archiveQuillsConversation",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Archive a conversation",
+        "description": "Takes the conversation out of every inbox list and count except the archived view (`view=archived`). The status does not change. A new customer message unarchives it.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "conversationId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The conversation and whether it changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "open",
+                        "snoozed",
+                        "closed"
+                      ]
+                    },
+                    "priority": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "low",
+                        "medium",
+                        "high",
+                        "urgent"
+                      ]
+                    },
+                    "channel": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "string"
+                    },
+                    "subject": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "lastMessagePreview": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "lastMessageAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "visitorPrincipalId": {
+                      "type": "string"
+                    },
+                    "visitorName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "visitorEmail": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "isTest": {
+                      "type": "boolean"
+                    },
+                    "assignedAgentPrincipalId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "assignedTeamId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "unreadCount": {
+                      "type": "number"
+                    },
+                    "waitingSince": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "snoozedUntil": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "resolvedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "endReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "endNote": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "spamReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "csatRating": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "agentLastReadAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "visitorLastReadAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "color": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "color"
+                        ]
+                      }
+                    },
+                    "attributes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "source": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "at": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "value",
+                          "source",
+                          "at"
+                        ]
+                      }
+                    },
+                    "translation": {
+                      "type": "object",
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "detectedLanguage": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "dismissedAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "enabled",
+                        "detectedLanguage",
+                        "dismissedAt"
+                      ]
+                    },
+                    "summary": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "csatComment": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "changed": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status",
+                    "priority",
+                    "channel",
+                    "source",
+                    "subject",
+                    "lastMessagePreview",
+                    "lastMessageAt",
+                    "createdAt",
+                    "updatedAt",
+                    "visitorPrincipalId",
+                    "visitorName",
+                    "visitorEmail",
+                    "isTest",
+                    "assignedAgentPrincipalId",
+                    "assignedTeamId",
+                    "unreadCount",
+                    "waitingSince",
+                    "snoozedUntil",
+                    "resolvedAt",
+                    "archivedAt",
+                    "endReason",
+                    "endNote",
+                    "spamReason",
+                    "csatRating",
+                    "agentLastReadAt",
+                    "visitorLastReadAt",
+                    "tags",
+                    "attributes",
+                    "translation",
+                    "summary",
+                    "summaryUpdatedAt",
+                    "csatComment",
+                    "changed"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation or related record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The conversation is not in the required state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
+    "/quills/{workspaceId}/conversations/{conversationId}/unarchive": {
+      "post": {
+        "operationId": "unarchiveQuillsConversation",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Unarchive a conversation",
+        "description": "Puts an archived conversation back in the inbox lists and counts.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "conversationId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The conversation and whether it changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "open",
+                        "snoozed",
+                        "closed"
+                      ]
+                    },
+                    "priority": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "low",
+                        "medium",
+                        "high",
+                        "urgent"
+                      ]
+                    },
+                    "channel": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "string"
+                    },
+                    "subject": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "lastMessagePreview": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "lastMessageAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "visitorPrincipalId": {
+                      "type": "string"
+                    },
+                    "visitorName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "visitorEmail": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "isTest": {
+                      "type": "boolean"
+                    },
+                    "assignedAgentPrincipalId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "assignedTeamId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "unreadCount": {
+                      "type": "number"
+                    },
+                    "waitingSince": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "snoozedUntil": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "resolvedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "endReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "endNote": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "spamReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "csatRating": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "agentLastReadAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "visitorLastReadAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "color": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "color"
+                        ]
+                      }
+                    },
+                    "attributes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "source": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "at": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "value",
+                          "source",
+                          "at"
+                        ]
+                      }
+                    },
+                    "translation": {
+                      "type": "object",
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "detectedLanguage": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "dismissedAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "enabled",
+                        "detectedLanguage",
+                        "dismissedAt"
+                      ]
+                    },
+                    "summary": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "csatComment": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "changed": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status",
+                    "priority",
+                    "channel",
+                    "source",
+                    "subject",
+                    "lastMessagePreview",
+                    "lastMessageAt",
+                    "createdAt",
+                    "updatedAt",
+                    "visitorPrincipalId",
+                    "visitorName",
+                    "visitorEmail",
+                    "isTest",
+                    "assignedAgentPrincipalId",
+                    "assignedTeamId",
+                    "unreadCount",
+                    "waitingSince",
+                    "snoozedUntil",
+                    "resolvedAt",
+                    "archivedAt",
+                    "endReason",
+                    "endNote",
+                    "spamReason",
+                    "csatRating",
+                    "agentLastReadAt",
+                    "visitorLastReadAt",
+                    "tags",
+                    "attributes",
+                    "translation",
+                    "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -114048,6 +115786,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -114191,6 +115936,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -114222,6 +115974,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -114232,6 +115985,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -114459,6 +116213,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -114602,6 +116363,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -114633,6 +116401,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -114643,6 +116412,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -114860,6 +116630,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -115003,6 +116780,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -115034,6 +116818,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -115044,6 +116829,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -115260,6 +117046,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -115403,6 +117196,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -115434,6 +117234,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -115444,6 +117245,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -115658,6 +117460,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -115801,6 +117610,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -115832,6 +117648,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -115842,6 +117659,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -116038,6 +117856,13 @@
                       ],
                       "format": "date-time"
                     },
+                    "archivedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "endReason": {
                       "type": [
                         "string",
@@ -116181,6 +118006,13 @@
                         "null"
                       ]
                     },
+                    "summaryUpdatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
                     "csatComment": {
                       "type": [
                         "string",
@@ -116212,6 +118044,7 @@
                     "waitingSince",
                     "snoozedUntil",
                     "resolvedAt",
+                    "archivedAt",
                     "endReason",
                     "endNote",
                     "spamReason",
@@ -116222,6 +118055,7 @@
                     "attributes",
                     "translation",
                     "summary",
+                    "summaryUpdatedAt",
                     "csatComment",
                     "changed"
                   ]
@@ -119628,6 +121462,48 @@
                                 "field": {
                                   "type": "string",
                                   "enum": [
+                                    "unread"
+                                  ]
+                                },
+                                "value": {
+                                  "type": "boolean",
+                                  "enum": [
+                                    true
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "field",
+                                "value"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "field": {
+                                  "type": "string",
+                                  "enum": [
+                                    "archived"
+                                  ]
+                                },
+                                "value": {
+                                  "type": "boolean",
+                                  "enum": [
+                                    true
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "field",
+                                "value"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "field": {
+                                  "type": "string",
+                                  "enum": [
                                     "kind"
                                   ]
                                 },
@@ -120135,6 +122011,48 @@
                                   "type": "string",
                                   "enum": [
                                     "waiting"
+                                  ]
+                                },
+                                "value": {
+                                  "type": "boolean",
+                                  "enum": [
+                                    true
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "field",
+                                "value"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "field": {
+                                  "type": "string",
+                                  "enum": [
+                                    "unread"
+                                  ]
+                                },
+                                "value": {
+                                  "type": "boolean",
+                                  "enum": [
+                                    true
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "field",
+                                "value"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "field": {
+                                  "type": "string",
+                                  "enum": [
+                                    "archived"
                                   ]
                                 },
                                 "value": {
@@ -120921,7 +122839,7 @@
           "Quills"
         ],
         "summary": "List the inbox: conversations and tickets",
-        "description": "Conversations and tickets in one page, newest activity first (a conversation's last message, a ticket's last change). `facet` maps to a conversation status (waiting = snoozed) and a ticket status category (waiting = pending). A customer ticket with a linked conversation lists as that conversation. A conversation-only filter (visitor, tag, channel, source, waitingOnly or a view) lists conversations only. Pass `nextCursor` as `cursor` for the next page.",
+        "description": "Conversations and tickets in one page, newest activity first (a conversation's last message, a ticket's last change). `facet` maps to a conversation status (waiting = snoozed) and a ticket status category (waiting = pending). A customer ticket with a linked conversation lists as that conversation. A conversation-only filter (visitor, tag, channel, source, waitingOnly, unreadOnly or a view) lists conversations only. Pass `nextCursor` as `cursor` for the next page.",
         "parameters": [
           {
             "schema": {
@@ -121030,10 +122948,23 @@
             "schema": {
               "type": "string",
               "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "required": false,
+            "name": "unreadOnly",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
                 "all",
                 "mentions",
                 "spam",
-                "created_by_me"
+                "created_by_me",
+                "archived"
               ],
               "default": "all"
             },
@@ -121245,6 +123176,13 @@
                                 ],
                                 "format": "date-time"
                               },
+                              "archivedAt": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "format": "date-time"
+                              },
                               "endReason": {
                                 "type": [
                                   "string",
@@ -121327,6 +123265,7 @@
                               "waitingSince",
                               "snoozedUntil",
                               "resolvedAt",
+                              "archivedAt",
                               "endReason",
                               "endNote",
                               "spamReason",
@@ -121417,7 +123356,7 @@
           "Quills"
         ],
         "summary": "Count the open inbox queues",
-        "description": "Open conversations assigned to the caller and unassigned ones; open tickets by type, where the customer count includes open conversations paired with a customer ticket (a pair counts once, as in the list); and test conversations in any status. Test customers' threads and spam are not counted in the queues.",
+        "description": "Open conversations assigned to the caller and unassigned ones; open tickets by type, where the customer count includes open conversations paired with a customer ticket (a pair counts once, as in the list); and test conversations in any status. Test customers' threads, spam and archived conversations are not counted in the queues.",
         "parameters": [
           {
             "schema": {
@@ -121530,7 +123469,7 @@
           "Quills"
         ],
         "summary": "List segments with their open conversation counts",
-        "description": "Live segments by name, each with the open conversations whose visitor is a member (test and spam conversations not counted).",
+        "description": "Live segments by name, each with the open conversations whose visitor is a member (test, spam and archived conversations not counted).",
         "parameters": [
           {
             "schema": {
@@ -121944,6 +123883,107 @@
                   "required": [
                     "messageId",
                     "conversationId"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation or related record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The conversation is not in the required state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
+    "/quills/{workspaceId}/conversations/{conversationId}/posts/{postId}": {
+      "delete": {
+        "operationId": "unlinkQuillsPostFromConversation",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Stop tracking a post from a conversation",
+        "description": "Idempotent. Removes only the link: the post, the visitor's vote and the shared message stay. The post must be on a board the caller can see.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "conversationId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Whether a link was removed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "changed": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "changed"
                   ]
                 }
               }
@@ -141882,6 +143922,7 @@
                             "post.tags_backfill_requested",
                             "conversation.summary_requested",
                             "conversation.summarized",
+                            "conversation.post_unlinked",
                             "ticket.summary_requested",
                             "ticket.summarized",
                             "help_center.article_translation_requested",
@@ -149098,6 +151139,12 @@
                         "null"
                       ]
                     },
+                    "authorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "ownerPrincipalId": {
                       "type": [
                         "string",
@@ -149224,6 +151271,7 @@
                     "statusId",
                     "principalId",
                     "authorName",
+                    "authorAvatarUrl",
                     "ownerPrincipalId",
                     "voteCount",
                     "commentCount",

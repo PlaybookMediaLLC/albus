@@ -43,10 +43,15 @@ export interface PostCommentProps {
   attachments?: ReactNode;
   /** Replies, shown under the comment. */
   children?: ReactNode;
+  /** Controls at the end of the author line, such as the team's comment menu. */
+  menu?: ReactNode;
+  /** Replaces the like and the reactions, such as the team's vote pill. */
+  reactions?: ReactNode;
 }
 
+// A small text action: the touch hitbox gives it a 44 px target on touch screens.
 const action =
-  "text-xs text-muted-foreground transition-colors hover:text-foreground";
+  "relative touch-hitbox rounded-sm text-xs text-muted-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring hover:text-foreground";
 /** The style of a comment's text, for a `body` that replaces it. */
 export const commentText =
   "mt-1 text-sm leading-relaxed [&>*+*]:mt-2 [&_p]:whitespace-pre-line";
@@ -63,23 +68,25 @@ export function PostComment({ comment, ...props }: PostCommentProps) {
         // A team reply stands out, so customers see the official answer.
         comment.author.isTeamMember &&
           !comment.deleted &&
-          "-mx-3 rounded-xl bg-primary/5 p-3 ring-1 ring-primary/15 ring-inset",
+          "-ms-3 rounded-xl bg-primary/5 p-3 ring-1 ring-primary/15 ring-inset",
       )}
     >
       <PersonAvatar
         name={author}
         avatarUrl={comment.author.avatarUrl}
+        colored
         className="size-7 text-xs"
       />
       <div className="min-w-0">
         <p className="flex flex-wrap items-baseline gap-x-2 text-sm">
           <span className="font-medium">{author}</span>
           {comment.author.isTeamMember ? (
-            <span className="rounded bg-muted px-1.5 text-[11px] text-muted-foreground">
+            <span className="rounded bg-muted px-1.5 text-xs text-muted-foreground">
               {t("post.team")}
             </span>
           ) : null}
           <time
+            className="text-xs text-muted-foreground"
             dateTime={comment.createdAt}
             title={new Date(comment.createdAt).toLocaleString(i18n.language)}
           >
@@ -90,6 +97,7 @@ export function PostComment({ comment, ...props }: PostCommentProps) {
               {t("post.edited")}
             </span>
           ) : null}
+          {props.menu ? <span className="ms-auto">{props.menu}</span> : null}
         </p>
         {comment.deleted ? (
           <p className="mt-1 text-sm italic text-muted-foreground">
@@ -118,15 +126,17 @@ export function PostComment({ comment, ...props }: PostCommentProps) {
             role="group"
             className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1"
           >
-            <CommentReactions
-              reactions={comment.reactions}
-              onReact={
-                props.onReact
-                  ? (emoji, reacted) =>
-                      props.onReact!(comment.id, emoji, reacted)
-                  : undefined
-              }
-            />
+            {props.reactions ?? (
+              <CommentReactions
+                reactions={comment.reactions}
+                onReact={
+                  props.onReact
+                    ? (emoji, reacted) =>
+                        props.onReact!(comment.id, emoji, reacted)
+                    : undefined
+                }
+              />
+            )}
             {props.replyForm ? (
               <button
                 type="button"

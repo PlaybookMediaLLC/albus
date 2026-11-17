@@ -1,12 +1,20 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { createId } from "@kaneo/ids";
 import { flexibleToTypeIdSchema } from "@kaneo/ids/zod";
-import { apiRouter, pagingNumber, z } from "../../../openapi";
+import {
+  apiRouter,
+  pagingNumber,
+  responseTimestamp,
+  z,
+} from "../../../openapi";
 import {
   conversationMessages,
   conversations,
 } from "../../../database/quills/schema/conversation";
+import { files } from "../../../database/quills/schema/files";
 import { defineQuillsRoute } from "../../framework/define-route";
+import { createDownload } from "../../framework/files";
+import { widgetMetadata } from "../../portal/feedback/posts";
 import {
   claimReceipt,
   conversationParams,
@@ -45,6 +53,12 @@ const sent = z.object({
   replayed: z.boolean(),
 });
 const PAGE = 30;
+/** The widget's host-page context, kept with the visitor's message. */
+const messageMetadata = widgetMetadata.describe(
+  "Context from the host page, such as pageUrl and browser, and keys that the host app set with the widget's metadata command. Stored with the message for the team; never returned to the visitor.",
+);
+const metadataOf = (body: object) =>
+  (body as { metadata?: Record<string, string> }).metadata;
 
 /** Builds the conversation routes of one customer audience. */
 export function conversationRoutes(audience: Customer) {
@@ -209,6 +223,67 @@ export function conversationRoutes(audience: Customer) {
     },
   });
 
+  const file = defineQuillsRoute({
+    audience,
+    method: "get",
+    path: `${base}/conversations/{conversationId}/files/{fileId}`,
+    operationId: name(
+      "getQuillsWidgetConversationFile",
+      "getQuillsMyConversationFile",
+    ),
+    summary: `Get a file of a conversation of ${who} and a short-lived download URL`,
+    description:
+      "Only a file of a live message that the customer reads: never one of an internal note, of a deleted message or of another conversation.",
+    action: "read",
+    params: conversationParams.extend({
+      fileId: flexibleToTypeIdSchema("file"),
+    }),
+    response: z.object({
+      id: z.string(),
+      name: z.string(),
+      contentType: z.string(),
+      size: z.number(),
+      downloadUrl: z.string(),
+      downloadExpiresAt: responseTimestamp,
+    }),
+    responseDescription: "The file",
+    errors,
+    handler: async ({ db, caller, params }) => {
+      await requireSurface(db, audience, caller, "messenger");
+      const conversation = await ownConversation(
+        db,
+        caller.principalId,
+        params.conversationId,
+      );
+      const [row] = await db
+        .select({
+          id: files.id,
+          name: files.name,
+          contentType: files.contentType,
+          size: files.size,
+          storageKey: files.storageKey,
+        })
+        .from(files)
+        .innerJoin(
+          conversationMessages,
+          eq(conversationMessages.id, files.messageId),
+        )
+        .where(
+          and(
+            eq(files.id, params.fileId),
+            isNull(files.deletedAt),
+            eq(conversationMessages.conversationId, conversation.id),
+            eq(conversationMessages.isInternal, false),
+            isNull(conversationMessages.deletedAt),
+          ),
+        )
+        .limit(1);
+      if (!row) throw notFound("File");
+      const { id, name, contentType, size } = row;
+      return { id, name, contentType, size, ...(await createDownload(row)) };
+    },
+  });
+
   const listMessages = defineQuillsRoute({
     audience,
     method: "get",
@@ -255,7 +330,11 @@ export function conversationRoutes(audience: Customer) {
       "Creates the conversation and its first message. A retry with the same idempotencyKey and text returns the first result; other text with that key is 409.",
     action: "create",
     rateLimit: { limit: 20, windowSeconds: 600 },
-    body: z.object({ content: messageText, idempotencyKey }),
+    body: z.object({
+      content: messageText,
+      idempotencyKey,
+      ...(widget && { metadata: messageMetadata }),
+    }),
     response: sent,
     responseDescription: "The new conversation and its first message",
     errors: sendErrors,
@@ -298,6 +377,7 @@ export function conversationRoutes(audience: Customer) {
           created!,
           receipt.messageId,
           body.content,
+          metadataOf(body),
         );
       }
       return loadSent(
@@ -325,7 +405,11 @@ export function conversationRoutes(audience: Customer) {
     action: "update",
     rateLimit: { limit: 60, windowSeconds: 600 },
     params: conversationParams,
-    body: z.object({ content: messageText, idempotencyKey }),
+    body: z.object({
+      content: messageText,
+      idempotencyKey,
+      ...(widget && { metadata: messageMetadata }),
+    }),
     response: sent,
     responseDescription: "The message and the updated conversation",
     errors: sendErrors,
@@ -363,6 +447,7 @@ export function conversationRoutes(audience: Customer) {
           conversation,
           receipt.messageId,
           body.content,
+          metadataOf(body),
         );
       return loadSent(
         db,
@@ -521,6 +606,7 @@ export function conversationRoutes(audience: Customer) {
     .openapi(...start)
     .openapi(...get)
     .openapi(...listMessages)
+    .openapi(...file)
     .openapi(...send)
     .openapi(...markRead)
     .openapi(...typing)

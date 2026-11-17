@@ -54,6 +54,12 @@ External effects:          one GET to the Resend Received Emails API when the ev
   names the workspace by ID or slug. A workspace that does not exist, is archived or never used Quills
   answers 404. Custom addresses on sending domains are not routed: P5b records those domains as
   `pending` and never verifies them, so their ownership is unproven.
+- Email security: with `EMAIL_INBOUND_AUTHSERV_ID` set to the receiving server's authserv-id (the
+  first word of its `Authentication-Results` header), the message stores that header's SPF, DKIM and
+  DMARC results as `pass`, `fail` or `none` (`inbound/email-auth.ts`). Only the first header with that
+  ID counts, because a sender can add its own, and only when the event sends its headers as a list:
+  a map keeps one copy of a repeated header, maybe the sender's. Quoted values never add results.
+  Without the variable nothing is stored. Check one real inbound mail's headers before you set it.
 - The body: the event's `text`, or Resend's Received Emails API with `EMAIL_RESEND_API_KEY` when the
   event has none. A missing mail there is an empty mail; another failure answers 500 and Resend
   redelivers (the receipt is not written).

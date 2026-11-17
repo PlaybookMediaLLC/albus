@@ -91,7 +91,11 @@ export function MemberTraits({ workspaceId, member }: MemberTraitsProps) {
             </li>
           ))}
         </ul>
-      ) : null}
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          {t("team-members.noTraits")}
+        </p>
+      )}
     </section>
   );
 }

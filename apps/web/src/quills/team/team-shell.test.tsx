@@ -87,8 +87,8 @@ describe("TeamShell", () => {
     expect(within(nav).queryByRole("list", { name: "Requests" })).toBeNull();
     const queue = await within(nav).findByRole("link", { name: "Queue 3" });
     expect(queue).toHaveAttribute("aria-current", "page");
-    expect(within(queue).getByText("3")).toHaveClass("bg-priority-high/15");
-    expect(within(nav).getByText("5")).not.toHaveClass("bg-priority-high/15");
+    expect(within(queue).getByText("3")).toHaveClass("bg-warning/15");
+    expect(within(nav).getByText("5")).not.toHaveClass("bg-warning/15");
     expect(document.documentElement).toHaveAttribute("data-quills-shell");
     press("Acme");
     expect(await view.findByText("Admin")).toBeVisible();
@@ -96,14 +96,14 @@ describe("TeamShell", () => {
     expect(api.calls("getQuillsTeamCounts")).toHaveLength(1);
   });
 
-  it("lists the open post statuses as Requests, the first with the orange badge", async () => {
+  it("lists the open post statuses as Requests, the first with the warning badge", async () => {
     answer();
     const view = renderShell("/feedback/workspace_1/posts?statusId=status_2");
     const requests = view.getByRole("list", { name: "Requests" });
     const pending = await within(requests).findByRole("link", {
       name: "Pending 4",
     });
-    expect(within(pending).getByText("4")).toHaveClass("bg-priority-high/15");
+    expect(within(pending).getByText("4")).toHaveClass("bg-warning/15");
     const planned = within(requests).getByRole("link", { name: "Planned 1" });
     expect(planned).toHaveAttribute(
       "href",
@@ -122,7 +122,7 @@ describe("TeamShell", () => {
     ).toHaveAttribute("aria-current", "page");
   });
 
-  it("marks html for the 90% scale only while the shell is open", () => {
+  it("marks html for the 95% scale only while the shell is open", () => {
     answer();
     const view = renderShell("/feedback/workspace_1");
     expect(document.documentElement).toHaveAttribute("data-quills-shell");

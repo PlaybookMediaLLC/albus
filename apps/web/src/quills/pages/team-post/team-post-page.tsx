@@ -99,6 +99,7 @@ export function TeamPostPage({
       <DetailLayout
         list={
           <PostListPane
+            workspaceId={workspaceId}
             posts={items}
             statuses={statuses.data?.statuses ?? []}
             boards={boards.data?.items ?? []}

@@ -18,7 +18,9 @@ describe("DetailPaneContext", () => {
     expect(view.getByRole("button")).toHaveTextContent("None");
     const hideList = vi.fn();
     view.rerender(
-      <DetailPaneContext.Provider value={{ hideList, panel: null }}>
+      <DetailPaneContext.Provider
+        value={{ hideList, showList: null, panel: null }}
+      >
         <Probe />
       </DetailPaneContext.Provider>,
     );

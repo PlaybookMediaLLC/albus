@@ -98,6 +98,8 @@ export const conversationItem = z.object({
   waitingSince: nullableResponseTimestamp,
   snoozedUntil: nullableResponseTimestamp,
   resolvedAt: nullableResponseTimestamp,
+  /** Set while archived: the conversation lists only in the archived view. */
+  archivedAt: nullableResponseTimestamp,
   endReason: z.string().nullable(),
   endNote: z.string().nullable(),
   spamReason: z.string().nullable(),
@@ -124,6 +126,7 @@ export const conversationDetail = conversationItem.extend({
     dismissedAt: nullableResponseTimestamp,
   }),
   summary: z.string().nullable(),
+  summaryUpdatedAt: nullableResponseTimestamp,
   csatComment: z.string().nullable(),
 });
 export const changedConversation = conversationDetail.extend({
@@ -154,6 +157,7 @@ const columns = {
   waitingSince: conversations.waitingSince,
   snoozedUntil: conversations.snoozedUntil,
   resolvedAt: conversations.resolvedAt,
+  archivedAt: conversations.archivedAt,
   endReason: conversations.endReason,
   endNote: conversations.endNote,
   spamReason: conversations.spamReason,
@@ -182,6 +186,20 @@ type Row = Awaited<
 >[number];
 
 /** Adds unread counts and live tags, with one query each for the page. */
+/**
+ * A live customer message after the team read mark: what a row's unreadCount counts and the
+ * unreadOnly list filter finds. Reads conversations, so the query joins it or correlates it.
+ */
+export const unreadByTeam = and(
+  eq(conversationMessages.senderType, "visitor"),
+  eq(conversationMessages.isInternal, false),
+  isNull(conversationMessages.deletedAt),
+  or(
+    isNull(conversations.agentLastReadAt),
+    gt(conversationMessages.createdAt, conversations.agentLastReadAt),
+  ),
+)!;
+
 export async function toItems(db: Database, rows: Row[]) {
   const ids = rows.map((row) => row.id);
   const unread = ids.length
@@ -193,16 +211,7 @@ export async function toItems(db: Database, rows: Row[]) {
           eq(conversations.id, conversationMessages.conversationId),
         )
         .where(
-          and(
-            inArray(conversationMessages.conversationId, ids),
-            eq(conversationMessages.senderType, "visitor"),
-            eq(conversationMessages.isInternal, false),
-            isNull(conversationMessages.deletedAt),
-            or(
-              isNull(conversations.agentLastReadAt),
-              gt(conversationMessages.createdAt, conversations.agentLastReadAt),
-            ),
-          ),
+          and(inArray(conversationMessages.conversationId, ids), unreadByTeam),
         )
         .groupBy(conversationMessages.conversationId)
     : [];
@@ -298,6 +307,7 @@ export async function loadConversation(db: Database, id: ConversationId) {
       dismissedAt: conversations.translationDismissedAt,
       csatComment: conversations.csatComment,
       summary: conversationSummaries.summary,
+      summaryUpdatedAt: conversationSummaries.updatedAt,
     })
     .from(conversations)
     .leftJoin(
@@ -314,6 +324,7 @@ export async function loadConversation(db: Database, id: ConversationId) {
       dismissedAt: extra!.dismissedAt,
     },
     summary: extra!.summary,
+    summaryUpdatedAt: extra!.summaryUpdatedAt,
     csatComment: extra!.csatComment,
   };
 }

@@ -217,11 +217,15 @@ async function widgetCaller(db: Database, tokenHash: string) {
   return row && { ...row, customerId: session.data.customerId };
 }
 
-/** True when the stored widget configuration turns the widget on. */
+/**
+ * The widget is on unless the workspace turned it off: only a stored `enabled: false` disables it.
+ * An unreadable configuration fails closed.
+ */
 export function widgetEnabled(stored: string | null) {
   try {
     return (
-      (JSON.parse(stored || "{}") as { enabled?: unknown })?.enabled === true
+      (JSON.parse(stored || "{}") as { enabled?: unknown } | null)?.enabled !==
+      false
     );
   } catch {
     return false;

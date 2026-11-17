@@ -22,6 +22,7 @@ import {
 } from "../../../database/quills/schema/conversation";
 import { emailLog } from "../../../database/quills/schema/email-log";
 import { events } from "../../../database/quills/schema/events";
+import { files } from "../../../database/quills/schema/files";
 import { kvStore } from "../../../database/quills/schema/kv";
 import { inAppNotifications } from "../../../database/quills/schema/notifications";
 import {
@@ -312,6 +313,117 @@ describe.skipIf(!url)("Quills customer support routes and delivery", () => {
   beforeEach(() => {
     mail = [];
     broadcast.mockClear();
+  });
+
+  it("lets a widget visitor download a reply's file, never a note's or another visitor's", async () => {
+    const env = contractEnv();
+    const a = await env.widgetVisitor(env.a);
+    const b = await env.widgetVisitor(env.a);
+    const started = await call("POST", "/widget/conversations", {
+      bearer: a.token,
+      body: { content: "Send me the invoice", idempotencyKey: key() },
+    });
+    const id = started.body.conversation.id as string;
+    const upload = () =>
+      env.scoped(env.a, async (db, actor) => {
+        const [row] = await db
+          .insert(files)
+          .values({
+            storageKey: `quills/file/${env.id("key")}.pdf`,
+            name: "invoice.pdf",
+            contentType: "application/pdf",
+            family: "pdf",
+            size: 1200,
+            sha256: env.id("sha"),
+            source: "agent",
+            uploadedById: actor.principalId,
+            previewStatus: "none",
+          })
+          .returning({ id: files.id });
+        return row!.id;
+      });
+    const [shared, secret] = [await upload(), await upload()];
+    const team = { user: env.owner, teammate: true };
+    expect(
+      (
+        await call("POST", `/conversations/${id}/reply`, {
+          ...team,
+          body: { content: "Here it is", attachmentIds: [shared] },
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await call("POST", `/conversations/${id}/note`, {
+          ...team,
+          body: { content: "Internal copy", attachmentIds: [secret] },
+        })
+      ).status,
+    ).toBe(200);
+    const thread = await call("GET", `/widget/conversations/${id}`, {
+      bearer: a.token,
+    });
+    expect(
+      thread.body.messages.flatMap(
+        (m: { attachments: Array<{ fileId: string }> }) => m.attachments,
+      ),
+    ).toEqual([
+      {
+        fileId: shared,
+        name: "invoice.pdf",
+        contentType: "application/pdf",
+        size: 1200,
+      },
+    ]);
+    // B's own conversation: a file of A's conversation must not come through it.
+    const theirs = (
+      await call("POST", "/widget/conversations", {
+        bearer: b.token,
+        body: { content: "Mine too", idempotencyKey: key() },
+      })
+    ).body.conversation.id as string;
+    // A file on a deleted reply is gone for the customer.
+    const removed = await upload();
+    const gone = await call("POST", `/conversations/${id}/reply`, {
+      ...team,
+      body: { content: "Wrong file", attachmentIds: [removed] },
+    });
+    expect(
+      (
+        await call(
+          "DELETE",
+          `/conversation-messages/${gone.body.message.id}`,
+          team,
+        )
+      ).status,
+    ).toBe(200);
+    const get = (fileId: string, token = a.token, conversation = id) =>
+      call("GET", `/widget/conversations/${conversation}/files/${fileId}`, {
+        bearer: token,
+      });
+    // Signing a download URL is local: no storage server runs.
+    const s3 = {
+      S3_ENDPOINT: "http://127.0.0.1:9",
+      S3_BUCKET: "quills-customer-files",
+      S3_ACCESS_KEY_ID: "customer",
+      S3_SECRET_ACCESS_KEY: "customer-secret",
+    };
+    const saved = Object.keys(s3).map((name) => [name, process.env[name]]);
+    Object.assign(process.env, s3);
+    try {
+      const download = await get(shared);
+      expect(download.status).toBe(200);
+      expect(download.body).toMatchObject({ id: shared, name: "invoice.pdf" });
+      expect(download.body.downloadUrl).toEqual(expect.any(String));
+      expect((await get(secret)).status).toBe(404);
+      expect((await get(removed)).status).toBe(404);
+      expect((await get(shared, b.token)).status).toBe(404);
+      expect((await get(shared, b.token, theirs)).status).toBe(404);
+    } finally {
+      for (const [name, value] of saved)
+        if (value === undefined) delete process.env[name!];
+        else process.env[name!] = value;
+    }
   });
 
   it("keeps each widget visitor to their own conversations, messages and tickets, without internal notes", async () => {

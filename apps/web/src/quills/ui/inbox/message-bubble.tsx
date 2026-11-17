@@ -7,8 +7,11 @@ import { cn } from "../upstream";
 import type { InboxPerson } from "./inbox-types";
 
 export interface MessageBubbleProps {
-  /** customer: left and gray. team: right and blue. note: right, yellow, labelled "Note". */
-  kind: "customer" | "team" | "note";
+  /**
+   * other: left and gray. self: right, in the primary color. note: right, yellow, labelled "Note".
+   * "self" is the viewer's side: the team in the teammate app, the customer in the portal.
+   */
+  kind: "other" | "self" | "note";
   author: InboxPerson;
   /** The message body, such as MarkdownContent and attachments. */
   children: ReactNode;
@@ -16,11 +19,13 @@ export interface MessageBubbleProps {
   time: string;
   /** A delivery failure under the bubble, such as "Email failed". */
   failure?: string | null;
+  /** False hides the avatar, such as for the customer's own messages in the portal. */
+  avatar?: boolean;
 }
 
 const bubbles = {
-  customer: "rounded-bl-md bg-muted text-foreground",
-  team: "rounded-br-md bg-info-foreground text-background [&_a]:text-background",
+  other: "rounded-bl-md bg-muted text-foreground",
+  self: "rounded-br-md bg-primary text-primary-foreground [&_a]:text-primary-foreground",
   note: "rounded-br-md border border-warning/30 bg-warning/10 text-foreground",
 } as const;
 
@@ -31,17 +36,20 @@ export function MessageBubble({
   children,
   time,
   failure,
+  avatar = true,
 }: MessageBubbleProps) {
   const { t, i18n } = useTranslation("quills");
-  const mine = kind !== "customer";
+  const mine = kind !== "other";
   return (
     <div className={cn("flex items-end gap-2", mine && "flex-row-reverse")}>
-      <PersonAvatar
-        colored
-        name={author.name}
-        avatarUrl={author.avatarUrl}
-        className="mb-5 size-7 text-[10px]"
-      />
+      {avatar ? (
+        <PersonAvatar
+          colored
+          name={author.name}
+          avatarUrl={author.avatarUrl}
+          className="mb-5 size-7 text-xs"
+        />
+      ) : null}
       <div
         className={cn(
           "flex min-w-0 max-w-[80%] flex-col gap-1",

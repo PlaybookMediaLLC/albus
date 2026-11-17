@@ -70,13 +70,13 @@ describe("TeamRail", () => {
       "/feedback/workspace_1/conversations/queue",
     );
     expect(conversations).toHaveAttribute("aria-current", "page");
-    expect(conversations.querySelector(".bg-priority-high")).not.toBeNull();
+    expect(conversations.querySelector(".bg-warning")).not.toBeNull();
     expect(link("Requests")).toHaveAttribute(
       "href",
       "/feedback/workspace_1/posts",
     );
     expect(link("Requests")).not.toHaveAttribute("aria-current");
-    expect(link("Requests").querySelector(".bg-priority-high")).toBeNull();
+    expect(link("Requests").querySelector(".bg-warning")).toBeNull();
     expect(link("Workspace")).toHaveAttribute("href", "/feedback/workspace_1");
     expect(link("Settings")).not.toHaveAttribute("aria-current");
     fireEvent.click(link("Requests"));

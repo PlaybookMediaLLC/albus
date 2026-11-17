@@ -17,6 +17,19 @@ const render = (team = postTeam) =>
   );
 
 describe("CommentBox", () => {
+  it("puts a chosen emoji at the cursor", async () => {
+    mockApi();
+    const view = render();
+    const box = view.getByRole("textbox", {
+      name: "Write a comment…",
+    }) as HTMLTextAreaElement;
+    fireEvent.change(box, { target: { value: "Ship it" } });
+    box.setSelectionRange(4, 4);
+    fireEvent.click(view.getByRole("button", { name: "Add an emoji" }));
+    fireEvent.click(await view.findByRole("menuitem", { name: "Insert 🚀" }));
+    expect(box).toHaveValue("Ship🚀 it");
+  });
+
   it("sends a public comment on Enter and clears the box", async () => {
     const api = mockApi();
     api.reply(createCommentFixture.ok());

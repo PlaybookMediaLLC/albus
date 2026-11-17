@@ -8,6 +8,7 @@ import { relativeTime } from "../../core/relative-time";
 import { ConfirmAction } from "../confirm-action";
 import { PersonAvatar } from "../person-avatar";
 import { ShareActions } from "../share-actions";
+import { Button } from "../upstream";
 import { StatusIcon } from "./status-icon";
 
 export interface PostSidebarProps {
@@ -28,11 +29,10 @@ export interface PostSidebarProps {
 }
 
 const section =
-  "[&_h2]:mb-2.5 [&_h2]:text-[11px] [&_h2]:font-semibold [&_h2]:uppercase [&_h2]:tracking-wider [&_h2]:text-foreground";
-const item =
-  "flex w-full items-center gap-2 rounded-md py-1 text-left text-sm text-muted-foreground transition-colors hover:text-foreground [&_svg]:size-3.5";
-// Resets the upstream button so a write keeps the look of the other rail items.
-const confirmItem = `${item} h-auto justify-start border-0 bg-transparent px-0 font-normal shadow-none before:hidden hover:bg-transparent aria-pressed:bg-transparent aria-pressed:text-foreground sm:h-auto sm:text-sm dark:bg-transparent`;
+  "[&_h2]:mb-2 [&_h2]:text-xs [&_h2]:font-medium [&_h2]:text-muted-foreground";
+// A quiet ghost action. The list's negative margin lines the text up with the headings.
+const action =
+  "w-full justify-start text-muted-foreground hover:text-foreground aria-pressed:text-foreground";
 
 /** The author, details and actions beside a post. */
 export function PostSidebar(props: PostSidebarProps) {
@@ -40,7 +40,7 @@ export function PostSidebar(props: PostSidebarProps) {
   const author = props.author.name?.trim() || t("post.anonymousAuthor");
   return (
     <aside
-      className={`portal-post-sidebar flex min-w-0 flex-wrap gap-x-8 gap-y-4 max-md:border-b max-md:border-border max-md:pb-6 max-md:[&_h2]:sr-only md:sticky md:top-8 md:flex-col md:gap-7 ${section}`}
+      className={`portal-post-sidebar flex min-w-0 flex-wrap gap-x-8 gap-y-4 max-md:border-b max-md:border-border max-md:pb-6 max-md:[&_h2]:sr-only md:sticky md:top-32 lg:top-24 md:flex-col md:gap-7 ${section}`}
     >
       <section aria-labelledby="post-author">
         <h2 id="post-author">{t("post.authorHeading")}</h2>
@@ -48,11 +48,13 @@ export function PostSidebar(props: PostSidebarProps) {
           <PersonAvatar
             name={author}
             avatarUrl={props.author.avatarUrl}
+            colored
             className="size-7 text-xs"
           />
           <div className="min-w-0 text-sm">
             <p className="truncate font-medium">{author}</p>
             <time
+              className="text-xs text-muted-foreground"
               dateTime={props.createdAt}
               title={new Date(props.createdAt).toLocaleString(i18n.language)}
             >
@@ -113,20 +115,27 @@ export function PostSidebar(props: PostSidebarProps) {
         className="max-md:flex max-md:flex-wrap max-md:gap-x-4"
       >
         <h2 id="post-actions">{t("post.actions")}</h2>
-        <ul className="flex flex-wrap gap-x-4 md:grid md:gap-0.5">
+        <ul className="-mx-2 flex flex-wrap gap-x-1 md:grid md:gap-0.5">
           {props.signInHref ? (
             <li>
-              <a className={item} href={props.signInHref}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={action}
+                render={<a href={props.signInHref} />}
+              >
                 <IconBellOutline18 aria-hidden="true" />
                 {t("post.follow")}
-              </a>
+              </Button>
             </li>
           ) : props.following !== undefined && props.onFollowChange ? (
             <li>
               <ConfirmAction
                 labelKey={props.following ? "post.following" : "post.follow"}
                 pressed={props.following}
-                className={confirmItem}
+                variant="ghost"
+                size="sm"
+                className={action}
                 onConfirm={() => props.onFollowChange!(!props.following)}
               >
                 <IconBellOutline18 aria-hidden="true" />
@@ -136,18 +145,28 @@ export function PostSidebar(props: PostSidebarProps) {
           ) : null}
           {props.onEdit ? (
             <li>
-              <button type="button" className={item} onClick={props.onEdit}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={action}
+                onClick={props.onEdit}
+              >
                 <IconPen3Outline18 aria-hidden="true" />
                 {t("post.editPost")}
-              </button>
+              </Button>
             </li>
           ) : null}
           {props.onDelete ? (
             <li>
-              <button type="button" className={item} onClick={props.onDelete}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={action}
+                onClick={props.onDelete}
+              >
                 <IconTrashOutline18 aria-hidden="true" />
                 {t("post.deletePost")}
-              </button>
+              </Button>
             </li>
           ) : null}
         </ul>

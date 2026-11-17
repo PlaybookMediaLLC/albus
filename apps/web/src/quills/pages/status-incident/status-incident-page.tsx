@@ -52,7 +52,7 @@ export function StatusIncidentPage(props: StatusIncidentPageProps) {
             }}
           >
             {incident.data ? (
-              <article className="space-y-6 [&_section]:space-y-4 [&_ol]:space-y-6 [&_ol>li]:space-y-2 [&_ol>li]:border-l [&_ol>li]:border-border [&_ol>li]:pl-5">
+              <article className="space-y-6 text-sm">
                 <p>
                   {t("status-incident.status", {
                     status: incident.data.status,
@@ -76,8 +76,14 @@ export function StatusIncidentPage(props: StatusIncidentPageProps) {
                     },
                   )}
                 </p>
-                <section aria-labelledby="affected-components-heading">
-                  <h3 id="affected-components-heading">
+                <section
+                  aria-labelledby="affected-components-heading"
+                  className="space-y-4"
+                >
+                  <h3
+                    id="affected-components-heading"
+                    className="text-base font-semibold"
+                  >
                     {t("status-incident.affectedComponents")}
                   </h3>
                   {incident.data.affectedComponents.length ? (
@@ -95,21 +101,33 @@ export function StatusIncidentPage(props: StatusIncidentPageProps) {
                     <p>{t("status-incident.noAffectedComponents")}</p>
                   )}
                 </section>
-                <section aria-labelledby="incident-updates-heading">
-                  <h3 id="incident-updates-heading">
+                <section
+                  aria-labelledby="incident-updates-heading"
+                  className="space-y-4"
+                >
+                  <h3
+                    id="incident-updates-heading"
+                    className="text-base font-semibold"
+                  >
                     {t("status-incident.updates")}
                   </h3>
                   {incident.data.updates.length ? (
-                    <ol>
+                    <ol className="space-y-6">
                       {incident.data.updates.map((update) => (
-                        <li key={update.id}>
+                        <li
+                          key={update.id}
+                          className="space-y-2 border-l border-border pl-5"
+                        >
                           <p>
                             {t("status-incident.status", {
                               status: update.status,
                             })}
                           </p>
                           <p>{update.body}</p>
-                          <time dateTime={update.createdAt}>
+                          <time
+                            className="text-xs text-muted-foreground"
+                            dateTime={update.createdAt}
+                          >
                             {new Date(update.createdAt).toLocaleString()}
                           </time>
                         </li>

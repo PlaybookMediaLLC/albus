@@ -1,4 +1,12 @@
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { DateSeparator } from "../inbox/date-separator";
+import { MessageBubble } from "../inbox/message-bubble";
+import { SystemEvent } from "../inbox/system-event";
+import { arrivedClass, useArrived } from "../inbox/use-arrived";
+import { cn } from "../upstream";
+
+type Attachment = { fileId?: string | null; name: string };
 
 export interface ConversationMessagesProps {
   messages: Array<{
@@ -7,48 +15,83 @@ export interface ConversationMessagesProps {
     senderType: string;
     author: { name: string | null } | null;
     content: string;
-    attachments: Array<{ name: string }>;
+    attachments: Attachment[];
     createdAt: string;
   }>;
+  /** Renders a file that has an ID, such as a download link; otherwise its name shows. */
+  renderAttachment?: (attachment: Attachment & { fileId: string }) => ReactNode;
 }
 
-export function ConversationMessages({ messages }: ConversationMessagesProps) {
+const day = (iso: string) => new Date(iso).toDateString();
+
+/** The customer's thread, with the bubbles of the teammate inbox: the customer's own messages on the right. */
+export function ConversationMessages({
+  messages,
+  renderAttachment,
+}: ConversationMessagesProps) {
   const { t } = useTranslation("quills");
+  const arrived = useArrived(
+    messages.map((message) => message.id),
+    "thread",
+  );
   return (
     <section
-      className="portal-messages mt-8 [&>h2]:mb-5 [&>h2]:text-base [&>h2]:font-medium [&_ol]:grid [&_ol]:gap-5 [&_li]:max-w-[95%] md:[&_li]:max-w-[85%] [&_li]:rounded-2xl [&_li]:rounded-bl-sm [&_li]:border [&_li]:border-border [&_li]:bg-muted [&_li]:px-5 [&_li]:py-4 [&_li[data-sender=customer]]:justify-self-end [&_li[data-sender=customer]]:rounded-bl-2xl [&_li[data-sender=customer]]:rounded-br-sm [&_li[data-sender=customer]]:bg-primary/5 [&_li>p:first-child]:mb-2 [&_li>p:first-child]:text-xs [&_li>p:first-child]:font-semibold [&_li>p]:whitespace-pre-wrap [&_li>p]:break-words [&_time]:mt-3 [&_time]:block"
+      className="portal-messages mt-8"
       aria-labelledby="conversation-messages-heading"
     >
-      <h2 id="conversation-messages-heading">{t("conversation.messages")}</h2>
+      <h2
+        id="conversation-messages-heading"
+        className="mb-5 text-base font-medium"
+      >
+        {t("conversation.messages")}
+      </h2>
       {messages.length ? (
-        <ol>
-          {messages.map((message) => {
-            const sender = message.fromVisitor
-              ? t("conversation.you")
-              : message.senderType === "system"
-                ? t("conversation.system")
-                : message.author?.name?.trim() || t("conversation.support");
-            return (
-              <li
-                key={message.id}
-                data-sender={message.fromVisitor ? "customer" : "team"}
-              >
-                <p>{sender}</p>
-                <p>{message.content}</p>
-                {message.attachments.map((attachment) => (
-                  <p key={`${message.id}:${attachment.name}`}>
-                    {t("conversation.attachment", { name: attachment.name })}
-                  </p>
-                ))}
-                <time dateTime={message.createdAt}>
-                  {new Date(message.createdAt).toLocaleString()}
-                </time>
-              </li>
-            );
-          })}
+        <ol className="grid gap-3">
+          {messages.map((message, index) => (
+            <li
+              key={message.id}
+              className={cn("grid gap-3", arrived(message.id) && arrivedClass)}
+            >
+              {index === 0 ||
+              day(messages[index - 1]!.createdAt) !== day(message.createdAt) ? (
+                <DateSeparator date={message.createdAt} />
+              ) : null}
+              {message.senderType === "system" ? (
+                <SystemEvent time={message.createdAt}>
+                  {message.content}
+                </SystemEvent>
+              ) : (
+                <MessageBubble
+                  kind={message.fromVisitor ? "self" : "other"}
+                  avatar={!message.fromVisitor}
+                  author={{
+                    name: message.fromVisitor
+                      ? t("conversation.you")
+                      : message.author?.name?.trim() ||
+                        t("conversation.support"),
+                  }}
+                  time={message.createdAt}
+                >
+                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  {message.attachments.map(({ fileId, name }, index) => (
+                    <p
+                      key={fileId ?? `${message.id}:${index}`}
+                      className="mt-1 text-xs opacity-80"
+                    >
+                      {fileId && renderAttachment
+                        ? renderAttachment({ fileId, name })
+                        : t("conversation.attachment", { name })}
+                    </p>
+                  ))}
+                </MessageBubble>
+              )}
+            </li>
+          ))}
         </ol>
       ) : (
-        <p>{t("conversation.noMessages")}</p>
+        <p className="text-sm text-muted-foreground">
+          {t("conversation.noMessages")}
+        </p>
       )}
     </section>
   );

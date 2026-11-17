@@ -11,7 +11,6 @@ import { TeamStateView } from "../../team/team-state-view";
 import { GroupedList } from "../../ui/inbox/grouped-list";
 import { ListHeader } from "../../ui/inbox/list-header";
 import { PostStatusIcon } from "../../ui/inbox/post-status-icon";
-import { RequestFilters } from "../../ui/inbox/request-filters";
 import { RequestRow } from "../../ui/inbox/request-row";
 import { SearchField } from "../../ui/inbox/search-field";
 import { useListNavigation } from "../../ui/inbox/use-list-navigation";
@@ -21,12 +20,12 @@ import { DeletedRequest } from "./parts/deleted-request";
 import { NewRequestDialog } from "../../team/new-request/new-request-dialog";
 import { groupPosts, postRow, rowContext, statusIcon } from "./post-list";
 import {
-  filterPatch,
   postListInput,
   postSearch,
   type PostSearch,
   requestListTitle,
 } from "./post-search";
+import { useRequestFilters } from "./use-request-filters";
 import { useRequestQuery } from "./use-request-query";
 
 export interface TeamPostsPageProps {
@@ -85,21 +84,20 @@ export function TeamPostsPage({
   const deleted = tab === "deleted";
   const onOpen = deleted ? undefined : open;
   useListNavigation({ ids, activeId: active, onMove: setActive, onOpen });
+  const menu = useRequestFilters({
+    workspaceId,
+    search,
+    statuses: statuses.data?.statuses ?? [],
+    boards: boards.data?.items ?? [],
+    onSearch: setSearch,
+    withDeleted: true,
+  });
 
   return (
     <PageFrame titleKey="team-posts.title" landmark={false} variant="app">
       <ListHeader
         title={requestListTitle(search, statuses.data?.statuses ?? [], t)}
-        filters={
-          <RequestFilters
-            status={search.statusId ? "" : tab}
-            withDeleted
-            board={search.board ?? ""}
-            sort={search.sort ?? "newest"}
-            boards={boards.data?.items ?? []}
-            onChange={(key, value) => setSearch(filterPatch(key, value))}
-          />
-        }
+        filters={menu.filters}
         actions={
           <>
             <SearchField
@@ -120,7 +118,9 @@ export function TeamPostsPage({
             {team.permissions.create ? (
               <Button size="sm" onClick={() => setSearch({ new: true })}>
                 <Plus aria-hidden="true" />
-                {t("team-posts.newRequest")}
+                <span className="max-sm:sr-only">
+                  {t("team-posts.newRequest")}
+                </span>
               </Button>
             ) : null}
           </>
@@ -173,6 +173,7 @@ export function TeamPostsPage({
           ) : null}
         </TeamStateView>
       </div>
+      {menu.dialog}
       {creating && team.permissions.create && statuses.data && boards.data ? (
         <NewRequestDialog
           workspaceId={workspaceId}

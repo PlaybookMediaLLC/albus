@@ -1,3 +1,4 @@
+import { Rss } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { changelogFeedUrl } from "../../core/changelog-feed-url";
 import { portalHref } from "../../core/portal-href";
@@ -67,30 +68,37 @@ export function ChangelogPage(props: ChangelogPageProps) {
   // A tab that the portal settings turn off looks like a missing page.
   if (!shown)
     return (
-      <PageFrame titleKey="changelog.title" wide>
+      <PageFrame titleKey="changelog.title" wide hub>
         <StateView problem={{ kind: "notFound" }}>{null}</StateView>
       </PageFrame>
     );
   return (
     <PageFrame
+      hub
       titleKey="changelog.title"
       description={t("changelog.description")}
       wide
       actions={
         <>
           <ShareActions compact />
-          <a
-            className="rounded-full bg-muted px-3 py-1 text-xs font-medium transition-colors hover:bg-muted/70"
-            href={changelogFeedUrl(props.workspaceId)}
+          <Button
+            variant="secondary"
+            size="icon-xs"
+            className="rounded-full before:rounded-full"
+            aria-label={t("changelog.rss")}
+            title={t("changelog.rss")}
+            render={<a href={changelogFeedUrl(props.workspaceId)} />}
           >
-            {t("changelog.rss")}
-          </a>
-          <a
-            className="rounded-full bg-muted px-3 py-1 text-xs font-medium transition-colors hover:bg-muted/70"
-            href={portalHref(props.workspaceId, "preferences")}
+            <Rss aria-hidden="true" />
+          </Button>
+          <Button
+            variant="secondary"
+            size="xs"
+            className="rounded-full before:rounded-full"
+            render={<a href={portalHref(props.workspaceId, "preferences")} />}
           >
             {t("changelog.emailUpdates")}
-          </a>
+          </Button>
         </>
       }
     >

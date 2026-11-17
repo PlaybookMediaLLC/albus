@@ -4,6 +4,8 @@ import { createContext } from "react";
 export interface DetailPaneControls {
   /** Hides the list pane (md and up). */
   hideList: () => void;
+  /** Shows the hidden list pane; null while the list is visible. */
+  showList: (() => void) | null;
   /** The right panel, or null when the layout has none. */
   panel: { label: string; open: boolean; toggle: () => void } | null;
 }

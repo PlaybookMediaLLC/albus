@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { brand } from "@kaneo/branding";
 import { useTranslation } from "react-i18next";
 import { PortalThemeContext } from "../core/portal-theme-context";
+import { useDarkTheme } from "../core/use-dark-theme";
 import type { PortalBranding } from "../core/types";
 
 export interface PortalShellProps {
@@ -21,10 +22,10 @@ export function PortalShell({
 }: PortalShellProps) {
   const { t } = useTranslation("quills");
   const displayName = branding.headerDisplayName?.trim() || workspaceName;
+  const dark = useDarkTheme();
   const theme =
     branding.theme.themeMode === "dark" ||
-    (branding.theme.themeMode === "user" &&
-      document.documentElement.classList.contains("dark"))
+    (branding.theme.themeMode === "user" && dark)
       ? branding.theme.dark
       : branding.theme.light;
   const themeVariables = Object.fromEntries(
@@ -37,10 +38,10 @@ export function PortalShell({
   const shell = (
     // quills-web-allow C19: runtime workspace theme variables must stay scoped to the portal container.
     <div
-      className="portal-shell break-words flex h-full min-h-0 w-full flex-col overflow-y-auto bg-background text-foreground font-sans text-sm leading-relaxed [&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-offset-4 [&_a:focus-visible]:outline-ring"
+      className="portal-shell break-words flex h-full min-h-0 w-full scroll-pt-28 flex-col overflow-y-auto bg-background lg:scroll-pt-20 text-foreground font-sans text-sm leading-relaxed [&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-offset-4 [&_a:focus-visible]:outline-ring"
       style={themeVariables}
     >
-      <header className="portal-header shrink-0 bg-background">
+      <header className="portal-header sticky top-0 z-20 shrink-0 border-b border-border/60 bg-background/85 backdrop-blur">
         <div className="portal-header-inner mx-auto flex max-w-5xl flex-wrap items-center gap-3 px-5 py-4 lg:flex-nowrap lg:gap-6">
           <div className="portal-brand flex min-w-0 flex-1 items-center gap-2 text-base tracking-tight lg:flex-none">
             {branding.logoUrl ? (
@@ -62,7 +63,7 @@ export function PortalShell({
         </div>
       </header>
       {children}
-      <footer className="portal-footer mx-auto w-full max-w-5xl px-5 py-6 text-xs text-muted-foreground">
+      <footer className="portal-footer mx-auto w-full max-w-5xl px-5 py-6 text-xs text-muted-foreground max-sm:pb-24">
         {t("core.poweredBy")} {brand.name}
       </footer>
     </div>

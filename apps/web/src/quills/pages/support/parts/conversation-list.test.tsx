@@ -33,5 +33,7 @@ describe("ConversationList", () => {
       "href",
       "/portal/workspace_test_1/conversations/conversation_test_1",
     );
+    expect(view.getByText("1 unread message")).toBeVisible();
+    expect(view.getByText("Hello")).toBeVisible();
   });
 });

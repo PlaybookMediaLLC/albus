@@ -38,6 +38,31 @@ describe("PostThread", () => {
     expect(onLoadMore).toHaveBeenCalledTimes(1);
   });
 
+  it("puts the pinned comment first with a label, and offers the comment menu", () => {
+    mockApi();
+    const view = renderComponent(
+      <TeamRuntimeProvider value={postTeam}>
+        <PostThread
+          workspaceId="workspace_test_1"
+          post={{ ...postDetail, pinnedCommentId: reply.id }}
+          comments={[customer, reply]}
+          hasMore={false}
+          loadingMore={false}
+          onLoadMore={() => undefined}
+        />
+      </TeamRuntimeProvider>,
+    );
+    const [first] = view.getAllByRole("listitem");
+    expect(within(first!).getByText(reply.content)).toBeVisible();
+    expect(within(first!).getByText("Pinned")).toBeVisible();
+    expect(
+      view.getAllByRole("button", { name: "Comment actions" }),
+    ).toHaveLength(2);
+    expect(
+      view.getAllByRole("button", { name: /votes? for this comment/ }),
+    ).toHaveLength(2);
+  });
+
   it("says when there is no reply", () => {
     const view = renderComponent(
       <TeamRuntimeProvider value={postTeam}>

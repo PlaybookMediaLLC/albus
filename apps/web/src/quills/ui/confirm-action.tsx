@@ -1,6 +1,6 @@
 import { useId, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, Label, Switch } from "./upstream";
+import { Button, cn, Label, Switch } from "./upstream";
 
 export function isFramed(): boolean {
   try {
@@ -21,10 +21,19 @@ export interface ConfirmActionProps {
   checked?: boolean;
   "aria-checked"?: boolean;
   pressed?: boolean;
-  /** The look of a plain button (without `pressed`), such as "outline" in a long list. */
-  variant?: "default" | "outline";
+  /**
+   * The look. "outline" suits a long list. "ghost" is a quiet text action. "pill" is a small
+   * rounded toggle or count, such as a vote or a reaction; `pressed` tints it.
+   */
+  variant?: "default" | "outline" | "ghost" | "pill";
+  /** The button size. A pill is "xs" unless set. */
+  size?: "default" | "sm" | "xs" | "icon-xs";
   className?: string;
 }
+
+// The dark: step wins over the outline variant's dark:bg-input/32 (same specificity, later).
+const pill =
+  "rounded-full tabular-nums before:rounded-full enabled:not-aria-pressed:text-muted-foreground enabled:not-aria-pressed:hover:text-foreground aria-pressed:border-primary/40 aria-pressed:bg-primary/10 aria-pressed:text-primary dark:aria-pressed:bg-primary/10";
 
 export function ConfirmAction({
   labelKey,
@@ -37,6 +46,7 @@ export function ConfirmAction({
   "aria-checked": ariaChecked,
   pressed,
   variant = "default",
+  size,
   className,
 }: ConfirmActionProps) {
   const id = useId();
@@ -81,11 +91,18 @@ export function ConfirmAction({
         <Button
           type="button"
           variant={
-            pressed === undefined ? variant : pressed ? "secondary" : "outline"
+            variant === "pill"
+              ? "outline"
+              : pressed === undefined || variant === "ghost"
+                ? variant
+                : pressed
+                  ? "secondary"
+                  : "outline"
           }
+          size={size ?? (variant === "pill" ? "xs" : undefined)}
           aria-label={children ? t(labelKey, labelValues) : undefined}
           aria-pressed={pressed}
-          className={className}
+          className={cn(variant === "pill" && pill, className)}
           disabled={disabled || pending}
           loading={pending}
           onClick={() => void confirm()}

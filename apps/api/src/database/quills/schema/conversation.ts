@@ -130,6 +130,9 @@ export const conversations = quillsSchema
       // When the conversation was resolved/closed (set on close, cleared on
       // reopen). Drives resolution reporting and the resolved-vs-active split.
       resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+      // When a teammate archived the conversation: it leaves every inbox list and count except
+      // the Archived list, whatever its status. A new customer message clears it.
+      archivedAt: timestamp("archived_at", { withTimezone: true }),
       // Why the conversation was ended + an optional free-text note. The taxonomy
       // is enforced at the app layer (CONVERSATION_END_REASONS). Stored to power
       // resolution-rate reporting: resolved-rate = count(end_reason IN

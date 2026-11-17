@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useCreateComment } from "../../../hooks/team/use-create-comment";
 import { useTeamRuntime } from "../../../team/runtime";
 import { Composer } from "../../../ui/inbox/composer";
+import { EmojiMenu } from "../../../ui/inbox/emoji-menu";
 import { useKeyShortcuts } from "../../../ui/inbox/use-key-shortcuts";
 
 export interface CommentBoxProps {
@@ -37,6 +38,17 @@ export function CommentBox(props: CommentBoxProps) {
     { r: focus("public"), n: focus("private") },
     allowed && !props.parentId,
   );
+  // Puts the emoji at the cursor, or in place of the selected text.
+  const insert = (emoji: string) => {
+    const box = input.current;
+    const start = box?.selectionStart ?? text.length;
+    const end = box?.selectionEnd ?? start;
+    setText(text.slice(0, start) + emoji + text.slice(end));
+    requestAnimationFrame(() => {
+      box?.focus();
+      box?.setSelectionRange(start + emoji.length, start + emoji.length);
+    });
+  };
   return (
     <div className="grid grid-cols-1 gap-1">
       <Composer
@@ -58,6 +70,7 @@ export function CommentBox(props: CommentBoxProps) {
         }
         mode={mode}
         onModeChange={setMode}
+        tools={<EmojiMenu onPick={insert} disabled={!allowed} />}
         sending={create.isPending}
         disabled={!allowed}
         inputRef={input}

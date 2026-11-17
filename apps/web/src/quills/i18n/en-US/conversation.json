@@ -7,11 +7,11 @@
 	"noMessages": "No messages yet.",
 	"you": "You",
 	"support": "Support",
-	"system": "System",
 	"typing": "Support is typing…",
 	"replyLabel": "Reply",
 	"replyPlaceholder": "Write a reply",
 	"send": "Send reply",
 	"readOnly": "This conversation is read-only.",
-	"attachment": "Attachment: {{name}}"
+	"attachment": "Attachment: {{name}}",
+	"attachmentFailed": "The file could not be opened. Try again."
 }

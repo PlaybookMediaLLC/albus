@@ -12,18 +12,16 @@ import { PageFrame } from "../../ui/page-frame";
 import { PortalGate } from "../../ui/portal-gate";
 import { PostSort } from "../../ui/post/post-sort";
 import { StateView } from "../../ui/state-view";
-import { Input } from "../../ui/upstream";
+import { Button, Input } from "../../ui/upstream";
 import { meta } from "./meta";
 import { RoadmapBoard } from "./parts/roadmap-board";
+import { RoadmapPicker } from "./parts/roadmap-picker";
 
 export interface RoadmapPageProps {
   workspaceId: string;
   params: Record<string, string>;
   search: Record<string, unknown>;
 }
-
-const tab =
-  "rounded-full px-3 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground aria-pressed:bg-muted aria-pressed:font-medium aria-pressed:text-foreground";
 
 export function RoadmapPage(props: RoadmapPageProps) {
   const { t } = useTranslation("quills");
@@ -73,21 +71,28 @@ export function RoadmapPage(props: RoadmapPageProps) {
   // A tab that the portal settings turn off looks like a missing page.
   if (!shown)
     return (
-      <PageFrame titleKey="roadmap.title" wide>
+      <PageFrame titleKey="roadmap.title" wide hub>
         <StateView problem={{ kind: "notFound" }}>{null}</StateView>
       </PageFrame>
     );
   return (
     <PageFrame
+      hub
       titleKey="roadmap.title"
       description={selected?.description || t("roadmap.description")}
       actions={
-        <a
-          className="rounded-full bg-muted px-3 py-1 text-xs font-medium transition-colors hover:bg-muted/70"
-          href={portalHref(props.workspaceId, "", { openFeedback: "1" })}
+        <Button
+          variant="secondary"
+          size="xs"
+          className="rounded-full before:rounded-full"
+          render={
+            <a
+              href={portalHref(props.workspaceId, "", { openFeedback: "1" })}
+            />
+          }
         >
           {t("roadmap.suggest")}
-        </a>
+        </Button>
       }
       wide
     >
@@ -112,23 +117,11 @@ export function RoadmapPage(props: RoadmapPageProps) {
           >
             <div className="flex flex-wrap items-center gap-3">
               {list.length > 1 ? (
-                <div
-                  role="group"
-                  aria-label={t("roadmap.roadmaps")}
-                  className="flex flex-wrap gap-1"
-                >
-                  {list.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={tab}
-                      aria-pressed={item.id === selected?.id}
-                      onClick={() => change({ roadmap: item.slug })}
-                    >
-                      {item.name}
-                    </button>
-                  ))}
-                </div>
+                <RoadmapPicker
+                  roadmaps={list}
+                  selected={selected?.slug}
+                  onSelect={(slug) => change({ roadmap: slug })}
+                />
               ) : null}
               <div className="ml-auto flex items-center gap-1">
                 <div className="relative">

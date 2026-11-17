@@ -53,6 +53,7 @@ export function HelpCenterLocalePage(props: HelpCenterLocalePageProps) {
 
   return (
     <PageFrame
+      hub
       titleKey="help-center.title"
       displayTitle={home.data?.homepageTitle}
       description={home.data?.homepageDescription}

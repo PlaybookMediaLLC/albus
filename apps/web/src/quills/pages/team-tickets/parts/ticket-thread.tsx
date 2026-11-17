@@ -51,7 +51,7 @@ export function TicketThread({ ticket }: TicketThreadProps) {
     <div className="flex min-h-0 flex-1 flex-col">
       {/* The reversed column keeps the newest message in view, without script. */}
       <div className="flex min-h-0 flex-1 flex-col-reverse overflow-y-auto">
-        <div className="mx-auto mb-auto w-full max-w-205 px-4 py-4 [&>[role=alert]]:m-4">
+        <div className="mx-auto mb-auto w-full max-w-200 px-4 py-4 [&>[role=alert]]:m-4">
           <TeamStateView
             loading={messages.isLoading || activity.isLoading}
             problem={messages.error ?? activity.error ?? null}
@@ -71,7 +71,7 @@ export function TicketThread({ ticket }: TicketThreadProps) {
         </div>
       </div>
       {writer ? (
-        <div className="mx-auto w-full max-w-205 shrink-0 px-4 pb-4">
+        <div className="mx-auto w-full max-w-200 shrink-0 px-4 pb-4">
           <Composer
             label={
               mode === "reply"

@@ -1,6 +1,8 @@
 import {
   AlarmClock,
   AlarmClockOff,
+  Archive,
+  ArchiveRestore,
   Ban,
   CircleSlash,
   EllipsisVertical,
@@ -22,6 +24,7 @@ export interface ConversationMenuProps {
   status: ConversationStatus;
   /** Ended as spam. */
   spam: boolean;
+  archived: boolean;
   /** Whether the sender is blocked; null when the sender has no customer profile. */
   blocked: boolean | null;
   disabled?: boolean;
@@ -30,13 +33,15 @@ export interface ConversationMenuProps {
   onUnsnooze: () => void;
   onSpam: () => void;
   onNotSpam: () => void;
+  onArchive: () => void;
+  onUnarchive: () => void;
   onBlock: () => void;
   onUnblock: () => void;
 }
 
 /**
- * The kebab menu of the conversation header: snooze or unsnooze, spam and blocking. The API has no
- * conversation archive, so the menu has no Archive item.
+ * The kebab menu of the conversation header: snooze or unsnooze, spam, archive and blocking.
+ * Archive is apart from the status: it only takes the conversation out of the inbox lists.
  */
 export function ConversationMenu(props: ConversationMenuProps) {
   const { t } = useTranslation("quills");
@@ -74,6 +79,17 @@ export function ConversationMenu(props: ConversationMenuProps) {
           <MenuItem onClick={props.onSpam}>
             <ShieldAlert aria-hidden="true" />
             {t("team-conversations.markSpam")}
+          </MenuItem>
+        )}
+        {props.archived ? (
+          <MenuItem onClick={props.onUnarchive}>
+            <ArchiveRestore aria-hidden="true" />
+            {t("team-conversations.unarchive")}
+          </MenuItem>
+        ) : (
+          <MenuItem onClick={props.onArchive}>
+            <Archive aria-hidden="true" />
+            {t("team-conversations.archive")}
           </MenuItem>
         )}
         {props.blocked === null ? null : (

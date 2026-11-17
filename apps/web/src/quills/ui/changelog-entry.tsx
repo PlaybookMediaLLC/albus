@@ -48,7 +48,7 @@ export function ChangelogEntry({
         />
         <p className="text-sm font-medium">
           <time
-            className="!text-[13px] !text-foreground"
+            className="text-sm text-foreground"
             dateTime={entry.publishedAt}
           >
             {new Intl.DateTimeFormat(i18n.language, {
@@ -64,7 +64,7 @@ export function ChangelogEntry({
             {entry.categories.map((category) => (
               <li
                 key={category.id}
-                className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground"
+                className="rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
               >
                 {category.name}
               </li>
@@ -104,6 +104,7 @@ export function ChangelogEntry({
             <PersonAvatar
               name={entry.author.name}
               avatarUrl={entry.author.avatarUrl}
+              colored
               className="size-6"
             />
             {entry.author.name}

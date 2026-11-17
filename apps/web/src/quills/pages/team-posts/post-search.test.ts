@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vite-plus/test";
 import { listStatusesFixture } from "../../api/team/list-statuses.fixture";
 import {
+  checkedStatuses,
   detailSearch,
-  filterPatch,
+  facetPatch,
   postListInput,
   postSearch,
   requestListTitle,
+  viewFilters,
+  viewSearch,
 } from "./post-search";
 
 const status = (id: string, category: "active" | "complete" | "closed") => ({
@@ -33,6 +36,13 @@ describe("postSearch", () => {
     expect(
       postSearch.parse({ status: "done", sort: "votes", board: "b1", q: "x" }),
     ).toEqual({ sort: "votes", board: "b1", q: "x" });
+    expect(postSearch.parse({ sort: "stale", tags: "t1,t2" })).toEqual({
+      sort: "stale",
+      tags: "t1,t2",
+    });
+    // The API takes at most 50 IDs in a list.
+    const many = Array.from({ length: 51 }, (_, i) => `b${i}`).join(",");
+    expect(postSearch.parse({ board: many })).toEqual({});
   });
 });
 
@@ -58,6 +68,18 @@ describe("postListInput", () => {
         boardIds: "b1",
         search: "export",
       },
+    });
+  });
+
+  it("filters several statuses and tags", () => {
+    const { input } = postListInput(
+      "ws",
+      { statusId: "open,done", tags: "t1,t2" },
+      statuses,
+    );
+    expect(input.query).toMatchObject({
+      statusIds: "open,done",
+      tagIds: "t1,t2",
     });
   });
 
@@ -97,19 +119,80 @@ describe("postListInput", () => {
   });
 });
 
-describe("filterPatch", () => {
-  it("turns a filter menu choice into an address change", () => {
-    expect(filterPatch("status", "closed")).toEqual({
-      status: "closed",
+describe("facetPatch", () => {
+  it("turns checked boards, statuses and tags into address lists", () => {
+    expect(facetPatch({}, "board", ["b1", "b2"], 3)).toEqual({
+      board: "b1,b2",
+    });
+    // Every board is no board filter.
+    expect(facetPatch({}, "board", ["b1", "b2", "b3"], 3)).toEqual({
+      board: undefined,
+    });
+    expect(facetPatch({}, "tags", [], 2)).toEqual({ tags: undefined });
+    expect(facetPatch({ status: "closed" }, "status", ["open"], 3)).toEqual({
+      status: undefined,
+      statusId: "open",
+    });
+    expect(facetPatch({}, "status", ["a", "b", "c"], 3)).toEqual({
+      status: "all",
       statusId: undefined,
     });
-    expect(filterPatch("board", "")).toEqual({ board: undefined });
-    expect(filterPatch("board", "board_ideas")).toEqual({
-      board: "board_ideas",
+  });
+
+  it("keeps the Deleted tab", () => {
+    expect(facetPatch({ status: "deleted" }, "status", ["open"], 3)).toEqual({
+      status: "deleted",
+      statusId: "open",
     });
-    expect(filterPatch("sort", "rice")).toEqual({ sort: "rice" });
-    // A value that the address does not accept removes the key.
-    expect(filterPatch("sort", "loudest")).toEqual({ sort: undefined });
+  });
+});
+
+describe("checkedStatuses", () => {
+  it("checks the chosen statuses, else those of the tab", () => {
+    expect(checkedStatuses({ statusId: "done,open" }, statuses)).toEqual([
+      "done",
+      "open",
+    ]);
+    expect(checkedStatuses({}, statuses)).toEqual(["open", "planned"]);
+    expect(checkedStatuses({ status: "all" }, statuses)).toEqual([
+      "open",
+      "planned",
+      "done",
+    ]);
+  });
+});
+
+describe("saved views", () => {
+  it("saves the checked statuses, lists and sort, and opens them again", () => {
+    const filters = viewFilters(
+      { board: "b1", tags: "t1,t2", sort: "trending" },
+      statuses,
+    );
+    expect(filters).toEqual({
+      status: ["open", "planned"],
+      board: ["b1"],
+      tags: ["t1", "t2"],
+      sort: "trending",
+    });
+    expect(viewSearch(filters)).toEqual({
+      status: undefined,
+      statusId: "open,planned",
+      board: "b1",
+      tags: "t1,t2",
+      sort: "trending",
+    });
+  });
+
+  it("saves All without a status list, and Deleted as showDeleted", () => {
+    expect(viewFilters({ status: "all" }, statuses)).toEqual({});
+    expect(viewSearch({})).toMatchObject({ status: "all" });
+    const deleted = viewFilters({ status: "deleted" }, statuses);
+    expect(deleted).toEqual({ showDeleted: true });
+    expect(viewSearch(deleted)).toMatchObject({ status: "deleted" });
+  });
+
+  it("drops a sort that the list does not have", () => {
+    expect(viewSearch({ sort: "priority" }).sort).toBeUndefined();
   });
 });
 
@@ -134,6 +217,9 @@ describe("requestListTitle", () => {
       "t:team-posts.closed",
     );
     expect(requestListTitle({}, list, t)).toBe("t:team-posts.title");
+    expect(requestListTitle({ statusId: "open,planned" }, list, t)).toBe(
+      "t:team-posts.title",
+    );
     expect(requestListTitle({ statusId: "gone", status: "all" }, list, t)).toBe(
       "t:team.nav.allRequests",
     );

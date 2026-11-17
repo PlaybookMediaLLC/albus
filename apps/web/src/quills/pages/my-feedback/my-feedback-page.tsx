@@ -9,7 +9,7 @@ import { ConfirmAction } from "../../ui/confirm-action";
 import { PageFrame } from "../../ui/page-frame";
 import { PortalGate } from "../../ui/portal-gate";
 import { StateView } from "../../ui/state-view";
-import { Button } from "../../ui/upstream";
+import { Button, Card } from "../../ui/upstream";
 import { meta } from "./meta";
 import {
   FeedbackFilter,
@@ -77,7 +77,7 @@ export function MyFeedbackPage(props: MyFeedbackPageProps) {
             }}
           >
             {weeklyDigest !== undefined ? (
-              <div className="rounded-xl border border-border p-4">
+              <Card className="p-4">
                 <ConfirmAction
                   labelKey="my-feedback.digest"
                   role="switch"
@@ -90,11 +90,11 @@ export function MyFeedbackPage(props: MyFeedbackPageProps) {
                     });
                   }}
                 />
-              </div>
+              </Card>
             ) : null}
             <FeedbackFilter value={filter} onChange={setFilter} />
             {items.length ? (
-              <ul className="divide-y divide-border rounded-lg border border-border">
+              <Card render={<ul />} className="divide-y divide-border">
                 {items.map((item) => (
                   <MyFeedbackRow
                     key={item.id}
@@ -102,9 +102,9 @@ export function MyFeedbackPage(props: MyFeedbackPageProps) {
                     item={item}
                   />
                 ))}
-              </ul>
+              </Card>
             ) : (
-              <p className="text-sm text-muted-foreground">{t("core.empty")}</p>
+              <StateView empty>{null}</StateView>
             )}
             {list.hasNextPage ? (
               <Button

@@ -61,16 +61,14 @@ describe("TeamInsightsPage", () => {
       );
       expect(view.getByLabelText("Billing")).toHaveAttribute("max", "3");
       expect(view.getByLabelText("Negative")).toHaveAttribute("max", "4");
-      expect(
-        view.getByRole("row", { name: "2026-11-09 4 6" }),
-      ).toBeInTheDocument();
+      expect(view.getByRole("row", { name: "Nov 9 4 6" })).toBeInTheDocument();
       expect(view.getByRole("link", { name: /Dark mode/ })).toHaveAttribute(
         "href",
         "/feedback/workspace_test_1/posts/post_test_1",
       );
       expect(view.getByText("Ideas · +5 votes")).toBeInTheDocument();
       expect(
-        view.getByText("2026-10-15 to 2026-11-13 (UTC)"),
+        view.getByText("Oct 15, 2026 to Nov 13, 2026 (UTC)"),
       ).toBeInTheDocument();
     });
 

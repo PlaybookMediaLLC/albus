@@ -12,6 +12,8 @@ export interface PageFrameProps {
   persistToken?: boolean;
   /** A rail beside the title and content, such as board or help navigation. */
   aside?: ReactNode;
+  /** False hides the rail below md, for a page that puts its controls in the content there. */
+  mobileAside?: boolean;
   /** Context above the title, such as a breadcrumb. */
   eyebrow?: ReactNode;
   /** A short line under the title. */
@@ -20,6 +22,8 @@ export interface PageFrameProps {
   actions?: ReactNode;
   /** Use the full portal width for boards, lists and grids. */
   wide?: boolean;
+  /** A hub page (feedback, help, roadmap, updates) gets the large title; others a smaller one. */
+  hub?: boolean;
   /** Set false inside the app shell, which already has the main landmark. */
   landmark?: boolean;
   /**
@@ -37,10 +41,12 @@ export function PageFrame({
   tokenScope,
   persistToken = false,
   aside,
+  mobileAside = true,
   eyebrow,
   description,
   actions,
   wide = false,
+  hub = false,
   landmark = true,
   variant = "portal",
 }: PageFrameProps) {
@@ -56,7 +62,10 @@ export function PageFrame({
   useEffect(() => {
     const title = heading.current ?? root.current?.querySelector("h1");
     // An embedded Kaneo page, such as a settings page, has an h1 that cannot take focus.
-    if (title && !title.hasAttribute("tabindex")) title.tabIndex = -1;
+    if (title && !title.hasAttribute("tabindex")) {
+      title.tabIndex = -1;
+      title.classList.add("outline-none");
+    }
     title?.focus();
   }, [titleKey]);
 
@@ -73,7 +82,10 @@ export function PageFrame({
         <h1
           ref={heading}
           tabIndex={-1}
-          className="portal-page-title text-3xl font-semibold leading-tight tracking-tight outline-none md:text-4xl"
+          className={cn(
+            "portal-page-title font-medium leading-tight tracking-tight outline-none",
+            hub ? "text-3xl md:text-4xl" : "text-2xl md:text-3xl",
+          )}
         >
           {title}
         </h1>
@@ -106,7 +118,7 @@ export function PageFrame({
   return (
     <Root
       className={cn(
-        "portal-page mx-auto w-full flex-1 px-5 pb-16 pt-8 md:pt-12 [&_h2]:tracking-tight [&_h3]:font-semibold [&_time]:text-xs [&_time]:text-muted-foreground",
+        "portal-page mx-auto w-full flex-1 px-5 pb-16 pt-8 md:pt-12",
         wide || aside ? "max-w-5xl" : "max-w-3xl",
       )}
       data-page={titleKey}
@@ -115,7 +127,12 @@ export function PageFrame({
       {aside ? (
         <div className="grid items-start gap-x-16 md:grid-cols-[13rem_minmax(0,1fr)] md:grid-rows-[auto_1fr]">
           {header}
-          <div className="mb-8 min-w-0 md:col-start-1 md:row-span-2 md:row-start-1 md:mb-0 md:self-stretch">
+          <div
+            className={cn(
+              "mb-8 min-w-0 md:col-start-1 md:row-span-2 md:row-start-1 md:mb-0 md:self-stretch",
+              !mobileAside && "max-md:hidden",
+            )}
+          >
             {aside}
           </div>
           {content}

@@ -65,19 +65,14 @@ export function RoadmapColumn({ status, ...props }: RoadmapColumnProps) {
     <PostStatusIcon color={status.color} progress={props.progress} />
   );
   const panel = cn(
-    "flex shrink-0 flex-col rounded-xl bg-muted/50 ring-ring/40 transition-shadow",
+    "group/column flex shrink-0 flex-col rounded-xl bg-muted/50 ring-ring/40 transition-shadow",
     props.dropTarget && "ring-2",
     // The lifted column follows the pointer; its place shows as a dashed outline.
     drag.isDragging &&
       "bg-transparent outline-2 outline-dashed outline-ring/40 *:invisible",
   );
   const name = (
-    // quills-web-allow C19: the status name takes the workspace status color, a runtime value.
-    <h2
-      id={id}
-      className="truncate text-sm font-semibold"
-      style={{ color: status.color }}
-    >
+    <h2 id={id} className="truncate text-sm font-semibold">
       {status.name}
     </h2>
   );
@@ -108,7 +103,7 @@ export function RoadmapColumn({ status, ...props }: RoadmapColumnProps) {
       ref={drag.setActivatorNodeRef}
       label={t("team-roadmap.reorder", { name: status.name })}
       // touch-none: a touch drag moves the column instead of scrolling the board.
-      className="cursor-grab touch-none text-muted-foreground"
+      className="cursor-grab touch-none text-muted-foreground opacity-0 transition-opacity group-hover/column:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100 motion-reduce:transition-none"
       {...drag.attributes}
       {...drag.listeners}
     >

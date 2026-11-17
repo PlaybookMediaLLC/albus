@@ -1,8 +1,10 @@
 import {
   AlarmClock,
+  Archive,
   CircleCheck,
   Inbox,
   type LucideIcon,
+  Mail,
   MessagesSquare,
   ShieldAlert,
   UserRound,
@@ -26,7 +28,7 @@ export interface ListFilter {
   group?: boolean;
 }
 
-/** The filter menu of design section 2. Unread and Archived have no API filter, so they are left out. */
+/** The filter menu of design section 2. */
 export const listFilters: readonly ListFilter[] = [
   {
     id: "open",
@@ -50,6 +52,13 @@ export const listFilters: readonly ListFilter[] = [
     status: "any",
   },
   {
+    id: "unread",
+    labelKey: "team-conversations.filters.unread",
+    icon: Mail,
+    view: "all",
+    status: "unread",
+  },
+  {
     id: "snoozed",
     labelKey: "team-conversations.filters.snoozed",
     icon: AlarmClock,
@@ -70,6 +79,13 @@ export const listFilters: readonly ListFilter[] = [
     view: "all",
     status: "spam",
     group: true,
+  },
+  {
+    id: "archived",
+    labelKey: "team-conversations.filters.archived",
+    icon: Archive,
+    view: "all",
+    status: "archived",
   },
 ];
 
@@ -115,8 +131,8 @@ export function listTitle(
 type Rules = CreateConversationViewRequest["json"]["filters"]["rules"];
 
 /**
- * The rules that save the current list as a view. Spam, the search text and a saved view
- * have no rule, so those lists cannot be saved (null).
+ * The rules that save the current list as a view. Spam, the search text and a saved view have no
+ * rule, so those lists cannot be saved (null).
  */
 export function viewRules(context: ListContext): Rules | null {
   if (context.status === "spam" || context.savedView || context.search)
@@ -130,7 +146,9 @@ export function viewRules(context: ListContext): Rules | null {
   if (context.view === "mine") rules.push({ field: "assignee", value: "me" });
   if (context.view === "unassigned")
     rules.push({ field: "assignee", value: "unassigned" });
-  if (context.status !== "any")
+  if (context.status === "unread" || context.status === "archived")
+    rules.push({ field: context.status, value: true });
+  else if (context.status !== "any")
     rules.push({ field: "status", value: context.status });
   return rules;
 }

@@ -86,8 +86,12 @@ export function postRow(post: ListedPost, context: RowContext, now?: number) {
     votes: post.voteCount,
     comments: post.commentCount,
     board: context.boardName.get(post.boardId) ?? null,
+    boardId: post.boardId,
     time: post.createdAt,
-    person: { name: post.authorName ?? context.anonymous },
+    person: {
+      name: post.authorName ?? context.anonymous,
+      avatarUrl: post.authorAvatarUrl,
+    },
   };
 }
 

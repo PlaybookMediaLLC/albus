@@ -1,6 +1,7 @@
 import { fireEvent, waitFor } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { describe, expect, it } from "vite-plus/test";
+import { archiveConversationFixture } from "../../../api/team/archive-conversation.fixture";
 import { assignConversationFixture } from "../../../api/team/assign-conversation.fixture";
 import { blockUserFixture } from "../../../api/team/block-user.fixture";
 import { endConversationFixture } from "../../../api/team/end-conversation.fixture";
@@ -8,6 +9,7 @@ import { getConversationFixture } from "../../../api/team/get-conversation.fixtu
 import { getUserFixture } from "../../../api/team/get-user.fixture";
 import { restoreConversationFromSpamFixture } from "../../../api/team/restore-conversation-from-spam.fixture";
 import { setConversationStatusFixture } from "../../../api/team/set-conversation-status.fixture";
+import { unarchiveConversationFixture } from "../../../api/team/unarchive-conversation.fixture";
 import { TeamRuntimeProvider } from "../../../team/runtime";
 import { press } from "../../../test/actions";
 import { mockApi } from "../../../test/mock-api";
@@ -189,6 +191,39 @@ describe("ConversationHeader", () => {
     expect(block!.method).toBe("PUT");
     expect(new URL(block!.url).pathname).toBe(
       "/api/quills/workspace_test_1/users/principal_test_9/block",
+    );
+  });
+
+  it("archives from the menu, and unarchives an archived conversation", async () => {
+    const api = answer({
+      getQuillsUser: user(),
+      archiveQuillsConversation: { body: archiveConversationFixture.ok() },
+    });
+    const view = render(header());
+    press("More actions");
+    fireEvent.click(await view.findByRole("menuitem", { name: "Archive" }));
+    await waitFor(() =>
+      expect(api.calls("archiveQuillsConversation")).toHaveLength(1),
+    );
+    expect(
+      new URL(api.calls("archiveQuillsConversation")[0]!.url).pathname,
+    ).toBe(
+      "/api/quills/workspace_test_1/conversations/conversation_test_1/archive",
+    );
+    view.unmount();
+    const back = answer({
+      getQuillsUser: user(),
+      unarchiveQuillsConversation: { body: unarchiveConversationFixture.ok() },
+    });
+    const archived = render(
+      header({ ...conversation, archivedAt: "2026-11-01T10:00:00.000Z" }),
+    );
+    press("More actions");
+    fireEvent.click(
+      await archived.findByRole("menuitem", { name: "Unarchive" }),
+    );
+    await waitFor(() =>
+      expect(back.calls("unarchiveQuillsConversation")).toHaveLength(1),
     );
   });
 

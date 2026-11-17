@@ -31,6 +31,14 @@ export const rejectQuillsPost = {
   ...byParam("postId", (s) => s.pendingPostId, { reason: "Spam" }),
   softDelete: pendingPost,
 };
+const duplicatePost = softDeletes(
+  "posts",
+  ({ a }: FeedbackIds) => a.duplicatePostId,
+);
+export const setQuillsPostVisibility = {
+  ...byParam("postId", (s) => s.duplicatePostId, { visible: false }),
+  softDelete: duplicatePost,
+};
 export const approveQuillsComment = {
   ...byParam("commentId", (s) => s.commentId),
   softDelete: pendingComment,

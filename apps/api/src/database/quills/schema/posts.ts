@@ -338,6 +338,14 @@ export const postVotes = quillsSchema
         table.principalId,
         table.createdAt,
       ),
+      // The Trending sort of the post list: the recent voters of each post, read from the index
+      // alone. Built CONCURRENTLY after migrations (CONCURRENT_INDEX_SPECS).
+      index("post_votes_workspace_post_created_idx").on(
+        table.workspaceId,
+        table.postId,
+        table.createdAt,
+        table.principalId,
+      ),
       // Partial index for finding integration-sourced votes
       index("post_votes_source_type_idx")
         .on(table.sourceType)

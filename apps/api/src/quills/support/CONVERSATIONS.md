@@ -50,8 +50,8 @@ Visibility: `quills:read` sees every conversation of the workspace (D2: Kaneo ha
 
 | operationId | Route | Action | Tables | Event | Tests |
 |---|---|---|---|---|---|
-| `listQuillsConversations` | `GET /conversations` (status, priority, assignee `mine`/`unassigned`/principal, teamId, visitorPrincipalId, channel, source, waitingOnly, tagId, view `all`/`mentions`/`spam`/`created_by_me`, search, sort, cursor; `limit` ≤ 100) | read | `conversations`, `principal`, `user`, `conversation_messages`, `conversation_tag_assignments`, `conversation_tags`, `conversation_message_mentions` | - | contract, read-leak, page-bounds |
-| `getQuillsConversation` | `GET /conversations/{conversationId}` | read | `conversations`, `conversation_summaries`, tags | - | contract |
+| `listQuillsConversations` | `GET /conversations` (status, priority, assignee `mine`/`unassigned`/principal, teamId, visitorPrincipalId, channel, source, waitingOnly, unreadOnly, tagId, view `all`/`mentions`/`spam`/`created_by_me`/`archived`, search, sort, cursor; `limit` ≤ 100; an archived conversation lists only in `archived`) | read | `conversations`, `principal`, `user`, `conversation_messages`, `conversation_tag_assignments`, `conversation_tags`, `conversation_message_mentions` | - | contract, read-leak, page-bounds |
+| `getQuillsConversation` | `GET /conversations/{conversationId}` (with `summary` and `summaryUpdatedAt`) | read | `conversations`, `conversation_summaries`, tags | - | contract |
 | `exportQuillsConversationTranscript` | `GET /conversations/{conversationId}/transcript` | read | `conversations`, `conversation_messages`, `principal` | - | contract |
 | `listQuillsConversationFiles` | `GET /conversations/{conversationId}/files` | read | `conversation_messages` | - | contract |
 
@@ -65,8 +65,8 @@ Merged: 6. `listQuillsConversationsIndex` (v1, shape) + `listQuillsConversations
 | operationId | Route | Action | Tables | Event | Tests |
 |---|---|---|---|---|---|
 | `listQuillsConversationMessages` | `GET /conversations/{conversationId}/messages` (`includeInternal`, `before`; `limit` ≤ 100) | read | `conversation_messages`, reactions, flags, `principal` | - | contract, read-leak |
-| `replyQuillsConversation` | `POST /conversations/{conversationId}/reply` | update | `conversation_messages`, `conversations` | `message.created` | contract, rollback |
-| `addQuillsConversationNote` | `POST /conversations/{conversationId}/note` (`mentionPrincipalIds` ≤ 20, current members) | create | `conversation_messages`, `conversation_message_mentions`, `conversations` | `message.note_created` | contract, rollback |
+| `replyQuillsConversation` | `POST /conversations/{conversationId}/reply` (`attachmentIds` ≤ 10: the caller's unattached teammate uploads) | update | `conversation_messages`, `conversations`, `files` | `message.created` | contract, rollback |
+| `addQuillsConversationNote` | `POST /conversations/{conversationId}/note` (`mentionPrincipalIds` ≤ 20, current members; `attachmentIds` as for a reply) | create | `conversation_messages`, `conversation_message_mentions`, `conversations`, `files` | `message.note_created` | contract, rollback |
 | `updateQuillsConversationMessage` | `PATCH /conversation-messages/{messageId}` (the caller's own agent message) | update | `conversation_messages`, `conversations` | `message.updated`, `message.note_updated` | contract, rollback |
 | `deleteQuillsConversationMessage` | `DELETE /conversation-messages/{messageId}` (soft delete) | delete | `conversation_messages` | `message.deleted`, `message.note_deleted` | contract, rollback |
 | `setQuillsMessageReaction`, `removeQuillsMessageReaction` | `PUT` and `DELETE /conversation-messages/{messageId}/reactions?emoji=` | update | `conversation_message_reactions` | `message.reacted`, `message.unreacted` | contract, rollback |
@@ -93,6 +93,8 @@ Reply and note take plain text (≤ 10000). Rich content and attachments are not
 | `snoozeQuillsConversation` | `POST /conversations/{conversationId}/snooze` | update | same | `conversation.status_changed` | contract, rollback |
 | `endQuillsConversation` | `POST /conversations/{conversationId}/end` (reason, note ≤ 2000; close checks required attributes unless the reason is spam: 409) | update | same | `conversation.status_changed` | contract, rollback |
 | `restoreQuillsConversationFromSpam` | `POST /conversations/{conversationId}/restore-spam` (409 unless spam) | update | same | `conversation.status_changed` | contract, rollback |
+| `archiveQuillsConversation` | `POST /conversations/{conversationId}/archive` (the status stays; a new customer message unarchives) | update | `conversations` | `conversation.updated` | contract, rollback |
+| `unarchiveQuillsConversation` | `POST /conversations/{conversationId}/unarchive` | update | `conversations` | `conversation.updated` | contract, rollback |
 | `setQuillsConversationPriority` | `POST /conversations/{conversationId}/priority` | update | same | `conversation.priority_changed` | contract, rollback |
 | `assignQuillsConversation` | `POST /conversations/{conversationId}/assign` (`assigneePrincipalId`: a current member, `me` or null) | update | `conversations`, `principal`, `conversation_messages`; reads `workspace_member` | `conversation.assigned` | contract, rollback |
 | `assignQuillsConversationTeam` | `PUT /conversations/{conversationId}/team` | update | `conversations`, `teams`, `conversation_messages` | `conversation.assigned` | contract, rollback |
@@ -210,7 +212,7 @@ Merged: 7. The ticket target of `setQuillsConversationAttributeValue` belongs to
 | `addQuillsConversationParticipant` | `POST /conversations/{conversationId}/participants` (an existing customer by `principalId` or `email`) | update | `conversation_participants`, `conversation_messages` | `conversation.participant_added` |
 | `removeQuillsConversationParticipant` | `DELETE /conversations/{conversationId}/participants/{principalId}` | update | same | `conversation.participant_removed` |
 | `listQuillsConversationViews` | `GET /conversation-views` (shared and own private, pinned first) | read | `conversation_views`, pins | - |
-| `createQuillsConversationView` | `POST /conversation-views` (≤ 15 rules; tag, team and assignee IDs checked) | create | `conversation_views` | `conversation_view.created` |
+| `createQuillsConversationView` | `POST /conversation-views` (≤ 15 rules; tag, team and assignee IDs checked; `waiting`, `unread` and `archived` take `true`) | create | `conversation_views` | `conversation_view.created` |
 | `updateQuillsConversationView` | `PATCH /conversation-views/{viewId}` | update | `conversation_views` | `conversation_view.updated` |
 | `deleteQuillsConversationView` | `DELETE /conversation-views/{viewId}` (soft delete, drops pins) | delete | views, pins | `conversation_view.deleted` |
 | `pinQuillsConversationView`, `unpinQuillsConversationView` | `PUT` and `DELETE /conversation-views/{viewId}/pin` | update | pins | none (a personal marker) |
@@ -220,10 +222,11 @@ Merged: 7. The ticket target of `setQuillsConversationAttributeValue` belongs to
 | `createQuillsPostFromConversation` | `POST /conversations/{conversationId}/posts` (new post by the visitor, or the visitor's vote on `asUpvoteOfPostId`) | create | `posts`, `post_votes`, `post_subscriptions`, `post_activity`, `post_comments`, `post_external_links`, `conversation_messages`, `conversations` | `post.created` or `post.voted` |
 | `shareQuillsPost` | `POST /conversations/{conversationId}/share-post` | update | `conversation_messages`, `conversations`, `posts` | `message.created` |
 | `getQuillsLinkedPostsForConversation` | `GET /conversations/{conversationId}/posts` | read | `post_external_links`, `posts`, `boards` | - |
+| `unlinkQuillsPostFromConversation` | `DELETE /conversations/{conversationId}/posts/{postId}` (idempotent; the post, the visitor's vote and the shared message stay) | update | `post_external_links` | `conversation.post_unlinked` when changed |
 | `getQuillsLinkedConversationsForPost` | `GET /posts/{postId}/conversations` | read | `post_external_links`, `conversations` | - |
 | `getQuillsConversationTicketLink` | `GET /conversations/{conversationId}/ticket` (the paired customer ticket or null; RFC 0004 lane C) | read | `conversations`, `ticket_conversations`, `tickets`, `ticket_statuses` | - |
 
-Merged: 18. The inbox is the source's unified inbox: the conversation branch and the ticket branch
+Merged: 19. The inbox is the source's unified inbox: the conversation branch and the ticket branch
 (`support/ticket-list.ts`, shared with `listQuillsTickets`), each paged by its own keyset cursor and
 merged in order; the opaque cursor carries both. A customer ticket with a linked conversation lists as
 that conversation, and test customers' tickets stay out, as their conversations do. `waiting` maps to

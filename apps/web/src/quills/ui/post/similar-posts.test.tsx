@@ -29,6 +29,36 @@ describe("SimilarPosts", () => {
     expect(view.getByText("4 votes")).toBeInTheDocument();
   });
 
+  it("names each status with its color, and leaves open posts plain", () => {
+    const view = renderComponent(
+      <SimilarPosts
+        workspaceId="workspace_test_1"
+        stages={[
+          { value: "open", label: "Open", color: "#888888" },
+          { value: "planned", label: "Planned", color: "#7c3aed" },
+        ]}
+        posts={[
+          {
+            id: "post_1",
+            title: "Linear sync",
+            voteCount: 4,
+            stage: "planned",
+          },
+          { id: "post_2", title: "CSV export", voteCount: 2, stage: "open" },
+        ]}
+      />,
+    );
+    const planned = view.getByRole("link", { name: /Linear sync/ });
+    expect(planned).toHaveTextContent("Planned");
+    expect(planned.querySelector("svg[color]")).toHaveAttribute(
+      "color",
+      "#7c3aed",
+    );
+    expect(
+      view.getByRole("link", { name: /CSV export/ }),
+    ).not.toHaveTextContent("Open");
+  });
+
   it("marks the posts the viewer voted for", () => {
     const view = renderComponent(
       <SimilarPosts

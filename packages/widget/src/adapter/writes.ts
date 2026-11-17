@@ -86,15 +86,17 @@ export const writes = (api: Api) => ({
       { helpful },
       signal,
     ),
+  /** `metadata`: the host page context, kept with the message for the team. */
   startConversation: (
     content: string,
     idempotencyKey: string,
     signal?: AbortSignal,
+    metadata?: Record<string, string>,
   ) =>
     api.request<Sent>(
       "POST",
       "/widget/conversations",
-      { content, idempotencyKey },
+      { content, idempotencyKey, ...(metadata && { metadata }) },
       signal,
     ),
   reply: (
@@ -102,13 +104,24 @@ export const writes = (api: Api) => ({
     content: string,
     idempotencyKey: string,
     signal?: AbortSignal,
+    metadata?: Record<string, string>,
   ) =>
     api.request<Sent>(
       "POST",
       `/widget/conversations/${id(conversationId)}/messages`,
-      { content, idempotencyKey },
+      { content, idempotencyKey, ...(metadata && { metadata }) },
       signal,
     ),
+  /** A short-lived download URL of a file that a teammate sent in the conversation. */
+  fileUrl: (conversationId: string, fileId: string, signal?: AbortSignal) =>
+    api
+      .request<{ downloadUrl: string }>(
+        "GET",
+        `/widget/conversations/${id(conversationId)}/files/${id(fileId)}`,
+        undefined,
+        signal,
+      )
+      .then((file) => file.downloadUrl),
   /** The watermark only moves forward on the server. */
   markRead: (
     conversationId: string,

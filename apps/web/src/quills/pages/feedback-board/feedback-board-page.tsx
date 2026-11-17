@@ -12,6 +12,7 @@ import { FeedbackComposer } from "../../portal/feedback-composer";
 import { HelpSuggestions } from "../../portal/help-suggestions";
 import { usePortalRuntime } from "../../portal/runtime";
 import { SimilarRequests } from "../../portal/similar-requests";
+import { BoardFilters } from "../../ui/board-filters";
 import { BoardNavigation } from "../../ui/board-navigation";
 import { PageFrame } from "../../ui/page-frame";
 import { PortalGate } from "../../ui/portal-gate";
@@ -75,27 +76,26 @@ export function FeedbackBoardPage(props: FeedbackBoardPageProps) {
   );
   const vote = useSetPortalVote(viewer);
   const remember = useSearchPatch();
+  // The board rail on wide screens and the filter row on small ones take the same props.
+  const rail = boards.data && {
+    boards: boards.data.items,
+    workspaceId: props.workspaceId,
+    boardId,
+    stages: feedbackStages(statuses.data?.items ?? []),
+    stage,
+    onStageChange: (value: string) => {
+      setStage(value);
+      remember({ stage: value });
+    },
+  };
   return (
     <PageFrame
+      hub
       titleKey="feedback.title"
+      mobileAside={false}
       displayTitle={canLoad ? board?.name : undefined}
       description={board?.description || undefined}
-      aside={
-        boards.data ? (
-          <BoardNavigation
-            boards={boards.data.items}
-            workspaceId={props.workspaceId}
-            boardId={boardId}
-            stages={feedbackStages(statuses.data?.items ?? [])}
-            stage={stage}
-            stats={stats.data}
-            onStageChange={(value) => {
-              setStage(value);
-              remember({ stage: value });
-            }}
-          />
-        ) : null
-      }
+      aside={rail ? <BoardNavigation {...rail} stats={stats.data} /> : null}
     >
       <StateView
         loading={portal.accessLoading}
@@ -139,6 +139,7 @@ export function FeedbackBoardPage(props: FeedbackBoardPageProps) {
               workspaceId={props.workspaceId}
               title={title}
               posts={similar.data?.items ?? []}
+              stages={rail?.stages}
               canVote={(id) =>
                 Boolean(
                   boards.data?.items.some(
@@ -151,6 +152,7 @@ export function FeedbackBoardPage(props: FeedbackBoardPageProps) {
             <PostSort
               sort={activeSort}
               random={defaultSort === "random"}
+              filters={rail ? <BoardFilters {...rail} /> : null}
               onSortChange={(value) => {
                 setSort(value);
                 remember({ sort: value === defaultSort ? "" : value });
@@ -160,6 +162,7 @@ export function FeedbackBoardPage(props: FeedbackBoardPageProps) {
               loading={posts.isLoading}
               problem={posts.error ?? null}
               onRetry={() => void posts.refetch()}
+              rows={5}
             >
               <PostList
                 posts={posts.data?.pages.flatMap((page) => page.items) ?? []}

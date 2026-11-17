@@ -3,9 +3,6 @@ import { ConfirmAction } from "./confirm-action";
 
 /** The emoji that the API accepts for a changelog reaction, in display order. */
 const EMOJI = ["👍", "❤️", "🎉", "😄", "😕", "👀", "🚀"];
-// Resets the upstream button so a reaction reads as a small chip.
-const chip =
-  "h-7 gap-1 rounded-full border border-border bg-transparent px-2 text-xs font-normal tabular-nums shadow-none before:hidden hover:bg-muted aria-pressed:border-primary/40 aria-pressed:bg-primary/10 aria-pressed:text-primary sm:h-7";
 
 export interface ReactionBarProps {
   reactions: ReadonlyArray<{ emoji: string; count: number; reacted: boolean }>;
@@ -36,7 +33,7 @@ export function ReactionBar({ reactions, onReact }: ReactionBarProps) {
           labelValues={{ emoji: reaction.emoji, count: reaction.count }}
           pressed={reaction.reacted}
           disabled={!onReact}
-          className={chip}
+          variant="pill"
           onConfirm={() => onReact!(reaction.emoji, !reaction.reacted)}
         >
           <span aria-hidden="true">{reaction.emoji}</span>

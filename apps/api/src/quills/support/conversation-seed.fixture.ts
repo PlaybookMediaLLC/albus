@@ -113,6 +113,7 @@ export async function conversation(
 export type Part =
   | "posts"
   | "spam"
+  | "archived"
   | "participants"
   | "tags"
   | "team"
@@ -139,6 +140,7 @@ export async function supportSide(
       visitorId,
       teammateId: actor.principalId,
       spamId: "",
+      archivedId: "",
       otherCustomerId: "",
       participantId: "",
       tagId: "",
@@ -162,6 +164,12 @@ export async function supportSide(
           endReason: "spam",
           spamReason: "manual",
           resolvedAt: new Date(),
+        })
+      ).conversationId;
+    if (has("archived"))
+      side.archivedId = (
+        await conversation(db, actor.principalId, visitorId, {
+          archivedAt: new Date(),
         })
       ).conversationId;
     if (has("participants")) {

@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { shortDate } from "../../core/short-date";
+import { compactTime, shortDate } from "../../core/short-date";
 import { PersonAvatar } from "../person-avatar";
 import { cn } from "../upstream";
 import type { InboxBadge, InboxPerson } from "./inbox-types";
@@ -59,25 +59,32 @@ export function ConversationRow(props: ConversationRowProps) {
           ) : null}
           <time
             dateTime={props.time}
+            title={shortDate(props.time, i18n.language)}
             className="shrink-0 text-xs text-muted-foreground"
           >
-            {shortDate(props.time, i18n.language)}
+            {compactTime(props.time, i18n.language)}
           </time>
         </span>
         <span className="mt-0.5 flex items-center gap-2">
           <span className="min-w-0 flex-1 truncate text-muted-foreground">
             {props.title ? (
-              <span className="text-foreground">{props.title} </span>
+              <>
+                <span className="text-foreground">{props.title}</span>{" "}
+                <span
+                  aria-hidden="true"
+                  className="me-1 before:content-['·']"
+                />
+              </>
             ) : null}
             {props.preview}
           </span>
           {props.assignee ? (
-            <span className="flex shrink-0">
+            <span className="flex shrink-0" title={props.assignee.name ?? ""}>
               <PersonAvatar
                 colored
                 name={props.assignee.name}
                 avatarUrl={props.assignee.avatarUrl}
-                className="size-4 text-[8px]"
+                className="size-5"
               />
               <span className="sr-only">
                 {t("inbox.assignedTo", { name: props.assignee.name ?? "" })}

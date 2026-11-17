@@ -16,7 +16,7 @@ export interface BoardNavigationProps {
 }
 
 const section =
-  "[&_h2]:mb-2.5 [&_h2]:text-[11px] [&_h2]:font-semibold [&_h2]:uppercase [&_h2]:tracking-wider [&_h2]:text-foreground";
+  "[&_h2]:mb-2 [&_h2]:text-xs [&_h2]:font-medium [&_h2]:text-muted-foreground";
 const item =
   "flex w-full items-center gap-2 whitespace-nowrap rounded-md py-1 text-left text-sm text-muted-foreground transition-colors hover:text-foreground aria-[current]:font-medium aria-[current]:text-foreground aria-pressed:font-medium aria-pressed:text-foreground";
 
@@ -32,12 +32,12 @@ export function BoardNavigation({
   const { t } = useTranslation("quills");
   return (
     <aside
-      className={`portal-board-sidebar flex min-w-0 flex-col gap-7 md:sticky md:top-8 ${section}`}
+      className={`portal-board-sidebar flex min-w-0 flex-col gap-7 md:sticky md:top-32 lg:top-24 ${section}`}
     >
       <section aria-labelledby="feedback-boards">
         <h2 id="feedback-boards">{t("feedback.boards")}</h2>
         {boards.length ? (
-          <ul className="flex gap-4 overflow-x-auto md:grid md:gap-0.5">
+          <ul className="grid gap-0.5">
             <li>
               <a
                 className={item}
@@ -73,12 +73,13 @@ export function BoardNavigation({
       {stages.length && onStageChange ? (
         <section aria-labelledby="feedback-statuses">
           <h2 id="feedback-statuses">{t("feedback.stage")}</h2>
-          <ul className="flex gap-4 overflow-x-auto md:grid md:gap-0.5">
+          <ul className="grid gap-0.5">
             {stages.map((option) => (
               <li key={option.value}>
                 <button
                   type="button"
-                  className={item}
+                  // Links get the portal shell's focus outline; a button draws its own ring.
+                  className={`${item} outline-none focus-visible:ring-2 focus-visible:ring-ring`}
                   aria-pressed={option.value === stage}
                   onClick={() =>
                     onStageChange(option.value === stage ? "" : option.value)
@@ -114,9 +115,7 @@ export function BoardNavigation({
                 key={label}
                 className="flex flex-col-reverse rounded-lg bg-muted/60 py-2"
               >
-                <dt className="text-[11px] text-muted-foreground">
-                  {t(label)}
-                </dt>
+                <dt className="text-xs text-muted-foreground">{t(label)}</dt>
                 <dd className="text-sm font-semibold tabular-nums">{value}</dd>
               </div>
             ))}

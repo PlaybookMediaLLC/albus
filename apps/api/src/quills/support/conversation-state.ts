@@ -26,6 +26,7 @@ import {
   resolveAssignee,
   resolveTeam,
   restoreFromSpam,
+  setArchived,
   setPriority,
   setStatus,
   snooze,
@@ -66,11 +67,11 @@ const setStatusRoute = defineQuillsRoute({
       entityId: params.conversationId,
       payload: { status: body.status },
     },
-  handler: ({ db, params, body }) =>
+  handler: ({ db, actor, params, body }) =>
     apply(db, params.conversationId, async (conversation) => {
       if (body.status === "closed" && conversation.status !== "closed")
         await requireClosable(db, conversation);
-      return setStatus(db, conversation, body.status);
+      return setStatus(db, conversation, body.status, actor);
     }),
 });
 
@@ -124,6 +125,48 @@ const endRoute = defineQuillsRoute({
         await requireClosable(db, conversation);
       return endConversation(db, conversation, body.reason, body.note || null);
     }),
+});
+
+const archiveRoute = defineQuillsRoute({
+  ...common,
+  method: "post",
+  path: "/conversations/{conversationId}/archive",
+  operationId: "archiveQuillsConversation",
+  summary: "Archive a conversation",
+  description:
+    "Takes the conversation out of every inbox list and count except the archived view (`view=archived`). The status does not change. A new customer message unarchives it.",
+  event: ({ params }, result) =>
+    result.changed && {
+      type: "conversation.updated",
+      entityType: "conversation",
+      entityId: params.conversationId,
+      payload: { archived: "true" },
+    },
+  handler: ({ db, params }) =>
+    apply(db, params.conversationId, (conversation) =>
+      setArchived(db, conversation, true),
+    ),
+});
+
+const unarchiveRoute = defineQuillsRoute({
+  ...common,
+  method: "post",
+  path: "/conversations/{conversationId}/unarchive",
+  operationId: "unarchiveQuillsConversation",
+  summary: "Unarchive a conversation",
+  description:
+    "Puts an archived conversation back in the inbox lists and counts.",
+  event: ({ params }, result) =>
+    result.changed && {
+      type: "conversation.updated",
+      entityType: "conversation",
+      entityId: params.conversationId,
+      payload: { archived: "false" },
+    },
+  handler: ({ db, params }) =>
+    apply(db, params.conversationId, (conversation) =>
+      setArchived(db, conversation, false),
+    ),
 });
 
 const restoreSpamRoute = defineQuillsRoute({
@@ -367,6 +410,8 @@ export default apiRouter<BaseVariables & { workspaceId: string }>()
   .openapi(...snoozeRoute)
   .openapi(...endRoute)
   .openapi(...restoreSpamRoute)
+  .openapi(...archiveRoute)
+  .openapi(...unarchiveRoute)
   .openapi(...priorityRoute)
   .openapi(...assignRoute)
   .openapi(...teamRoute)

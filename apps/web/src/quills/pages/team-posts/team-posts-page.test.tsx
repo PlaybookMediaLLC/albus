@@ -1,6 +1,8 @@
 import { fireEvent, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vite-plus/test";
 import { createPostFixture } from "../../api/team/create-post.fixture";
+import { createPostViewFixture } from "../../api/team/create-post-view.fixture";
+import { listPostViewsFixture } from "../../api/team/list-post-views.fixture";
 import type { ListPostsResponse } from "../../api/team/list-posts";
 import { listPostsFixture } from "../../api/team/list-posts.fixture";
 import { listUsersFixture } from "../../api/team/list-users.fixture";
@@ -124,18 +126,35 @@ describe("TeamPostsPage", () => {
     });
   });
 
-  it("shows one sidebar status by name and changes the status group from the filter menu", async () => {
-    prepare();
+  // Opening the filter menu loads the tags, then the saved views.
+  const openFilters = async (
+    api: ReturnType<typeof prepare>,
+    views = listPostViewsFixture.ok(),
+  ) => {
+    api.reply(inboxTags);
+    api.reply(views);
+    press("Filters");
+  };
+  const submenu = async (view: ReturnType<typeof renderPage>, name: string) =>
+    fireEvent.click(await view.findByRole("menuitem", { name }));
+
+  it("shows one sidebar status by name and adds a status from the filter menu", async () => {
+    const api = prepare();
     const view = renderPage(TeamPostsPage, meta, {
       search: { statusId: "status_planned" },
     });
     expect(
       await view.findByRole("heading", { level: 1, name: "Planned" }),
     ).toBeVisible();
-    press("Filters");
-    fireEvent.click(await view.findByRole("menuitemradio", { name: "Closed" }));
+    await openFilters(api);
+    await submenu(view, "Status");
+    fireEvent.click(
+      await view.findByRole("menuitemcheckbox", { name: "Open" }),
+    );
     await waitFor(() =>
-      expect(view.router.state.location.search).toEqual({ status: "closed" }),
+      expect(view.router.state.location.search).toEqual({
+        statusId: "status_planned,status_open",
+      }),
     );
   });
 
@@ -145,15 +164,85 @@ describe("TeamPostsPage", () => {
   };
 
   it("offers the deleted requests in the filter menu", async () => {
-    prepare();
+    const api = prepare();
     const view = renderPage(TeamPostsPage, meta);
     await view.findByRole("link", { name: /Export to CSV/ });
-    press("Filters");
+    await openFilters(api);
+    await submenu(view, "Status");
     fireEvent.click(
-      await view.findByRole("menuitemradio", { name: "Deleted" }),
+      await view.findByRole("menuitemcheckbox", { name: "Deleted" }),
     );
     await waitFor(() =>
       expect(view.router.state.location.search).toEqual({ status: "deleted" }),
+    );
+  });
+
+  it("filters by a tag", async () => {
+    const api = prepare();
+    const view = renderPage(TeamPostsPage, meta);
+    await view.findByRole("link", { name: /Export to CSV/ });
+    await openFilters(api);
+    await submenu(view, "Tags");
+    fireEvent.click(await view.findByRole("menuitemcheckbox", { name: "UX" }));
+    await waitFor(() =>
+      expect(view.router.state.location.search).toEqual({ tags: "tag_ux" }),
+    );
+  });
+
+  it("sends the tag filter and saves the filters as a view", async () => {
+    const api = prepare();
+    const view = renderPage(TeamPostsPage, meta, {
+      search: { tags: "tag_ux" },
+    });
+    await view.findByRole("link", { name: /Export to CSV/ });
+    expect(
+      new URL(api.calls("listQuillsPosts")[0]!.url).searchParams.get("tagIds"),
+    ).toBe("tag_ux");
+    await openFilters(api);
+    fireEvent.click(
+      await view.findByRole("menuitem", { name: "Save as view…" }),
+    );
+    await view.findByRole("dialog");
+    fill("Name", "UX asks");
+    api.reply(createPostViewFixture.ok());
+    press("Save view");
+    await waitFor(() =>
+      expect(api.calls("createQuillsPostView")).toHaveLength(1),
+    );
+    await expect(
+      api.calls("createQuillsPostView")[0]!.clone().json(),
+    ).resolves.toEqual({
+      name: "UX asks",
+      filters: { status: ["status_open", "status_planned"], tags: ["tag_ux"] },
+    });
+  });
+
+  it("opens a saved view", async () => {
+    const api = prepare();
+    const view = renderPage(TeamPostsPage, meta);
+    await view.findByRole("link", { name: /Export to CSV/ });
+    await openFilters(
+      api,
+      listPostViewsFixture.ok({
+        views: [
+          {
+            id: "view_top",
+            name: "Top ideas",
+            isShared: true,
+            mine: true,
+            filters: { board: ["board_ideas"], sort: "votes" },
+          },
+        ],
+      }),
+    );
+    await submenu(view, "Views");
+    fireEvent.click(await view.findByRole("menuitem", { name: "Top ideas" }));
+    await waitFor(() =>
+      expect(view.router.state.location.search).toEqual({
+        status: "all",
+        board: "board_ideas",
+        sort: "votes",
+      }),
     );
   });
 

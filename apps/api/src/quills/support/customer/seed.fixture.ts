@@ -9,6 +9,7 @@ import {
   conversationMessages,
   conversations,
 } from "../../../database/quills/schema/conversation";
+import { files } from "../../../database/quills/schema/files";
 import { ticketSubscriptions } from "../../../database/quills/schema/ticket-subscriptions";
 import { ticketTypes } from "../../../database/quills/schema/ticket-types";
 import {
@@ -130,7 +131,37 @@ export const conversationOf = (
       content: text.deleted,
       deletedAt: new Date(),
     });
-    return { conversationId: id, visitorMessageId, replyId, noteId, text };
+    // A teammate file on the reply (the customer downloads it) and one on the note (never).
+    const attach = async (messageId: typeof replyId) =>
+      (
+        await db
+          .insert(files)
+          .values({
+            storageKey: `quills/file/${env.id("key")}.pdf`,
+            name: "invoice.pdf",
+            contentType: "application/pdf",
+            family: "pdf",
+            size: 1200,
+            sha256: env.id("sha"),
+            source: "agent",
+            uploadedById: actor.principalId,
+            messageId,
+            attachedAt: new Date(),
+            previewStatus: "none",
+          })
+          .returning({ id: files.id })
+      )[0]!.id;
+    const fileId = await attach(replyId);
+    const noteFileId = await attach(noteId);
+    return {
+      conversationId: id,
+      visitorMessageId,
+      replyId,
+      noteId,
+      fileId,
+      noteFileId,
+      text,
+    };
   });
 
 /** A customer ticket of `requester` with its paired conversation, as a teammate opens one. */

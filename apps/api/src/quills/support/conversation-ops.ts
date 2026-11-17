@@ -60,12 +60,17 @@ async function update(
     .where(eq(conversations.id, conversation.id));
 }
 
-/** Open, snoozed (until the customer replies) or closed. Close and reopen post a notice both sides see. */
+/**
+ * Open, snoozed (until the customer replies) or closed. Close and reopen post a notice both sides
+ * see. A teammate `actor` is named in the notice; automation passes none.
+ */
 export async function setStatus(
   db: Database,
   conversation: Conversation,
   status: Status,
+  actor?: QuillsActor,
 ) {
+  const by = actor ? { actorPrincipalId: actor.principalId } : {};
   if (status === conversation.status && !conversation.snoozedUntil)
     return false;
   await update(db, conversation, {
@@ -75,11 +80,11 @@ export async function setStatus(
   });
   if (status === "closed" && conversation.status !== "closed")
     await systemNotice(db, conversation.id, "Conversation ended", {
-      event: { kind: "chat_ended" },
+      event: { kind: "chat_ended", ...by },
     });
   if (conversation.status === "closed" && status !== "closed")
     await systemNotice(db, conversation.id, "Conversation reopened", {
-      event: { kind: "chat_reopened" },
+      event: { kind: "chat_reopened", ...by },
     });
   return true;
 }
@@ -115,6 +120,17 @@ export async function requireClosable(
     throw conflict(
       `Missing required attributes: ${missing.map((a) => a.label).join(", ")}`,
     );
+}
+
+/** Archive or unarchive. The status stays: an archived thread can be open, snoozed or closed. */
+export async function setArchived(
+  db: Database,
+  conversation: Conversation,
+  archived: boolean,
+) {
+  if ((conversation.archivedAt !== null) === archived) return false;
+  await update(db, conversation, { archivedAt: archived ? new Date() : null });
+  return true;
 }
 
 /** Snooze until a time, or until the customer replies (null). The notice is team-only. */

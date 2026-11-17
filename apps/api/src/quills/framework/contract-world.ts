@@ -50,6 +50,8 @@ export type ContractEnv = {
   b: string;
   /** The owner of A. */
   owner: string;
+  /** The owner of B, with no membership in A. */
+  outsider: string;
   /** Kaneo accounts with no membership: portal customers A (the valid caller) and B. */
   customerA: string;
   customerB: string;
@@ -244,6 +246,7 @@ export async function startContract(testPool: Pool, url: string) {
     a,
     b,
     owner: users.owner,
+    outsider: users.outsider,
     db,
     id: (label) => `${prefix}_${label}_${++count}`,
     scoped: (workspaceId, work, userId) =>

@@ -32,7 +32,7 @@ export function HelpSidebar(props: HelpSidebarProps) {
   return (
     <nav
       aria-label={t("help-center.collections")}
-      className="portal-help-sidebar hidden flex-col gap-7 md:sticky md:top-8 md:flex"
+      className="portal-help-sidebar hidden flex-col gap-7 md:sticky md:top-32 lg:top-24 md:flex"
     >
       {props.categories
         .filter((category) => !category.parentId)
@@ -67,7 +67,7 @@ function HelpSidebarSection(props: {
   );
   return (
     <section>
-      <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider">
+      <h2 className="mb-2 text-xs font-medium text-muted-foreground">
         <a
           href={portalHref(props.workspaceId, props.category.path)}
           aria-current={props.current ? "page" : undefined}

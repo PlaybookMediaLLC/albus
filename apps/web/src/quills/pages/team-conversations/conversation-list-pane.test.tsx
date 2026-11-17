@@ -77,6 +77,14 @@ describe("ConversationListPane", () => {
     );
   });
 
+  it("shows no Queue button on the Queue view", () => {
+    const view = renderPane({ view: "queue", status: "open" });
+    expect(view.queryByRole("button", { name: "Queue" })).toBeNull();
+    expect(
+      view.getByRole("button", { name: "New message" }),
+    ).toBeInTheDocument();
+  });
+
   it("searches after a pause in typing", async () => {
     const onSearch = vi.fn();
     renderPane({ view: "all", status: "any" }, { onSearch });

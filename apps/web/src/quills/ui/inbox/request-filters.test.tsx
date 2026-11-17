@@ -2,76 +2,112 @@ import { fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vite-plus/test";
 import { renderComponent } from "../../test/render";
 import { ListHeader } from "./list-header";
-import { RequestFilters } from "./request-filters";
+import { RequestFilters, type RequestFiltersProps } from "./request-filters";
 
-const render = (onChange = vi.fn()) =>
-  renderComponent(
-    <ListHeader
-      title="Requests"
-      filters={
-        <RequestFilters
-          status=""
-          board="board_ideas"
-          sort="votes"
-          boards={[{ id: "board_ideas", name: "Ideas" }]}
-          onChange={onChange}
-        />
-      }
-    />,
+const render = (props: Partial<RequestFiltersProps> = {}) => {
+  const all: RequestFiltersProps = {
+    boards: [
+      { id: "board_ideas", label: "Ideas" },
+      { id: "board_bugs", label: "Bugs" },
+    ],
+    statuses: [
+      { id: "status_open", label: "Open" },
+      { id: "status_planned", label: "Planned" },
+    ],
+    tags: [{ id: "tag_api", label: "API" }],
+    checked: { board: ["board_ideas"], status: ["status_open"], tags: [] },
+    sort: "votes",
+    onFacet: vi.fn(),
+    onSort: vi.fn(),
+    onClear: vi.fn(),
+    ...props,
+  };
+  const view = renderComponent(
+    <ListHeader title="Requests" filters={<RequestFilters {...all} />} />,
   );
+  fireEvent.click(view.getByRole("button", { name: "Filters" }));
+  return { view, props: all };
+};
+const open = async (view: ReturnType<typeof render>["view"], name: string) =>
+  fireEvent.click(await view.findByRole("menuitem", { name }));
 
 describe("RequestFilters", () => {
-  it("checks the current board and sort, and no status group while one status shows", async () => {
-    const view = render();
-    fireEvent.click(view.getByRole("button", { name: "Filters" }));
+  it("checks the chosen boards and adds one", async () => {
+    const { view, props } = render();
+    await open(view, "Boards");
     expect(
-      await view.findByRole("menuitemradio", { name: "Ideas" }),
+      await view.findByRole("menuitemcheckbox", { name: "Ideas" }),
     ).toHaveAttribute("aria-checked", "true");
-    expect(
-      view.getByRole("menuitemradio", { name: "Most votes" }),
-    ).toHaveAttribute("aria-checked", "true");
-    expect(view.getByRole("menuitemradio", { name: "Open" })).toHaveAttribute(
-      "aria-checked",
-      "false",
-    );
+    fireEvent.click(view.getByRole("menuitemcheckbox", { name: "Bugs" }));
+    expect(props.onFacet).toHaveBeenCalledWith("board", [
+      "board_ideas",
+      "board_bugs",
+    ]);
   });
 
-  it("reports the chosen value with its group", async () => {
-    const onChange = vi.fn();
-    const view = render(onChange);
-    fireEvent.click(view.getByRole("button", { name: "Filters" }));
-    fireEvent.click(
-      await view.findByRole("menuitemradio", { name: "All boards" }),
-    );
-    expect(onChange).toHaveBeenCalledWith("board", "");
+  it("selects every status", async () => {
+    const { view, props } = render();
+    await open(view, "Status");
+    fireEvent.click(await view.findByRole("menuitem", { name: "Select all" }));
+    expect(props.onFacet).toHaveBeenCalledWith("status", [
+      "status_open",
+      "status_planned",
+    ]);
   });
 
-  it("offers the deleted requests only when asked", async () => {
-    const view = render();
-    fireEvent.click(view.getByRole("button", { name: "Filters" }));
-    await view.findByRole("menuitemradio", { name: "Open" });
-    expect(view.queryByRole("menuitemradio", { name: "Deleted" })).toBeNull();
-    view.unmount();
-    const onChange = vi.fn();
-    const deleted = renderComponent(
-      <ListHeader
-        title="Requests"
-        filters={
-          <RequestFilters
-            status="active"
-            withDeleted
-            board=""
-            sort="newest"
-            boards={[]}
-            onChange={onChange}
-          />
-        }
-      />,
-    );
-    fireEvent.click(deleted.getByRole("button", { name: "Filters" }));
+  it("keeps the last checked board", async () => {
+    const { view } = render();
+    await open(view, "Boards");
+    expect(
+      await view.findByRole("menuitemcheckbox", { name: "Ideas" }),
+    ).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("keeps the last checked status", async () => {
+    const { view } = render();
+    await open(view, "Status");
+    expect(
+      await view.findByRole("menuitemcheckbox", { name: "Open" }),
+    ).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("checks the sort and reports a new one", async () => {
+    const { view, props } = render();
+    await open(view, "Sort");
+    expect(
+      await view.findByRole("menuitemradio", { name: "Top" }),
+    ).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(view.getByRole("menuitemradio", { name: "Trending" }));
+    expect(props.onSort).toHaveBeenCalledWith("trending");
+  });
+
+  it("offers Deleted, the saved views, Save as view and Clear only when asked", async () => {
+    const onDeleted = vi.fn();
+    const onView = vi.fn();
+    const onSaveView = vi.fn();
+    const { view, props } = render({
+      deleted: false,
+      onDeleted,
+      views: [{ id: "view_big", name: "Big asks" }],
+      onView,
+      onSaveView,
+    });
+    await open(view, "Status");
     fireEvent.click(
-      await deleted.findByRole("menuitemradio", { name: "Deleted" }),
+      await view.findByRole("menuitemcheckbox", { name: "Deleted" }),
     );
-    expect(onChange).toHaveBeenCalledWith("status", "deleted");
+    expect(onDeleted).toHaveBeenCalledWith(true);
+    await open(view, "Views");
+    fireEvent.click(await view.findByRole("menuitem", { name: "Big asks" }));
+    expect(onView).toHaveBeenCalledWith("view_big");
+    expect(props.onClear).not.toHaveBeenCalled();
+  });
+
+  it("leaves out Deleted, Views and Save as view by default, and clears", async () => {
+    const { view, props } = render();
+    fireEvent.click(await view.findByRole("menuitem", { name: "Clear" }));
+    expect(props.onClear).toHaveBeenCalled();
+    expect(view.queryByRole("menuitem", { name: "Save as view…" })).toBeNull();
+    expect(view.queryByRole("menuitem", { name: "Views" })).toBeNull();
   });
 });

@@ -96,6 +96,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/moderation/posts/{postId}/approve",
   },
   {
+    operationId: "archiveQuillsConversation",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/conversations/{conversationId}/archive",
+  },
+  {
     operationId: "archiveQuillsConversationAttribute",
     method: "POST",
     path: "/api/quills/{workspaceId}/conversation-attributes/{attributeId}/archive",
@@ -1211,6 +1216,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills-public/{workspace}/support/conversations/{conversationId}",
   },
   {
+    operationId: "getQuillsMyConversationFile",
+    method: "GET",
+    path: "/api/quills-public/{workspace}/support/conversations/{conversationId}/files/{fileId}",
+  },
+  {
     operationId: "getQuillsMyLanguagePreference",
     method: "GET",
     path: "/api/quills-public/{workspace}/user/language",
@@ -1589,6 +1599,11 @@ export const quillsOperationRoutes = [
     operationId: "getQuillsWidgetConversation",
     method: "GET",
     path: "/api/quills-public/{workspace}/widget/conversations/{conversationId}",
+  },
+  {
+    operationId: "getQuillsWidgetConversationFile",
+    method: "GET",
+    path: "/api/quills-public/{workspace}/widget/conversations/{conversationId}/files/{fileId}",
   },
   {
     operationId: "getQuillsWidgetConversationLinkedTicket",
@@ -3236,6 +3251,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/posts/{postId}/tags",
   },
   {
+    operationId: "setQuillsPostVisibility",
+    method: "PUT",
+    path: "/api/quills/{workspaceId}/posts/{postId}/visibility",
+  },
+  {
     operationId: "setQuillsPoweredBy",
     method: "PUT",
     path: "/api/quills/{workspaceId}/operations/powered-by",
@@ -3501,6 +3521,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills-public/{workspace}/portal/translations",
   },
   {
+    operationId: "unarchiveQuillsConversation",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/conversations/{conversationId}/unarchive",
+  },
+  {
     operationId: "unblockQuillsUser",
     method: "DELETE",
     path: "/api/quills/{workspaceId}/users/{principalId}/block",
@@ -3539,6 +3564,11 @@ export const quillsOperationRoutes = [
     operationId: "unlinkQuillsCustomerProfile",
     method: "DELETE",
     path: "/api/quills-public/{workspace}/user/profile",
+  },
+  {
+    operationId: "unlinkQuillsPostFromConversation",
+    method: "DELETE",
+    path: "/api/quills/{workspaceId}/conversations/{conversationId}/posts/{postId}",
   },
   {
     operationId: "unlinkQuillsPostFromTask",

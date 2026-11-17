@@ -105,7 +105,13 @@ export const customerMessageSchema = z.object({
   /** Records a teammate shared into the thread, for example a post (the text may be empty). */
   embeds: z.array(z.object({ kind: z.string(), id: z.string() })),
   attachments: z.array(
-    z.object({ name: z.string(), contentType: z.string(), size: z.number() }),
+    z.object({
+      /** Downloads through the conversation file route; null for refs older than the file pipeline. */
+      fileId: z.string().nullable(),
+      name: z.string(),
+      contentType: z.string(),
+      size: z.number(),
+    }),
   ),
   createdAt: responseTimestamp,
   editedAt: nullableResponseTimestamp,
@@ -250,6 +256,7 @@ export const toMessages = (rows: MessageRow[]) =>
     content: row.content,
     embeds: embedsOf(row.contentJson),
     attachments: (row.attachments ?? []).map((file) => ({
+      fileId: file.fileId ?? null,
       name: file.name,
       contentType: file.contentType,
       size: file.size,
@@ -341,6 +348,7 @@ export async function insertVisitorMessage(
   conversation: ConversationRow,
   messageId: MessageId,
   content: string,
+  widgetMetadata?: Record<string, string>,
 ) {
   await db.insert(conversationMessages).values({
     id: messageId,
@@ -348,6 +356,8 @@ export async function insertVisitorMessage(
     principalId: me,
     senderType: "visitor",
     content,
+    ...(widgetMetadata &&
+      Object.keys(widgetMetadata).length && { metadata: { widgetMetadata } }),
   });
   // The stored microsecond time: a millisecond JS Date would sort before the message itself.
   const at = sql`(select ${conversationMessages.createdAt} from ${conversationMessages} where ${eq(conversationMessages.id, messageId)})`;
@@ -361,6 +371,8 @@ export async function insertVisitorMessage(
       lastMessagePreview: preview(content),
       visitorLastReadAt: at,
       waitingSince: sql`coalesce(${conversations.waitingSince}, ${at})`,
+      // A customer message brings an archived conversation back to the inbox.
+      archivedAt: null,
       updatedAt: at,
       ...(reopen && {
         status: "open" as const,

@@ -32,7 +32,7 @@ export function SidebarItem({ item, onNavigate }: SidebarItemProps) {
           className={cn(
             "min-w-5 rounded-full px-1.5 text-center text-xs leading-5 tabular-nums",
             item.attention && item.count > 0
-              ? "bg-priority-high/15 font-semibold text-orange-800 dark:text-priority-high"
+              ? "bg-warning/15 font-semibold text-warning-foreground"
               : "text-muted-foreground",
           )}
         >

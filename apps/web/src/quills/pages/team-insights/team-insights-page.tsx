@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { calendarDate } from "../../core/calendar-date";
 import { useGetFeedbackInsights } from "../../hooks/team/use-get-feedback-insights";
 import { useTeamRuntime } from "../../team/runtime";
 import { teamHref } from "../../team/team-href";
@@ -33,7 +34,7 @@ const muted = "text-sm text-muted-foreground";
 
 /** Tags, sentiment and the weekly trend of the posts on the boards that the teammate can see. */
 export function TeamInsightsPage({ workspaceId }: TeamInsightsPageProps) {
-  const { t } = useTranslation("quills");
+  const { t, i18n } = useTranslation("quills");
   const team = useTeamRuntime();
   const navigate = useNavigate();
   const [days, setDays] = useState(30);
@@ -74,9 +75,12 @@ export function TeamInsightsPage({ workspaceId }: TeamInsightsPageProps) {
           onRetry={() => void insights.refetch()}
         >
           {data ? (
-            <div className="mx-auto max-w-4xl space-y-8">
+            <div className="max-w-4xl space-y-8">
               <p className={muted}>
-                {t("insights.period", { from: data.from, to: data.to })}
+                {t("insights.period", {
+                  from: calendarDate(data.from, i18n.language, true),
+                  to: calendarDate(data.to, i18n.language, true),
+                })}
               </p>
               <MeterList
                 titleKey="insights.topics"

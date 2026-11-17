@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { shortDate } from "../../core/short-date";
 import { PersonAvatar } from "../person-avatar";
 import { cn } from "../upstream";
+import { BoardDot } from "./board-dot";
 import type { InboxBadge, InboxPerson } from "./inbox-types";
 import { RowBadge } from "./row-badge";
 import { useRowLink } from "./use-row-link";
@@ -26,6 +27,8 @@ export interface RequestRowProps {
   comments?: number;
   /** The board name, shown as a chip with a dot. */
   board?: string | null;
+  /** The board ID, which gives the board chip dot its tone. */
+  boardId?: string;
   /** An ISO time. Left out for a row without a date, such as a board. */
   time?: string;
   /** The author or the customer. */
@@ -33,6 +36,9 @@ export interface RequestRowProps {
   /** The stacked card of the list pane beside an open item. */
   compact?: boolean;
 }
+
+// A small gray count pill, as the vote and comment counts of a request show.
+const pill = "rounded-md bg-muted px-1.5 py-0.5 tabular-nums";
 
 /** A request row: status icon, title, badges, votes, comments, board, date and author. */
 export function RequestRow(props: RequestRowProps) {
@@ -43,6 +49,7 @@ export function RequestRow(props: RequestRowProps) {
       <span
         className={cn(
           "inline-flex shrink-0 items-center gap-1",
+          pill,
           key === "inbox.votes" && "font-medium text-foreground",
         )}
       >
@@ -87,12 +94,12 @@ export function RequestRow(props: RequestRowProps) {
     return (
       <a href={props.href} {...link} className={cn("block", className)}>
         <span className="flex items-start gap-2">
-          {props.icon ? (
-            <span className="flex h-5 shrink-0 items-center">{props.icon}</span>
-          ) : null}
           <span className="line-clamp-2 min-w-0 flex-1 font-medium">
             {props.title}
           </span>
+          {props.icon ? (
+            <span className="flex h-5 shrink-0 items-center">{props.icon}</span>
+          ) : null}
         </span>
         {detail}
         <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
@@ -104,7 +111,7 @@ export function RequestRow(props: RequestRowProps) {
           ) : null}
           {badges}
           {votes}
-          {comments}
+          {props.comments ? comments : null}
           {date}
         </span>
       </a>
@@ -120,20 +127,28 @@ export function RequestRow(props: RequestRowProps) {
         <span className="block truncate font-medium">{props.title}</span>
         {detail}
       </span>
+      {/* Fixed-width slots keep the counts, board and date in columns down the list. */}
       <span className="flex shrink-0 items-center gap-2.5 text-xs text-muted-foreground">
         {badges}
-        {votes}
-        {comments}
-        {props.board ? (
-          <span className="hidden max-w-32 items-center gap-1.5 truncate text-[11px] font-medium uppercase tracking-wide sm:inline-flex">
-            <span
-              aria-hidden="true"
-              className="size-1.5 rounded-full bg-current"
-            />
-            {props.board}
+        {votes ? <span className="flex w-14 justify-end">{votes}</span> : null}
+        {comments ? (
+          <span className="flex w-12 justify-end">
+            {props.comments ? comments : null}
           </span>
         ) : null}
-        <span className="hidden sm:inline">{date}</span>
+        {props.board === undefined ? null : (
+          <span className="hidden w-32 items-center gap-1.5 text-xs font-medium uppercase tracking-wide sm:inline-flex">
+            {props.board ? (
+              <>
+                <BoardDot boardId={props.boardId} />
+                <span className="min-w-0 truncate">{props.board}</span>
+              </>
+            ) : null}
+          </span>
+        )}
+        {date ? (
+          <span className="hidden w-16 text-end sm:inline">{date}</span>
+        ) : null}
         {avatar}
         {props.person ? (
           <span className="sr-only">{props.person.name}</span>

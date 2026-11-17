@@ -238,6 +238,7 @@ The rules for a teammate page:
 - C21 portal links use `portalHref` or API `portalPaths`.
 - C22 forms use `PortalForm`.
 - C23 every kit component appears in the development gallery.
+- C24 TSX classes use Tailwind text steps and semantic tokens: no px text sizes, palette colors, `prose` classes or `before:hidden` (with any variant, `!` or opacity).
 
 An exception is `// quills-web-allow C18: reason`. C5, C7, C9 and C16 do not allow exceptions. Run `list --exceptions` and include the output in the change report.
 

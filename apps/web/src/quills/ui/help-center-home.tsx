@@ -87,7 +87,7 @@ export function HelpCenterHome(props: HelpCenterHomeProps) {
   );
 
   return (
-    <div className="portal-help space-y-10 [&_h2]:mb-4 [&_h2]:text-xs [&_h2]:font-normal [&_h2]:text-muted-foreground">
+    <div className="portal-help space-y-10 [&_h2]:mb-4 [&_h2]:text-xs [&_h2]:font-medium [&_h2]:text-muted-foreground">
       {searchForm}
       {props.searchQuery ? (
         <section aria-labelledby="help-results">

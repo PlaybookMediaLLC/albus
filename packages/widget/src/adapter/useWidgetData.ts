@@ -471,7 +471,12 @@ export function useWidgetData({
         run(async (signal) =>
           sent(
             signal,
-            await send.startConversation(body, options.idempotencyKey, signal),
+            await send.startConversation(
+              body,
+              options.idempotencyKey,
+              signal,
+              postMetadata(page.current, navigator.userAgent),
+            ),
           ),
         ),
       onReplyMessage: (
@@ -487,9 +492,12 @@ export function useWidgetData({
               body,
               options.idempotencyKey,
               signal,
+              postMetadata(page.current, navigator.userAgent),
             ),
           ),
         ),
+      onOpenFile: (conversationId: string, fileId: string) =>
+        run((signal) => send.fileUrl(conversationId, fileId, signal)),
       onReadConversation: (conversationId: string, throughMessageId: string) =>
         run(async (signal) => {
           const result = await send.markRead(

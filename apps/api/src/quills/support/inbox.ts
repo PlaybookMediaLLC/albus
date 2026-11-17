@@ -107,7 +107,7 @@ const listInbox = defineQuillsRoute({
   operationId: "listQuillsInboxItems",
   summary: "List the inbox: conversations and tickets",
   description:
-    "Conversations and tickets in one page, newest activity first (a conversation's last message, a ticket's last change). `facet` maps to a conversation status (waiting = snoozed) and a ticket status category (waiting = pending). A customer ticket with a linked conversation lists as that conversation. A conversation-only filter (visitor, tag, channel, source, waitingOnly or a view) lists conversations only. Pass `nextCursor` as `cursor` for the next page.",
+    "Conversations and tickets in one page, newest activity first (a conversation's last message, a ticket's last change). `facet` maps to a conversation status (waiting = snoozed) and a ticket status category (waiting = pending). A customer ticket with a linked conversation lists as that conversation. A conversation-only filter (visitor, tag, channel, source, waitingOnly, unreadOnly or a view) lists conversations only. Pass `nextCursor` as `cursor` for the next page.",
   action: "read",
   query: listFilters.omit({ status: true, sort: true, cursor: true }).extend({
     facet: z.enum(["open", "waiting", "closed", "all"]).default("open"),
@@ -141,6 +141,7 @@ const listInbox = defineQuillsRoute({
       filters.channel ||
       filters.source ||
       filters.waitingOnly ||
+      filters.unreadOnly ||
       filters.view !== "all",
     );
     const conversationPage =
@@ -216,7 +217,7 @@ const inboxCounts = defineQuillsRoute({
   operationId: "fetchQuillsInboxCounts",
   summary: "Count the open inbox queues",
   description:
-    "Open conversations assigned to the caller and unassigned ones; open tickets by type, where the customer count includes open conversations paired with a customer ticket (a pair counts once, as in the list); and test conversations in any status. Test customers' threads and spam are not counted in the queues.",
+    "Open conversations assigned to the caller and unassigned ones; open tickets by type, where the customer count includes open conversations paired with a customer ticket (a pair counts once, as in the list); and test conversations in any status. Test customers' threads, spam and archived conversations are not counted in the queues.",
   action: "read",
   response: z.object({
     mine: z.number(),
@@ -275,7 +276,7 @@ const inboxSegments = defineQuillsRoute({
   operationId: "fetchQuillsInboxSegmentsWithCounts",
   summary: "List segments with their open conversation counts",
   description:
-    "Live segments by name, each with the open conversations whose visitor is a member (test and spam conversations not counted).",
+    "Live segments by name, each with the open conversations whose visitor is a member (test, spam and archived conversations not counted).",
   action: "read",
   response: z.object({
     items: z.array(

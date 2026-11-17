@@ -12,7 +12,7 @@
 		"failed": "Network error",
 		"form": "Form error to simulate",
 		"invalid": "Field error",
-		"markdown": "## Example content\n\n**Formatted text**, a list, and [a link](https://example.test).\n\n- First item\n- Second item",
+		"markdown": "## Example content\n\n**Formatted text**, `inline code`, a list, and [a link](https://example.test).\n\n### A smaller heading\n\n- First item\n  - A nested item\n- Second item\n\n1. Step one\n2. Step two\n\n> A quoted line.\n\n```\nconst value = 1;\n```\n\n---\n\nThe last paragraph.",
 		"message": "Example message",
 		"pending": "Show pending and read-only content",
 		"rateLimited": "Rate limited",
@@ -60,5 +60,10 @@
 	"signInRequired": "Sign in to continue.",
 	"breadcrumb": "Breadcrumb",
 	"breadcrumbSeparator": "/",
-	"submitAsFeedback": "Submit “{{query}}” as feedback"
+	"submitAsFeedback": "Submit “{{query}}” as feedback",
+	"pageContext": {
+		"browser": "Browser",
+		"page": "Page",
+		"title": "Page context"
+	}
 }

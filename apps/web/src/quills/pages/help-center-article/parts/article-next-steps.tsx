@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { portalHref } from "../../../core/portal-href";
+import { Button } from "../../../ui/upstream";
 
 export interface ArticleNextStepsProps {
   workspaceId: string;
@@ -11,7 +12,6 @@ export interface ArticleNextStepsProps {
 
 const step =
   "flex min-w-0 flex-col gap-0.5 rounded-xl border border-border px-4 py-3 text-sm transition-colors hover:bg-muted/50";
-const pill = "rounded-full px-3 py-1.5 text-xs font-medium transition-colors";
 
 /** The previous and next articles, and a way to ask the team when the article did not help. */
 export function ArticleNextSteps(props: ArticleNextStepsProps) {
@@ -66,18 +66,25 @@ export function ArticleNextSteps(props: ArticleNextStepsProps) {
           {t("help-center.stillNeedHelpBody")}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <a
-            className={`${pill} bg-primary text-primary-foreground hover:bg-primary/90`}
-            href={portalHref(props.workspaceId, "", { openFeedback: "1" })}
+          <Button
+            size="sm"
+            className="rounded-full before:rounded-full"
+            render={
+              <a
+                href={portalHref(props.workspaceId, "", { openFeedback: "1" })}
+              />
+            }
           >
             {t("help-center.submitFeedback")}
-          </a>
-          <a
-            className={`${pill} bg-background hover:bg-muted`}
-            href={portalHref(props.workspaceId, "support")}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-full before:rounded-full"
+            render={<a href={portalHref(props.workspaceId, "support")} />}
           >
             {t("help-center.contactSupport")}
-          </a>
+          </Button>
         </div>
       </section>
     </>

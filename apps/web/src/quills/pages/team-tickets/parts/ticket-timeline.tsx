@@ -43,8 +43,8 @@ export function TicketTimeline({ entries, requester }: TicketTimelineProps) {
                   message.isInternal
                     ? "note"
                     : message.senderType === "visitor"
-                      ? "customer"
-                      : "team"
+                      ? "other"
+                      : "self"
                 }
                 author={
                   message.senderType === "visitor"
