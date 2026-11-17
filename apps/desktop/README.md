@@ -136,6 +136,12 @@ secrets, but the result is not signed. Add these to sign it and turn on updates:
 
 Change `version` in `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml` before each release.
 
+Set the endpoint to
+`https://github.com/PlaybookMediaLLC/kaneo/releases/download/desktop-latest/latest.json`. Kaneo's own
+releases take GitHub's "latest" release, so that address does not work. Installed apps see an
+update only after a person publishes the draft. Then `.github/workflows/desktop-update-feed.yml`
+copies its `latest.json` to the `desktop-latest` release.
+
 ## Limits
 
 - The app needs a server that has the desktop sign-in (this fork). With an older server, Google
