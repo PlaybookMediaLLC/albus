@@ -47,7 +47,7 @@ export default function TaskStartDatePopover({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-65 p-0" align="start">
+      <PopoverContent variant="menu" className="w-65" align="start">
         <DatePickerMenu
           label={t("tasks:properties.startDate")}
           placeholder={t("tasks:datePicker.startDatePlaceholder")}

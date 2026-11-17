@@ -56,7 +56,7 @@ export default function MobileProjectNav({
         </span>
         <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-72 p-2">
+      <PopoverContent variant="menu" align="start" className="w-72 p-2">
         <div className="space-y-3">
           <div className="space-y-1">
             <p className="px-1 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">

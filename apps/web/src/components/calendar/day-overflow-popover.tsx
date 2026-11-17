@@ -47,7 +47,7 @@ export default function DayOverflowPopover({
       >
         {t("tasks:calendar.moreTasks", { count: hiddenCount })}
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-64 p-2">
+      <PopoverContent variant="menu" align="start" className="w-64 p-2">
         <div className="space-y-1">
           <p className="px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             {dayLabel}

@@ -54,7 +54,7 @@ export default function SubtaskStatusPopover({
   return (
     <Popover open={open} onOpenChange={setOpen} modal={false}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-60 p-0" align="start">
+      <PopoverContent variant="menu" className="w-60" align="start">
         <OptionMenu
           label={t("tasks:status.label")}
           placeholder={t("tasks:bulk.statusPlaceholder")}
