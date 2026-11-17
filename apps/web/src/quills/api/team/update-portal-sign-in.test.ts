@@ -8,7 +8,7 @@ describe("updatePortalSignIn", () => {
     operation: updatePortalSignIn,
     request: {
       param: { workspaceId: "workspace_test_1" },
-      json: { mode: "kaneo", widgetSignIn: false, ssoUrl: null },
+      json: { mode: "account", widgetSignIn: false, ssoUrl: null },
     },
     response: updatePortalSignInFixture.ok(),
     method: "put",

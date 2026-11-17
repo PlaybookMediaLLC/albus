@@ -14,7 +14,7 @@ export { portalSignIn, readPortalSignIn };
 
 // How customers sign in to the portal (gaps G-17 and G-24). Kaneo accounts are the one login
 // system; these settings only choose how a customer reaches one:
-// - kaneo: the Kaneo sign-in page (the default).
+// - account: the Kaneo sign-in page (the default).
 // - sso: the portal's sign-in button opens the host app's login page, which sends the person back
 //   with a token signed by the widget secret.
 // - disabled: no customer signs in to the portal; it stays readable where access allows.
@@ -33,7 +33,7 @@ const updateSignIn = defineQuillsRoute({
   operationId: "updateQuillsPortalSignIn",
   summary: "Update how customers sign in to the portal",
   description:
-    "sso needs ssoUrl, the host app's login page: the portal sends the person there with return_to, and the host app redirects back to return_to with a token parameter signed by the widget secret. A token signs in only to a portal-only Kaneo account that token sign-in created for this workspace's customer; an email that already has a Kaneo account uses the Kaneo sign-in page.",
+    "sso needs ssoUrl, the host app's login page: the portal sends the person there with return_to, and the host app redirects back to return_to with a token parameter signed by the widget secret. A token signs in only to a portal-only account that token sign-in created for this workspace's customer; an email that already has an account uses the sign-in page.",
   action: "manage_settings",
   body: z.object({
     mode: z.enum(SIGN_IN_MODES),

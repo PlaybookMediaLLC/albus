@@ -2172,7 +2172,7 @@ const groups = {
     try {
       await step("portal-widget-sign-in", async () => {
         const saved = await setPolicy({
-          mode: "kaneo",
+          mode: "account",
           widgetSignIn: true,
           ssoUrl: null,
         });
@@ -2263,7 +2263,7 @@ const groups = {
         };
       });
     } finally {
-      await setPolicy({ mode: "kaneo", widgetSignIn: false, ssoUrl: null });
+      await setPolicy({ mode: "account", widgetSignIn: false, ssoUrl: null });
       await tm.dispose();
     }
   },

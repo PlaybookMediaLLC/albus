@@ -46,7 +46,7 @@ describe("portal token sign-in grants", () => {
 
   it("reads the stored policy, and SSO without a URL is the Kaneo sign-in", () => {
     expect(readPortalSignIn(null)).toEqual({
-      mode: "kaneo",
+      mode: "account",
       widgetSignIn: false,
       ssoUrl: null,
     });
@@ -54,7 +54,7 @@ describe("portal token sign-in grants", () => {
       readPortalSignIn(
         JSON.stringify({ signIn: { mode: "sso", widgetSignIn: true } }),
       ),
-    ).toEqual({ mode: "kaneo", widgetSignIn: true, ssoUrl: null });
+    ).toEqual({ mode: "account", widgetSignIn: true, ssoUrl: null });
     expect(
       readPortalSignIn(
         JSON.stringify({
@@ -62,6 +62,6 @@ describe("portal token sign-in grants", () => {
         }),
       ).mode,
     ).toBe("sso");
-    expect(readPortalSignIn("not json").mode).toBe("kaneo");
+    expect(readPortalSignIn("not json").mode).toBe("account");
   });
 });

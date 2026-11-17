@@ -15,7 +15,7 @@ describe("portalSignInHref", () => {
     expect(go()).toBe(
       "/auth/sign-in?redirect=%2Fportal%2Facme%2Fboards%2Fb1%3Fsort%3Dtop",
     );
-    expect(go({ mode: "kaneo", ssoUrl: null })).toBe(go());
+    expect(go({ mode: "account", ssoUrl: null })).toBe(go());
   });
 
   it("sends SSO sign-in to the host app with a return to the signed step", () => {

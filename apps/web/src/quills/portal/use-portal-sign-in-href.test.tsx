@@ -8,7 +8,7 @@ function Link() {
   const href = usePortalSignInHref("acme")("boards/b1");
   return href ? <a href={href}>Sign in</a> : null;
 }
-const render = (mode: "kaneo" | "disabled") =>
+const render = (mode: "account" | "disabled") =>
   renderComponent(
     <PortalRuntimeProvider
       value={{
@@ -29,7 +29,7 @@ const render = (mode: "kaneo" | "disabled") =>
 
 describe("usePortalSignInHref", () => {
   it("links back to the portal page, and offers nothing when sign-in is off", () => {
-    const on = render("kaneo");
+    const on = render("account");
     expect(on.getByRole("link", { name: "Sign in" })).toHaveAttribute(
       "href",
       "/auth/sign-in?redirect=%2Fportal%2Facme%2Fboards%2Fb1",

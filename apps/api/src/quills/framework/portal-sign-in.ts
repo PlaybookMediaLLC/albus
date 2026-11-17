@@ -103,7 +103,7 @@ export function safePortalPath(next: string | undefined) {
 }
 
 // The portal sign-in policy that portal/sign-in-settings.ts stores in the portal config.
-export const SIGN_IN_MODES = ["kaneo", "sso", "disabled"] as const;
+export const SIGN_IN_MODES = ["account", "sso", "disabled"] as const;
 export type PortalSignIn = {
   mode: (typeof SIGN_IN_MODES)[number];
   widgetSignIn: boolean;
@@ -134,9 +134,9 @@ export function readPortalSignIn(portalConfig: string | null): PortalSignIn {
   const value: Record<string, unknown> =
     stored && typeof stored === "object" ? { ...stored } : {};
   const ssoUrl = httpUrl(value.ssoUrl);
-  const mode = SIGN_IN_MODES.find((m) => m === value.mode) ?? "kaneo";
+  const mode = SIGN_IN_MODES.find((m) => m === value.mode) ?? "account";
   return {
-    mode: mode === "sso" && !ssoUrl ? "kaneo" : mode,
+    mode: mode === "sso" && !ssoUrl ? "account" : mode,
     widgetSignIn: value.widgetSignIn === true,
     ssoUrl,
   };

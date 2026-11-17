@@ -50,8 +50,8 @@ export function SignInSection({
             value={data.mode}
             options={[
               {
-                value: "kaneo",
-                label: t("settings-product.privacy.signInModes.kaneo"),
+                value: "account",
+                label: t("settings-product.privacy.signInModes.account"),
               },
               ...(data.ssoUrl
                 ? [

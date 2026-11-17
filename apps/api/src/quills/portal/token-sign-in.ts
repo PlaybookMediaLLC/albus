@@ -84,7 +84,7 @@ const tokenSignIn = defineQuillsRoute({
   operationId: "startQuillsPortalTokenSignIn",
   summary: "Sign in to the portal with a widget link or an SSO token",
   description:
-    "A browser navigation. `code` is the widget's one-time link (widget sign-in on). `token` is a token that the host app signed with the widget secret, as for widget identify, when the portal's sign-in mode is sso; `next` is then the portal path to open. Each works once. The browser continues to the Kaneo sign-in, which signs in only to a portal-only account that token sign-in created for this customer; another account with the email means the Kaneo sign-in page.",
+    "A browser navigation. `code` is the widget's one-time link (widget sign-in on). `token` is a token that the host app signed with the widget secret, as for widget identify, when the portal's sign-in mode is sso; `next` is then the portal path to open. Each works once. The browser continues to the account sign-in, which signs in only to a portal-only account that token sign-in created for this customer; another account with the email means the sign-in page.",
   action: "create",
   query: z.object({
     workspace: z.string().min(1).max(100),
@@ -93,7 +93,7 @@ const tokenSignIn = defineQuillsRoute({
     next: z.string().max(300).optional(),
   }),
   response: z.object({ grant: z.string() }),
-  responseDescription: "The grant for the Kaneo sign-in",
+  responseDescription: "The grant for the account sign-in",
   errors: {
     403: "Token sign-in is off, or the customer is blocked",
     404: "The portal is off",
@@ -108,7 +108,9 @@ const tokenSignIn = defineQuillsRoute({
     failure: (_status, { query }) =>
       `${portalHome(query?.workspace)}?signIn=failed`,
   },
-  event: { none: "The sign-in is Kaneo's; Quills records the receipt only" },
+  event: {
+    none: "The account sign-in owns the session; this records the receipt only",
+  },
   handler: async ({ db, credential, workspaceId }) => {
     await requirePortal(db);
     const policy = await portalSignIn(db);

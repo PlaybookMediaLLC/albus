@@ -5,7 +5,7 @@ export const evaluateMyPortalAccessFixture = {
       ...{
         granted: false,
         reason: "public",
-        signIn: { mode: "kaneo", ssoUrl: null },
+        signIn: { mode: "account", ssoUrl: null },
       },
       ...overrides,
     }) satisfies EvaluateMyPortalAccessResponse,

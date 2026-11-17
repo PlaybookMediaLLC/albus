@@ -117,10 +117,10 @@
 		"moderate": "Moderate submissions",
 		"moderateText": "Hold new posts for review before they show on the portal.",
 		"signIn": "Customer sign-in",
-		"signInText": "How customers sign in to the portal. They always sign in with a Kaneo account.",
+		"signInText": "How customers sign in to the portal. They always sign in with an account on this site.",
 		"signInMode": "Sign-in button",
 		"signInModes": {
-			"kaneo": "Kaneo sign-in page",
+			"account": "Sign-in page",
 			"sso": "Your app's login page",
 			"disabled": "Off"
 		},
@@ -130,7 +130,7 @@
 		"ssoUrlPlaceholder": "https://app.example.com/login",
 		"saveSsoUrl": "Save login page",
 		"widgetSignIn": "Open the portal signed in from the widget",
-		"widgetSignInText": "People your app identified in the widget open the portal signed in. This only reaches a portal account that it created for them in this workspace. An email that already has a Kaneo account uses the Kaneo sign-in page.",
+		"widgetSignInText": "People your app identified in the widget open the portal signed in. This only reaches a portal account that it created for them in this workspace. An email that already has an account uses the sign-in page.",
 		"holdSensitive": "Hold sensitive information",
 		"holdSensitiveText": "Send a post or comment that shows an email address, a phone or card number, an IBAN or a secret key to review first. With AI set up, a post's images are checked too, just after it is posted.",
 		"holdSpam": "Hold likely spam",

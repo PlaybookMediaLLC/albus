@@ -11,7 +11,7 @@ async function side(env: ContractEnv, workspaceId: string) {
     await db.update(settings).set({
       portalConfig: JSON.stringify({
         enabled: true,
-        signIn: { mode: "kaneo", widgetSignIn: true, ssoUrl: null },
+        signIn: { mode: "account", widgetSignIn: true, ssoUrl: null },
       }),
     });
     const [row] = await db

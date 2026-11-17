@@ -11699,7 +11699,7 @@
           "Quills"
         ],
         "summary": "Sign in to the portal with a widget link or an SSO token",
-        "description": "A browser navigation. `code` is the widget's one-time link (widget sign-in on). `token` is a token that the host app signed with the widget secret, as for widget identify, when the portal's sign-in mode is sso; `next` is then the portal path to open. Each works once. The browser continues to the Kaneo sign-in, which signs in only to a portal-only account that token sign-in created for this customer; another account with the email means the Kaneo sign-in page.",
+        "description": "A browser navigation. `code` is the widget's one-time link (widget sign-in on). `token` is a token that the host app signed with the widget secret, as for widget identify, when the portal's sign-in mode is sso; `next` is then the portal path to open. Each works once. The browser continues to the account sign-in, which signs in only to a portal-only account that token sign-in created for this customer; another account with the email means the sign-in page.",
         "security": [],
         "parameters": [
           {
@@ -11742,7 +11742,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The grant for the Kaneo sign-in",
+            "description": "The grant for the account sign-in",
             "headers": {
               "X-Quills-Result-Location": {
                 "description": "The sanitized web result page for a browser bridge",
@@ -12312,7 +12312,7 @@
                         "mode": {
                           "type": "string",
                           "enum": [
-                            "kaneo",
+                            "account",
                             "sso",
                             "disabled"
                           ]
@@ -65885,7 +65885,7 @@
                         "mode": {
                           "type": "string",
                           "enum": [
-                            "kaneo",
+                            "account",
                             "sso",
                             "disabled"
                           ]
@@ -66178,7 +66178,7 @@
                         "mode": {
                           "type": "string",
                           "enum": [
-                            "kaneo",
+                            "account",
                             "sso",
                             "disabled"
                           ]
@@ -87334,7 +87334,7 @@
           "Quills"
         ],
         "summary": "Update how customers sign in to the portal",
-        "description": "sso needs ssoUrl, the host app's login page: the portal sends the person there with return_to, and the host app redirects back to return_to with a token parameter signed by the widget secret. A token signs in only to a portal-only Kaneo account that token sign-in created for this workspace's customer; an email that already has a Kaneo account uses the Kaneo sign-in page.",
+        "description": "sso needs ssoUrl, the host app's login page: the portal sends the person there with return_to, and the host app redirects back to return_to with a token parameter signed by the widget secret. A token signs in only to a portal-only account that token sign-in created for this workspace's customer; an email that already has an account uses the sign-in page.",
         "parameters": [
           {
             "schema": {
@@ -87356,7 +87356,7 @@
                   "mode": {
                     "type": "string",
                     "enum": [
-                      "kaneo",
+                      "account",
                       "sso",
                       "disabled"
                     ]
@@ -87393,7 +87393,7 @@
                     "mode": {
                       "type": "string",
                       "enum": [
-                        "kaneo",
+                        "account",
                         "sso",
                         "disabled"
                       ]

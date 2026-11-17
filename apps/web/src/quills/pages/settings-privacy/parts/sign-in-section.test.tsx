@@ -32,7 +32,7 @@ const render = (data: Parameters<typeof SignInSection>[0]["data"]) =>
   );
 
 describe("SignInSection", () => {
-  const kaneo = { mode: "kaneo" as const, widgetSignIn: false, ssoUrl: null };
+  const kaneo = { mode: "account" as const, widgetSignIn: false, ssoUrl: null };
 
   it("turns on widget sign-in and keeps the other choices", async () => {
     const api = mockApi();

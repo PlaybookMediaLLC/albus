@@ -122,7 +122,7 @@ export function renderPage(
     access: {
       granted: options.accessGranted ?? true,
       reason: options.accessGranted === false ? "unauthorized" : "public",
-      signIn: options.signIn ?? { mode: "kaneo", ssoUrl: null },
+      signIn: options.signIn ?? { mode: "account", ssoUrl: null },
     },
     accessLoading: options.accessLoading ?? false,
     accessProblem: options.accessProblem ?? null,

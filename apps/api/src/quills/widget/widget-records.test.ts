@@ -775,7 +775,7 @@ describe.skipIf(!url)("widget records and ownership", () => {
       // Off by default.
       expect((await link()).status).toBe(403);
       expect(
-        (await signIn({ mode: "kaneo", widgetSignIn: true, ssoUrl: null }))
+        (await signIn({ mode: "account", widgetSignIn: true, ssoUrl: null }))
           .status,
       ).toBe(200);
       const started = await call("POST", "/widget/conversations", {
@@ -845,7 +845,7 @@ describe.skipIf(!url)("widget records and ownership", () => {
         // A private portal lets the host's customer in.
         expect((await portal("/portal/access", userId)).body).toMatchObject({
           granted: true,
-          signIn: { mode: "kaneo", ssoUrl: null },
+          signIn: { mode: "account", ssoUrl: null },
         });
 
         // SSO mode: the host app's login page sends the person back with a signed token, once.

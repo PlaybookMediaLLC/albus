@@ -2,7 +2,7 @@ import { resolveApiBaseUrl } from "@kaneo/libs";
 import { portalHref } from "./portal-href";
 
 export type PortalSignInMode = {
-  mode: "kaneo" | "sso" | "disabled";
+  mode: "account" | "sso" | "disabled";
   ssoUrl: string | null;
 };
 

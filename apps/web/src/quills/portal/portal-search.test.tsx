@@ -33,7 +33,7 @@ const runtime = (granted: boolean): PortalRuntimeValue => ({
   access: {
     granted,
     reason: granted ? "public" : "unauthorized",
-    signIn: { mode: "kaneo", ssoUrl: null },
+    signIn: { mode: "account", ssoUrl: null },
   },
   accessLoading: false,
   accessProblem: null,
