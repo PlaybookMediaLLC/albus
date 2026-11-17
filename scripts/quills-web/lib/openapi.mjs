@@ -57,6 +57,13 @@ export function zodForSchema(document, rawSchema) {
       : `z.union([${variants.join(", ")}])`;
   }
   if (schema.type === "null") return "z.null()";
+  // A map with free keys: z.object({}) would strip every key.
+  if (
+    !schema.properties &&
+    schema.additionalProperties &&
+    typeof schema.additionalProperties === "object"
+  )
+    return `z.record(z.string(), ${zodForSchema(document, schema.additionalProperties)})`;
   if (schema.type === "object" || schema.properties) {
     const required = new Set(schema.required ?? []);
     const fields = Object.entries(schema.properties ?? {}).map(
