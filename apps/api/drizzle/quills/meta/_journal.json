@@ -229,22 +229,36 @@
 		{
 			"idx": 32,
 			"version": "7",
-			"when": 1794905815819,
-			"tag": "0032_post_task_source",
+			"when": 1794906164239,
+			"tag": "0032_post_score_values",
 			"breakpoints": true
 		},
 		{
 			"idx": 33,
 			"version": "7",
-			"when": 1794905819311,
-			"tag": "0033_changelog_announced",
+			"when": 1794906174344,
+			"tag": "0033_quills_view_revenue",
 			"breakpoints": true
 		},
 		{
 			"idx": 34,
 			"version": "7",
-			"when": 1794905823043,
-			"tag": "0034_post_updates",
+			"when": 1794909946146,
+			"tag": "0034_post_task_source",
+			"breakpoints": true
+		},
+		{
+			"idx": 35,
+			"version": "7",
+			"when": 1794909949536,
+			"tag": "0035_changelog_announced",
+			"breakpoints": true
+		},
+		{
+			"idx": 36,
+			"version": "7",
+			"when": 1794910771728,
+			"tag": "0036_post_updates",
 			"breakpoints": true
 		}
 	]

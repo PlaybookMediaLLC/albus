@@ -40,6 +40,7 @@ import postTasks from "./feedback/post-tasks";
 import postUpdates from "./feedback/post-updates";
 import demand from "./feedback/demand";
 import scores from "./feedback/scores";
+import scoring from "./feedback/scoring";
 // RFC 0004: the AI chip of the request detail.
 import postSummary from "./feedback/post-summary";
 import { brandText } from "@kaneo/branding";
@@ -130,6 +131,7 @@ export default apiRouter<BaseVariables & { workspaceId: string }>()
   .route("/", postUpdates)
   .route("/", demand)
   .route("/", scores)
+  .route("/", scoring)
   // RFC 0004: the AI chip of the request detail.
   .route("/", postSummary)
   .openapi(...context);

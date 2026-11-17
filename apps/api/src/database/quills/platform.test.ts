@@ -158,6 +158,13 @@ describe.skipIf(!url)("Shared Kaneo and Quills platform", () => {
     );
     const upgrade = migration.split("--> statement-breakpoint").at(-1)!;
     expect(upgrade).toContain("FROM public.workspace_role");
+    // 0033 then gives untouched default roles quills:view_revenue (#79): the defaults of today.
+    const revenue = (
+      await readFile(
+        resolve("drizzle/quills/0033_quills_view_revenue.sql"),
+        "utf8",
+      )
+    ).split("--> statement-breakpoint")[0]!;
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
@@ -176,6 +183,7 @@ describe.skipIf(!url)("Shared Kaneo and Quills platform", () => {
         [`${suffix}_custom`, b, custom, `${suffix}_invalid`],
       );
       await client.query(upgrade);
+      await client.query(revenue);
       const result = await client.query(
         "SELECT role,permission FROM public.workspace_role WHERE workspace_id=$1 AND role IN ('viewer','member','admin')",
         [a],
@@ -201,6 +209,77 @@ describe.skipIf(!url)("Shared Kaneo and Quills platform", () => {
           )
         ).rows[0].permission,
       ).toBe("invalid json");
+    } finally {
+      await client.query("ROLLBACK");
+      client.release();
+    }
+  });
+  it("grants view_revenue only to member and admin roles with the previous default Quills actions", async () => {
+    const revenue = (
+      await readFile(
+        resolve("drizzle/quills/0033_quills_view_revenue.sql"),
+        "utf8",
+      )
+    ).split("--> statement-breakpoint")[0]!;
+    const client = await pool.connect();
+    const role = (id: string, name: string, permission: string) =>
+      client.query(
+        "INSERT INTO public.workspace_role(id,workspace_id,role,permission,created_at) VALUES($1,$2,$3,$4,now())",
+        [`${suffix}_rev_${id}`, b, name, permission],
+      );
+    const permission = async (id: string) =>
+      (
+        await client.query(
+          "SELECT permission FROM public.workspace_role WHERE id=$1",
+          [`${suffix}_rev_${id}`],
+        )
+      ).rows[0].permission as string;
+    try {
+      await client.query("BEGIN");
+      // The previous admin default, saved in another order by the Roles screen.
+      await role(
+        "admin",
+        "admin",
+        JSON.stringify({
+          workspace: ["read"],
+          quills: ["update", "read", "manage_settings", "delete", "create"],
+        }),
+      );
+      await role(
+        "member",
+        "member",
+        JSON.stringify({ quills: ["read", "create", "update"] }),
+      );
+      const customized = JSON.stringify({ quills: ["read", "create"] });
+      await role("customized", "member", customized);
+      const viewer = JSON.stringify({ quills: ["read"] });
+      await role("viewer", "viewer", viewer);
+      const custom = JSON.stringify({ quills: ["read", "create", "update"] });
+      await role("custom", "support", custom);
+      await role("invalid", "admin", "invalid json");
+      await client.query(revenue);
+      expect(JSON.parse(await permission("admin")).quills).toEqual([
+        "update",
+        "read",
+        "manage_settings",
+        "delete",
+        "create",
+        "view_revenue",
+      ]);
+      expect(JSON.parse(await permission("admin")).workspace).toEqual(["read"]);
+      expect(JSON.parse(await permission("member")).quills).toEqual([
+        "read",
+        "create",
+        "update",
+        "view_revenue",
+      ]);
+      expect(await permission("customized")).toBe(customized);
+      expect(await permission("viewer")).toBe(viewer);
+      expect(await permission("custom")).toBe(custom);
+      expect(await permission("invalid")).toBe("invalid json");
+      // A second run changes nothing: the actions are no longer the previous default.
+      await client.query(revenue);
+      expect(JSON.parse(await permission("member")).quills).toHaveLength(4);
     } finally {
       await client.query("ROLLBACK");
       client.release();

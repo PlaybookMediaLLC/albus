@@ -55,6 +55,8 @@ export const postUpdates = quillsSchema
         t.idempotencyKey,
       ),
       index("post_updates_post_idx").on(t.postId, t.createdAt),
+      // Deleting a principal sets these to null; the index keeps that from scanning the table.
+      index("post_updates_principal_idx").on(t.principalId),
       check(
         "post_updates_body_length_check",
         sql`char_length(${t.body}) BETWEEN 1 AND 5000`,

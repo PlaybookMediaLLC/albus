@@ -22,6 +22,7 @@ ALTER TABLE "quills"."post_updates" ADD CONSTRAINT "post_updates_workspace_id_po
 ALTER TABLE "quills"."post_updates" ADD CONSTRAINT "post_updates_workspace_id_principal_id_principal_workspace_id_id_fk" FOREIGN KEY ("workspace_id","principal_id") REFERENCES "quills"."principal"("workspace_id","id") ON DELETE SET NULL ("principal_id") ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "post_updates_idempotency_unique" ON "quills"."post_updates" USING btree ("workspace_id","idempotency_key");--> statement-breakpoint
 CREATE INDEX "post_updates_post_idx" ON "quills"."post_updates" USING btree ("post_id","created_at");--> statement-breakpoint
+CREATE INDEX "post_updates_principal_idx" ON "quills"."post_updates" USING btree ("principal_id");--> statement-breakpoint
 CREATE POLICY "workspace_isolation" ON "quills"."post_updates" AS PERMISSIVE FOR ALL TO public USING ("quills"."post_updates"."workspace_id" = nullif(current_setting('quills.workspace_id', true), '')) WITH CHECK ("quills"."post_updates"."workspace_id" = nullif(current_setting('quills.workspace_id', true), ''));
 --> statement-breakpoint
 ALTER TABLE "quills"."post_updates" FORCE ROW LEVEL SECURITY;

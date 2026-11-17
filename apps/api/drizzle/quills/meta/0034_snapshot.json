@@ -1,6 +1,6 @@
 {
-	"id": "dfd95195-1843-40fa-a7fa-dc4efedcce3c",
-	"prevId": "95849f34-ce64-418f-9dc2-1cef784b7fb1",
+	"id": "dd499087-279b-4c55-8e97-665da5a0801d",
+	"prevId": "b4e7eead-e202-4544-9f9f-cfa713991bf1",
 	"version": "7",
 	"dialect": "postgresql",
 	"tables": {
@@ -4220,6 +4220,13 @@
 					"type": "real",
 					"primaryKey": false,
 					"notNull": false
+				},
+				"score_values": {
+					"name": "score_values",
+					"type": "jsonb",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'{}'::jsonb"
 				}
 			},
 			"indexes": {
@@ -16726,195 +16733,6 @@
 			"checkConstraints": {},
 			"isRLSEnabled": true
 		},
-		"quills.post_updates": {
-			"name": "post_updates",
-			"schema": "quills",
-			"columns": {
-				"workspace_id": {
-					"name": "workspace_id",
-					"type": "text",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "nullif(current_setting('quills.workspace_id', true), '')"
-				},
-				"id": {
-					"name": "id",
-					"type": "uuid",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "gen_random_uuid()"
-				},
-				"post_id": {
-					"name": "post_id",
-					"type": "uuid",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"principal_id": {
-					"name": "principal_id",
-					"type": "uuid",
-					"primaryKey": false,
-					"notNull": false
-				},
-				"body": {
-					"name": "body",
-					"type": "text",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"channels": {
-					"name": "channels",
-					"type": "jsonb",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"segment_ids": {
-					"name": "segment_ids",
-					"type": "jsonb",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "'[]'::jsonb"
-				},
-				"languages": {
-					"name": "languages",
-					"type": "jsonb",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "'[]'::jsonb"
-				},
-				"release_confirmed": {
-					"name": "release_confirmed",
-					"type": "boolean",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"counts": {
-					"name": "counts",
-					"type": "jsonb",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"recipient_ids": {
-					"name": "recipient_ids",
-					"type": "jsonb",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "'[]'::jsonb"
-				},
-				"idempotency_key": {
-					"name": "idempotency_key",
-					"type": "text",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"created_at": {
-					"name": "created_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				}
-			},
-			"indexes": {
-				"post_updates_idempotency_unique": {
-					"name": "post_updates_idempotency_unique",
-					"columns": [
-						{
-							"expression": "workspace_id",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						},
-						{
-							"expression": "idempotency_key",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": true,
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
-				},
-				"post_updates_post_idx": {
-					"name": "post_updates_post_idx",
-					"columns": [
-						{
-							"expression": "post_id",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						},
-						{
-							"expression": "created_at",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": false,
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
-				}
-			},
-			"foreignKeys": {
-				"post_updates_workspace_id_workspace_id_fk": {
-					"name": "post_updates_workspace_id_workspace_id_fk",
-					"tableFrom": "post_updates",
-					"tableTo": "workspace",
-					"columnsFrom": ["workspace_id"],
-					"columnsTo": ["id"],
-					"onDelete": "cascade",
-					"onUpdate": "no action"
-				},
-				"post_updates_workspace_id_post_id_posts_workspace_id_id_fk": {
-					"name": "post_updates_workspace_id_post_id_posts_workspace_id_id_fk",
-					"tableFrom": "post_updates",
-					"tableTo": "posts",
-					"schemaTo": "quills",
-					"columnsFrom": ["workspace_id", "post_id"],
-					"columnsTo": ["workspace_id", "id"],
-					"onDelete": "cascade",
-					"onUpdate": "no action"
-				},
-				"post_updates_workspace_id_principal_id_principal_workspace_id_id_fk": {
-					"name": "post_updates_workspace_id_principal_id_principal_workspace_id_id_fk",
-					"tableFrom": "post_updates",
-					"tableTo": "principal",
-					"schemaTo": "quills",
-					"columnsFrom": ["workspace_id", "principal_id"],
-					"columnsTo": ["workspace_id", "id"],
-					"onDelete": "set null",
-					"onUpdate": "no action"
-				}
-			},
-			"compositePrimaryKeys": {
-				"post_updates_workspace_id_id_pk": {
-					"name": "post_updates_workspace_id_id_pk",
-					"columns": ["workspace_id", "id"]
-				}
-			},
-			"uniqueConstraints": {},
-			"policies": {
-				"workspace_isolation": {
-					"name": "workspace_isolation",
-					"as": "PERMISSIVE",
-					"for": "ALL",
-					"to": ["public"],
-					"using": "\"quills\".\"post_updates\".\"workspace_id\" = nullif(current_setting('quills.workspace_id', true), '')",
-					"withCheck": "\"quills\".\"post_updates\".\"workspace_id\" = nullif(current_setting('quills.workspace_id', true), '')"
-				}
-			},
-			"checkConstraints": {
-				"post_updates_body_length_check": {
-					"name": "post_updates_body_length_check",
-					"value": "char_length(\"quills\".\"post_updates\".\"body\") BETWEEN 1 AND 5000"
-				}
-			},
-			"isRLSEnabled": true
-		},
 		"quills.ai_usage_log": {
 			"name": "ai_usage_log",
 			"schema": "quills",
@@ -26764,12 +26582,6 @@
 					"primaryKey": false,
 					"notNull": true,
 					"default": "now()"
-				},
-				"announced_at": {
-					"name": "announced_at",
-					"type": "timestamp with time zone",
-					"primaryKey": false,
-					"notNull": false
 				}
 			},
 			"indexes": {},

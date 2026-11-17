@@ -7,11 +7,9 @@ import {
   z,
   type BaseVariables,
 } from "../../openapi";
-import { principal } from "../../database/quills/schema/auth";
 import { postExternalLinks as links } from "../../database/quills/schema/external-links";
 import { posts } from "../../database/quills/schema/posts";
 import { identifyCustomer } from "../directory/identify-customer";
-import { recordActivity } from "../feedback/activity";
 import { findPost, loadProjects, visiblePost } from "../feedback/visibility";
 import { addVote } from "../feedback/votes";
 import {
@@ -88,7 +86,7 @@ const link = defineQuillsRoute({
         type: "post.voted",
         entityType: "post",
         entityId: result.votedPostId,
-        payload: { principalId: result.voterPrincipalId },
+        payload: { principalId: result.voterPrincipalId, source: "app" },
       });
     if (result.voterPrincipalId)
       changes.push({
@@ -136,17 +134,14 @@ const link = defineQuillsRoute({
         voterPrincipalId: null,
       };
     const { principalId } = await identifyCustomer(db, body.requester);
-    const vote = await addVote(db, post.id, projects, principalId, actor);
-    if (vote.changed) {
-      const [voter] = await db
-        .select({ name: principal.displayName })
-        .from(principal)
-        .where(eq(principal.id, principalId));
-      await recordActivity(db, actor, vote.postId, {
-        type: "vote.proxy",
-        metadata: { voterPrincipalId: principalId, voterName: voter!.name },
-      });
-    }
+    const vote = await addVote(
+      db,
+      post.id,
+      projects,
+      principalId,
+      actor,
+      "app",
+    );
     return {
       linkId,
       linked,

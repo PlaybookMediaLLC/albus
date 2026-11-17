@@ -7,7 +7,6 @@ const input = {
   title: "Export [beta] CSV",
   voters: 5,
   companies: 2,
-  mrrCents: 123_456,
   segments: [{ name: "Beta program", voters: 3 }],
   conversations: 1,
 };
@@ -22,7 +21,7 @@ describe("taskDescription", () => {
         "",
         "**Feedback request:** [Export beta CSV](https://kaneo.test/feedback/ws/posts/post_1)",
         "",
-        "- Votes: 5 · Companies: 2 · MRR: $1,235",
+        "- Votes: 5 · Companies: 2",
         "- Top segments: Beta program (3)",
         "- Linked conversations: 1",
       ].join("\n"),

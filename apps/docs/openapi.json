@@ -5082,6 +5082,9 @@
           "manageQuillsSettings": {
             "type": "boolean"
           },
+          "viewQuillsRevenue": {
+            "type": "boolean"
+          },
           "manageProjects": {
             "type": "boolean"
           },
@@ -5146,6 +5149,7 @@
           "updateQuills",
           "deleteQuills",
           "manageQuillsSettings",
+          "viewQuillsRevenue",
           "manageProjects",
           "createProjects",
           "updateProjects",
@@ -58736,6 +58740,114 @@
         }
       }
     },
+    "/quills/{workspaceId}/companies/import": {
+      "post": {
+        "operationId": "importQuillsCompanies",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Create or update companies, with their revenue, from a CSV file",
+        "description": "The CSV text, with a header row of these columns in any order: name, domain, external_id, plan and mrr (the monthly revenue in major units, such as 1250.50), at most 100,000 characters. A row updates the company with its external_id, else the company with its domain, else creates a company, which needs a name. An empty cell leaves that field as it is. Up to 1000 rows. One invalid row rejects the file with every row's problem, and nothing changes.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "csv": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100000
+                  }
+                },
+                "required": [
+                  "csv"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "How many companies the file created and updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "created": {
+                      "type": "number"
+                    },
+                    "updated": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "created",
+                    "updated"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The file has invalid rows",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A parallel change added one of the companies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
     "/quills/{workspaceId}/companies": {
       "get": {
         "operationId": "listQuillsCompanies",
@@ -58839,7 +58951,8 @@
                             "type": [
                               "number",
                               "null"
-                            ]
+                            ],
+                            "description": "Monthly revenue in cents. Null when unset or without the quills:view_revenue permission."
                           },
                           "size": {
                             "type": [
@@ -59108,7 +59221,8 @@
                       "type": [
                         "number",
                         "null"
-                      ]
+                      ],
+                      "description": "Monthly revenue in cents. Null when unset or without the quills:view_revenue permission."
                     },
                     "size": {
                       "type": [
@@ -59291,7 +59405,8 @@
                       "type": [
                         "number",
                         "null"
-                      ]
+                      ],
+                      "description": "Monthly revenue in cents. Null when unset or without the quills:view_revenue permission."
                     },
                     "size": {
                       "type": [
@@ -59559,7 +59674,8 @@
                       "type": [
                         "number",
                         "null"
-                      ]
+                      ],
+                      "description": "Monthly revenue in cents. Null when unset or without the quills:view_revenue permission."
                     },
                     "size": {
                       "type": [
@@ -60171,7 +60287,8 @@
                           "type": [
                             "number",
                             "null"
-                          ]
+                          ],
+                          "description": "Monthly revenue in cents. Null when unset or without the quills:view_revenue permission."
                         },
                         "size": {
                           "type": [
@@ -60398,7 +60515,8 @@
                       "type": [
                         "number",
                         "null"
-                      ]
+                      ],
+                      "description": "Monthly revenue in cents. Null when unset or without the quills:view_revenue permission."
                     },
                     "size": {
                       "type": [
@@ -68945,7 +69063,7 @@
           "Quills"
         ],
         "summary": "List the visible feedback posts",
-        "description": "Leaves out merged posts, test-customer posts and posts on boards hidden by their project links. showDeleted=true lists posts deleted in the last 30 days. Each post has its demand, as getQuillsPostDemand counts it, without segments. authorPrincipalId keeps only the posts that one person wrote.",
+        "description": "Leaves out merged posts, test-customer posts and posts on boards hidden by their project links. showDeleted=true lists posts deleted in the last 30 days. Each post has its demand, as getQuillsPostDemand counts it, without segments, and its team score. authorPrincipalId keeps only the posts that one person wrote. minVotes, minMrrCents, segmentIds (a counted voter in one of the segments) and minScore filter by customer value. Without quills:view_revenue, demand.mrrCents is null, and sort=mrr or minMrrCents is 403.",
         "parameters": [
           {
             "schema": {
@@ -69073,14 +69191,15 @@
                 "votes",
                 "rice",
                 "mrr",
+                "score",
                 "trending",
                 "stale"
               ],
               "default": "newest",
-              "description": "rice: the RICE score, posts without one last. mrr: the monthly revenue of the voters' companies. trending: the most votes in the last 7 days. stale: the least recently changed first."
+              "description": "rice: the RICE score, posts without one last. mrr: the monthly revenue of the voters' companies. score: the team score from the scoring factors, posts without a value last. trending: the most votes in the last 7 days. stale: the least recently changed first."
             },
             "required": false,
-            "description": "rice: the RICE score, posts without one last. mrr: the monthly revenue of the voters' companies. trending: the most votes in the last 7 days. stale: the least recently changed first.",
+            "description": "rice: the RICE score, posts without one last. mrr: the monthly revenue of the voters' companies. score: the team score from the scoring factors, posts without a value last. trending: the most votes in the last 7 days. stale: the least recently changed first.",
             "name": "sort",
             "in": "query"
           },
@@ -69109,6 +69228,48 @@
             },
             "required": false,
             "name": "authorPrincipalId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            },
+            "required": false,
+            "name": "minVotes",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647,
+              "description": "Only posts whose voters' companies pay at least this, in cents"
+            },
+            "required": false,
+            "description": "Only posts whose voters' companies pay at least this, in cents",
+            "name": "minMrrCents",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated IDs, at most 50"
+            },
+            "required": false,
+            "description": "Comma-separated IDs, at most 50",
+            "name": "segmentIds",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "description": "Only posts with at least this team score"
+            },
+            "required": false,
+            "description": "Only posts with at least this team score",
+            "name": "minScore",
             "in": "query"
           }
         ],
@@ -69319,6 +69480,25 @@
                               "rice"
                             ]
                           },
+                          "factorValues": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "factorId": {
+                                  "type": "string"
+                                },
+                                "value": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "factorId",
+                                "value"
+                              ]
+                            },
+                            "description": "The post's stored values (0 to 10) by scoring factor ID. Only the team's current factors count toward the score."
+                          },
                           "demand": {
                             "type": "object",
                             "properties": {
@@ -69330,8 +69510,11 @@
                                 "description": "Distinct voter companies"
                               },
                               "mrrCents": {
-                                "type": "number",
-                                "description": "The monthly revenue of the voters' companies, in cents. Each company counts once."
+                                "type": [
+                                  "number",
+                                  "null"
+                                ],
+                                "description": "The monthly revenue of the voters' companies, in cents. Each company counts once. Null without the quills:view_revenue permission."
                               },
                               "importance": {
                                 "type": "object",
@@ -69359,6 +69542,13 @@
                               "mrrCents",
                               "importance"
                             ]
+                          },
+                          "teamScore": {
+                            "type": [
+                              "number",
+                              "null"
+                            ],
+                            "description": "The sum of weight × value over the team's scoring factors; null without a value."
                           }
                         },
                         "required": [
@@ -69384,7 +69574,9 @@
                           "tags",
                           "customFields",
                           "score",
-                          "demand"
+                          "factorValues",
+                          "demand",
+                          "teamScore"
                         ]
                       }
                     },
@@ -69458,7 +69650,7 @@
           "Quills"
         ],
         "summary": "Create a feedback post",
-        "description": "The author is the caller, or `authorPrincipalId` to post on behalf of a person of this workspace (that also needs the update action). The author is the first voter. Without a status, the post gets the default status. customFields must hold a value for each required field of the board, internal fields included; 400 for a missing or wrongly typed value.",
+        "description": "The author is the caller, or `authorPrincipalId` to post on behalf of a person of this workspace (that also needs the update action). The author is the first voter and is subscribed to the post. On behalf of a person, the post history and the audit log record you, the person and `source`. Without a status, the post gets the default status. customFields must hold a value for each required field of the board, internal fields included; 400 for a missing or wrongly typed value.",
         "parameters": [
           {
             "schema": {
@@ -69503,6 +69695,18 @@
                   },
                   "authorPrincipalId": {
                     "type": "string"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "call",
+                      "meeting",
+                      "email",
+                      "chat",
+                      "other"
+                    ],
+                    "default": "other",
+                    "description": "Where you heard it: call, meeting, email, chat or other. The post history and the audit log record it."
                   },
                   "customFields": {
                     "type": "object",
@@ -69743,6 +69947,25 @@
                         "effort",
                         "rice"
                       ]
+                    },
+                    "factorValues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "factorId": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "factorId",
+                          "value"
+                        ]
+                      },
+                      "description": "The post's stored values (0 to 10) by scoring factor ID. Only the team's current factors count toward the score."
                     }
                   },
                   "required": [
@@ -69767,7 +69990,8 @@
                     "deletedAt",
                     "tags",
                     "customFields",
-                    "score"
+                    "score",
+                    "factorValues"
                   ]
                 }
               }
@@ -70446,6 +70670,25 @@
                         "rice"
                       ]
                     },
+                    "factorValues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "factorId": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "factorId",
+                          "value"
+                        ]
+                      },
+                      "description": "The post's stored values (0 to 10) by scoring factor ID. Only the team's current factors count toward the score."
+                    },
                     "hasVoted": {
                       "type": "boolean"
                     },
@@ -70485,6 +70728,7 @@
                     "tags",
                     "customFields",
                     "score",
+                    "factorValues",
                     "hasVoted",
                     "viewerPrincipalId",
                     "widgetMetadata"
@@ -70826,6 +71070,25 @@
                         "effort",
                         "rice"
                       ]
+                    },
+                    "factorValues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "factorId": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "factorId",
+                          "value"
+                        ]
+                      },
+                      "description": "The post's stored values (0 to 10) by scoring factor ID. Only the team's current factors count toward the score."
                     }
                   },
                   "required": [
@@ -70850,7 +71113,8 @@
                     "deletedAt",
                     "tags",
                     "customFields",
-                    "score"
+                    "score",
+                    "factorValues"
                   ]
                 }
               }
@@ -71139,6 +71403,25 @@
                         "effort",
                         "rice"
                       ]
+                    },
+                    "factorValues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "factorId": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "factorId",
+                          "value"
+                        ]
+                      },
+                      "description": "The post's stored values (0 to 10) by scoring factor ID. Only the team's current factors count toward the score."
                     }
                   },
                   "required": [
@@ -71163,7 +71446,8 @@
                     "deletedAt",
                     "tags",
                     "customFields",
-                    "score"
+                    "score",
+                    "factorValues"
                   ]
                 }
               }
@@ -71460,6 +71744,25 @@
                         "effort",
                         "rice"
                       ]
+                    },
+                    "factorValues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "factorId": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "factorId",
+                          "value"
+                        ]
+                      },
+                      "description": "The post's stored values (0 to 10) by scoring factor ID. Only the team's current factors count toward the score."
                     }
                   },
                   "required": [
@@ -71484,7 +71787,8 @@
                     "deletedAt",
                     "tags",
                     "customFields",
-                    "score"
+                    "score",
+                    "factorValues"
                   ]
                 }
               }
@@ -71782,6 +72086,25 @@
                         "effort",
                         "rice"
                       ]
+                    },
+                    "factorValues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "factorId": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "factorId",
+                          "value"
+                        ]
+                      },
+                      "description": "The post's stored values (0 to 10) by scoring factor ID. Only the team's current factors count toward the score."
                     }
                   },
                   "required": [
@@ -71806,7 +72129,8 @@
                     "deletedAt",
                     "tags",
                     "customFields",
-                    "score"
+                    "score",
+                    "factorValues"
                   ]
                 }
               }
@@ -72107,6 +72431,25 @@
                         "effort",
                         "rice"
                       ]
+                    },
+                    "factorValues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "factorId": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "factorId",
+                          "value"
+                        ]
+                      },
+                      "description": "The post's stored values (0 to 10) by scoring factor ID. Only the team's current factors count toward the score."
                     }
                   },
                   "required": [
@@ -72131,7 +72474,8 @@
                     "deletedAt",
                     "tags",
                     "customFields",
-                    "score"
+                    "score",
+                    "factorValues"
                   ]
                 }
               }
@@ -72433,6 +72777,25 @@
                         "effort",
                         "rice"
                       ]
+                    },
+                    "factorValues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "factorId": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "factorId",
+                          "value"
+                        ]
+                      },
+                      "description": "The post's stored values (0 to 10) by scoring factor ID. Only the team's current factors count toward the score."
                     }
                   },
                   "required": [
@@ -72457,7 +72820,8 @@
                     "deletedAt",
                     "tags",
                     "customFields",
-                    "score"
+                    "score",
+                    "factorValues"
                   ]
                 }
               }
@@ -72738,6 +73102,25 @@
                         "effort",
                         "rice"
                       ]
+                    },
+                    "factorValues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "factorId": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "factorId",
+                          "value"
+                        ]
+                      },
+                      "description": "The post's stored values (0 to 10) by scoring factor ID. Only the team's current factors count toward the score."
                     }
                   },
                   "required": [
@@ -72762,7 +73145,8 @@
                     "deletedAt",
                     "tags",
                     "customFields",
-                    "score"
+                    "score",
+                    "factorValues"
                   ]
                 }
               }
@@ -72987,6 +73371,24 @@
                                   "null"
                                 ]
                               },
+                              "authorPrincipalId": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "authorName": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "source": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
                               "commentId": {
                                 "type": [
                                   "string",
@@ -72994,12 +73396,6 @@
                                 ]
                               },
                               "commentAuthorPrincipalId": {
-                                "type": [
-                                  "string",
-                                  "null"
-                                ]
-                              },
-                              "source": {
                                 "type": [
                                   "string",
                                   "null"
@@ -73096,7 +73492,7 @@
           "Quills"
         ],
         "summary": "List a post's voters, newest first",
-        "description": "The votes the post's count is made of: for a merged post, those of the post it was merged into. Leaves out test customers and votes on posts the caller cannot see. Names come from the principal profile; emails are not returned. importance is how much the voter needs the post, when the voter said so.",
+        "description": "The votes the post's count is made of: for a merged post, those of the post it was merged into. Leaves out test customers and votes on posts the caller cannot see. Names come from the principal profile; emails are not returned. importance is how much the voter needs the post, when the voter said so. A vote that a teammate added for the voter has addedByPrincipalId, addedByName and, as sourceType, where the teammate heard it.",
         "parameters": [
           {
             "schema": {
@@ -73182,6 +73578,12 @@
                               "null"
                             ]
                           },
+                          "addedByName": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
                           "importance": {
                             "type": [
                               "string",
@@ -73206,6 +73608,7 @@
                           "isAnonymous",
                           "sourceType",
                           "addedByPrincipalId",
+                          "addedByName",
                           "importance",
                           "createdAt"
                         ]
@@ -73360,7 +73763,7 @@
           "Quills"
         ],
         "summary": "Vote on a post on behalf of a person",
-        "description": "Idempotent. The vote records the caller as the teammate who added it.",
+        "description": "Idempotent: a person has one vote on a post, however it was added. The vote and the post history record the caller as the teammate who added it, and `source`. It does not subscribe the person to the post, as a portal vote does not.",
         "parameters": [
           {
             "schema": {
@@ -73387,6 +73790,24 @@
             "required": true,
             "name": "principalId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "call",
+                "meeting",
+                "email",
+                "chat",
+                "other"
+              ],
+              "default": "other",
+              "description": "Where you heard it: call, meeting, email, chat or other. The post history and the audit log record it."
+            },
+            "required": false,
+            "description": "Where you heard it: call, meeting, email, chat or other. The post history and the audit log record it.",
+            "name": "source",
+            "in": "query"
           }
         ],
         "responses": {
@@ -76341,6 +76762,7 @@
                         "company.created",
                         "company.updated",
                         "company.deleted",
+                        "company.imported",
                         "user_attribute.created",
                         "user_attribute.updated",
                         "user_attribute.deleted",
@@ -76670,6 +77092,7 @@
                         "survey.closed",
                         "survey.responded",
                         "post.scored",
+                        "settings.scoring_updated",
                         "post.vote_importance_set",
                         "changelog.reacted",
                         "changelog.unreacted",
@@ -76913,6 +77336,7 @@
                         "company.created",
                         "company.updated",
                         "company.deleted",
+                        "company.imported",
                         "user_attribute.created",
                         "user_attribute.updated",
                         "user_attribute.deleted",
@@ -77242,6 +77666,7 @@
                         "survey.closed",
                         "survey.responded",
                         "post.scored",
+                        "settings.scoring_updated",
                         "post.vote_importance_set",
                         "changelog.reacted",
                         "changelog.unreacted",
@@ -102296,6 +102721,135 @@
         }
       }
     },
+    "/quills/{workspaceId}/tickets/{ticketId}/posts": {
+      "post": {
+        "operationId": "createQuillsPostFromTicket",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Record a ticket's request as feedback",
+        "description": "Creates a post by the ticket's requester on a visible board, or with asUpvoteOfPostId adds the requester's vote to a visible post. As for every request that you record for a customer: the requester is the author and first voter and is subscribed as the author, a vote does not subscribe, a person has one vote per post, and the post history and the audit log record you, the requester and the source `ticket`. Needs the create and update actions. 409 when the ticket has no customer requester.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "ticketId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "boardId": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "content": {
+                    "type": "string",
+                    "maxLength": 10000,
+                    "default": ""
+                  },
+                  "asUpvoteOfPostId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The post that holds the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "postId": {
+                      "type": "string"
+                    },
+                    "created": {
+                      "type": "boolean"
+                    },
+                    "voted": {
+                      "type": "boolean",
+                      "description": "False when the requester had already voted on the post."
+                    }
+                  },
+                  "required": [
+                    "postId",
+                    "created",
+                    "voted"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ticket, board or post not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The ticket has no customer requester",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
     "/quills/{workspaceId}/tickets/{ticketId}/read": {
       "post": {
         "operationId": "markQuillsTicketRead",
@@ -125244,7 +125798,7 @@
           "Quills"
         ],
         "summary": "Track a conversation as feedback",
-        "description": "Creates a post by the conversation's visitor on a visible board, or with asUpvoteOfPostId adds the visitor's vote to a visible post (sourceMessageContent becomes a private team comment). Links the post to the conversation and shares it into the thread. Test conversations return 409.",
+        "description": "Creates a post by the conversation's visitor on a visible board, or with asUpvoteOfPostId adds the visitor's vote to a visible post (sourceMessageContent becomes a private team comment). The visitor is subscribed as the author of a new post, not for a vote. Links the post to the conversation and shares it into the thread. Test conversations return 409.",
         "parameters": [
           {
             "schema": {
@@ -127516,7 +128070,7 @@
           "Quills"
         ],
         "summary": "Get the team context of a profile",
-        "description": "The email, company, segments, last device visit and the verified and blocked flags of a person with a profile. The email is the customer account's, else the contact email; a teammate's account email is not returned.",
+        "description": "The email, company, segments, last device visit and the verified and blocked flags of a person with a profile. The email is the customer account's, else the contact email; a teammate's account email is not returned. The company's mrrCents is null without quills:view_revenue.",
         "parameters": [
           {
             "schema": {
@@ -128909,7 +129463,7 @@
           "Quills"
         ],
         "summary": "Start an export run",
-        "description": "Queues a CSV export of posts, users, companies or conversations. The file holds only rows that the caller can read: posts on boards the caller can see, no test customers and no deleted rows. One export runs per workspace at a time. Poll GET /transfer/export-runs/{runId}, then request a download URL.",
+        "description": "Queues a CSV export of posts, users, companies or conversations. The file holds only rows that the caller can read: posts on boards the caller can see, no test customers and no deleted rows. The companies file has the monthly_spend column only when the caller holds quills:view_revenue, at the request and when the file is built. One export runs per workspace at a time. Poll GET /transfer/export-runs/{runId}, then request a download URL.",
         "parameters": [
           {
             "schema": {
@@ -145305,6 +145859,7 @@
                             "company.created",
                             "company.updated",
                             "company.deleted",
+                            "company.imported",
                             "user_attribute.created",
                             "user_attribute.updated",
                             "user_attribute.deleted",
@@ -145634,6 +146189,7 @@
                             "survey.closed",
                             "survey.responded",
                             "post.scored",
+                            "settings.scoring_updated",
                             "post.vote_importance_set",
                             "changelog.reacted",
                             "changelog.unreacted",
@@ -154000,7 +154556,7 @@
           "Quills"
         ],
         "summary": "Get the demand for a post",
-        "description": "Voters, their companies and revenue, the five segments with the most voters, and the importance that voters gave. For a merged post: the demand of the post it was merged into. Votes on boards that the caller cannot see and test customers' votes are left out.",
+        "description": "Voters, their companies and revenue (null without quills:view_revenue), the five segments with the most voters, and the importance that voters gave. For a merged post: the demand of the post it was merged into. Votes on boards that the caller cannot see and test customers' votes are left out.",
         "parameters": [
           {
             "schema": {
@@ -154037,8 +154593,11 @@
                       "description": "Distinct voter companies"
                     },
                     "mrrCents": {
-                      "type": "number",
-                      "description": "The monthly revenue of the voters' companies, in cents. Each company counts once."
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "description": "The monthly revenue of the voters' companies, in cents. Each company counts once. Null without the quills:view_revenue permission."
                     },
                     "importance": {
                       "type": "object",
@@ -154140,7 +154699,7 @@
           "Quills"
         ],
         "summary": "Sum the revenue of companies with a critical vote on an open post",
-        "description": "An open post is live, not merged and has no complete or closed status. Votes count as in getQuillsPostDemand. Each company counts once.",
+        "description": "An open post is live, not merged and has no complete or closed status. Votes count as in getQuillsPostDemand. Each company counts once. Needs quills:view_revenue.",
         "parameters": [
           {
             "schema": {
@@ -154514,6 +155073,25 @@
                         "effort",
                         "rice"
                       ]
+                    },
+                    "factorValues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "factorId": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "factorId",
+                          "value"
+                        ]
+                      },
+                      "description": "The post's stored values (0 to 10) by scoring factor ID. Only the team's current factors count toward the score."
                     }
                   },
                   "required": [
@@ -154538,8 +155116,394 @@
                     "deletedAt",
                     "tags",
                     "customFields",
+                    "score",
+                    "factorValues"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Post not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
+    "/quills/{workspaceId}/feedback/scoring-factors": {
+      "get": {
+        "operationId": "getQuillsScoringFactors",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "List the team's scoring factors",
+        "description": "Each factor has an ID, a name and a weight from -10 to 10 (negative for a cost such as effort). A post's score is the sum of weight × its value for the factor.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The scoring factors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "factors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-z0-9]{1,16}$"
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 60
+                          },
+                          "weight": {
+                            "type": "integer",
+                            "minimum": -10,
+                            "maximum": 10
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "weight"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "factors"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      },
+      "put": {
+        "operationId": "setQuillsScoringFactors",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Replace the team's scoring factors",
+        "description": "Desired state, up to 10 factors. Send a stored factor's ID to keep the values that posts have for it; a factor without a stored ID gets a new one, so a removed factor's values never count again.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "factors": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[a-z0-9]{1,16}$"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 60
+                        },
+                        "weight": {
+                          "type": "integer",
+                          "minimum": -10,
+                          "maximum": 10
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "weight"
+                      ]
+                    },
+                    "maxItems": 10
+                  }
+                },
+                "required": [
+                  "factors"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The saved scoring factors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "factors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-z0-9]{1,16}$"
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 60
+                          },
+                          "weight": {
+                            "type": "integer",
+                            "minimum": -10,
+                            "maximum": 10
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "weight"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "factors"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid factors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
+    "/quills/{workspaceId}/posts/{postId}/factor-scores": {
+      "put": {
+        "operationId": "setQuillsPostFactorScores",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Set a post's values for the team's scoring factors",
+        "description": "Each value names a factor ID and is 0 to 10; null clears it. Values that are not sent stay. Values of removed factors are dropped. Only the post's ranking changes: no linked task changes.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "values": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "factorId": {
+                          "type": "string",
+                          "pattern": "^[a-z0-9]{1,16}$"
+                        },
+                        "value": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "maximum": 10
+                        }
+                      },
+                      "required": [
+                        "factorId",
+                        "value"
+                      ]
+                    },
+                    "maxItems": 10
+                  }
+                },
+                "required": [
+                  "values"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The post's factor values and score",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "postId": {
+                      "type": "string"
+                    },
+                    "values": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "factorId": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "factorId",
+                          "value"
+                        ]
+                      }
+                    },
+                    "score": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "postId",
+                    "values",
                     "score"
                   ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A value names no factor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }

@@ -17,4 +17,10 @@ describe("Quills workspace permissions", () => {
         role.authorize({ quills: ["delete", "manage_settings"] }).success,
       ).toBe(true);
   });
+
+  it("shows customer revenue to members, admins and owners, not viewers", () => {
+    expect(viewer.authorize({ quills: ["view_revenue"] }).success).toBe(false);
+    for (const role of [member, admin, owner])
+      expect(role.authorize({ quills: ["view_revenue"] }).success).toBe(true);
+  });
 });

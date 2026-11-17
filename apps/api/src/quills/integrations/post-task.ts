@@ -100,15 +100,9 @@ export function taskDescription(input: {
   title: string;
   voters: number;
   companies: number;
-  mrrCents: number;
   segments: { name: string; voters: number }[];
   conversations: number;
 }) {
-  const mrr = (input.mrrCents / 100).toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
   const content = clip(input.content.trim(), CONTENT_MAX);
   return [
     // A blank line before the rule: "text\n---" would make the request text a heading.
@@ -117,7 +111,7 @@ export function taskDescription(input: {
     "",
     `**Feedback request:** [${input.title.replace(/[[\]]/g, "")}](${input.url})`,
     "",
-    `- Votes: ${input.voters} · Companies: ${input.companies} · MRR: ${mrr}`,
+    `- Votes: ${input.voters} · Companies: ${input.companies}`,
     ...(input.segments.length
       ? [
           `- Top segments: ${input.segments.map((s) => `${s.name} (${s.voters})`).join(", ")}`,
@@ -158,7 +152,8 @@ export async function taskDraft(
     )
     .limit(1);
   if (!post) return undefined;
-  const demand = (await demandOf(db, [post.id], projects))(post.id);
+  // No revenue: every member of the Kaneo project reads the task, with or without quills:view_revenue.
+  const demand = (await demandOf(db, [post.id], projects, false))(post.id);
   const voters = sql<number>`count(distinct ${postVotes.principalId})::int`;
   const top = await db
     .select({ name: segments.name, voters })
@@ -191,7 +186,6 @@ export async function taskDraft(
       title,
       voters: demand.voters,
       companies: demand.companies,
-      mrrCents: demand.mrrCents,
       segments: top,
       conversations: conversations?.count ?? 0,
     }),

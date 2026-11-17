@@ -26,7 +26,7 @@ import { boardVisible, notTest } from "./visibility";
 /** How long a deleted post stays restorable and listed with showDeleted. */
 export const RESTORE_MS = 30 * 24 * 60 * 60 * 1000;
 
-const idList = <P extends IdPrefix>(prefix: P) =>
+export const idList = <P extends IdPrefix>(prefix: P) =>
   z
     .string()
     .max(2000)

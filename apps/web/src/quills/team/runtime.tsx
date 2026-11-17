@@ -8,6 +8,8 @@ export interface TeamPermissions {
   update: boolean;
   delete: boolean;
   manageSettings: boolean;
+  /** quills:view_revenue (#79): customer revenue. Absent means hidden. */
+  viewRevenue?: boolean;
 }
 
 export interface TeamRuntimeValue {

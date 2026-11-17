@@ -23,6 +23,11 @@ const id = (what: string) =>
     .regex(/^[A-Za-z0-9_-]+$/, `Expected a ${what} ID`)
     .describe(`${what} ID`);
 const workspaceId = id("Workspace");
+/** Where you heard a customer's request; the post history and the audit log record it. */
+const source = z
+  .enum(["call", "meeting", "email", "chat", "other"])
+  .optional()
+  .describe("Where you heard it: call, meeting, email, chat or other");
 const page = {
   limit: z.number().int().min(1).max(100).optional().describe("At most 100"),
   offset: z.number().int().min(0).max(100_000).optional(),
@@ -73,13 +78,19 @@ export function registerQuillsTools(
     "quills_list_posts",
     {
       description:
-        "List or search Quills feedback posts that you can see. Filter by board and status; search matches the title and the content. Merged and test-customer posts are left out.",
+        "List or search Quills feedback posts that you can see, with each post's demand (voters, companies, their monthly revenue) and team score. Filter by board, status, minimum votes, minimum revenue of the voters' companies (in cents), a voter segment or a minimum team score; search matches the title and the content. Sort by votes, revenue (mrr), RICE or team score. Merged and test-customer posts are left out.",
       inputSchema: z.object({
         workspaceId,
         boardId: id("Board").optional(),
         statusId: id("Status").optional(),
         search: z.string().trim().min(1).max(200).optional(),
-        sort: z.enum(["newest", "oldest", "votes"]).optional(),
+        sort: z
+          .enum(["newest", "oldest", "votes", "mrr", "rice", "score"])
+          .optional(),
+        minVotes: z.number().int().min(0).max(1_000_000).optional(),
+        minMrrCents: z.number().int().min(0).max(2_147_483_647).optional(),
+        segmentId: id("Segment").optional(),
+        minScore: z.number().int().min(-9999).max(9999).optional(),
         limit: page.limit,
       }),
     },
@@ -93,6 +104,10 @@ export function registerQuillsTools(
               statusIds: args.statusId,
               search: args.search,
               sort: args.sort,
+              minVotes: args.minVotes,
+              minMrrCents: args.minMrrCents,
+              segmentIds: args.segmentId,
+              minScore: args.minScore,
               limit: args.limit,
             })}`,
           ),
@@ -115,13 +130,15 @@ export function registerQuillsTools(
     "quills_create_post",
     {
       description:
-        "Create a Quills feedback post on a board. You are the author and its first voter. Without statusId the post gets the default status. customFields holds the board's custom field values, keyed by field key; each required field needs a value. Read the fields with the board settings route.",
+        "Create a Quills feedback post on a board. You are the author and its first voter, or authorPrincipalId makes a customer the author and first voter (for example after a sales call; that needs the update permission), with source recorded in the post history. Without statusId the post gets the default status. customFields holds the board's custom field values, keyed by field key; each required field needs a value. Read the fields with the board settings route.",
       inputSchema: z.object({
         workspaceId,
         boardId: id("Board"),
         title: z.string().trim().min(1).max(200),
         content: z.string().trim().max(10_000).optional(),
         statusId: id("Status").optional(),
+        authorPrincipalId: id("Customer (principal)").optional(),
+        source,
         customFields: z
           .record(
             z.string().max(40),
@@ -149,6 +166,7 @@ export function registerQuillsTools(
       content,
       statusId,
       customFields,
+      ...behalf
     }) =>
       run(() =>
         client.json(quills(ws, "/posts"), {
@@ -158,6 +176,10 @@ export function registerQuillsTools(
             title,
             ...(content !== undefined && { content }),
             ...(statusId && { statusId }),
+            ...(behalf.authorPrincipalId && {
+              authorPrincipalId: behalf.authorPrincipalId,
+            }),
+            ...(behalf.source && { source: behalf.source }),
             ...(customFields && { customFields }),
           }),
         }),
@@ -168,17 +190,22 @@ export function registerQuillsTools(
     "quills_add_proxy_vote",
     {
       description:
-        "Vote on a Quills post on behalf of a person, for example a customer who asked for it in a call. Idempotent. The vote records you as the teammate who added it.",
+        "Vote on a Quills post on behalf of a person, for example a customer who asked for it in a call. Idempotent: a person has one vote per post. The vote records you as the teammate who added it, and source. It does not subscribe the person.",
       inputSchema: z.object({
         workspaceId,
         postId: id("Post"),
         principalId: id("Person (principal)"),
+        source,
       }),
     },
-    async ({ workspaceId: ws, postId, principalId }) =>
+    async ({ workspaceId: ws, postId, principalId, source: heard }) =>
       run(() =>
         client.json(
-          post(ws, postId, `/voters/${encodeURIComponent(principalId)}`),
+          post(
+            ws,
+            postId,
+            `/voters/${encodeURIComponent(principalId)}${query({ source: heard })}`,
+          ),
           { method: "PUT" },
         ),
       ),

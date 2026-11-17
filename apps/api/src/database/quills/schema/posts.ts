@@ -140,6 +140,12 @@ export const posts = quillsSchema
       scoreConfidence: integer("score_confidence"),
       /** Person-weeks. */
       scoreEffort: real("score_effort"),
+      // Team scoring factor values (#79): factor ID → 0 to 10. The factors and weights live in
+      // settings.metadata.scoringFactors; the score is computed at read time.
+      scoreValues: jsonb("score_values")
+        .$type<Record<string, number>>()
+        .notNull()
+        .default({}),
     },
     (table) => [
       // Named to match the constraint the SQL migration created.

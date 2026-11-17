@@ -125,6 +125,20 @@
 		"visibility": "Portal visibility",
 		"visibilityText": "A private portal shows only to the people that you allow."
 	},
+	"scoring": {
+		"add": "Add factor",
+		"factor": "{{name}} (weight {{weight}})",
+		"name": "Factor {{n}} name",
+		"nameHead": "Factor",
+		"nameRequired": "Give the factor a name.",
+		"note": "Weights go from -10 to 10. Use a negative weight for a cost, such as effort. A request's score is the sum of weight × its value from 0 to 10, set in Triage. A score ranks requests; it never changes a task.",
+		"remove": "Remove {{name}}",
+		"save": "Save factors",
+		"title": "Scoring factors",
+		"weight": "Factor {{n}} weight",
+		"weightHead": "Weight",
+		"weightRange": "Use a whole number from -10 to 10, other than 0."
+	},
 	"tags": {
 		"actions": "Actions for {{name}}",
 		"createText": "Tags sort posts by topic.",

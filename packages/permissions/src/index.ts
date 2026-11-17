@@ -12,7 +12,15 @@ export const statement = {
   task: ["create", "read", "update", "delete", "assign"],
   label: ["create", "read", "update", "delete"],
   workspace: ["read", "update", "delete", "manage_settings"],
-  quills: ["read", "create", "update", "delete", "manage_settings"],
+  // view_revenue: customer revenue (company MRR and the revenue of a request's companies).
+  quills: [
+    "read",
+    "create",
+    "update",
+    "delete",
+    "manage_settings",
+    "view_revenue",
+  ],
 } as const;
 
 export const ac = createAccessControl(statement);
@@ -32,7 +40,7 @@ export const member = ac.newRole({
   task: ["create", "read", "update"],
   label: ["create", "read", "update", "delete"],
   workspace: ["read"],
-  quills: ["read", "create", "update"],
+  quills: ["read", "create", "update", "view_revenue"],
 });
 
 export const admin = ac.newRole({
@@ -41,7 +49,14 @@ export const admin = ac.newRole({
   task: ["create", "read", "update", "delete", "assign"],
   label: ["create", "read", "update", "delete"],
   workspace: ["read", "update", "manage_settings"],
-  quills: ["read", "create", "update", "delete", "manage_settings"],
+  quills: [
+    "read",
+    "create",
+    "update",
+    "delete",
+    "manage_settings",
+    "view_revenue",
+  ],
 });
 
 export const owner = ac.newRole({
@@ -50,7 +65,14 @@ export const owner = ac.newRole({
   task: ["create", "read", "update", "delete", "assign"],
   label: ["create", "read", "update", "delete"],
   workspace: ["read", "update", "delete", "manage_settings"],
-  quills: ["read", "create", "update", "delete", "manage_settings"],
+  quills: [
+    "read",
+    "create",
+    "update",
+    "delete",
+    "manage_settings",
+    "view_revenue",
+  ],
 });
 
 export const builtInRoles = { viewer, member, admin, owner } as const;

@@ -43,18 +43,32 @@ import {
   fieldValuesInput,
   type FieldValue,
 } from "./custom-fields";
-import { demandOf, demandSchema, mrrSort } from "./demand";
+import {
+  demandOf,
+  demandSchema,
+  mrrOf,
+  mrrSort,
+  votedFromSegments,
+} from "./demand";
 import {
   afterCursor,
   filterConditions,
   filters,
+  idList,
   restorable,
   RESTORE_MS,
   sorts,
   type Facet,
 } from "./post-filters";
+import { loadFactors, scoreOf, scoreSort, scoreSql } from "./scoring";
 import { loadPost, postSchema, selectPosts, withTags } from "./post-view";
 import { lockMergeTarget, recount } from "./thread-counts";
+import {
+  behalfSource,
+  revenueDenied,
+  seesRevenue,
+  type BehalfSource,
+} from "./schemas";
 import { findVoter } from "./votes";
 import {
   findBoard,
@@ -125,15 +139,40 @@ const loadWithMembers = async (input: {
 
 const filterQuery = filters.extend({
   sort: z
-    .enum(["newest", "oldest", "votes", "rice", "mrr", "trending", "stale"])
+    .enum([
+      "newest",
+      "oldest",
+      "votes",
+      "rice",
+      "mrr",
+      "score",
+      "trending",
+      "stale",
+    ])
     .default("newest")
     .openapi({
       description:
-        "rice: the RICE score, posts without one last. mrr: the monthly revenue of the voters' companies. trending: the most votes in the last 7 days. stale: the least recently changed first.",
+        "rice: the RICE score, posts without one last. mrr: the monthly revenue of the voters' companies. score: the team score from the scoring factors, posts without a value last. trending: the most votes in the last 7 days. stale: the least recently changed first.",
     }),
   cursor: flexibleToTypeIdSchema("post").optional(),
   limit: pagingNumber(1, 100, 20),
   authorPrincipalId: flexibleToTypeIdSchema("principal").optional(),
+  // #79: triage by customer value.
+  minVotes: pagingNumber(0, 1000000).optional(),
+  minMrrCents: pagingNumber(0, 2147483647).optional().openapi({
+    description:
+      "Only posts whose voters' companies pay at least this, in cents",
+  }),
+  segmentIds: idList("segment"),
+  minScore: z
+    .string()
+    .regex(/^-?\d{1,4}$/, "Expected an integer")
+    .transform(Number)
+    .optional()
+    .openapi({
+      type: "integer",
+      description: "Only posts with at least this team score",
+    }),
 });
 
 const listPosts = defineQuillsRoute({
@@ -142,28 +181,58 @@ const listPosts = defineQuillsRoute({
   operationId: "listQuillsPosts",
   summary: "List the visible feedback posts",
   description:
-    "Leaves out merged posts, test-customer posts and posts on boards hidden by their project links. showDeleted=true lists posts deleted in the last 30 days. Each post has its demand, as getQuillsPostDemand counts it, without segments. authorPrincipalId keeps only the posts that one person wrote.",
+    "Leaves out merged posts, test-customer posts and posts on boards hidden by their project links. showDeleted=true lists posts deleted in the last 30 days. Each post has its demand, as getQuillsPostDemand counts it, without segments, and its team score. authorPrincipalId keeps only the posts that one person wrote. minVotes, minMrrCents, segmentIds (a counted voter in one of the segments) and minScore filter by customer value. Without quills:view_revenue, demand.mrrCents is null, and sort=mrr or minMrrCents is 403.",
   action: "read",
+  callerActions: true,
   query: filterQuery,
   response: z.object({
-    items: z.array(postSchema.extend({ demand: demandSchema })),
+    items: z.array(
+      postSchema.extend({
+        demand: demandSchema,
+        teamScore: z.number().nullable().openapi({
+          description:
+            "The sum of weight × value over the team's scoring factors; null without a value.",
+        }),
+      }),
+    ),
     nextCursor: z.string().nullable(),
     hasMore: z.boolean(),
   }),
   responseDescription: "One page of posts",
   errors,
   load: loadProjects,
-  handler: async ({ db, query, loaded: projects }) => {
+  handler: async ({ db, query, loaded: projects, actions }) => {
+    const revenue = seesRevenue(actions);
+    // An order or a filter by revenue would show it.
+    if (!revenue && (query.sort === "mrr" || query.minMrrCents !== undefined))
+      throw revenueDenied();
     // A cursor is a post the caller can see; a hidden or missing one is 404, not a probe.
     if (query.cursor) await findPost(db, query.cursor, projects, true);
+    const factors = await loadFactors(db);
     const sort =
-      query.sort === "mrr" ? mrrSort(db, projects) : sorts[query.sort];
+      query.sort === "mrr"
+        ? mrrSort(db, projects)
+        : query.sort === "score"
+          ? scoreSort(factors)
+          : sorts[query.sort];
     const rows = await selectPosts(
       db,
       and(
         filterConditions(db, query, projects),
         query.authorPrincipalId &&
           eq(posts.principalId, query.authorPrincipalId),
+        query.minVotes === undefined
+          ? undefined
+          : sql`${posts.voteCount} >= ${query.minVotes}`,
+        query.minMrrCents === undefined
+          ? undefined
+          : sql`${mrrOf(db, sql`${posts}.id`, projects)} >= ${query.minMrrCents}`,
+        query.segmentIds?.length
+          ? votedFromSegments(db, query.segmentIds, projects)
+          : undefined,
+        query.minScore === undefined
+          ? undefined
+          : sql`${scoreSql(sql`${posts}`, factors)} >= ${query.minScore}`,
         query.cursor && afterCursor(query.cursor, sort),
       ),
     )
@@ -175,8 +244,13 @@ const listPosts = defineQuillsRoute({
       db,
       page.map((post) => post.id),
       projects,
+      revenue,
     );
-    const items = page.map((post) => ({ ...post, demand: demand(post.id) }));
+    const items = page.map((post) => ({
+      ...post,
+      demand: demand(post.id),
+      teamScore: scoreOf(factors, post.factorValues),
+    }));
     return { items, nextCursor: hasMore ? items.at(-1)!.id : null, hasMore };
   },
 });
@@ -339,7 +413,9 @@ const getPost = defineQuillsRoute({
 
 /**
  * Creates a post on a visible board, with its author's vote and subscription. The author is the
- * actor, or `author` (for example a customer); then the actor is recorded as the teammate who tracks it.
+ * actor, or `author` (for example a customer); then the actor is recorded as the teammate who tracks
+ * it and who added the author's vote, and the post history records the author and `source` (#73).
+ * The author is subscribed as the portal subscribes its own authors.
  */
 export async function insertPost(
   db: Database,
@@ -352,6 +428,7 @@ export async function insertPost(
     statusId?: TypeId<"post_status">;
     tagIds: TypeId<"post_tag">[];
     author?: TypeId<"principal">;
+    source?: BehalfSource;
     /** Values of the board's fields, internal ones included. */
     customFields?: Record<string, FieldValue | null>;
   },
@@ -369,6 +446,8 @@ export async function insertPost(
   const status = await findStatus(db, input.statusId);
   const tagIds = await checkTags(db, input.tagIds);
   const author = input.author ?? actor.principalId;
+  const behalf = author !== actor.principalId;
+  const source = input.source ?? "other";
   const [post] = await db
     .insert(posts)
     .values({
@@ -377,15 +456,20 @@ export async function insertPost(
       content: input.content,
       statusId: status?.id ?? null,
       principalId: author,
-      ...(author !== actor.principalId && {
-        trackedByPrincipalId: actor.principalId,
-      }),
+      ...(behalf && { trackedByPrincipalId: actor.principalId }),
       voteCount: 1,
       customFieldValues,
     })
     .returning({ id: posts.id });
   const postId = post!.id;
-  await db.insert(postVotes).values({ postId, principalId: author });
+  await db.insert(postVotes).values({
+    postId,
+    principalId: author,
+    ...(behalf && {
+      sourceType: source,
+      addedByPrincipalId: actor.principalId,
+    }),
+  });
   if (tagIds.length)
     await db
       .insert(postTagAssignments)
@@ -393,9 +477,22 @@ export async function insertPost(
   await db
     .insert(postSubscriptions)
     .values({ postId, principalId: author, reason: "author" });
+  const [person] = behalf
+    ? await db
+        .select({ name: principal.displayName })
+        .from(principal)
+        .where(eq(principal.id, author))
+    : [];
   await recordActivity(db, actor, postId, {
     type: "post.created",
-    metadata: { boardName: board.name },
+    metadata: {
+      boardName: board.name,
+      ...(behalf && {
+        authorPrincipalId: author,
+        authorName: person?.name ?? null,
+        source,
+      }),
+    },
   });
   return postId;
 }
@@ -406,7 +503,7 @@ const createPost = defineQuillsRoute({
   operationId: "createQuillsPost",
   summary: "Create a feedback post",
   description:
-    "The author is the caller, or `authorPrincipalId` to post on behalf of a person of this workspace (that also needs the update action). The author is the first voter. Without a status, the post gets the default status. customFields must hold a value for each required field of the board, internal fields included; 400 for a missing or wrongly typed value.",
+    "The author is the caller, or `authorPrincipalId` to post on behalf of a person of this workspace (that also needs the update action). The author is the first voter and is subscribed to the post. On behalf of a person, the post history and the audit log record you, the person and `source`. Without a status, the post gets the default status. customFields must hold a value for each required field of the board, internal fields included; 400 for a missing or wrongly typed value.",
   action: "create",
   callerActions: true,
   body: z.object({
@@ -416,20 +513,28 @@ const createPost = defineQuillsRoute({
     statusId: flexibleToTypeIdSchema("post_status").optional(),
     tagIds: z.array(flexibleToTypeIdSchema("post_tag")).max(50).default([]),
     authorPrincipalId: flexibleToTypeIdSchema("principal").optional(),
+    source: behalfSource,
     customFields: fieldValuesInput.optional(),
   }),
   response: postSchema,
   responseDescription: "Created post",
   errors: fieldErrors,
-  event: (_input, result) => ({
+  event: ({ body }, result, raw) => ({
     type: "post.created",
     entityType: "post",
     entityId: result.id,
-    payload: { boardId: result.boardId },
+    payload: {
+      boardId: result.boardId,
+      // The audit row of an on-behalf post names the person and the source (#73).
+      ...((raw as { behalf: boolean }).behalf && {
+        onBehalfOf: result.principalId,
+        source: body.source,
+      }),
+    },
   }),
   load: loadProjects,
   handler: async ({ db, actor, body, loaded: projects, actions }) => {
-    const { authorPrincipalId, ...input } = body;
+    const { authorPrincipalId, source, ...input } = body;
     const behalf =
       authorPrincipalId !== undefined &&
       authorPrincipalId !== actor.principalId;
@@ -440,10 +545,12 @@ const createPost = defineQuillsRoute({
     const author = behalf
       ? (await findVoter(db, authorPrincipalId)).id
       : undefined;
-    return loadPost(
-      db,
-      await insertPost(db, actor, projects, { ...input, author }),
-    );
+    const postId = await insertPost(db, actor, projects, {
+      ...input,
+      author,
+      source,
+    });
+    return { ...(await loadPost(db, postId)), behalf };
   },
 });
 

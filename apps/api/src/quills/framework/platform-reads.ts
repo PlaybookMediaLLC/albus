@@ -162,6 +162,7 @@ export async function visibleLinks(
 export async function quillsReaders(
   workspaceId: string,
   userIds: readonly string[],
+  actions: readonly QuillsAction[] = ["read"],
 ) {
   const readers = new Map<string, { email: string }>();
   const ids = [...new Set(userIds)];
@@ -185,7 +186,7 @@ export async function quillsReaders(
     if (
       await roleHasWorkspacePermission(workspaceId, row.role, {
         workspace: ["read"],
-        quills: ["read"],
+        quills: [...actions],
       })
     )
       readers.set(row.userId, { email: row.email });
