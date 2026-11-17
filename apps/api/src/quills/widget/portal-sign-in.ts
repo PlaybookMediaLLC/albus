@@ -20,10 +20,13 @@ const handoff = defineQuillsRoute({
   operationId: "createQuillsWidgetPortalSignIn",
   summary: "Get a link that opens the portal signed in",
   description:
-    "For a visitor that the host app identified, when widget sign-in is on. The link works once, for two minutes. `next` is a portal path such as /boards/b1; an empty or other value opens the portal home.",
+    "For a visitor that the host app identified, when widget sign-in is on. The link works once, for two minutes, and only in the browser whose sign-in page sent `state`: the tab that the widget opened at the account sign-in start. `next` is a portal path such as /boards/b1; an empty or other value opens the portal home.",
   action: "create",
   rateLimit: { limit: 20, windowSeconds: 600 },
-  body: z.object({ next: z.string().max(300) }),
+  body: z.object({
+    next: z.string().max(300),
+    state: z.string().regex(/^[0-9a-f]{64}$/),
+  }),
   response: z.object({ url: z.string() }),
   responseDescription: "The one-time sign-in link",
   errors: {
@@ -54,6 +57,7 @@ const handoff = defineQuillsRoute({
       workspaceId,
       customerId: caller.customerId!,
       next: safePortalPath(body.next),
+      state: body.state,
     });
     return {
       url: signedUrl(

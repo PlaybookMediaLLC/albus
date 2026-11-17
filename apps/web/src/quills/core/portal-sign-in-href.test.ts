@@ -18,18 +18,18 @@ describe("portalSignInHref", () => {
     expect(go({ mode: "account", ssoUrl: null })).toBe(go());
   });
 
-  it("sends SSO sign-in to the host app with a return to the signed step", () => {
+  it("starts SSO sign-in at the account sign-in, which marks this browser first", () => {
     const url = new URL(
       go({ mode: "sso", ssoUrl: "https://host.example.test/login?app=1" })!,
     );
-    expect(url.origin + url.pathname).toBe("https://host.example.test/login");
-    expect(url.searchParams.get("app")).toBe("1");
-    const back = new URL(url.searchParams.get("return_to")!);
-    expect(back.origin + back.pathname).toBe(
-      "https://api.example.test/api/quills-public/signed/portal-sign-in",
+    expect(url.origin + url.pathname).toBe(
+      "https://api.example.test/api/auth/quills/portal-sign-in",
     );
-    expect(back.searchParams.get("workspace")).toBe("acme");
-    expect(back.searchParams.get("next")).toBe("/boards/b1?sort=top");
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      via: "sso",
+      workspace: "acme",
+      next: "/boards/b1?sort=top",
+    });
   });
 
   it("offers no sign-in when customer sign-in is off", () => {

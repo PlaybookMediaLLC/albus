@@ -221,7 +221,7 @@ describe("widget host page", () => {
     expect(call!.init.headers).toMatchObject({ authorization: "Bearer anon" });
   });
 
-  it("opens the portal signed in for an identified visitor when the workspace allows it", async () => {
+  it("opens the portal signed in, handing the one-time link only to the tab it opened", async () => {
     table["POST /widget/identify"] = () => ({
       body: {
         sessionToken: "known",
@@ -230,34 +230,47 @@ describe("widget host page", () => {
         portalSignIn: true,
       },
     });
-    table["POST /widget/portal-sign-in"] = () => ({
-      body: {
-        url: "https://kaneo.test/api/quills-public/signed/portal-sign-in?code=c",
-      },
-    });
-    const tab = { opener: window, location: { href: "" }, close: vi.fn() };
+    const link = `${location.origin}/api/quills-public/signed/portal-sign-in?code=c`;
+    table["POST /widget/portal-sign-in"] = () => ({ body: { url: link } });
+    const tab = { postMessage: vi.fn(), close: vi.fn() };
     const open = vi
       .spyOn(window, "open")
       .mockReturnValue(tab as unknown as Window);
+    const fromTab = (source: unknown, origin = location.origin) =>
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          data: { type: "quills:portal-sign-in", state: "e".repeat(64) },
+          origin,
+          source: source as Window,
+        }),
+      );
     mount();
     fromParent({ type: "quackback:identify", data: { ssoToken: "a.b.c" } });
     fromParent({ type: "quackback:open", data: {} });
     fireEvent.click(
       await screen.findByRole("button", { name: "Open in portal" }),
     );
-    // The tab opens on the click, then goes to the one-time link.
-    expect(open).toHaveBeenCalledWith("", "_blank");
+    // The tab opens on the click, at the account sign-in start that marks its browser.
+    expect(open).toHaveBeenCalledWith(
+      `${location.origin}/api/auth/quills/portal-sign-in?via=widget&workspace=acme`,
+      "_blank",
+    );
+    // Another window, or this tab on another origin, does not get a link.
+    fromTab({});
+    fromTab(tab, "https://evil.test");
+    expect(requested("POST /widget/portal-sign-in")).toHaveLength(0);
+    fromTab(tab);
     await waitFor(() =>
-      expect(tab.location.href).toBe(
-        "https://kaneo.test/api/quills-public/signed/portal-sign-in?code=c",
+      expect(tab.postMessage).toHaveBeenCalledWith(
+        { type: "quills:portal-sign-in-url", url: link },
+        location.origin,
       ),
     );
-    expect(tab.opener).toBeNull();
     expect(
       JSON.parse(
         requested("POST /widget/portal-sign-in")[0]!.init.body as string,
       ),
-    ).toEqual({ next: "" });
+    ).toEqual({ next: "", state: "e".repeat(64) });
     // Widget sign-in replaces the mailed link.
     expect(requested("POST /widget/portal-link")).toHaveLength(0);
     expect(screen.queryByRole("status")).toBeNull();

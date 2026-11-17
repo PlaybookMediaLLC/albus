@@ -2270,6 +2270,68 @@ const groups = {
               : "fail",
         };
       });
+
+      await step("portal-login-csrf", async () => {
+        const saved = await setPolicy({
+          mode: "account",
+          widgetSignIn: true,
+          ssoUrl: null,
+        });
+        // The attacker starts a sign-in in their own browser and gets a link for their account.
+        const attacker = await browser.newContext();
+        const start = await attacker.newPage();
+        await start.goto(
+          `${L.API}/api/auth/quills/portal-sign-in?via=widget&workspace=${L.WS}`,
+        );
+        const attackerState = await start
+          .locator('meta[name="quills-state"]')
+          .getAttribute("content");
+        await page.goto(L.HOST + "/");
+        await page.waitForSelector("[data-event=ready]");
+        const identified = await signIn("grace");
+        const issued = await fetch(
+          `${L.API}/api/quills-public/${L.WS}/widget/portal-sign-in`,
+          {
+            method: "POST",
+            headers: {
+              authorization: `Bearer ${identified.body.sessionToken}`,
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({ next: "", state: attackerState }),
+          },
+        );
+        const { url } = await issued.json();
+        // The victim opens that link in another browser.
+        const victim = await browser.newContext();
+        const target = await victim.newPage();
+        await target.goto(url);
+        await target.waitForURL(/\/portal\//, { timeout: 30000 });
+        await target.waitForLoadState("networkidle");
+        const landed = target.url();
+        const signInLinks = await target
+          .getByRole("link", { name: "Sign in" })
+          .count();
+        const sessions = (await victim.cookies()).filter((c) =>
+          /session_token/.test(c.name),
+        ).length;
+        const shotPath = await pageShot(target, "41-portal-login-csrf");
+        await attacker.close();
+        await victim.close();
+        return {
+          expected:
+            "A one-time link minted in the attacker's browser does not sign the victim in from another browser: it lands on the portal with signIn=failed, signed out",
+          actual: `settings PUT ${saved.status()}; link ${issued.status}; landed ${landed.replace(/^.*\/portal\//, "/portal/")}; Sign in links ${signInLinks}; session cookies ${sessions}`,
+          shot: shotPath,
+          result:
+            saved.ok() &&
+            issued.ok &&
+            landed.includes("signIn=failed") &&
+            signInLinks > 0 &&
+            sessions === 0
+              ? "pass"
+              : "fail",
+        };
+      });
     } finally {
       await setPolicy({ mode: "account", widgetSignIn: false, ssoUrl: null });
       await tm.dispose();

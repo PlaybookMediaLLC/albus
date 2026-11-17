@@ -312,7 +312,7 @@ export function WidgetHost({
       {...(visitor.portal && {
         onOpenPortal: () =>
           (visitor.portal === "sign-in"
-            ? openPortalSignedIn(api).then(() => "opened" as const)
+            ? openPortalSignedIn(api, base).then(() => "opened" as const)
             : api.sendPortalLink()
           ).catch((error: unknown) => {
             // A portal sign-in linked this profile and ended its session: identify again.
