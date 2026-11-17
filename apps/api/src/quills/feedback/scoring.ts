@@ -147,7 +147,7 @@ const setValues = defineQuillsRoute({
   operationId: "setQuillsPostFactorScores",
   summary: "Set a post's values for the team's scoring factors",
   description:
-    "Each value names a factor ID and is 0 to 10; null clears it. Values that are not sent stay. Values of removed factors are dropped. Only the post's ranking changes: no Kaneo task changes.",
+    "Each value names a factor ID and is 0 to 10; null clears it. Values that are not sent stay. Values of removed factors are dropped. Only the post's ranking changes: no linked task changes.",
   action: "update",
   params: z.object({ postId: flexibleToTypeIdSchema("post") }),
   body: z.object({
