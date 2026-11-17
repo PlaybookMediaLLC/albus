@@ -180,6 +180,7 @@
 			"guestError": "Anmeldung als Gast fehlgeschlagen",
 			"errors": {
 				"account_not_linked": "Diese Identität konnte nicht mit dem bestehenden Konto verknüpft werden. Melde dich per E-Mail an, um das Konto zu bestätigen, und versuche SSO danach erneut. Falls die Anmeldung per E-Mail nicht verfügbar ist, wende dich an deinen Administrator.",
+				"invalid_token": "Dieser Anmeldelink ist abgelaufen oder wurde bereits verwendet. Melde dich erneut an, um fortzufahren.",
 				"oauth_code_verification_failed": "OAuth-Verifizierung fehlgeschlagen. Bitte versuche es erneut.",
 				"registration_is_currently_disabled_you_need_a_valid_invitation_to_create_an_account_": "Die Registrierung ist derzeit deaktiviert. Du benötigst eine gültige Einladung, um ein Konto zu erstellen.",
 				"use_a_permanent_email_address_disposable_addresses_cannot_create_accounts_": "Verwende eine dauerhafte E-Mail-Adresse. Mit Wegwerfadressen können keine Konten erstellt werden."

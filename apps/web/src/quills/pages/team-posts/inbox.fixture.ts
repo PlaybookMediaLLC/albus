@@ -87,12 +87,15 @@ const post = (id: string, title: string, statusId: string, votes: number) => ({
     effort: null,
     rice: null,
   },
+  factorValues: [],
   demand: {
     voters: votes,
     companies: 0,
     mrrCents: 0,
     importance: { nice: 0, important: 0, critical: 0 },
   },
+  teamScore: null,
+  customFields: [],
 });
 
 export const inboxPosts = {

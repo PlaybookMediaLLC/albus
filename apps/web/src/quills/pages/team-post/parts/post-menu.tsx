@@ -1,7 +1,15 @@
-import { Ellipsis, ExternalLink, Link2, Share2, Trash2 } from "lucide-react";
+import {
+  Ellipsis,
+  ExternalLink,
+  Link2,
+  Megaphone,
+  Share2,
+  Trash2,
+} from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { portalHref } from "../../../core/portal-href";
+import { SendUpdateDialog } from "../../../team/post-update/send-update-dialog";
 import { useTeamRuntime } from "../../../team/runtime";
 import { IconButton } from "../../../ui/inbox/icon-button";
 import {
@@ -21,11 +29,12 @@ export interface PostMenuProps {
   onDeleted: () => void;
 }
 
-/** The kebab menu of a request: visit, share or copy its portal page, and delete it. */
+/** The kebab menu of a request: visit, share or copy its portal page, send an update, and delete it. */
 export function PostMenu(props: PostMenuProps) {
   const { t } = useTranslation("quills");
   const team = useTeamRuntime();
   const [confirm, setConfirm] = useState(false);
+  const [update, setUpdate] = useState(false);
   const page = () =>
     new URL(
       portalHref(
@@ -70,6 +79,12 @@ export function PostMenu(props: PostMenuProps) {
             <Link2 aria-hidden="true" />
             {t("team-post.copyLink")}
           </MenuItem>
+          {team.permissions.update && team.permissions.manageSettings ? (
+            <MenuItem onClick={() => setUpdate(true)}>
+              <Megaphone aria-hidden="true" />
+              {t("team-post.sendUpdate")}
+            </MenuItem>
+          ) : null}
           {team.permissions.delete ? (
             <>
               <MenuSeparator />
@@ -81,6 +96,13 @@ export function PostMenu(props: PostMenuProps) {
           ) : null}
         </MenuPopup>
       </Menu>
+      {update ? (
+        <SendUpdateDialog
+          workspaceId={props.workspaceId}
+          post={{ id: props.postId, title: props.title }}
+          onClose={() => setUpdate(false)}
+        />
+      ) : null}
       {confirm ? (
         <DeletePostDialog
           workspaceId={props.workspaceId}

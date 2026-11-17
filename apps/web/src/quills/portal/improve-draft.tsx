@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { PortalProblemKind, Viewer } from "../core/types";
 import { useImprovePortalPostDraft } from "../hooks/feedback/use-improve-portal-post-draft";
@@ -14,8 +14,10 @@ export interface ImproveDraftProps {
   boards: Array<{ id: string }>;
   /** Reads the draft when the writer asks for help. */
   draft: () => PostComposerValues;
-  /** Replaces the draft with the suggestion that the writer accepted. */
+  /** Replaces the draft's title and board with the suggestion that the writer accepted. */
   onApply: (values: PostComposerValues) => void;
+  /** Shows similar requests for a title: the suggested one while it is open, then the writer's. */
+  onPreviewTitle?: (title: string) => void;
 }
 
 const problemKeys: Partial<Record<PortalProblemKind, string>> = {
@@ -31,7 +33,7 @@ const request = (values: PostComposerValues) => ({
   boardId: values.boardId,
 });
 
-/** "Improve with AI": a suggested title, problem statement and board that the writer can use. */
+/** "Suggest a title": a title and a board from the writer's own words. Their details never change. */
 export function ImproveDraft(props: ImproveDraftProps) {
   const { t } = useTranslation("quills");
   const [asked, setAsked] = useState<ReturnType<typeof request> | null>(null);
@@ -43,6 +45,15 @@ export function ImproveDraft(props: ImproveDraftProps) {
     props.viewer,
   );
   const data = asked ? suggestion.data : undefined;
+  const { onPreviewTitle } = props;
+  useEffect(() => {
+    if (!asked || !data) return;
+    onPreviewTitle?.(data.title);
+    return () => onPreviewTitle?.(asked.title);
+  }, [asked, data, onPreviewTitle]);
+  // Only a board that this composer offers is used, so only that one is named.
+  const board =
+    data && props.boards.some((b) => b.id === data.boardId) ? data : undefined;
   return (
     <div className="mt-2 grid gap-2">
       <Button
@@ -74,10 +85,14 @@ export function ImproveDraft(props: ImproveDraftProps) {
           aria-label={t("assist.suggestion")}
           className="grid gap-1 rounded-lg bg-muted/60 p-3 text-sm"
         >
-          <p className="font-medium">{data.title}</p>
-          <p className="whitespace-pre-line text-muted-foreground">
-            {data.problem}
+          <p className="font-medium" dir="auto">
+            {data.title}
           </p>
+          {board?.boardName ? (
+            <p className="text-muted-foreground">
+              {t("assist.suggestedBoard", { name: board.boardName })}
+            </p>
+          ) : null}
           <p className="text-xs text-muted-foreground">
             {t("assist.suggestionNote")}
           </p>
@@ -86,12 +101,11 @@ export function ImproveDraft(props: ImproveDraftProps) {
               type="button"
               size="sm"
               onClick={() => {
+                const current = props.draft();
                 props.onApply({
-                  boardId: props.boards.some((b) => b.id === data.boardId)
-                    ? data.boardId!
-                    : asked.boardId,
+                  ...current,
+                  boardId: board?.boardId ?? current.boardId,
                   title: data.title,
-                  content: data.problem,
                 });
                 setAsked(null);
               }}

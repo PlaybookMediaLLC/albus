@@ -90,7 +90,7 @@ export default function TaskMovePopover({
       }}
     >
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-60 p-0" align="start">
+      <PopoverContent variant="menu" className="w-60" align="start">
         {projectId === null ? (
           <OptionMenu
             key="projects"

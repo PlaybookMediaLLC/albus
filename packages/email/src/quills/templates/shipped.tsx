@@ -9,6 +9,8 @@ import { EmailLayout, NotificationFooter } from "./email-layout";
 import { typography } from "./shared-styles";
 
 interface ShippedEmailProps {
+  /** Text direction: "rtl" for a recipient who reads a right-to-left language (issue #117). */
+  dir?: "ltr" | "rtl";
   /** The published changelog entry. */
   entryTitle: string;
   entryUrl: string;
@@ -22,6 +24,7 @@ interface ShippedEmailProps {
 
 /** Tells a voter or follower that a request they asked for shipped (RFC 0003, feature 13). */
 export function ShippedEmail({
+  dir,
   entryTitle,
   entryUrl,
   requestTitle,
@@ -32,6 +35,7 @@ export function ShippedEmail({
 }: ShippedEmailProps) {
   return (
     <EmailLayout
+      dir={dir}
       footer={
         <NotificationFooter
           reason="You received this email because you voted for or follow this request."

@@ -23,6 +23,7 @@ import { segments, userSegments } from "../../database/quills/schema/segments";
 import { postStatuses } from "../../database/quills/schema/statuses";
 import { defineQuillsRoute, type Database } from "../framework/define-route";
 import type { Sort } from "./post-filters";
+import { seesRevenue } from "./schemas";
 import { boardVisible, findPost, loadProjects, notTest } from "./visibility";
 
 // Who asks for a post (RFC 0003, D3, feature 7): voters, their companies and revenue, segments and
@@ -72,9 +73,9 @@ function countedVotes(
 export const demandSchema = z.object({
   voters: z.number(),
   companies: z.number().openapi({ description: "Distinct voter companies" }),
-  mrrCents: z.number().openapi({
+  mrrCents: z.number().nullable().openapi({
     description:
-      "The monthly revenue of the voters' companies, in cents. Each company counts once.",
+      "The monthly revenue of the voters' companies, in cents. Each company counts once. Null without the quills:view_revenue permission.",
   }),
   importance: z.object({
     nice: z.number(),
@@ -84,20 +85,26 @@ export const demandSchema = z.object({
 });
 type Demand = z.output<typeof demandSchema>;
 
-/** The demand of each target post. A post without counted votes reads as zeros. */
+/**
+ * The demand of each target post. A post without counted votes reads as zeros. Without `revenue`
+ * (quills:view_revenue), the revenue reads as null.
+ */
 export async function demandOf(
   db: Database,
   targets: PostId[],
   projects: string[],
+  withRevenue: boolean,
 ) {
   const found = new Map<string, Demand>();
-  const of = (id: string) =>
-    found.get(id) ?? {
+  const of = (id: string): Demand => {
+    const demand = found.get(id) ?? {
       voters: 0,
       companies: 0,
       mrrCents: 0,
       importance: { nice: 0, important: 0, critical: 0 },
     };
+    return withRevenue ? demand : { ...demand, mrrCents: null };
+  };
   if (!targets.length) return of;
   const counted = countedVotes(db, targets, projects);
   const people = (importance?: "nice" | "important" | "critical") =>
@@ -149,7 +156,7 @@ export async function demandOf(
  * The revenue of the companies whose people vote on the posts row that `target` names, as SQL,
  * so a list can sort by it. The same counted votes as `demandOf`.
  */
-const mrrOf = (db: Database, target: SQL, projects: string[]) =>
+export const mrrOf = (db: Database, target: SQL, projects: string[]) =>
   sql`(select coalesce(sum(${companies.mrrCents}), 0) from ${companies} where ${inArray(
     companies.id,
     db
@@ -174,6 +181,42 @@ const mrrOf = (db: Database, target: SQL, projects: string[]) =>
   )})`;
 
 /**
+ * Posts with a counted vote, as `demandOf` counts them, from a person in one of `segmentIds` (#79).
+ * Deleted segments match nothing.
+ */
+export const votedFromSegments = (
+  db: Database,
+  segmentIds: string[],
+  projects: string[],
+) =>
+  sql`exists (${db
+    .select({ one: sql`1` })
+    .from(postVotes)
+    .innerJoin(voted, eq(voted.id, postVotes.postId))
+    .innerJoin(boards, eq(boards.id, voted.boardId))
+    .innerJoin(principal, eq(principal.id, postVotes.principalId))
+    .innerJoin(
+      userSegments,
+      eq(userSegments.principalId, postVotes.principalId),
+    )
+    .innerJoin(segments, eq(segments.id, userSegments.segmentId))
+    .where(
+      and(
+        or(
+          sql`${voted.id} = ${posts}.id`,
+          and(
+            sql`${voted.canonicalPostId} = ${posts}.id`,
+            isNull(voted.deletedAt),
+          ),
+        ),
+        boardVisible(projects),
+        isNull(principal.testOwnerPrincipalId),
+        inArray(userSegments.segmentId, segmentIds as never[]),
+        isNull(segments.deletedAt),
+      ),
+    )})`;
+
+/**
  * The teammate list order by voter revenue, highest first.
  * ponytail: computes the revenue of every listed post per request; store a rollup if lists grow slow.
  */
@@ -192,8 +235,9 @@ const getDemand = defineQuillsRoute({
   operationId: "getQuillsPostDemand",
   summary: "Get the demand for a post",
   description:
-    "Voters, their companies and revenue, the five segments with the most voters, and the importance that voters gave. For a merged post: the demand of the post it was merged into. Votes on boards that the caller cannot see and test customers' votes are left out.",
+    "Voters, their companies and revenue (null without quills:view_revenue), the five segments with the most voters, and the importance that voters gave. For a merged post: the demand of the post it was merged into. Votes on boards that the caller cannot see and test customers' votes are left out.",
   action: "read",
+  callerActions: true,
   params: z.object({ postId: flexibleToTypeIdSchema("post") }),
   response: demandSchema.extend({
     postId: z.string(),
@@ -204,7 +248,7 @@ const getDemand = defineQuillsRoute({
   responseDescription: "Demand",
   errors: { 404: "Post not found" },
   load: loadProjects,
-  handler: async ({ db, params, loaded: projects }) => {
+  handler: async ({ db, params, loaded: projects, actions }) => {
     const post = await findPost(db, params.postId, projects);
     const target = post.canonicalPostId ?? post.id;
     const counted = countedVotes(db, [target], projects);
@@ -224,7 +268,7 @@ const getDemand = defineQuillsRoute({
       .limit(5);
     return {
       postId: post.id,
-      ...(await demandOf(db, [target], projects))(target),
+      ...(await demandOf(db, [target], projects, seesRevenue(actions)))(target),
       segments: top,
     };
   },
@@ -236,8 +280,9 @@ const revenueAtRisk = defineQuillsRoute({
   operationId: "getQuillsRevenueAtRisk",
   summary: "Sum the revenue of companies with a critical vote on an open post",
   description:
-    "An open post is live, not merged and has no complete or closed status. Votes count as in getQuillsPostDemand. Each company counts once.",
+    "An open post is live, not merged and has no complete or closed status. Votes count as in getQuillsPostDemand. Each company counts once. Needs quills:view_revenue.",
   action: "read",
+  alsoRequires: ["view_revenue"],
   response: z.object({
     companies: z.number(),
     mrrCents: z.number().openapi({ description: "Monthly revenue in cents" }),

@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { navEnabled, withNavItem } from "../../core/portal-nav";
 import { useGetPortalSettings } from "../../hooks/team/use-get-portal-settings";
+import { useGetScoringFactors } from "../../hooks/team/use-get-scoring-factors";
 import { useListBoards } from "../../hooks/team/use-list-boards";
 import { useListTags } from "../../hooks/team/use-list-tags";
 import { useUpdatePortalSettings } from "../../hooks/team/use-update-portal-settings";
@@ -10,6 +11,7 @@ import { PageFrame } from "../../ui/page-frame";
 import { SettingSwitchRow } from "../../ui/setting-switch-row";
 import { SettingsCard, SettingsPage, SettingsSection } from "../../ui/upstream";
 import { BoardsSection } from "./parts/boards-section";
+import { ScoringSection } from "./parts/scoring-section";
 import { TagsSection } from "./parts/tags-section";
 
 export interface SettingsFeedbackPageProps {
@@ -21,7 +23,10 @@ export interface SettingsFeedbackPageProps {
 // ponytail: the first 100 boards and tags (the API maximum); page them when a workspace has more.
 const first = { offset: "0", limit: "100" };
 
-/** Settings › Feedback (settings spec B5): the public roadmap tab, the boards and the post tags. */
+/**
+ * Settings › Feedback (settings spec B5): the public roadmap tab, the boards, the post tags and the
+ * team's scoring factors (#79).
+ */
 export function SettingsFeedbackPage({
   workspaceId,
 }: SettingsFeedbackPageProps) {
@@ -34,6 +39,7 @@ export function SettingsFeedbackPage({
     team.viewer,
   );
   const tags = useListTags({ param, query: first }, team.viewer);
+  const factors = useGetScoringFactors({ param }, team.viewer);
   const update = useUpdatePortalSettings(team.viewer);
   const nav = portal.data?.nav ?? [];
   return (
@@ -47,8 +53,13 @@ export function SettingsFeedbackPage({
         description={t("settings-product.feedback.description")}
       >
         <TeamStateView
-          loading={portal.isPending || boards.isPending || tags.isPending}
-          problem={portal.error ?? boards.error ?? tags.error}
+          loading={
+            portal.isPending ||
+            boards.isPending ||
+            tags.isPending ||
+            factors.isPending
+          }
+          problem={portal.error ?? boards.error ?? tags.error ?? factors.error}
         >
           <SettingsSection title={t("settings-product.behavior")}>
             <SettingsCard>
@@ -71,6 +82,10 @@ export function SettingsFeedbackPage({
             boards={boards.data?.items ?? []}
           />
           <TagsSection workspaceId={workspaceId} tags={tags.data?.tags ?? []} />
+          <ScoringSection
+            workspaceId={workspaceId}
+            factors={factors.data?.factors ?? []}
+          />
         </TeamStateView>
       </SettingsPage>
     </PageFrame>

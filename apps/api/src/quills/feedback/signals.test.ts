@@ -9,6 +9,7 @@ import {
   conversationMessages,
   conversations,
 } from "../../database/quills/schema/conversation";
+import { boards } from "../../database/quills/schema/boards";
 import { events } from "../../database/quills/schema/events";
 import { feedbackSignals } from "../../database/quills/schema/feedback-signals";
 import { posts, postVotes } from "../../database/quills/schema/posts";
@@ -307,6 +308,73 @@ describe.skipIf(!url)("Quills feedback signals", () => {
     ).toMatchObject({ resultingPost: { id: postId, title: "Dark mode" } });
   });
 
+  it("asks for the board's required fields, internal ones included, before it accepts a signal", async () => {
+    const env = contractEnv();
+    const signal = await signalIn(env, env.a, {});
+    const [original] = await env.scoped(env.a, (db) =>
+      db
+        .select({ settings: boards.settings })
+        .from(boards)
+        .where(eq(boards.id, board as BoardId)),
+    );
+    const settings = (value: unknown) =>
+      env.scoped(env.a, (db) =>
+        db
+          .update(boards)
+          .set({ settings: value as never })
+          .where(eq(boards.id, board as BoardId)),
+      );
+    await settings({
+      ...(original!.settings as object),
+      customFields: [
+        {
+          key: "mrr",
+          label: "MRR",
+          type: "number",
+          required: true,
+          internal: true,
+        },
+      ],
+    });
+    try {
+      const accept = (body: object) =>
+        call(
+          app,
+          env,
+          member,
+          "POST",
+          `/feedback-signals/${signal.signalId}/post`,
+          {
+            boardId: board,
+            title: "Dark mode",
+            ...body,
+          },
+        );
+      const missing = await accept({});
+      expect(missing.status).toBe(400);
+      expect(JSON.stringify(missing.body)).toContain(
+        'Field \\"mrr\\" is required',
+      );
+      expect(await accept({ customFields: { mrr: "a lot" } })).toMatchObject({
+        status: 400,
+      });
+      expect(await signalRow(signal.signalId)).toMatchObject({
+        status: "pending",
+      });
+      const res = await accept({ customFields: { mrr: 1200 } });
+      expect(res.status).toBe(200);
+      const [created] = await env.scoped(env.a, (db) =>
+        db
+          .select({ values: posts.customFieldValues })
+          .from(posts)
+          .where(eq(posts.id, res.body.resultingPostId as PostId)),
+      );
+      expect(created!.values).toEqual({ mrr: 1200 });
+    } finally {
+      await settings(original!.settings);
+    }
+  });
+
   it("accepts a signal as the customer's vote on the matched post, then refuses a second decision", async () => {
     const env = contractEnv();
     const target = await postIn(env, env.a);
@@ -337,7 +405,7 @@ describe.skipIf(!url)("Quills feedback signals", () => {
         .where(eq(postVotes.postId, target.postId)),
     );
     expect(votes).toEqual([
-      { principalId: signal.customerId, sourceType: "proxy" },
+      { principalId: signal.customerId, sourceType: "conversation" },
     ]);
     expect(await outbox([signal.signalId, target.postId])).toEqual([
       { type: "post.voted", entityId: target.postId },

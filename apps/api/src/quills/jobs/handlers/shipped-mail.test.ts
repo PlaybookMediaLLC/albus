@@ -403,6 +403,72 @@ describe.skipIf(!url)("Quills shipped notices", () => {
     expect(mail.shipped).toEqual([]);
   });
 
+  it("mails a customer the entry's version in their saved language and direction, others the entry's own title", async () => {
+    const env = contractEnv();
+    mail.shipped.length = 0;
+    const published = await publish([p1.postId, p2.postId]);
+    expect(published.status).toBe(200);
+    // The German version is written before the worker delivers the event.
+    const saved = await app.request(
+      `/quills/${env.a}/changelog/${published.body.id}/translations`,
+      {
+        method: "PUT",
+        headers: {
+          "x-test-user": env.owner,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          locale: "ar",
+          title: "متاح الآن",
+          content: "جديد",
+        }),
+      },
+    );
+    expect(saved.status).toBe(200);
+    await env.scoped(env.a, (db) =>
+      db
+        .update(customer)
+        .set({ preferredLanguage: "ar-EG" })
+        .where(
+          eq(
+            customer.id,
+            sql`(select user_id from quills.principal where id = ${sql.param(customerA, principal.id)})`,
+          ),
+        ),
+    );
+    try {
+      await drain();
+      const byAddress = Object.fromEntries(
+        mail.shipped.map((sent) => [
+          sent.to,
+          sent as { entryTitle?: string; dir?: string },
+        ]),
+      );
+      // Arabic: the Arabic version, laid out right to left (issues #76, #117).
+      expect(byAddress[`${env.customerA}@example.test`]).toMatchObject({
+        entryTitle: "متاح الآن",
+        dir: "rtl",
+      });
+      // The follower saved no language: the entry's own title, left to right.
+      expect(byAddress[visitors.follower!.email]).toMatchObject({
+        entryTitle: published.body.title,
+        dir: "ltr",
+      });
+    } finally {
+      await env.scoped(env.a, (db) =>
+        db
+          .update(customer)
+          .set({ preferredLanguage: null })
+          .where(
+            eq(
+              customer.id,
+              sql`(select user_id from quills.principal where id = ${sql.param(customerA, principal.id)})`,
+            ),
+          ),
+      );
+    }
+  });
+
   it("records a refused send as failed and an uncertain one as never sent again", async () => {
     const env = contractEnv();
     const outcomes = async (eventId: string) =>

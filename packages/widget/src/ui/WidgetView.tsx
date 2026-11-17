@@ -25,6 +25,7 @@ import type {
   WidgetViewProps,
   HelpFilters,
   FeedbackFilters,
+  SubmissionOptions,
 } from "./types.js";
 
 const tabs: { id: WidgetTab; label: string }[] = [
@@ -37,6 +38,8 @@ const tabs: { id: WidgetTab; label: string }[] = [
 
 export function WidgetView({
   brandName = "Quills",
+  dir = "ltr",
+  identified = false,
   theme = "auto",
   initialTab = "home",
   tabs: enabledTabs,
@@ -51,6 +54,7 @@ export function WidgetView({
   connection = "online",
   onRetryLoad,
   teamAvailability,
+  onOpenPortal,
   teamMember,
   attachmentsEnabled,
   onCaptureScreenshot,
@@ -62,6 +66,8 @@ export function WidgetView({
   onClose,
   onSendMessage,
   onSubmitFeedback,
+  onDraftFeedback,
+  feedbackFields,
   onReplyMessage,
   onReadConversation,
   onOpenFile,
@@ -172,7 +178,9 @@ export function WidgetView({
   );
   const unreadUpdates = updates.filter((item) => item.unread).length;
   const submission = composer === "message" ? onSendMessage : onSubmitFeedback;
-  const submit = () => {
+  const submit = (
+    extra?: Pick<SubmissionOptions, "title" | "boardId" | "customFields">,
+  ) => {
     if (!composer || !submission || offline) return;
     const origin = nav.key;
     void draftStore.submit(
@@ -181,6 +189,7 @@ export function WidgetView({
         submission(body, {
           ...options,
           ...(route.articleId ? { articleId: route.articleId } : {}),
+          ...(composer === "feedback" && extra),
         }),
       () => {
         if (nav.currentKey.current !== origin) return;
@@ -194,6 +203,7 @@ export function WidgetView({
   return (
     <section
       className="qb-widget"
+      dir={dir}
       tabIndex={-1}
       data-theme={theme}
       data-expanded={expanded}
@@ -311,6 +321,13 @@ export function WidgetView({
             onCapture={onCaptureScreenshot}
             onOpenArticle={(id) => open("help", id)}
             onBrowseHelp={() => nav.go({ tab: "help" })}
+            onDraft={composer === "feedback" ? onDraftFeedback : undefined}
+            fields={composer === "feedback" ? feedbackFields : undefined}
+            onVote={
+              composer === "feedback" && onVoteFeedback
+                ? (postId) => onVoteFeedback(postId, true)
+                : undefined
+            }
           />
         ) : article ? (
           <ArticleView
@@ -435,6 +452,7 @@ export function WidgetView({
             conversations={conversations}
             openConversation={(id) => open("messages", id)}
             teamAvailability={teamAvailability}
+            openPortal={onOpenPortal}
             survey={
               survey &&
               onAnswerSurvey && (
@@ -467,6 +485,7 @@ export function WidgetView({
         ) : tab === "feedback" ? (
           <FeedbackView
             posts={feedback}
+            identified={identified}
             onOpen={(id) => open("feedback", id)}
             onCompose={() => compose("feedback")}
             filters={feedbackFilters}

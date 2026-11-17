@@ -5,10 +5,11 @@ export const PORTS = {
   db: 54480,
   api: 1390,
   web: 5190,
-  smtp: 54481,
-  mail: 54482,
+  smtp: 51390,
+  inbox: 51391,
 };
-export const MAIL_IMAGE = "axllent/mailpit:v1.33.1";
+/** The demo's local mail catcher. Pinned: the demo pulls it on first start. */
+export const MAILPIT_IMAGE = "axllent/mailpit:v1.32.0";
 export const WORKSPACE = "quills_portal_demo";
 export const AI_DEFAULTS = {
   QUILLS_AI_BASE_URL: "https://openrouter.ai/api/v1",
@@ -59,13 +60,14 @@ export function demoEnv(base, secrets, ai, ports = PORTS) {
     VITE_CLIENT_URL: web,
     // A root .env cannot turn on AI, send real mail or use a shared Redis: dotenv keeps set values.
     QUILLS_AI_API_KEY: "",
-    // All mail goes to the local Mailpit catcher, unencrypted and without a login.
+    // Kaneo's mail (sign-in links, invitations) goes to the demo's local Mailpit only.
     SMTP_HOST: "127.0.0.1",
     SMTP_PORT: String(ports.smtp),
+    SMTP_FROM: "Kaneo demo <demo@example.test>",
     SMTP_SECURE: "false",
     SMTP_REQUIRE_TLS: "false",
     SMTP_USER: "",
-    SMTP_FROM: "Kaneo demo <demo@example.test>",
+    // Quills mail (status changes, shipped notices, updates) goes to the same Mailpit.
     EMAIL_SMTP_HOST: "127.0.0.1",
     EMAIL_SMTP_PORT: String(ports.smtp),
     EMAIL_SMTP_SECURE: "false",

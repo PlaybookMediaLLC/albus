@@ -13,6 +13,9 @@ export const meta = {
     "listQuillsStatuses",
     "updateQuillsBoard",
     "updateQuillsBoardSettings",
+    // RFC 0005: the board's delivery project and task rule.
+    "setQuillsBoardDelivery",
+    "clearQuillsBoardDelivery",
   ],
   states: ["loading", "failed", "ready", "done"],
 } satisfies PageMeta;

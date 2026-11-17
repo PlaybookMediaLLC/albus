@@ -52,5 +52,20 @@
 	"votes_one": "{{count}} vote",
 	"votes_other": "{{count}} votes",
 	"votesStat": "Votes",
-	"yes": "Yes"
+	"yes": "Yes",
+	"editRevenue": "Edit monthly revenue",
+	"mrr": "Monthly revenue",
+	"mrrLabel": "Company monthly revenue",
+	"none": "Not set",
+	"plan": "Plan",
+	"saveRevenue": "Save revenue",
+	"amount": "Enter an amount such as 1250.50.",
+	"addCompany": "Add to a company",
+	"changeCompany": "Change company",
+	"company": "Company",
+	"companyName": "Company name",
+	"companyNameRequired": "Enter the company's name.",
+	"noCompany": "No company yet.",
+	"removeCompany": "Remove from company",
+	"saveCompany": "Save company"
 }

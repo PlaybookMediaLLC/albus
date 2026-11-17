@@ -15,6 +15,8 @@ import {
 } from "../../ui/upstream";
 import { AuthorPicker, type RequestAuthor } from "./author-picker";
 import { NewRequestForm } from "./new-request-form";
+import { SourceSelect } from "./source-select";
+import type { Source } from "./sources";
 
 export interface NewRequestDialogProps {
   workspaceId: string;
@@ -34,6 +36,7 @@ export function NewRequestDialog(props: NewRequestDialogProps) {
   const { t } = useTranslation("quills");
   const team = useTeamRuntime();
   const [author, setAuthor] = useState<RequestAuthor | null>(null);
+  const [source, setSource] = useState<Source>("other");
   // ponytail: the first 100 tags (the API maximum); page them when a workspace has more.
   const tags = useListTags(
     { param: { workspaceId: props.workspaceId }, query: { limit: "100" } },
@@ -61,11 +64,16 @@ export function NewRequestDialog(props: NewRequestDialogProps) {
           boardId={props.boardId}
           defaultStatusId={props.defaultStatusId}
           author={
-            <AuthorPicker
-              workspaceId={props.workspaceId}
-              value={author}
-              onChange={setAuthor}
-            />
+            <>
+              <AuthorPicker
+                workspaceId={props.workspaceId}
+                value={author}
+                onChange={setAuthor}
+              />
+              {author ? (
+                <SourceSelect value={source} onChange={setSource} />
+              ) : null}
+            </>
           }
           onSubmit={async ({ statusId, ...values }) => {
             const post = await create.mutateAsync({
@@ -76,7 +84,9 @@ export function NewRequestDialog(props: NewRequestDialogProps) {
                 ...(props.statuses.some((status) => status.id === statusId)
                   ? { statusId }
                   : {}),
-                ...(author ? { authorPrincipalId: author.principalId } : {}),
+                ...(author
+                  ? { authorPrincipalId: author.principalId, source }
+                  : {}),
               },
             });
             props.onCreated(post.id);

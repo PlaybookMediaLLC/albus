@@ -3,6 +3,7 @@ import attributes from "./attributes";
 import auditLog from "./audit-log";
 import blocking from "./blocking";
 import companies from "./companies";
+import companyImport from "./company-import";
 import leadMerge from "./lead-merge";
 import people from "./people";
 import principals from "./principals";
@@ -17,6 +18,7 @@ export default apiRouter<BaseVariables & { workspaceId: string }>()
   .route("/", leadMerge)
   .route("/", userTags)
   .route("/", blocking)
+  .route("/", companyImport)
   .route("/", companies)
   .route("/", attributes)
   .route("/", segments)

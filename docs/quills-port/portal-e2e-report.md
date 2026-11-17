@@ -5,8 +5,10 @@ only. It lists every page under `apps/web/src/routes/portal/$workspaceId/`, the 
 the checks that ran, the result, and the defects with their fixes.
 
 - Date: 2026-11-17. Code: branch `claude/festive-bardeen-yc9p98`, from `origin/staging` (`72ec91a2`).
-- Stack: `pnpm dev:demo` with its mail inbox (Mailpit, added in this change). Each mail was read
-  from the Mailpit API and its link opened in Chromium (Playwright scripts).
+- Stack: `pnpm dev:demo` with a Mailpit inbox. This branch first added its own (SMTP 54481, inbox
+  54482); staging then gained the same inbox (SMTP 51390, inbox 51391), and the merge keeps
+  staging's. Each mail was read from the Mailpit API and its link opened in Chromium (Playwright
+  scripts).
 - Actors:
   - Customer A: `portal-customer@example.test` (seeded).
   - Customer B: `customer-b@example.test`. B signed up in the demo, verified the address with a
@@ -158,7 +160,8 @@ that failed first:
 2. The help-center redirect page still treated a private portal as public (the D5 gap on one more
    page). It now asks a signed-out visitor to sign in.
 3. `pnpm dev:demo` skipped starting Mailpit when a stopped container of that name existed, yet
-   printed the inbox URL. It now replaces a stopped container.
+   printed the inbox URL. It replaced a stopped container. (That code was later dropped for
+   staging's demo inbox.)
 
 A suggestion to merge the repeated "workspace after access" lines into one helper was left out:
 it would touch pages outside this change.

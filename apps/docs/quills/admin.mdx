@@ -126,7 +126,8 @@ Open **Feedback > Autopilot** (`/dashboard/workspace/{workspaceId}/quills/autopi
 You need `quills:read` to see the queue, `quills:create` to accept and `quills:update` to dismiss or restore.
 
 - **Accept as new post** creates a post on a board that you choose, with the title that you can edit.
-  The customer is the author and the first voter.
+  The customer is the author and the first voter. When the board has custom fields, the form asks
+  for them, internal ones included, and a required field needs a value.
 - **Add vote** adds the customer's vote to the matched post.
 - **Dismiss** removes the signal from the pending queue. **Restore** puts a dismissed signal back.
 

@@ -10,20 +10,21 @@ import { probe, scene, type Scene } from "./seed.fixture";
 export const portalAiReply = (request: Parameters<typeof fallback>[0]) => {
   const system = String(request.body?.messages?.[0]?.content ?? "");
   if (system.startsWith("You help a customer write a feedback post"))
-    return chatReply({
-      title: "Export reports as CSV",
-      problem: "I cannot share a report with my team.",
-      boardId: null,
-    });
+    return chatReply({ title: "Export reports as CSV", boardId: null });
   if (system.startsWith("Translate customer feedback"))
     return chatReply({ title: "Titel", content: "Inhalt" });
   return fallback(request);
 };
-/** A portal scene with the portal AI answers installed: other fixtures replace the shared reply. */
-export const aiScene = (env: Parameters<typeof scene>[0]) => {
+/** A customer scene with the portal AI answers installed: other fixtures replace the shared reply. */
+const aiSceneFor = (
+  env: Parameters<typeof scene>[0],
+  who: Parameters<typeof scene>[1],
+) => {
   provider.reply(portalAiReply);
-  return scene(env, "portal");
+  return scene(env, who);
 };
+export const aiScene = (env: Parameters<typeof scene>[0]) =>
+  aiSceneFor(env, "portal");
 
 /** Values that no response may contain: hidden rows of A and every row of B. */
 export const hiddenOf = (s: Scene) => [
@@ -33,17 +34,22 @@ export const hiddenOf = (s: Scene) => [
   s.b.postId,
 ];
 
-export const improveQuillsPortalPostDraft = fixture<Scene>({
-  seed: aiScene,
-  valid: (s) => ({
-    body: {
-      title: "csv export",
-      details: "need to send reports to my boss",
-      boardId: s.a.boardId,
-    },
-  }),
-  foreign: (s) => ({ boardId: s.b.boardId }),
-  hidden: hiddenOf,
-  own: (s) => s.a.own,
-  probe,
-});
+const draft = (who: "portal" | "widget") =>
+  fixture<Scene>({
+    seed: (env) => aiSceneFor(env, who),
+    valid: (s) => ({
+      body: {
+        title: "csv export",
+        details: "need to send reports to my boss",
+        boardId: s.a.boardId,
+      },
+      ...(s.token && { bearer: s.token }),
+    }),
+    foreign: (s) => ({ boardId: s.b.boardId }),
+    hidden: hiddenOf,
+    own: (s) => s.a.own,
+    probe,
+  });
+
+export const improveQuillsPortalPostDraft = draft("portal");
+export const improveQuillsWidgetPostDraft = draft("widget");

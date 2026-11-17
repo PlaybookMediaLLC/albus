@@ -196,6 +196,7 @@ describe.skipIf(!url)("Quills taxonomy rules", () => {
       collaborationDisabled: false,
       autoSubscribe: true,
       emailsDisabled: false,
+      widgetAutoOpen: false,
     });
     expect(
       (

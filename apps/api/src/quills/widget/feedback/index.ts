@@ -1,6 +1,7 @@
 import { apiRouter } from "../../../openapi";
 import { changelogEngagementRoutes } from "../../portal/changelog-engagement";
 import { boardRoutes } from "../../portal/feedback/boards";
+import { improvePostDraft } from "../../portal/feedback/ai";
 import { changelogRoutes } from "../../portal/feedback/changelog";
 import { commentRoutes } from "../../portal/feedback/comments";
 import { postRoutes } from "../../portal/feedback/posts";
@@ -15,4 +16,5 @@ export default apiRouter()
   .route("/", postRoutes("widget"))
   .route("/", commentRoutes("widget"))
   .route("/", changelogEngagementRoutes("widget"))
-  .route("/", changelogRoutes("widget"));
+  .route("/", changelogRoutes("widget"))
+  .openapi(...improvePostDraft("widget"));

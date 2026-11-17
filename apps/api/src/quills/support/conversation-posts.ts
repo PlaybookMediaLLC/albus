@@ -14,12 +14,12 @@ import { postStatuses } from "../../database/quills/schema/statuses";
 import { principal } from "../../database/quills/schema/auth";
 import { defineQuillsRoute, type Database } from "../framework/define-route";
 import { recordActivity } from "../feedback/activity";
+import { addVote } from "../feedback/votes";
 import {
   boardVisible,
   findBoard,
   findPost,
   loadProjects,
-  relatedPosts,
 } from "../feedback/visibility";
 import {
   conflict,
@@ -55,8 +55,10 @@ const createPost = defineQuillsRoute({
   operationId: "createQuillsPostFromConversation",
   summary: "Track a conversation as feedback",
   description:
-    "Creates a post by the conversation's visitor on a visible board, or with asUpvoteOfPostId adds the visitor's vote to a visible post (sourceMessageContent becomes a private team comment). Links the post to the conversation and shares it into the thread. Test conversations return 409.",
+    "Creates a post by the conversation's visitor on a visible board, or with asUpvoteOfPostId adds the visitor's vote to a visible post (sourceMessageContent becomes a private team comment). The visitor is subscribed as the author of a new post, not for a vote. Links the post to the conversation and shares it into the thread. Test conversations return 409.",
   action: "create",
+  // Acting for the visitor needs update too, as createQuillsPost and addQuillsPostProxyVote do (#73).
+  alsoRequires: ["update"],
   params: conversationParams,
   body: z
     .object({
@@ -79,7 +81,7 @@ const createPost = defineQuillsRoute({
   errors,
   // One event per request: the post, else the vote, else the shared message. The post
   // and vote events carry `messageId`, so reply delivery must read it there too.
-  event: ({ params }, result) => {
+  event: ({ params }, result, raw) => {
     const payload: Record<string, string> = {
       conversationId: params.conversationId,
     };
@@ -94,7 +96,13 @@ const createPost = defineQuillsRoute({
       type: result.created ? "post.created" : "post.voted",
       entityType: "post",
       entityId: result.postId,
-      payload: { ...payload, messageId: result.messageId },
+      // The audit row names the customer and the source (#73).
+      payload: {
+        ...payload,
+        messageId: result.messageId,
+        onBehalfOf: (raw as { onBehalfOf: string }).onBehalfOf,
+        source: "conversation",
+      },
     };
   },
   load: loadProjects,
@@ -120,49 +128,17 @@ const createPost = defineQuillsRoute({
     let title;
     let voted = false;
     if (body.asUpvoteOfPostId) {
-      const target = await findPost(db, body.asUpvoteOfPostId, projects);
-      const post = target.canonicalPostId
-        ? await findPost(db, target.canonicalPostId, projects)
-        : target;
-      const [existing] = await db
-        .select({ id: postVotes.id })
-        .from(postVotes)
-        .where(
-          and(
-            eq(postVotes.principalId, visitor),
-            inArray(postVotes.postId, relatedPosts(db, post.id)),
-          ),
-        )
-        .limit(1);
-      // The unique (post, principal) index decides between two parallel votes.
-      voted = existing
-        ? false
-        : (
-            await db
-              .insert(postVotes)
-              .values({
-                postId: post.id,
-                principalId: visitor,
-                sourceType: LINK_TYPE,
-                addedByPrincipalId: actor.principalId,
-              })
-              .onConflictDoNothing()
-              .returning({ id: postVotes.id })
-          ).length > 0;
-      if (voted) {
-        await db
-          .update(posts)
-          .set({ voteCount: sql`${posts.voteCount} + 1` })
-          .where(eq(posts.id, post.id));
-        await db
-          .insert(postSubscriptions)
-          .values({ postId: post.id, principalId: visitor, reason: "vote" })
-          .onConflictDoNothing();
-        await recordActivity(db, actor, post.id, {
-          type: "vote.proxy",
-          metadata: { voterPrincipalId: visitor, voterName: null },
-        });
-      }
+      // As every teammate-added vote: one per person, and no subscription, as a portal vote (#73).
+      const vote = await addVote(
+        db,
+        body.asUpvoteOfPostId,
+        projects,
+        visitor,
+        actor,
+        "conversation",
+      );
+      voted = vote.changed;
+      const post = await findPost(db, vote.postId, projects);
       if (body.sourceMessageContent)
         await db.insert(postComments).values({
           postId: post.id,
@@ -199,15 +175,27 @@ const createPost = defineQuillsRoute({
           voteCount: 1,
         })
         .returning({ id: posts.id, title: posts.title });
-      await db
-        .insert(postVotes)
-        .values({ postId: post!.id, principalId: visitor });
+      await db.insert(postVotes).values({
+        postId: post!.id,
+        principalId: visitor,
+        sourceType: "conversation",
+        addedByPrincipalId: actor.principalId,
+      });
       await db
         .insert(postSubscriptions)
         .values({ postId: post!.id, principalId: visitor, reason: "author" });
+      const [person] = await db
+        .select({ name: principal.displayName })
+        .from(principal)
+        .where(eq(principal.id, visitor));
       await recordActivity(db, actor, post!.id, {
         type: "post.created",
-        metadata: { boardName: board.name },
+        metadata: {
+          boardName: board.name,
+          authorPrincipalId: visitor,
+          authorName: person?.name ?? null,
+          source: "conversation",
+        },
       });
       postId = post!.id;
       title = post!.title;
@@ -230,7 +218,13 @@ const createPost = defineQuillsRoute({
       postId,
       title,
     );
-    return { postId, created: !body.asUpvoteOfPostId, voted, messageId };
+    return {
+      postId,
+      created: !body.asUpvoteOfPostId,
+      voted,
+      messageId,
+      onBehalfOf: visitor,
+    };
   },
 });
 

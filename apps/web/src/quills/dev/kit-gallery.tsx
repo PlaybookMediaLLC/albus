@@ -3,6 +3,7 @@ import { BoardSelect } from "../ui/post/board-select";
 import { CommentReactions } from "../ui/post/comment-reactions";
 import { ReactionBar } from "../ui/reaction-bar";
 import { ComposerDetails } from "../ui/post/composer-details";
+import { ComposerFields } from "../ui/post/composer-fields";
 import { FeedbackEditor } from "../ui/feedback-editor";
 import { BoardFilters } from "../ui/board-filters";
 import { BoardNavigation } from "../ui/board-navigation";
@@ -17,6 +18,7 @@ import type { PortalProblemKind } from "../core/types";
 import { PostSort } from "../ui/post/post-sort";
 import { PostComposer } from "../ui/post/post-composer";
 import { ComposerSignIn } from "../ui/post/composer-sign-in";
+import { ComposerTitle } from "../ui/post/composer-title";
 import { SimilarPosts } from "../ui/post/similar-posts";
 import { StatusIcon } from "../ui/post/status-icon";
 import { ArrowUpIcon } from "../ui/arrow-up-icon";
@@ -43,6 +45,7 @@ import { PortalGate } from "../ui/portal-gate";
 import { PortalNavigation } from "../ui/portal-navigation";
 import { PortalShell } from "../ui/portal-shell";
 import { ResultCard } from "../ui/result-card";
+import { WidgetLinkPrompt } from "../ui/widget-link/widget-link-prompt";
 import { StateView } from "../ui/state-view";
 import { SurveyCard } from "../ui/survey-card";
 import { CommandPalette } from "../ui/inbox/command-palette";
@@ -138,6 +141,8 @@ export function KitGallery() {
   const schema = z.object({
     message: z.string().min(1, t("core.gallery.required")),
     display: z.enum(["count", "hidden"]),
+    boardId: z.string().optional(),
+    customFields: z.record(z.string(), z.any()).optional(),
   });
   return (
     <PortalShell
@@ -234,6 +239,18 @@ export function KitGallery() {
               disabled
               labelKey="core.gallery.confirm"
               onConfirm={async () => {}}
+            />
+            <WidgetLinkPrompt
+              answer={null}
+              onConfirm={async () => {}}
+              onDecline={async () => {}}
+              workspaceName={demo}
+            />
+            <WidgetLinkPrompt
+              answer="linked"
+              onConfirm={async () => {}}
+              onDecline={async () => {}}
+              workspaceName={demo}
             />
             <SettingsCard>
               <SettingSwitchRow
@@ -335,7 +352,12 @@ export function KitGallery() {
             <PortalForm
               key={outcome}
               schema={schema}
-              defaultValues={{ message: "", display: "count" }}
+              defaultValues={{
+                message: "",
+                display: "count",
+                boardId: "gallery",
+                customFields: {},
+              }}
               submitKey="core.gallery.confirm"
               onSubmit={async () => {
                 if (outcome === "success") {
@@ -385,6 +407,35 @@ export function KitGallery() {
                       {
                         value: "hidden",
                         label: t("team-triage.voteDisplayHidden"),
+                      },
+                    ]}
+                  />
+                  <ComposerFields
+                    form={form}
+                    boards={[
+                      {
+                        id: "gallery",
+                        fields: [
+                          {
+                            key: "plan",
+                            label: demo,
+                            type: "select",
+                            required: true,
+                            options: [demo],
+                          },
+                          {
+                            key: "seats",
+                            label: demo,
+                            type: "number",
+                            required: false,
+                          },
+                          {
+                            key: "ok",
+                            label: demo,
+                            type: "checkbox",
+                            required: false,
+                          },
+                        ],
                       },
                     ]}
                   />
@@ -477,6 +528,7 @@ export function KitGallery() {
               onSubmit={async () => setConfirmed(true)}
             />
             <ComposerSignIn href={portalHref("gallery")} />
+            <ComposerTitle workspaceName={demo} />
             <SimilarPosts
               workspaceId="gallery"
               posts={

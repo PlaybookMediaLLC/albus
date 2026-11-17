@@ -155,6 +155,13 @@ export function createSDK(): SDK {
         emitter.emit("unread", { count: msg.count });
         break;
       }
+      case "quackback:announce": {
+        const entry = { view: "changelog" as const, entryId: msg.entryId };
+        if (msg.open) {
+          if (!panelOpen) dispatch("open", entry);
+        } else launcher?.announce(msg.title, () => dispatch("open", entry));
+        break;
+      }
       case "quackback:expand":
         panel?.setExpanded(msg.expanded);
         break;

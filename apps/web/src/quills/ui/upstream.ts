@@ -97,8 +97,11 @@ export { shortcutRegistry } from "@/lib/shortcuts/registry";
 export { parseBinding } from "@/lib/shortcuts/key-combo";
 export { ShortcutListener } from "@/lib/shortcuts/shortcut-listener";
 
-// RFC 0004 lane P: the title and project of a task that a post links to.
-export { default as useGetTask } from "@/hooks/queries/task/use-get-task";
+// RFC 0005: Kaneo's own project, column and task search reads for the request-to-task dialogs. Kaneo's
+// API applies its project access to each of them.
+export { default as useGetProjects } from "@/hooks/queries/project/use-get-projects";
+export { useGetColumns } from "@/hooks/queries/column/use-get-columns";
+export { default as useGlobalSearch } from "@/hooks/queries/search/use-global-search";
 
 // The roadmap drag uses the drop easing of the Kaneo board.
 export { EASE_OUT_CSS } from "@/lib/motion";

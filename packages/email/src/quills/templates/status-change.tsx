@@ -8,6 +8,8 @@ import { EmailLayout, NotificationFooter } from "./email-layout";
 import { typography } from "./shared-styles";
 
 interface StatusChangeEmailProps {
+  /** Text direction: "rtl" for a recipient who reads a right-to-left language (issue #117). */
+  dir?: "ltr" | "rtl";
   postTitle: string;
   postUrl: string;
   previousStatus: string;
@@ -34,6 +36,7 @@ function capitalizeStatus(status: string): string {
 }
 
 export function StatusChangeEmail({
+  dir,
   postTitle,
   postUrl,
   previousStatus,
@@ -49,6 +52,7 @@ export function StatusChangeEmail({
 
   return (
     <EmailLayout
+      dir={dir}
       footer={
         <NotificationFooter
           reason="You received this email because you submitted or subscribed to this feedback."

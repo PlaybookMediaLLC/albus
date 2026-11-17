@@ -28,6 +28,9 @@ export interface LauncherHandle {
    *  only while closed and not dismissed this browser session; clicking it opens
    *  the widget. Driven by the server config. */
   setGreeting(text: string | null | undefined): void;
+  /** A new changelog entry's title in the bubble, over the greeting, until it is clicked
+   *  (opens the entry) or dismissed. The frame sends each entry once per visitor (#108). */
+  announce(title: string, onOpen: () => void): void;
   /** Text label beside the icon — turns the circular button into a pill.
    *  Empty/unset restores the icon-only circle. Driven by the server config. */
   setLabel(text: string | null | undefined): void;
@@ -62,6 +65,8 @@ export function createLauncher(opts: LauncherOptions): LauncherHandle {
   // must not write that key — it would hide the bubble for a later host visit.
   let greetingText: string | null = null;
   let localDismissed = false;
+  /** A new entry's title and its open action; it replaces the greeting while set. */
+  let announcement: { title: string; onOpen: () => void } | null = null;
   const contained = Boolean(opts.root);
   const edge = contained ? "0px" : "20px";
   const GREETING_DISMISS_KEY = "quackback:launcher-greeting-dismissed";
@@ -198,7 +203,17 @@ export function createLauncher(opts: LauncherOptions): LauncherHandle {
     textAlign: "start",
     padding: "0",
   });
-  bubbleText.addEventListener("click", opts.onClick, listen);
+  bubbleText.addEventListener(
+    "click",
+    () => {
+      const open = announcement?.onOpen;
+      announcement = null;
+      bubbleText.textContent = greetingText ?? "";
+      if (open) open();
+      else opts.onClick();
+    },
+    listen,
+  );
   const bubbleClose = document.createElement("button");
   bubbleClose.type = "button";
   bubbleClose.setAttribute("aria-label", "Dismiss");
@@ -217,12 +232,19 @@ export function createLauncher(opts: LauncherOptions): LauncherHandle {
     cursor: "pointer",
   });
   const renderGreeting = () => {
-    const show = !!greetingText && !isOpen && !greetingDismissed();
+    const show =
+      !isOpen && (!!announcement || (!!greetingText && !greetingDismissed()));
     bubble.style.display = show ? "flex" : "none";
   };
   bubbleClose.addEventListener(
     "click",
     () => {
+      if (announcement) {
+        announcement = null;
+        bubbleText.textContent = greetingText ?? "";
+        renderGreeting();
+        return;
+      }
       if (contained) {
         localDismissed = true;
       } else {
@@ -278,7 +300,12 @@ export function createLauncher(opts: LauncherOptions): LauncherHandle {
       const next = text?.trim() || null;
       if (contained && next !== greetingText) localDismissed = false;
       greetingText = next;
-      bubbleText.textContent = greetingText ?? "";
+      if (!announcement) bubbleText.textContent = greetingText ?? "";
+      renderGreeting();
+    },
+    announce(title, onOpen) {
+      announcement = { title, onOpen };
+      bubbleText.textContent = `New: ${title}`;
       renderGreeting();
     },
     setLabel(text) {

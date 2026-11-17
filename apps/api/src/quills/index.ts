@@ -32,10 +32,15 @@ import testConversations from "./support/test-conversations";
 // RFC 0003 lane L5.
 import changelogAi from "./feedback/changelog-ai";
 import changelogEngagement from "./feedback/changelog-engagement";
+import changelogTranslations from "./feedback/changelog-translations";
 // RFC 0003, lane L3.
 import boardSettings from "./feedback/board-settings";
+import boardDelivery from "./feedback/board-delivery";
+import postTasks from "./feedback/post-tasks";
+import postUpdates from "./feedback/post-updates";
 import demand from "./feedback/demand";
 import scores from "./feedback/scores";
+import scoring from "./feedback/scoring";
 // RFC 0004: the AI chip of the request detail.
 import postSummary from "./feedback/post-summary";
 import { brandText } from "@kaneo/branding";
@@ -116,10 +121,17 @@ export default apiRouter<BaseVariables & { workspaceId: string }>()
   // RFC 0003 lane L5.
   .route("/", changelogAi)
   .route("/", changelogEngagement)
+  .route("/", changelogTranslations)
   // RFC 0003, lane L3.
   .route("/", boardSettings)
+  // RFC 0005: requests become Kaneo tasks.
+  .route("/", boardDelivery)
+  .route("/", postTasks)
+  // #92: one update to every channel.
+  .route("/", postUpdates)
   .route("/", demand)
   .route("/", scores)
+  .route("/", scoring)
   // RFC 0004: the AI chip of the request detail.
   .route("/", postSummary)
   .openapi(...context);

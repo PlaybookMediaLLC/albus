@@ -12,6 +12,7 @@ export {
   type RawEmailOptions,
 } from "./input";
 export { emailAttachmentSchema } from "./attachment";
+export { directionOf } from "./direction";
 /**
  * Email sending module for Quackback
  *
@@ -93,6 +94,7 @@ import {
   type WeeklyDigestItem,
 } from "./templates/weekly-digest";
 import { NewCommentEmail } from "./templates/new-comment";
+import { PostUpdateEmail } from "./templates/post-update";
 import { ConversationMessageEmail } from "./templates/conversation-message";
 import { ConversationReplyEmail } from "./templates/conversation-reply";
 import {
@@ -1045,6 +1047,8 @@ export async function sendSendingDomainAttentionEmail(
 // ============================================================================
 
 interface SendStatusChangeParams {
+  /** "rtl" lays the email out right to left (issue #117). */
+  dir?: "ltr" | "rtl";
   to: string;
   postTitle: string;
   postUrl: string;
@@ -1081,6 +1085,7 @@ export async function sendStatusChangeEmail(
     to,
     subject: statusChangeHeadline(formattedNewStatus, yours),
     react: StatusChangeEmail({
+      dir: params.dir,
       postTitle,
       postUrl,
       previousStatus,
@@ -1104,6 +1109,8 @@ export async function sendStatusChangeEmail(
 // ============================================================================
 
 interface SendShippedParams {
+  /** "rtl" lays the email out right to left (issue #117). */
+  dir?: "ltr" | "rtl";
   to: string;
   entryTitle: string;
   entryUrl: string;
@@ -1123,6 +1130,7 @@ export async function sendShippedEmail(
     to: params.to,
     subject: `Shipped: ${params.requestTitle}`,
     react: ShippedEmail({
+      dir: params.dir,
       entryTitle: params.entryTitle,
       entryUrl: params.entryUrl,
       requestTitle: params.requestTitle,
@@ -1144,6 +1152,8 @@ export async function sendShippedEmail(
 // ============================================================================
 
 interface SendWeeklyDigestParams {
+  /** "rtl" lays the email out right to left (issue #117). */
+  dir?: "ltr" | "rtl";
   to: string;
   items: readonly WeeklyDigestItem[];
   myFeedbackUrl: string;
@@ -1161,6 +1171,7 @@ export async function sendWeeklyDigestEmail(
     to: params.to,
     subject: `Your feedback at ${params.workspaceName} this week`,
     react: WeeklyDigestEmail({
+      dir: params.dir,
       items: params.items,
       myFeedbackUrl: params.myFeedbackUrl,
       organizationName: params.workspaceName,
@@ -1180,6 +1191,8 @@ export async function sendWeeklyDigestEmail(
 // ============================================================================
 
 interface SendNewCommentParams {
+  /** "rtl" lays the email out right to left (issue #117). */
+  dir?: "ltr" | "rtl";
   to: string;
   postTitle: string;
   postUrl: string;
@@ -1213,6 +1226,7 @@ export async function sendNewCommentEmail(
     to,
     subject: `New comment on "${postTitle}"`,
     react: NewCommentEmail({
+      dir: params.dir,
       postTitle,
       postUrl,
       commenterName,
@@ -1228,6 +1242,41 @@ export async function sendNewCommentEmail(
     ),
     emailType: "NewCommentEmail",
     preview: { postUrl },
+  });
+}
+
+interface SendPostUpdateParams {
+  to: string;
+  postTitle: string;
+  postUrl: string;
+  /** The team's update, as plain text. */
+  body: string;
+  workspaceName: string;
+  unsubscribeUrl: string;
+  oneClickUnsubscribeUrl?: string;
+  logoUrl?: string;
+}
+
+/** A team's update about a request that the recipient follows (#92). */
+export async function sendPostUpdateEmail(
+  params: SendPostUpdateParams,
+): Promise<EmailResult> {
+  return sendEmail({
+    to: params.to,
+    subject: `Update on "${params.postTitle}"`,
+    react: PostUpdateEmail({
+      postTitle: params.postTitle,
+      postUrl: params.postUrl,
+      body: params.body,
+      organizationName: params.workspaceName,
+      unsubscribeUrl: params.unsubscribeUrl,
+      logoUrl: params.logoUrl,
+    }),
+    extraHeaders: listUnsubscribeHeaders(
+      params.oneClickUnsubscribeUrl ?? params.unsubscribeUrl,
+    ),
+    emailType: "PostUpdateEmail",
+    preview: { postUrl: params.postUrl },
   });
 }
 
@@ -2046,6 +2095,7 @@ export {
   type WeeklyDigestItem,
 } from "./templates/weekly-digest";
 export { NewCommentEmail } from "./templates/new-comment";
+export { PostUpdateEmail } from "./templates/post-update";
 export { PostMentionEmail } from "./templates/post-mention";
 export { ChangelogPublishedEmail } from "./templates/changelog-published";
 export { FeedbackLinkedEmail } from "./templates/feedback-linked";

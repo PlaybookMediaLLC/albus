@@ -11,7 +11,7 @@ with the Trello connect of follow-up FU1.
 | Entry points of #131 | Count |
 |---|---|
 | Built (lanes X1, C1, G1, G2, S1, B1, M1, P1, P2, P3, P4, and FU1 for Trello): 73 of the 73 assigned to lanes | 73 |
-| Blocked: widget handoff (#129) | 1 |
+| Replaced: widget handoff (#129, option C: profiles link by verified email; `apps/api/src/quills/portal/ROUTES.md`) | 1 |
 | Web-only: portal header setters (#130) | 2 |
 
 `ledger/overrides.json` closes the 73 built entry points: 62 server functions

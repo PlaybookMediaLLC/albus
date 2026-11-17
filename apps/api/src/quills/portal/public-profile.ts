@@ -28,6 +28,7 @@ import { segments, userSegments } from "../../database/quills/schema/segments";
 import { postStatuses } from "../../database/quills/schema/statuses";
 import { visitorDevices } from "../../database/quills/schema/visitor-analytics";
 import { defineQuillsRoute } from "../framework/define-route";
+import { seesRevenue } from "../feedback/schemas";
 import { realEmail } from "../directory/customer";
 import {
   commentVisible,
@@ -186,8 +187,9 @@ const teamContext = defineQuillsRoute({
   operationId: "getQuillsProfileTeamContext",
   summary: "Get the team context of a profile",
   description:
-    "The email, company, segments, last device visit and the verified and blocked flags of a person with a profile. The email is the customer account's, else the contact email; a teammate's account email is not returned.",
+    "The email, company, segments, last device visit and the verified and blocked flags of a person with a profile. The email is the customer account's, else the contact email; a teammate's account email is not returned. The company's mrrCents is null without quills:view_revenue.",
   action: "read",
+  callerActions: true,
   params,
   response: z.object({
     email: z.string().nullable(),
@@ -208,7 +210,7 @@ const teamContext = defineQuillsRoute({
   }),
   responseDescription: "The team context",
   errors: { 404: "Profile not found" },
-  handler: async ({ db, params }) => {
+  handler: async ({ db, params, actions }) => {
     const [row] = await db
       .select({
         email: customer.email,
@@ -238,7 +240,8 @@ const teamContext = defineQuillsRoute({
             id: row.companyId,
             name: row.companyName!,
             plan: row.companyPlan,
-            mrrCents: row.companyMrrCents,
+            // quills:view_revenue (#79).
+            mrrCents: seesRevenue(actions) ? row.companyMrrCents : null,
           }
         : null,
       segments: await db

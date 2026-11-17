@@ -154,7 +154,7 @@ export function StatusIncidentPage(props: StatusIncidentPageProps) {
                       {incident.data.updates.map((update) => (
                         <li
                           key={update.id}
-                          className="space-y-2 border-l border-border pl-5"
+                          className="space-y-2 border-s border-border ps-5"
                         >
                           <p>
                             {t("status-incident.status", {

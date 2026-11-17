@@ -1,13 +1,15 @@
 import { fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vite-plus/test";
 import { createPostFixture } from "../../api/team/create-post.fixture";
+import { listUsersFixture } from "../../api/team/list-users.fixture";
 import { TeamRuntimeProvider } from "../runtime";
-import { fill, press } from "../../test/actions";
+import { choose, fill, press } from "../../test/actions";
 import { mockApi } from "../../test/mock-api";
 import { renderComponent } from "../../test/render";
 import { postTeam } from "../../pages/team-post/post.fixture";
 import {
   inboxBoards,
+  inboxCustomer,
   inboxStatuses,
   inboxTags,
 } from "../../pages/team-posts/inbox.fixture";
@@ -50,6 +52,32 @@ describe("NewRequestDialog", () => {
       boardId: "board_ideas",
       title: "Dark mode",
       statusId: "status_open",
+    });
+  });
+
+  it("records a request for a customer with where the teammate heard it", async () => {
+    const api = mockApi();
+    api.reply(inboxTags);
+    api.reply(listUsersFixture.ok({ items: [inboxCustomer] }));
+    api.reply(createPostFixture.ok({ id: "post_sso" }));
+    const view = render();
+    await view.findByRole("dialog", { name: "New request" });
+    expect(
+      view.queryByRole("combobox", { name: "Where you heard it" }),
+    ).toBeNull();
+    fireEvent.click(view.getByRole("combobox", { name: "Author: You" }));
+    fill("Find a customer", "barb");
+    fireEvent.click(await view.findByRole("option", { name: "Barbara" }));
+    await choose("Where you heard it", "Meeting");
+    fill("Request title", "SSO");
+    press("Create");
+    await waitFor(() => expect(api.calls("createQuillsPost")).toHaveLength(1));
+    await expect(
+      api.calls("createQuillsPost")[0]!.clone().json(),
+    ).resolves.toMatchObject({
+      title: "SSO",
+      authorPrincipalId: "principal_new",
+      source: "meeting",
     });
   });
 

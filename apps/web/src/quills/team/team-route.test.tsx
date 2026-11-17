@@ -36,6 +36,7 @@ vi.mock("@/hooks/use-workspace-permission", () => ({
     canUpdateQuills: () => false,
     canDeleteQuills: () => false,
     canManageQuillsSettings: () => false,
+    canViewQuillsRevenue: () => true,
   }),
 }));
 
@@ -44,7 +45,7 @@ function TeamPage() {
   return (
     <output>
       {team.workspaceId}:{team.viewer.id}:{String(team.permissions.create)}:
-      {String(team.permissions.update)}
+      {String(team.permissions.update)}:{String(team.permissions.viewRevenue)}
     </output>
   );
 }
@@ -81,7 +82,7 @@ describe("TeamRoute", () => {
     api.reply(getTeamCountsFixture.ok());
     const view = renderTeam("/feedback/workspace_1");
     expect(await view.findByRole("status")).toHaveTextContent(
-      "workspace_1:user_1:true:false",
+      "workspace_1:user_1:true:false:true",
     );
     expect(
       view.getByRole("navigation", { name: "Teammate app" }),

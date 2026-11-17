@@ -881,7 +881,11 @@ function CreateTaskModalContent({
                       </span>
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-48 p-1" align="start">
+                  <PopoverContent
+                    variant="menu"
+                    className="w-48 p-1"
+                    align="start"
+                  >
                     <div className="space-y-1">
                       {workspaceProjects?.map((workspaceProject) => (
                         <button
@@ -944,7 +948,7 @@ function CreateTaskModalContent({
                     </span>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-65 p-0" align="start">
+                <PopoverContent variant="menu" className="w-65" align="start">
                   <DatePickerMenu
                     label={t("common:modals.createTask.startDate")}
                     placeholder={t("tasks:datePicker.startDatePlaceholder")}
@@ -979,7 +983,11 @@ function CreateTaskModalContent({
                     </span>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-48 p-1" align="start">
+                <PopoverContent
+                  variant="menu"
+                  className="w-48 p-1"
+                  align="start"
+                >
                   <div className="space-y-1">
                     {priorityOptions.map((option) => (
                       <button
@@ -1034,7 +1042,11 @@ function CreateTaskModalContent({
                     )}
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-48 p-1" align="start">
+                <PopoverContent
+                  variant="menu"
+                  className="w-48 p-1"
+                  align="start"
+                >
                   <div className="space-y-1">
                     <button
                       type="button"
@@ -1108,7 +1120,7 @@ function CreateTaskModalContent({
                     <TaskRecurrenceBadge task={{ recurrence }} asText />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-65 p-0" align="start">
+                <PopoverContent variant="menu" className="w-65" align="start">
                   <TaskDueDatePicker
                     label={t("common:modals.createTask.dueDate")}
                     clearLabel={t("tasks:popover.dueDate.clear")}
@@ -1141,7 +1153,7 @@ function CreateTaskModalContent({
                     <span>{t("common:modals.createTask.labels")}</span>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="p-0" align="start">
+                <PopoverContent variant="menu" align="start">
                   {labelsStep === "select" && (
                     <div className="w-auto">
                       <div className="flex items-center gap-2 p-2 border-b border-border">

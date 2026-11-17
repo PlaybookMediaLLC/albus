@@ -34,7 +34,9 @@ import {
 } from "../../../database/quills/schema/changelog-categories";
 import { posts, postVotes } from "../../../database/quills/schema/posts";
 import { postStatuses } from "../../../database/quills/schema/statuses";
+import { changelogTranslations } from "../../../database/quills/schema/changelog-translations";
 import { defineQuillsRoute, type Database } from "../../framework/define-route";
+import { language } from "../translations";
 import { notFound, notTest } from "../../feedback/visibility";
 import {
   httpUrl,
@@ -87,6 +89,10 @@ const entry = z.object({
   id: z.string(),
   title: z.string(),
   content: z.string(),
+  locale: z.string().nullable().openapi({
+    description:
+      "The language of the version that a teammate wrote for the reader's `locale` (issue #76); null for the entry's own text, the default language",
+  }),
   publishedAt: responseTimestamp,
   author: z
     .object({ name: z.string(), avatarUrl: z.string().nullable() })
@@ -159,11 +165,45 @@ export const reactionList = (
     .filter((row) => row.entryId === id)
     .map(({ emoji, count, reacted }) => ({ emoji, count, reacted }));
 
+/** The reader's language for changelog versions: a BCP 47 tag, stored as its language. */
+const readerLocale = z
+  .string()
+  .trim()
+  .max(35)
+  .regex(/^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/, "Use a BCP 47 language tag")
+  .transform(language)
+  .optional()
+  .openapi({
+    description:
+      "The reader's language. An entry with a version in this language returns it; others return their own text.",
+  });
+
+/** The versions of these entries in one language, by entry. */
+async function versionsIn(db: Database, ids: ChangelogId[], lang?: string) {
+  if (!lang || !ids.length)
+    return new Map<string, { title: string; content: string }>();
+  const rows = await db
+    .select({
+      entryId: changelogTranslations.changelogEntryId,
+      title: changelogTranslations.title,
+      content: changelogTranslations.content,
+    })
+    .from(changelogTranslations)
+    .where(
+      and(
+        inArray(changelogTranslations.changelogEntryId, ids),
+        eq(changelogTranslations.locale, lang),
+      ),
+    );
+  return new Map(rows.map((row) => [String(row.entryId), row]));
+}
+
 async function present(
   db: Database,
   viewer: Viewer,
   where: SQL,
   page: { offset: number; limit: number },
+  lang?: string,
 ) {
   const rows = await db
     .select({
@@ -243,9 +283,13 @@ async function present(
     )
     .groupBy(changelogEntryPosts.changelogEntryId);
   const reactions = await reactionsFor(db, viewer, ids);
+  const versions = await versionsIn(db, ids, lang);
   return {
     items: items.map(({ authorName, authorAvatar, ...row }) => ({
       ...row,
+      // The reader's language when a teammate wrote it, else the entry's own text.
+      ...versions.get(String(row.id)),
+      locale: versions.has(String(row.id)) ? lang! : null,
       author: authorName
         ? { name: authorName, avatarUrl: httpUrl(authorAvatar) }
         : null,
@@ -281,11 +325,12 @@ export const listChangelog = (audience: Customer) =>
     operationId: `listQuills${title(audience)}Changelog`,
     summary: "List the published changelog entries that the caller may see",
     description:
-      "Newest first by the shown date. content is the stored text, not sanitized HTML.",
+      "Newest first by the shown date. content is the stored text, not sanitized HTML. With locale, an entry that has a version in the reader's language returns it.",
     action: "read",
     query: z.object({
       offset: pagingNumber(0, 1000000, 0),
       limit: pagingNumber(1, 50, 20),
+      locale: readerLocale,
     }),
     response: z.object({
       entries: z.array(entry),
@@ -296,7 +341,7 @@ export const listChangelog = (audience: Customer) =>
     handler: async ({ db, caller, query }) => {
       const viewer = await viewerFor(db, audience, caller);
       if (!viewer.tabs.changelog) throw notFound("Changelog");
-      const page = await present(db, viewer, sql`true`, query);
+      const page = await present(db, viewer, sql`true`, query, query.locale);
       return {
         entries: page.items,
         nextOffset: page.hasMore ? query.offset + query.limit : null,
@@ -312,15 +357,18 @@ export const getChangelogEntry = (audience: Customer) =>
     path: `/${audience}/changelog/{entryId}`,
     operationId: `getQuills${title(audience)}ChangelogEntry`,
     summary: "Get a published changelog entry",
+    description:
+      "With locale, the entry's version in the reader's language when a teammate wrote one.",
     action: "read",
     params: z.object({ entryId: flexibleToTypeIdSchema("changelog") }),
+    query: z.object({ locale: readerLocale }),
     response: entry,
     responseDescription: "The entry",
     errors: {
       403: "Blocked account or no portal access",
       404: "Changelog entry not found, or the portal changelog tab is off",
     },
-    handler: async ({ db, caller, params }) => {
+    handler: async ({ db, caller, params, query }) => {
       const viewer = await viewerFor(db, audience, caller);
       const [found] = (
         await present(
@@ -331,6 +379,7 @@ export const getChangelogEntry = (audience: Customer) =>
             offset: 0,
             limit: 1,
           },
+          query.locale,
         )
       ).items;
       if (!found) throw notFound("Changelog entry");

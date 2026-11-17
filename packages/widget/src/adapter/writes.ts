@@ -24,6 +24,8 @@ export const writes = (api: Api) => ({
     context: {
       attachmentIds?: string[];
       metadata?: Record<string, string>;
+      title?: string;
+      customFields?: Record<string, string | number | boolean | string[]>;
     } = {},
   ) =>
     api.request<ApiPost>(
@@ -33,11 +35,35 @@ export const writes = (api: Api) => ({
         content,
         idempotencyKey,
         ...(boardId && { boardId }),
+        ...(context.title && { title: context.title }),
+        ...(context.customFields && { customFields: context.customFields }),
         ...(context.attachmentIds?.length && {
           attachmentIds: context.attachmentIds,
         }),
         ...(context.metadata && { metadata: context.metadata }),
       },
+      signal,
+    ),
+  /** A suggested title and board for the visitor's words (issue #106). Saves nothing. */
+  draftPost: (details: string, signal?: AbortSignal) =>
+    api.request<{
+      title: string;
+      boardId: string | null;
+      boardName: string | null;
+    }>(
+      "POST",
+      "/widget/post-draft/improve",
+      { title: "", details: details.slice(0, 4000) },
+      signal,
+    ),
+  /** Visible posts with a title like the text, best match first. */
+  similarPosts: (title: string, signal?: AbortSignal) =>
+    api.request<{
+      items: Array<{ id: string; title: string; voteCount?: number }>;
+    }>(
+      "GET",
+      `/widget/posts/similar?title=${encodeURIComponent(title.slice(0, 200))}&limit=5`,
+      undefined,
       signal,
     ),
   /** Desired state, not a toggle: a retry changes nothing. */
@@ -155,13 +181,20 @@ export const writes = (api: Api) => ({
       undefined,
       signal,
     ),
-  updatesUnread: (signal?: AbortSignal) =>
-    api.request<{ count: number }>(
-      "GET",
-      "/widget/changelog/unread",
+  /** Moves the visitor's announced mark to now: the launcher showed the newest update (#108). */
+  announced: (signal?: AbortSignal) =>
+    api.request<{ announcedAt: string }>(
+      "PUT",
+      "/widget/changelog/announced",
       undefined,
       signal,
     ),
+  updatesUnread: (signal?: AbortSignal) =>
+    api.request<{
+      count: number;
+      announce: { id: string; title: string } | null;
+      autoOpen: boolean;
+    }>("GET", "/widget/changelog/unread", undefined, signal),
   unread: (signal?: AbortSignal) =>
     api.request<{ unreadCount: number }>(
       "GET",

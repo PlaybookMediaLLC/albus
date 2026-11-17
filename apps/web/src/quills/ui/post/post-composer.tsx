@@ -8,25 +8,29 @@ import {
 } from "react";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
-import { saveDraft, startingDraft } from "../../core/composer-draft";
-import type { PortalProblem } from "../../core/types";
+import {
+  rememberDraft,
+  saveDraft,
+  startingDraft,
+} from "../../core/composer-draft";
 import { ArrowUpIcon } from "../arrow-up-icon";
 import { PortalForm } from "../portal-form";
-import { Input, cn } from "../upstream";
+import { cn } from "../upstream";
 import { BoardSelect } from "./board-select";
 import { ComposerDetails } from "./composer-details";
+import { ComposerFields } from "./composer-fields";
+import { shouldCollapse } from "./composer-collapse";
+import { composerSchema } from "./composer-schema";
+import type { PublicField } from "../../core/composer-fields";
+import type { PortalProblem } from "../../core/types";
+import type { PostComposerValues } from "./post-composer.type";
 import { ComposerSignIn } from "./composer-sign-in";
-
-interface PostComposerValues {
-  boardId?: string;
-  title: string;
-  content: string;
-}
+import { ComposerTitle } from "./composer-title";
 
 export interface PostComposerProps {
   workspaceName: string;
-  boards: Array<{ id: string; name: string }>;
+  /** `fields`: the board's public custom fields, which the composer asks for. */
+  boards: Array<{ id: string; name: string; fields?: PublicField[] }>;
   defaultBoardId?: string;
   /** Set for a visitor who must sign in first; the composer then only searches. */
   signInHref?: string;
@@ -46,6 +50,7 @@ export interface PostComposerProps {
   onSubmit: (values: PostComposerValues) => Promise<PortalProblem | void>;
 }
 
+type TitleProps = Partial<ComponentProps<typeof ComposerTitle>>;
 const card =
   "rounded-2xl border border-border bg-card px-4 py-3 shadow-xs transition-shadow focus-within:shadow-sm";
 
@@ -59,10 +64,10 @@ export function PostComposer(props: PostComposerProps) {
   );
   const [title, setTitle] = useState(draft.title);
   const [round, setRound] = useState(0);
-  const schema = z.object({
-    boardId: z.string().optional(),
-    title: z.string().trim().min(1, t("feedback.titleRequired")).max(200),
-    content: z.string().trim().max(10000),
+  const schema = composerSchema({
+    titleRequired: t("feedback.titleRequired"),
+    boards: props.boards,
+    fieldRequired: (label) => t("feedback.fieldRequired", { label }),
   });
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -77,23 +82,13 @@ export function PostComposer(props: PostComposerProps) {
     clearTimeout(timer.current);
     timer.current = setTimeout(() => props.onTitleChange(value), 300);
   };
-  const remember = (values: { title?: string; content?: string }) =>
-    saveDraft(props.draftKey, {
-      title: values.title ?? "",
-      content: values.content ?? "",
-    });
   const collapse = (event: FocusEvent<HTMLDivElement>) => {
-    if (!event.currentTarget.contains(event.relatedTarget) && !title.trim())
+    if (shouldCollapse(event.currentTarget, event.relatedTarget, title))
       setExpanded(false);
   };
-  const titleInput = (field?: ComponentProps<typeof Input>) => (
-    <Input
-      unstyled
-      className="text-base [&_input]:text-ellipsis"
-      id="feedback-title"
-      aria-label={t("feedback.postTitle")}
-      placeholder={t("feedback.composer", { name: props.workspaceName })}
-      autoFocus={props.autoFocus}
+  const titleInput = (field?: TitleProps) => (
+    <ComposerTitle
+      {...{ workspaceName: props.workspaceName, autoFocus: props.autoFocus }}
       onFocus={() => setExpanded(true)}
       {...field}
     />
@@ -120,6 +115,7 @@ export function PostComposer(props: PostComposerProps) {
           boardId: props.defaultBoardId ?? props.boards[0]?.id,
           title: round ? "" : draft.title,
           content: round ? "" : draft.content,
+          customFields: {},
         }}
         submitKey="feedback.submit"
         submitIcon={<ArrowUpIcon />}
@@ -165,7 +161,7 @@ export function PostComposer(props: PostComposerProps) {
               form.register("title", {
                 onChange: (event) => {
                   changeTitle(event.target.value);
-                  remember(form.getValues());
+                  rememberDraft(props.draftKey, form.getValues());
                 },
               }),
             )}
@@ -175,17 +171,21 @@ export function PostComposer(props: PostComposerProps) {
               </p>
             ) : null}
             {expanded ? (
-              <ComposerDetails
-                {...form.register("content", {
-                  onChange: () => remember(form.getValues()),
-                })}
-              />
+              <>
+                <ComposerDetails
+                  {...form.register("content", {
+                    onChange: () =>
+                      rememberDraft(props.draftKey, form.getValues()),
+                  })}
+                />
+                <ComposerFields boards={props.boards} form={form} />
+              </>
             ) : null}
             {expanded &&
               props.assist?.(form.getValues, (values) => {
                 form.reset(values, { keepDefaultValues: true });
                 changeTitle(values.title);
-                remember(values);
+                rememberDraft(props.draftKey, values);
               })}
           </>
         )}

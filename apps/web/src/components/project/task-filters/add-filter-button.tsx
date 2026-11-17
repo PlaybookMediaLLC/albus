@@ -28,7 +28,7 @@ export function AddFilterButton({ subjects }: { subjects: FilterSubject[] }) {
       >
         <Plus />
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-60">
+      <PopoverContent variant="menu" align="start" className="w-60">
         <FilterRootPanel subjects={subjects} onApplied={() => setOpen(false)} />
       </PopoverContent>
     </Popover>

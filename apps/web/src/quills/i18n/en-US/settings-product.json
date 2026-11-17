@@ -45,6 +45,8 @@
 		"title": "Tags"
 	},
 	"changelog": {
+		"autoOpen": "Open new updates in the widget",
+		"autoOpenText": "On a customer's next visit, the widget opens the newest update once. Off: the launcher shows its title once.",
 		"description": "Publish your product updates on the portal, in the widget and in an RSS feed.",
 		"public": "Public changelog",
 		"publicText": "Show the changelog on the portal, in the widget and in the RSS feed.",
@@ -122,6 +124,20 @@
 		"title": "Privacy & Access",
 		"visibility": "Portal visibility",
 		"visibilityText": "A private portal shows only to the people that you allow."
+	},
+	"scoring": {
+		"add": "Add factor",
+		"factor": "{{name}} (weight {{weight}})",
+		"name": "Factor {{n}} name",
+		"nameHead": "Factor",
+		"nameRequired": "Give the factor a name.",
+		"note": "Weights go from -10 to 10. Use a negative weight for a cost, such as effort. A request's score is the sum of weight × its value from 0 to 10, set in Triage. A score ranks requests; it never changes a task.",
+		"remove": "Remove {{name}}",
+		"save": "Save factors",
+		"title": "Scoring factors",
+		"weight": "Factor {{n}} weight",
+		"weightHead": "Weight",
+		"weightRange": "Use a whole number from -10 to 10, other than 0."
 	},
 	"tags": {
 		"actions": "Actions for {{name}}",

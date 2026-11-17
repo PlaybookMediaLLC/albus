@@ -35,6 +35,7 @@ const post = (id: string, statusId: string | null) =>
           mrrCents: 0,
           importance: { nice: 0, important: 0, critical: 0 },
         },
+        teamScore: null,
       },
     ],
   }).items[0]!;

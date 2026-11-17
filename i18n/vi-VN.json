@@ -180,6 +180,7 @@
 			"guestError": "Không thể đăng nhập với tư cách khách",
 			"errors": {
 				"account_not_linked": "Không thể liên kết danh tính này với tài khoản hiện có. Hãy đăng nhập bằng email để xác minh tài khoản, sau đó thử SSO lại. Nếu không thể đăng nhập bằng email, hãy liên hệ quản trị viên của bạn.",
+				"invalid_token": "Liên kết đăng nhập này đã hết hạn hoặc đã được sử dụng. Vui lòng đăng nhập lại để tiếp tục.",
 				"oauth_code_verification_failed": "Xác minh OAuth thất bại. Vui lòng thử lại.",
 				"registration_is_currently_disabled_you_need_a_valid_invitation_to_create_an_account_": "Đăng ký hiện đang bị tắt. Bạn cần có lời mời hợp lệ để tạo tài khoản.",
 				"use_a_permanent_email_address_disposable_addresses_cannot_create_accounts_": "Hãy dùng địa chỉ email cố định. Không thể tạo tài khoản bằng địa chỉ email dùng một lần."

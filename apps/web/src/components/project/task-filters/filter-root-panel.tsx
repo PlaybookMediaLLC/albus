@@ -86,6 +86,7 @@ export function FilterRootPanel({
         }}
       >
         <PopoverContent
+          variant="menu"
           anchor={nested?.anchor}
           side="left"
           align="start"

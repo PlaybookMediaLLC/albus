@@ -2,6 +2,7 @@ export * from "./attributes.fixture";
 export * from "./audit-log.fixture";
 export * from "./blocking.fixture";
 export * from "./companies.fixture";
+export * from "./company-import.fixture";
 export * from "./lead-merge.fixture";
 export * from "./people.fixture";
 export * from "./principals.fixture";

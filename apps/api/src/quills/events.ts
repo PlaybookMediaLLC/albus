@@ -35,6 +35,10 @@ export const changeSchema = z.object({
     "board.project_unlinked",
     "post.task_linked",
     "post.task_unlinked",
+    // RFC 0005: the board rule made no task; the payload names the teammate to tell and the reason.
+    "post.task_create_failed",
+    // #92: one update to the request's followers on every chosen channel; the payload names the update.
+    "post.update_sent",
     "team.bound",
     "team.unbound",
     "workspace.imported",
@@ -53,6 +57,8 @@ export const changeSchema = z.object({
     "company.created",
     "company.updated",
     "company.deleted",
+    // #79: a company CSV import (counts only, never revenue).
+    "company.imported",
     "user_attribute.created",
     "user_attribute.updated",
     "user_attribute.deleted",
@@ -129,6 +135,9 @@ export const changeSchema = z.object({
     "changelog.updated",
     "changelog.published",
     "changelog.deleted",
+    // Issue #76: a teammate wrote or removed an entry's version in one language.
+    "changelog.translation_saved",
+    "changelog.translation_deleted",
     "changelog.category_created",
     "changelog.category_updated",
     "changelog.category_deleted",
@@ -384,6 +393,8 @@ export const changeSchema = z.object({
     "survey.closed",
     "survey.responded",
     "post.scored",
+    // #79: the team's scoring factors.
+    "settings.scoring_updated",
     "post.vote_importance_set",
     "changelog.reacted",
     "changelog.unreacted",

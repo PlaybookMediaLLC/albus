@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { readsEnglish } from "../../../core/reader-locale";
 import type { Viewer } from "../../../core/types";
 import { useTranslatePortalContent } from "../../../hooks/feedback/use-translate-portal-content";
 import { MarkdownContent } from "../../../ui/markdown-content";
+import { useReaderLocale } from "../../../portal/runtime";
 
 export interface TranslatedTextProps {
   workspaceId: string;
@@ -15,21 +17,19 @@ export interface TranslatedTextProps {
   translatable?: boolean;
 }
 
-// ponytail: the content language is taken to be English, the only portal language today.
-// Compare with a workspace language setting when one exists.
-/** The browser language when it is not English, else null: then no text offers a translation. */
-export const browserLocale = () => {
-  const locale = globalThis.navigator?.language ?? "en";
-  return /^en(-|$)/i.test(locale) ? null : locale;
-};
-
-/** A post or comment text with "Translate" when the browser language is not English. A post's translated title shows above its text. */
+/**
+ * A post or comment text with "Translate" when the reader's language (saved, else the browser's)
+ * is not English. A translation is marked as one, and "Show original" brings the source back.
+ * A post's translated title shows above its text.
+ */
 export function TranslatedText(props: TranslatedTextProps) {
   const { t } = useTranslation("quills");
   // The toggle belongs to one text: after an edit the new original shows.
   const [translatedFor, setTranslatedFor] = useState<string | null>(null);
   const on = translatedFor === props.content;
-  const locale = props.translatable === false ? null : browserLocale();
+  const reader = useReaderLocale();
+  const locale =
+    props.translatable === false || readsEnglish(reader) ? null : reader;
   const translation = useTranslatePortalContent(
     {
       param: { workspace: on && locale ? props.workspaceId : "" },
@@ -40,7 +40,16 @@ export function TranslatedText(props: TranslatedTextProps) {
   const shown = on ? translation.data : undefined;
   return (
     <>
-      {shown?.title ? <p className="font-medium">{shown.title}</p> : null}
+      {shown ? (
+        <p className="text-xs text-muted-foreground">
+          {t("assist.translated")}
+        </p>
+      ) : null}
+      {shown?.title ? (
+        <p className="font-medium" dir="auto">
+          {shown.title}
+        </p>
+      ) : null}
       <MarkdownContent
         customer
         content={shown?.content ?? props.content}

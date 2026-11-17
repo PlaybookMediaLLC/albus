@@ -34,6 +34,11 @@ test("CLI provisions then verifies the requested deployment, and fails closed on
       child.execFileSync = (binary, args) => {
         const key = args.slice(0,2).join(' ');
         if (process.env.SCENARIO === 'provider-error' && key === 'deployment group') throw new Error('SENSITIVE_PROVIDER_ERROR');
+        if (key === 'deployment operation') return JSON.stringify([
+          {properties:{provisioningState:'Succeeded',targetResource:{resourceType:'Microsoft.Cache/redisEnterprise',resourceName:'kaneo'}}},
+          {properties:{provisioningState:'Failed',targetResource:{resourceType:'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules',resourceName:'kaneo/app-platform-0'},
+            statusMessage:{error:{code:'ResourceOperationFailure',message:'SENSITIVE_PROVIDER_ERROR',details:[{code:'ServerIsBusy',message:'SENSITIVE_PROVIDER_ERROR'}]}}}},
+        ]);
         if (binary === 'az') {
           if (key === 'account show') return JSON.stringify({id:process.env.AZURE_SUBSCRIPTION_ID});
           if (key === 'deployment group') return JSON.stringify({properties:{outputs:{postgresHost:{value:'db.example'},redisHost:{value:'redis.example'},redisDatabaseId:{value:'/redis/default'}}}});
@@ -133,6 +138,11 @@ test("CLI provisions then verifies the requested deployment, and fails closed on
         result.stdout + result.stderr,
         /private-auth-secret|private-redis-key|private-postgres-password|SENSITIVE_PROVIDER_ERROR|private-s3-secret/,
       );
+      if (scenario === "provider-error")
+        assert.match(
+          result.stderr,
+          /Failed Azure operations: Microsoft\.DBforPostgreSQL\/flexibleServers\/firewallRules\/kaneo\/app-platform-0 \(ResourceOperationFailure, ServerIsBusy\)$/m,
+        );
       if (succeeds) {
         const proof = JSON.parse(readFileSync(resultPath));
         assert.equal(proof.deploymentId, "release-1");

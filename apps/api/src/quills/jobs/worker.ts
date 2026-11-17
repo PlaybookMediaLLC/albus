@@ -27,6 +27,7 @@ import {
   handOffTaskStatus,
   runTaskSyncJob,
 } from "../integrations/task-sync-job";
+import { runTaskRuleJob } from "../integrations/task-rule-job";
 import {
   claimFrom,
   enqueueQuillsEvent,
@@ -60,11 +61,13 @@ const handlers: Record<
   "quills.domain_check": runDomainCheckJob,
   "quills.wipe": runWipeJob,
   "quills.transfer": runTransferJob,
-  // A task-sync job (RFC 0003, D12) names its Kaneo task.
+  // A task-sync job (RFC 0003, D12) names its Kaneo task; a board task rule job (RFC 0005) names its rule.
   "quills.workflow": (workspaceId, job) =>
     "taskId" in (job.payload as object)
       ? runTaskSyncJob(workspaceId, job)
-      : runWorkflowJob(workspaceId, job),
+      : "rule" in (job.payload as object)
+        ? runTaskRuleJob(workspaceId, job)
+        : runWorkflowJob(workspaceId, job),
   "quills.ai": runAiJob,
 };
 

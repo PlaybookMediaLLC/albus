@@ -41,6 +41,7 @@ function PopoverPopup({
   sideOffset = 4,
   alignOffset = 0,
   tooltipStyle = false,
+  variant = "panel",
   anchor,
   positionerClassName,
   ...props
@@ -50,6 +51,8 @@ function PopoverPopup({
   sideOffset?: PopoverPrimitive.Positioner.Props["sideOffset"];
   alignOffset?: PopoverPrimitive.Positioner.Props["alignOffset"];
   tooltipStyle?: boolean;
+  /** "panel" pads text and forms; "menu" keeps lists and pickers close to the edge. */
+  variant?: "panel" | "menu";
   anchor?: PopoverPrimitive.Positioner.Props["anchor"];
   positionerClassName?: string;
 }) {
@@ -79,10 +82,11 @@ function PopoverPopup({
         >
           <PopoverPrimitive.Viewport
             className={cn(
-              "relative size-full max-h-(--available-height) overflow-clip px-(--viewport-inline-padding) py-0.5 [--viewport-inline-padding:--spacing(1)] has-data-[slot=calendar]:p-2 data-instant:transition-none **:data-current:data-ending-style:opacity-0 **:data-current:data-starting-style:opacity-0 **:data-previous:data-ending-style:opacity-0 **:data-previous:data-starting-style:opacity-0 **:data-current:w-[calc(var(--popup-width)-2*var(--viewport-inline-padding)-2px)] **:data-previous:w-[calc(var(--popup-width)-2*var(--viewport-inline-padding)-2px)] **:data-current:opacity-100 **:data-previous:opacity-100 **:data-current:transition-opacity **:data-previous:transition-opacity",
-              tooltipStyle
+              "relative size-full max-h-(--available-height) overflow-clip px-(--viewport-inline-padding) has-data-[slot=calendar]:p-2 data-instant:transition-none **:data-current:data-ending-style:opacity-0 **:data-current:data-starting-style:opacity-0 **:data-previous:data-ending-style:opacity-0 **:data-previous:data-starting-style:opacity-0 **:data-current:w-[calc(var(--popup-width)-2*var(--viewport-inline-padding)-2px)] **:data-previous:w-[calc(var(--popup-width)-2*var(--viewport-inline-padding)-2px)] **:data-current:opacity-100 **:data-previous:opacity-100 **:data-current:transition-opacity **:data-previous:transition-opacity",
+              tooltipStyle || variant === "menu"
                 ? "py-0.5 [--viewport-inline-padding:--spacing(1)]"
-                : "not-data-transitioning:overflow-y-auto",
+                : "py-4 [--viewport-inline-padding:--spacing(4)]",
+              !tooltipStyle && "not-data-transitioning:overflow-y-auto",
             )}
             data-slot="popover-viewport"
           >

@@ -1,7 +1,8 @@
 # RFC 0005: requests become Kaneo tasks
 
-Status: draft; decisions 1–5 made (2026-11-15), delegated by the owner; scope rule added
-(2026-11-15, section 1.1). Owner: to be decided.
+Status: phases 1 and 2 built (2026-11-17); phases 3 and 4 not started. Decisions 1–5 made
+(2026-11-15), delegated by the owner; scope rule added (2026-11-15, section 1.1). Owner: to be
+decided.
 
 ## 1. Summary
 
@@ -61,14 +62,25 @@ task panel in 7.3 are affected.
 | Piece | Where | What it does |
 |---|---|---|
 | Board ↔ project links | `quills.board_projects`, `linkQuillsBoardToProject` | Many to many. **Also a visibility rule**: a linked board is visible only to teammates who can open one of its projects (`feedback/visibility.ts`). |
-| Request ↔ task links | `quills.post_tasks`, `linkQuillsPostToTask`, `unlinkQuillsPostFromTask`, `listQuillsLinks` | Many to many. The link cascades when the task is deleted. No web screen creates or removes a link yet. |
+| Request ↔ task links | `quills.post_tasks` (with `source`: `manual`, `rule` or `import`; migration `0034_post_task_source`), `linkQuillsPostToTask`, `unlinkQuillsPostFromTask`, `listQuillsLinks` | Many to many. The link cascades when the task is deleted. Existing rows read as `manual`. `created_by` was not added: the audit row of `post.task_linked` names the actor. |
+| Create a task from a request | `createQuillsPostTask` (POST `/posts/{postId}/tasks`, `feedback/post-tasks.ts`) | Phase 1. Creates the task as the caller through Kaneo's `createTask` controller, then links it and writes a `task.created` request activity row and `post.task_linked`. Needs Quills `update`, Kaneo `task:create` and access to the project; an archived project or a missing column answers 409. If the link write fails, the new task is deleted (`revert`). |
+| The task that a request becomes | `integrations/post-task.ts#taskDraft` | Title, a Markdown description (request text, a link to `/feedback/{ws}/posts/{id}`, votes, companies, the top 3 segments and the linked conversations; no customer names and no revenue, because every project member reads the task and revenue needs `quills:view_revenue`), `posts.eta` as the due date, the request owner as assignee when Kaneo allows it, and the board's delivery priority (default `medium`). Labels from tags are not set yet. |
+| A request's tasks | `listQuillsPostTasks` (GET `/posts/{postId}/tasks`) | Phase 1. The key, title, column and assignee of each linked task in a project that the caller can open, and a `hidden` count of the others. It replaces the 100-link scan of the request page. |
+| Kaneo writes | `quills/framework/platform-writes.ts` | The one module that calls Kaneo's `createTask`, `createComment` and `deleteTask` controllers (scope rule 3). `platform-reads.ts#taskTarget` checks the teammate's Kaneo `task:create`, project access, a live project, Kaneo's plan check and the column first. The typecheck pins the controller signatures. |
+| Request page Tasks section | `pages/team-post/parts/post-links.tsx`, `linked-task.tsx`, `ui/post-tasks/*` | Each linked task with its key, title, column and assignee, "Unlink", "Create task" (project, column and title; the board's delivery project is the default) and "Link existing task" (Kaneo's own task search). Hidden tasks show as a count. |
+| Roadmap card actions | `pages/team-roadmap/parts/roadmap-card-body.tsx` | Phase 1. "Create task" and "Link existing task" in the card menu open the same dialogs. The task chip (7.4) is phase 3. |
+| Board delivery project and rule | `boards.settings.delivery`, `setQuillsBoardDelivery`, `clearQuillsBoardDelivery`, `getQuillsBoardSettings`, `pages/team-boards/parts/delivery-form.tsx` | Phase 2. The project, the column, the priority and the trigger status (off by default, decision 1). Saving needs `manage_settings` and Kaneo `task:create` in a live project. It never writes `board_projects`, so it never changes who sees the board (decision 4). |
+| Creation rule | `integrations/task-rule-job.ts` (`taskRuleDue` in the fan-out, `runTaskRuleJob` on `quills.workflow`) | Phase 2. After a teammate's `post.status_changed` commits into the trigger status, one job creates the task as that teammate and links it with `source: rule`. A change without a teammate or from task sync (`payload.source`) does nothing. One task per request and project: the job skips a request that already links a task in the project, and a `task-rule:{post}:{project}` delivery ledger row stops retries and later moves. |
+| Rule failure | `task.create_failed` request activity row, `post.task_create_failed` event, in-app notification `task_create_failed` | Phase 2. A missing permission, an archived project, a deleted column, the plan check or a Kaneo refusal is final at once; another error retries 3 times first. Only the teammate who moved the request is told. |
+| Request moves back | `integrations/task-rule-job.ts` (rule `comment`) | Decision 3. A teammate's move to a closed status, from complete to active, or to an earlier active status comments once on each linked task that the teammate may update. The task stays. `setQuillsPostStatus` now records `previousStatusId` in its event for this. |
 | Task done → request status | `integrations/task-sync.ts`, `task-sync-job.ts`, board setting `taskSync.statusOnTaskDone` | When a linked task enters a final column, a durable Quills job sets the request to the mapped status. The existing fanout then notifies voters. |
-| Linked task on the request page | `pages/team-post/parts/linked-task.tsx` | Shows the task title. A task in a project the viewer cannot open shows as unavailable. |
-| Request target date | `posts.eta` | The roadmap shows it. |
-| Kaneo task creation | `task/controllers/create-task.ts`, capability `createTasks: { task: ["create"] }` | Needs the project, the creator, the title and a column status; publishes `task.created`. |
+| Request target date | `posts.eta` | The roadmap shows it; a new task gets it as its due date. |
+| Send an update (#92) | `previewQuillsPostUpdate`, `sendQuillsPostUpdate` (`feedback/post-updates.ts`, `integrations/post-update.ts`), `quills.post_updates` (migration `0036_post_updates`), `team/post-update/*` (request menu → "Send update") | One message on every chosen channel: a public team comment on the request, mail to the followers (`PostUpdateEmail`), a reply in each linked conversation (it never reopens or claims it, and that customer gets no mail), and Slack connections that send the board's comments. Segment and language targets. The preview counts with the same steps as the send, and the send stores its recipients for the mail worker, which checks each address and the request's visibility again at send time. Needs Quills `update` and `manage_settings` (no `quills:release` permission exists; adding one changes Kaneo-owned `packages/permissions`) and an explicit "this shipped" confirmation, because no verified release record exists yet (#11). A repeated idempotency key returns the first send. At most 1,000 followers and 100 conversations per send. |
+| Kaneo task creation | `task/controllers/create-task.ts`, capability `createTasks: { task: ["create"] }` | Needs the project, the creator, the title and a column status; publishes `task.created`. Quills calls it only through `platform-writes.ts`. |
 
-So the data links exist. The missing parts are: a way to create or link a task from Quills, a
-rule that does it on a status change, a column-to-status map, and a clear project choice.
+Not built yet: the "Create task?" suggestion for a change without a teammate (decision 2; no such
+status change reaches the rule today except task sync, which already links its task), labels from
+tags, moving links on a merge (4.3), the bulk action, the backfill and everything in phases 3 and 4.
 
 ## 3. Goals and non-goals
 
@@ -172,7 +184,7 @@ The flow:
 | Task field | Source | Note |
 |---|---|---|
 | Title | Request title | Plain text, at most the Kaneo limit. |
-| Description | Template | Request text, a link to `/feedback/{ws}/posts/{id}`, votes, number of companies and MRR, top segments, and the number of linked conversations. **No customer names or emails** — Kaneo project members do not need personal data to do the work, and the link shows it to those who may see it. |
+| Description | Template | Request text, a link to `/feedback/{ws}/posts/{id}`, votes, number of companies, top segments, and the number of linked conversations. No MRR: revenue needs `quills:view_revenue`, and every project member reads the task. **No customer names or emails** — Kaneo project members do not need personal data to do the work, and the link shows it to those who may see it. |
 | Column / status | Rule or dialog | Default: the first non-final column of the project. |
 | Assignee | Request owner | Only if the owner is a member who can open the project; else empty. |
 | Due date | `posts.eta` | Empty when the request has no target date. |

@@ -153,10 +153,14 @@ credential. They add no server permission:
 Use them in this order:
 
 1. Call `quills_list_boards` and `quills_list_statuses` for the IDs.
-2. Call `quills_list_posts` to search posts (board, status, search, sort and limit), and
+2. Call `quills_list_posts` to search posts (board, status, search, sort and limit), or to rank
+   them by customer value: sort by `votes`, `mrr`, `rice` or `score`, and filter by `minVotes`,
+   `minMrrCents`, `segmentId` or `minScore`. Call
    `quills_get_post` to read one post. A post from the widget includes `widgetMetadata`, for
    example the page URL and the browser.
-3. Call `quills_create_post`, `quills_add_proxy_vote` (a vote for a customer's principal ID),
+3. Call `quills_create_post` (with `authorPrincipalId` and `source` to record a customer's
+   request, for example after a sales call), `quills_add_proxy_vote` (a vote for a customer's
+   principal ID, with `source`),
    `quills_add_comment` or `quills_set_post_status` to change feedback. `quills_add_comment`
    requires `isPrivate`: `true` keeps the comment inside the team, and `false` shows it to
    customers.
