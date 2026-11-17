@@ -16,7 +16,7 @@ const secrets = {
   POSTGRES_PASSWORD: "p@ss/word",
   QUILLS_DEMO_PASSWORD: "demo",
 };
-const ports = { db: 1, api: 2, web: 3 };
+const ports = { db: 1, api: 2, web: 3, smtp: 4, inbox: 5 };
 
 test("parseArgs accepts --reset and refuses other arguments", () => {
   assert.deepEqual(parseArgs([]), { reset: false });
@@ -55,8 +55,12 @@ test("demoEnv points every URL and the database at the demo stack", () => {
     assert.equal(env[key], "http://127.0.0.1:2");
   for (const key of ["KANEO_CLIENT_URL", "CORS_ORIGINS", "VITE_CLIENT_URL"])
     assert.equal(env[key], "http://127.0.0.1:3");
+  // Kaneo's mail goes to the local catcher, whatever the shell or a root .env says.
+  assert.equal(env.SMTP_HOST, "127.0.0.1");
+  assert.equal(env.SMTP_PORT, "4");
+  assert.equal(env.SMTP_SECURE, "false");
   for (const key of [
-    "SMTP_HOST",
+    "SMTP_USER",
     "EMAIL_SMTP_HOST",
     "RESEND_API_KEY",
     "REDIS_URL",

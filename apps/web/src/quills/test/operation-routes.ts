@@ -561,6 +561,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/automation/workflows",
   },
   {
+    operationId: "declineQuillsPortalWidgetLink",
+    method: "DELETE",
+    path: "/api/quills-public/{workspace}/portal/widget-link",
+  },
+  {
     operationId: "declineQuillsWebsiteBrandingOffer",
     method: "POST",
     path: "/api/quills/{workspaceId}/settings/website-branding/decline",
@@ -1326,6 +1331,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills-public/{workspace}/portal/user/stats",
   },
   {
+    operationId: "getQuillsPortalWidgetLink",
+    method: "GET",
+    path: "/api/quills-public/{workspace}/portal/widget-link",
+  },
+  {
     operationId: "getQuillsPost",
     method: "GET",
     path: "/api/quills/{workspaceId}/posts/{postId}",
@@ -1759,6 +1769,11 @@ export const quillsOperationRoutes = [
     operationId: "linkQuillsBoardToProject",
     method: "PUT",
     path: "/api/quills/{workspaceId}/boards/{boardId}/projects/{projectId}",
+  },
+  {
+    operationId: "linkQuillsPortalWidgetProfile",
+    method: "POST",
+    path: "/api/quills-public/{workspace}/portal/widget-link",
   },
   {
     operationId: "linkQuillsPostToTask",
@@ -3099,6 +3114,11 @@ export const quillsOperationRoutes = [
     operationId: "sendQuillsWidgetConversationTyping",
     method: "POST",
     path: "/api/quills-public/{workspace}/widget/conversations/{conversationId}/typing",
+  },
+  {
+    operationId: "sendQuillsWidgetPortalLink",
+    method: "POST",
+    path: "/api/quills-public/{workspace}/widget/portal-link",
   },
   {
     operationId: "setQuillsAgentAvailability",

@@ -128,7 +128,8 @@ export async function readCredentials(
   return { account: null, tokenHash: token ? hashToken(token) : null };
 }
 
-async function portalCaller(
+/** The portal account's customer profile; with `ensure`, created when missing. */
+export async function portalCaller(
   db: Database,
   account: PortalAccount,
   ensure: boolean,
@@ -149,7 +150,7 @@ async function portalCaller(
   let row = await find();
   if (ensure && !row?.principalId) {
     // The customer_membership trigger accepts this link only for the account the entry point vouched for.
-    // The email stays on the Kaneo account: a profile is never matched to an account by email.
+    // A new profile carries no email. Only portal/widget-link.ts matches one by email: the account's verified email.
     if (!row)
       await db
         .insert(customer)
@@ -323,8 +324,8 @@ export const callerActor = (caller: QuillsCaller): ChangeActor => ({
 
 /**
  * Mints a widget session for a customer that a token signed with `secret` identified. Only the
- * SHA-256 hash of the session token is stored. HMAC provenance for the portal handoff is not
- * recorded until the handoff exists.
+ * SHA-256 hash of the session token is stored. The portal link (issue #129, option C) proves the
+ * email by mail, so no HMAC provenance is recorded.
  */
 export async function mintWidgetSession(
   db: Database,
@@ -432,8 +433,8 @@ const strings = (value: unknown) =>
 
 /**
  * What a portal caller may see: the private-portal gate. Fails closed on a malformed config.
- * A verified address with an accepted invite to this workspace is let in. The widget grant of
- * the source waits for the widget handoff decision.
+ * A verified address with an accepted invite to this workspace is let in. The source's widget
+ * grant is not built: issue #129 links profiles by verified email instead (portal/widget-link.ts).
  */
 export async function evaluatePortalAccess(
   db: Database,

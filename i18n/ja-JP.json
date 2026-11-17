@@ -180,6 +180,7 @@
 			"guestError": "ゲストとしてのサインインに失敗しました",
 			"errors": {
 				"account_not_linked": "この認証情報は既存のアカウントにリンクできませんでした。メールでサインインしてアカウントを確認後、再度SSOをお試しください。メールサインインが利用できない場合は、管理者にお問い合わせください。",
+				"invalid_token": "このサインインリンクは有効期限が切れているか、すでに使用されています。続行するには、もう一度サインインしてください。",
 				"oauth_code_verification_failed": "OAuth 認証に失敗しました。もう一度お試しください。",
 				"registration_is_currently_disabled_you_need_a_valid_invitation_to_create_an_account_": "現在、新規登録は無効になっています。アカウントを作成するには有効な招待が必要です。",
 				"use_a_permanent_email_address_disposable_addresses_cannot_create_accounts_": "恒久的なメールアドレスを使用してください。使い捨てのメールアドレスではアカウントを作成できません。"

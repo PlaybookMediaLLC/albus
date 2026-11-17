@@ -205,6 +205,15 @@ export function WidgetHost({
         bridge.current?.post({ type: "quackback:expand", expanded })
       }
       navigation={navigation}
+      {...(visitor.portal && {
+        onOpenPortal: () =>
+          api.sendPortalLink().catch((error: unknown) => {
+            // A portal sign-in linked this profile and ended its session: identify again.
+            if (error instanceof ApiError && error.status === 401)
+              visitor.expire(visitor.session);
+            throw error;
+          }),
+      })}
       {...survey}
       {...data}
       // Screenshots and images go with feedback only, from a visitor that the host app

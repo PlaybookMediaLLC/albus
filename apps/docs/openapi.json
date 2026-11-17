@@ -14578,6 +14578,257 @@
         }
       }
     },
+    "/quills-public/{workspace}/portal/widget-link": {
+      "get": {
+        "operationId": "getQuillsPortalWidgetLink",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Whether a widget profile waits for the caller to link it",
+        "description": "pending is true when a widget profile with the signed-in account's verified email asked for a portal sign-in link (POST /widget/portal-link) in the last 15 minutes and can be linked. The portal then asks the person to confirm (POST) or refuse (DELETE). 404 while the portal is off.",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Workspace ID or slug"
+            },
+            "required": true,
+            "description": "Workspace ID or slug",
+            "name": "workspace",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Whether a link waits for the caller's answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pending": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "pending"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This account is blocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found or archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "linkQuillsPortalWidgetProfile",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Link the caller's widget profile to their portal profile",
+        "description": "The person confirmed the link in the portal. When the signed-in account's email is verified and equals the email of a widget profile that the host app identified in this workspace, and that widget profile asked for a portal sign-in link (POST /widget/portal-link) in the last 15 minutes, the widget profile's votes, comments, conversations, tickets, survey answers, subscriptions and other activity move to the caller's portal profile in one transaction. A duplicate vote, rating or subscription is dropped and its count lowered, so counts do not grow; an opt-out on either profile wins. The widget profile is removed and its sub identifies the portal profile from then on. A blocked or test profile, an unverified email, a workspace member and a portal profile that an earlier link gave another sub are never linked. Each request links once. Without a match nothing changes. 404 while the portal is off.",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Workspace ID or slug"
+            },
+            "required": true,
+            "description": "Workspace ID or slug",
+            "name": "workspace",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The caller's profile and the widget profile it absorbed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "principalId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "mergedPrincipalId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "principalId",
+                    "mergedPrincipalId"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This account is blocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found or archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "declineQuillsPortalWidgetLink",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Refuse the link that a widget profile asked for",
+        "description": "The person did not ask to open the portal from the widget: the pending request for the signed-in account's email ends, and nothing is linked. 404 while the portal is off.",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Workspace ID or slug"
+            },
+            "required": true,
+            "description": "Workspace ID or slug",
+            "name": "workspace",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Whether a pending request ended",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "declined": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "declined"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This account is blocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found or archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/quills-public/{workspace}/widget/config.json": {
       "get": {
         "operationId": "getQuillsWidgetConfig",
@@ -14995,7 +15246,7 @@
           "Quills"
         ],
         "summary": "Identify a widget visitor with a signed token",
-        "description": "Creates or updates the customer that the host app's signed ssoToken names and returns a widget session token for the Authorization header. The token needs sub (or id), email and exp. Optional claims: custom attributes that match a user attribute definition (at most 50; others are dropped), segments (at most 50 manual segment slugs; it replaces the widget-sourced memberships, and a missing claim removes them). Identify also subscribes the person to the changelog when the workspace auto-subscribes.",
+        "description": "Creates or updates the customer that the host app's signed ssoToken names and returns a widget session token for the Authorization header. The token needs sub (or id), email and exp. Optional claims: custom attributes that match a user attribute definition (at most 50; others are dropped), segments (at most 50 manual segment slugs; it replaces the widget-sourced memberships, and a missing claim removes them). Identify also subscribes the person to the changelog when the workspace auto-subscribes. A profile that a portal sign-in linked to an account resolves only by its sub and email together, and the token never changes its name, email or avatar. canPortalHandoff is true while the portal is on and the instance can mail a sign-in link (mail delivery on, login form on, no captcha): POST /widget/portal-link then asks for one.",
         "security": [],
         "parameters": [
           {
@@ -15608,7 +15859,7 @@
           "Quills"
         ],
         "summary": "Validate the widget session",
-        "description": "user is null for an anonymous visitor. The session expires 7 days after identify.",
+        "description": "user is null for an anonymous visitor. The session expires 7 days after identify. canPortalHandoff is true for an identified visitor while the portal is on and the instance can mail a sign-in link (mail delivery on, login form on, no captcha).",
         "security": [],
         "parameters": [
           {
@@ -15792,6 +16043,110 @@
           },
           "404": {
             "description": "Workspace not found or archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quills-public/{workspace}/widget/portal-link": {
+      "post": {
+        "operationId": "sendQuillsWidgetPortalLink",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Mail the identified visitor a sign-in link to the portal",
+        "description": "Sends the instance's sign-in link to the email of the visitor that the host app identified. The link works once, expires after 5 minutes and opens the portal's My feedback page signed in. For the next 15 minutes, the portal asks a signed-in account with that verified address to confirm linking this widget profile (GET, POST and DELETE /portal/widget-link). A used or expired link opens the sign-in page with the error. With registration closed, only an address that has an account gets the mail, and delivery is if_account. 403 for an anonymous visitor, or when the instance cannot mail a sign-in link (no mail delivery, login form off, captcha on); 404 while the portal is closed.",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Workspace ID or slug"
+            },
+            "required": true,
+            "description": "Workspace ID or slug",
+            "name": "workspace",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The sign-in link was handed to the instance's mail delivery",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sent": {
+                      "type": "boolean"
+                    },
+                    "delivery": {
+                      "type": "string",
+                      "enum": [
+                        "sent",
+                        "if_account"
+                      ],
+                      "description": "sent: the instance mails any address. if_account: registration is closed, so it mails only an address that has an account; the API never says which, so the visitor is told so."
+                    }
+                  },
+                  "required": [
+                    "sent",
+                    "delivery"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Valid widget session required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Anonymous visitor, blocked person, or the instance cannot send a sign-in link",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found or archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The caller changed during the request; retry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts",
             "content": {
               "application/json": {
                 "schema": {
@@ -56700,7 +57055,7 @@
           "Quills"
         ],
         "summary": "Update a customer's profile and attributes",
-        "description": "For a lead, `email` sets the contact email. Attributes need a user attribute definition; null removes one.",
+        "description": "For a lead, `email` sets the contact email. Attributes need a user attribute definition; null removes one. A portal customer's profile, linked to their sign-in account, keeps its email, email verification and external ID (409).",
         "parameters": [
           {
             "schema": {
@@ -56954,7 +57309,7 @@
             }
           },
           "409": {
-            "description": "Email or external ID already in use",
+            "description": "Email or external ID already in use, or the profile is linked to a sign-in account",
             "content": {
               "application/json": {
                 "schema": {
