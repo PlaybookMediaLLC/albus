@@ -45,7 +45,20 @@ const bakedWorkspace = served?.[2];
 // (they don't want a default widget spawning later).
 let bootSuppressed = false;
 
+/** State reads that the npm entry exposes as methods; the script tag answers them by name too. */
+const queries = {
+  isOpen: () => sdk.isOpen(),
+  getUser: () => sdk.getUser(),
+  isIdentified: () => sdk.isIdentified(),
+  getState: () => sdk.getState(),
+};
+
 function dispatch(command: unknown, a?: unknown, b?: unknown): unknown {
+  if (
+    typeof command === "string" &&
+    Object.prototype.hasOwnProperty.call(queries, command)
+  )
+    return queries[command as keyof typeof queries]();
   let options = a;
   if (command === "init" || command === "destroy") bootSuppressed = true;
   if (command === "init" && bakedUrl) {
@@ -72,6 +85,7 @@ const queued: IArguments[] = [
 const live = function (...args: unknown[]) {
   return dispatch(args[0], args[1], args[2]);
 };
+Object.assign(live, queries);
 w.Quills = live;
 if (legacy) w.Quackback = live;
 

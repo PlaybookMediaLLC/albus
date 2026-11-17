@@ -13,7 +13,12 @@ import type { ContractEnv } from "../framework/contract";
 export function customer(
   env: ContractEnv,
   workspaceId: string,
-  options: { lead?: boolean; email?: string; companyId?: string } = {},
+  options: {
+    lead?: boolean;
+    email?: string;
+    companyId?: string;
+    externalId?: string;
+  } = {},
 ) {
   return env.scoped(workspaceId, async (db) => {
     const [identity] = await db
@@ -25,6 +30,7 @@ export function customer(
           (options.lead
             ? `${env.id("lead")}@anon.quills.io`
             : `${env.id("customer")}@example.test`),
+        ...(options.externalId && { externalId: options.externalId }),
       })
       .returning({ id: user.id });
     const [row] = await db

@@ -15,6 +15,8 @@ export const updatePortalSettingsFixture = {
           requireApproval: "value",
           holdImages: false,
           holdLinks: false,
+          holdSpam: false,
+          holdSensitive: false,
         },
         access: {
           visibility: "value",
@@ -24,6 +26,7 @@ export const updatePortalSettingsFixture = {
         },
         nav: [],
         supportEnabled: false,
+        signIn: { mode: "account", widgetSignIn: false, ssoUrl: null },
         receiptId: null,
       },
       ...overrides,

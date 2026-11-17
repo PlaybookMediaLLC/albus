@@ -41,6 +41,7 @@ import {
   ownMessageIds,
   readMailTags,
   replyAddress,
+  postReplyAddress,
   replyAddressConversation,
   safeEqual,
   verifySvixSignature,
@@ -312,6 +313,71 @@ describe.skipIf(!url)("signed audience with PostgreSQL", () => {
       messageId: null,
     });
   });
+  it("turns a subscriber's reply to a post notification into their comment, and nobody else's", async () => {
+    const env = contractEnv();
+    const postId = await post(env, env.a);
+    const visitor = await env.widgetVisitor(env.a);
+    const [{ email }] = (
+      await pool.query(
+        "SELECT c.email FROM quills.principal p JOIN quills.customer_identity c ON c.id = p.user_id WHERE p.id = $1",
+        [toUuid(visitor.principalId)],
+      )
+    ).rows;
+    await pool.query(
+      "INSERT INTO quills.post_subscriptions (id, workspace_id, post_id, principal_id, reason) VALUES (gen_random_uuid(), $1, $2, $3, 'manual')",
+      [env.a, toUuid(postId), toUuid(visitor.principalId)],
+    );
+    const [{ slug }] = (
+      await pool.query(
+        "SELECT slug FROM quills.settings WHERE workspace_id = $1",
+        [env.a],
+      )
+    ).rows;
+    const address = postReplyAddress({ id: env.a, slug }, postId)!;
+    expect(address).toMatch(/\+p[0-9a-z]{38}@in\.example\.test$/);
+    const reply = (from: string, messageId: string) => {
+      const raw = JSON.stringify({
+        type: "email.received",
+        data: {
+          from,
+          to: [address],
+          subject: "Re: New comment",
+          text: `Yes please, we need this.\n\nOn Mon, Team wrote:\n> New comment on "Contract"`,
+          headers: { "message-id": messageId },
+        },
+      });
+      return app.request("/quills-public/signed/chat/email/inbound", {
+        method: "POST",
+        headers: svix(raw),
+        body: raw,
+      });
+    };
+    const first = `<${randomUUID()}@customer.test>`;
+    const stored = (await (await reply(email, first)).json()) as {
+      status: string;
+      commentId: string;
+    };
+    expect(stored.status).toBe("received");
+    const comments = await pool.query(
+      "SELECT principal_id, content FROM quills.post_comments WHERE post_id = $1",
+      [toUuid(postId)],
+    );
+    expect(comments.rows).toEqual([
+      {
+        principal_id: toUuid(visitor.principalId),
+        content: "Yes please, we need this.",
+      },
+    ]);
+    expect(
+      (
+        await (
+          await reply("mallory@evil.test", `<${randomUUID()}@evil.test>`)
+        ).json()
+      ).status,
+    ).toBe("from_mismatch");
+    expect((await (await reply(email, first)).json()).status).toBe("duplicate");
+  });
+
   it("stores only the trusted receiver's SPF, DKIM and DMARC results", async () => {
     const env = contractEnv();
     const send = async (headers: unknown) => {

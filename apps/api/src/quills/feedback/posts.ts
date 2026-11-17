@@ -3,6 +3,7 @@ import {
   asc,
   count,
   desc,
+  gte,
   eq,
   inArray,
   isNotNull,
@@ -10,6 +11,11 @@ import {
   sql,
 } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
+import {
+  attachment,
+  attachmentFields,
+  readAttachments,
+} from "../portal/feedback/attachments";
 import { flexibleToTypeIdSchema } from "@kaneo/ids/zod";
 import type { TypeId } from "@kaneo/ids";
 import {
@@ -157,6 +163,10 @@ const filterQuery = filters.extend({
   cursor: flexibleToTypeIdSchema("post").optional(),
   limit: pagingNumber(1, 100, 20),
   authorPrincipalId: flexibleToTypeIdSchema("principal").optional(),
+  updatedSince: z.iso.datetime({ offset: true }).max(64).optional().openapi({
+    description:
+      "Only posts changed at or after this time, for an integration that syncs changes",
+  }),
   // #79: triage by customer value.
   minVotes: pagingNumber(0, 1000000).optional(),
   minMrrCents: pagingNumber(0, 2147483647).optional().openapi({
@@ -221,6 +231,9 @@ const listPosts = defineQuillsRoute({
         filterConditions(db, query, projects),
         query.authorPrincipalId &&
           eq(posts.principalId, query.authorPrincipalId),
+        query.updatedSince
+          ? gte(posts.updatedAt, new Date(query.updatedSince))
+          : undefined,
         query.minVotes === undefined
           ? undefined
           : sql`${posts.voteCount} >= ${query.minVotes}`,
@@ -370,6 +383,8 @@ const getPost = defineQuillsRoute({
     viewerPrincipalId: z.string(),
     /** Host-page context that the widget sent with the post, such as pageUrl and browser. */
     widgetMetadata: z.record(z.string(), z.string()).nullable(),
+    /** Images the author attached; GET /files/{fileId} gives a download URL. */
+    attachments: z.array(attachment),
   }),
   responseDescription: "Post",
   errors,
@@ -398,6 +413,9 @@ const getPost = defineQuillsRoute({
       ...(await loadPost(db, params.postId)),
       hasVoted: voted.length > 0,
       viewerPrincipalId: actor.principalId,
+      attachments: (await readAttachments(db, { postIds: [post.id] })).map(
+        attachmentFields,
+      ),
       // An imported row may hold other JSON: only string values are returned.
       widgetMetadata: context?.widgetMetadata
         ? Object.fromEntries(

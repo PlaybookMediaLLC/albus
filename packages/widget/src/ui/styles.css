@@ -111,6 +111,12 @@
 .qb-avatar { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 32px; height: 32px; background: #e6e3de; color: #585149; border-radius: 50%; font-size: 12px; font-weight: 600; }
 .qb-team-avatar { width: 28px; height: 28px; background: #353b39; color: #fff; margin-bottom: 14px; display: flex; }
 .qb-team-avatar svg { width: 16px; height: 16px; }
+.qb-team { position: relative; display: inline-flex; margin-bottom: 14px; }
+.qb-team .qb-team-avatar { margin-bottom: 0; }
+.qb-team-avatars { display: flex; }
+.qb-team-avatars .qb-avatar { width: 28px; height: 28px; box-shadow: 0 0 0 2px var(--qb-card); margin-inline-start: -6px; }
+.qb-team-avatars .qb-avatar:first-child { margin-inline-start: 0; }
+.qb-online-dot { position: absolute; inset-inline-end: -2px; bottom: -2px; width: 10px; height: 10px; border-radius: 50%; background: #16a34a; box-shadow: 0 0 0 2px var(--qb-card); }
 .qb-contact-card h2 { font-size: 15px; font-weight: 600; color: var(--qb-ink); line-height: 20px; letter-spacing: -.21px; }
 .qb-contact-card p { color: var(--qb-muted); font-size: 13px; margin-top: 2px; line-height: 18px; }
 .qb-widget .qb-message-prompt { display: flex; align-items: center; justify-content: space-between; width: 100%; background: var(--qb-input); border: 1px solid var(--qb-line); border-radius: 12px; padding-block: 6px; padding-inline: 13px 7px; margin-top: 14px; color: var(--qb-muted); font-size: 13px; }
@@ -321,6 +327,10 @@
 .qb-widget .qb-suggestions button { width: 100%; display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 8px 0; }
 .qb-suggestions svg { width: 16px; height: 16px; }
 .qb-suggestions svg:last-child { margin-inline-start: auto; width: 12px; }
+.qb-suggestion { display: flex; align-items: center; gap: 8px; }
+.qb-widget .qb-suggestion > button:first-child { flex: 1; min-width: 0; }
+.qb-widget .qb-suggestions .qb-votes { width: auto; flex-shrink: 0; gap: 4px; padding: 4px 8px; }
+.qb-suggestions .qb-votes svg { margin-inline-start: 0; width: 14px; }
 .qb-widget .qb-draft-button { align-self: flex-start; }
 .qb-draft { background: var(--qb-card); padding: 12px; border-radius: 12px; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
 .qb-draft h2, .qb-draft h3 { font-size: 12px; font-weight: 600; color: var(--qb-muted); }
@@ -435,6 +445,8 @@
 .qb-status-dot { width: 12px; height: 12px; border: 1.5px solid var(--qb-status-color, #83817f); border-radius: 5px; display: inline-block; flex-shrink: 0; box-shadow: inset 0 -4px var(--qb-status-color, #83817f); }
 .qb-roadmap-group h2 { font-size: 14px; font-weight: 600; color: var(--qb-ink); display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .qb-widget .qb-roadmap-item { width: calc(100% - 6px); display: flex; align-items: flex-start; gap: 12px; position: relative; margin-inline-start: 6px; padding-block: 12px; padding-inline: 16px 0; border-inline-start: 1px solid color-mix(in srgb, var(--qb-status-color) 40%, transparent); }
+.qb-widget .qb-roadmap-open { flex: 1; min-width: 0; display: flex; text-align: start; }
+.qb-for-you { margin-inline-start: 6px; padding: 1px 6px; border-radius: 10px; background: var(--qb-active); color: var(--qb-on-active); font-size: 11px; font-weight: 500; }
 .qb-roadmap-item::before { content: ""; position: absolute; inset-inline-start: -5px; top: 16px; width: 10px; height: 10px; border: 1.5px solid var(--qb-status-color); border-radius: 50%; background: var(--qb-bg); }
 .qb-roadmap-item::after { content: ""; position: absolute; inset-inline: 16px 0; bottom: 0; border-bottom: 1px solid var(--qb-line); }
 .qb-roadmap-item .qb-feedback-copy > span { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
@@ -463,6 +475,7 @@
 .qb-annotation h2 { font-size: 18px; font-weight: 600; color: var(--qb-ink); }
 .qb-annotation p { font-size: 13px; line-height: 1.5; margin: 12px 0; }
 .qb-annotation-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.qb-annotation-color { display: inline-flex; flex-shrink: 0; align-items: center; gap: 6px; font-size: 12px; white-space: nowrap; }
 .qb-widget .qb-annotation-tools button { display: inline-flex; align-items: center; gap: 4px; padding: 8px 10px; background: var(--qb-card); border-radius: 8px; font-size: 12px; }
 .qb-annotation-tools button[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--qb-muted); }
 .qb-annotation-tools svg { width: 14px; height: 14px; }
@@ -471,6 +484,7 @@
 .qb-annotation legend { font-size: 12px; margin-bottom: 8px; }
 .qb-annotation label { min-width: 0; font-size: 11px; }
 .qb-annotation input { display: block; width: 100%; min-width: 0; background: var(--qb-input); border: 1px solid var(--qb-line); border-radius: 6px; padding: 6px; }
+.qb-annotation .qb-annotation-color input { width: 32px; height: 28px; padding: 2px; }
 .qb-annotation footer { margin-top: 16px; font-size: 13px; }
 @media (pointer: coarse) {
   .qb-widget :is(.qb-send-round, .qb-attachment-tools .qb-icon-button, .qb-comment-actions button, .qb-roadmap-more, .qb-follow-request, .qb-annotation-tools button) { min-width: 44px; min-height: 44px; }
@@ -526,8 +540,14 @@
 .qb-survey textarea { display: block; width: 100%; margin-top: 12px; padding: 8px 12px; border: 1px solid var(--qb-line); border-radius: 12px; background: var(--qb-input); color: var(--qb-ink); font: inherit; font-size: 13px; resize: vertical; }
 .qb-survey .qb-composer-actions { margin-top: 12px; }
 .qb-survey [role="status"] { color: var(--qb-ink); font-size: 13px; }
+.qb-contact-email { margin: 0 4px 16px; padding: 14px; border-radius: 14px; background: var(--qb-surface, rgba(0,0,0,.03)); display: grid; gap: 8px; font-size: 13px; }
+.qb-contact-email h2 { font-size: 14px; font-weight: 600; color: var(--qb-ink); }
+.qb-contact-email form { display: grid; gap: 8px; }
+.qb-contact-email input { min-height: 36px; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--qb-line); background: var(--qb-bg); color: var(--qb-text); font: inherit; }
+.qb-contact-email button[type="submit"] { justify-self: start; min-height: 32px; padding: 0 14px; border-radius: 16px; background: var(--qb-active); color: var(--qb-on-active); }
+.qb-updates-subscribe { margin: -4px 0 12px; }
 
 /* Right to left (issue #117): the logical properties above flip the layout; icons that point the
    way of reading flip with it, and the detail view slides in from the other side. */
 .qb-widget[dir="rtl"] { --qb-dir-x: -1; }
-.qb-widget[dir="rtl"] :is(.qb-icon-back, .qb-icon-chevron, .qb-icon-arrow) { transform: scaleX(-1); }
+.qb-widget[dir="rtl"] :is(.qb-icon-back, .qb-icon-chevron, .qb-icon-arrow, .qb-icon-external) { transform: scaleX(-1); }

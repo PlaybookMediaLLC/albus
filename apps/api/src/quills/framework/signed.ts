@@ -541,6 +541,54 @@ export function replyAddressConversation(
 }
 
 /**
+ * The signed reply address of a post notification (`<slug>+p<post><tag>@domain`, gap G-27): a
+ * subscriber's reply by mail becomes a comment. Null without inbound mail or for a long slug.
+ * The tag binds the post to this workspace, as for a conversation.
+ */
+export function postReplyAddress(
+  workspace: { id: string; slug: string },
+  postId: string,
+) {
+  const key = replyKey();
+  const domain = env("EMAIL_INBOUND_DOMAIN").toLowerCase();
+  const suffix = postId.slice(postId.lastIndexOf("_") + 1);
+  if (
+    !key ||
+    !domain ||
+    !isTypeId(postId, "post") ||
+    !/^[a-z0-9][a-z0-9_-]*$/.test(workspace.slug)
+  )
+    return null;
+  const local = `${workspace.slug}+p${suffix}${replyTag(key, workspace.id, postId)}`;
+  return local.length <= 64 ? `${local}@${domain}` : null;
+}
+
+/** The post that a verified post reply address among `addresses` names in this workspace, or null. */
+export function replyAddressPost(
+  addresses: readonly string[],
+  workspaceId: string,
+) {
+  const key = replyKey();
+  const domain = env("EMAIL_INBOUND_DOMAIN").toLowerCase();
+  if (!key || !domain) return null;
+  for (const address of addresses.slice(0, 50)) {
+    const bare = (/<([^<>]+)>\s*$/.exec(address)?.[1] ?? address)
+      .trim()
+      .toLowerCase();
+    const match =
+      /^([a-z0-9][a-z0-9_-]*)\+p([0-9a-z]{26})([0-9a-z]{12})@(.+)$/.exec(bare);
+    if (!match || match[4] !== domain) continue;
+    const postId = `post_${match[2]}`;
+    if (
+      isTypeId(postId, "post") &&
+      safeEqual(match[3]!, replyTag(key, workspaceId, postId))
+    )
+      return postId;
+  }
+  return null;
+}
+
+/**
  * A six-digit address verification code (widget/contact-email.ts). It is derived from the workspace's
  * widget secret and the pending request, so no code is stored and the mail worker can send the
  * same code again after a failed attempt. A new request (new nonce) or a rotated secret changes it.

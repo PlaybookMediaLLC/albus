@@ -7,6 +7,7 @@ import { relativeTime } from "./relative-time.js";
 import { useAction } from "./useAction.js";
 import type { useDrafts } from "./useDrafts.js";
 import type { FeedbackPost, WidgetViewProps } from "./types.js";
+import { useLocale, useT } from "./i18n/useT.js";
 
 export function FeedbackDetail({
   post,
@@ -25,8 +26,10 @@ export function FeedbackDetail({
   drafts: ReturnType<typeof useDrafts>;
   offline: boolean;
 }) {
+  const t = useT();
+  const locale = useLocale();
   const action = useAction();
-  const age = relativeTime(post.createdAt);
+  const age = relativeTime(post.createdAt, locale, t("Just now"));
   return (
     <article className="qb-detail qb-request-detail">
       <div className="qb-byline">
@@ -46,7 +49,7 @@ export function FeedbackDetail({
       <div className="qb-request-summary">
         <span className="qb-request-status" data-status={post.status ?? "open"}>
           <span className="qb-status-dot" />
-          {feedbackStatusLabels[post.status ?? "open"]}
+          {t(feedbackStatusLabels[post.status ?? "open"])}
         </span>
         <span className="qb-avatar-stack">
           {post.voters?.slice(0, 4).map((person) => (
@@ -56,7 +59,7 @@ export function FeedbackDetail({
         <button
           type="button"
           className="qb-votes"
-          aria-label={`${post.voted ? "Voted" : "Vote"}${post.votes === undefined ? "" : ` · ${post.votes}`}`}
+          aria-label={`${post.voted ? t("Voted") : t("Vote")}${post.votes === undefined ? "" : ` · ${post.votes}`}`}
           aria-pressed={!!post.voted}
           disabled={!onVote || offline || action.pending}
           onClick={() => {
@@ -77,7 +80,7 @@ export function FeedbackDetail({
             void action.run(() => onFollow(post.id, !post.following));
         }}
       >
-        {post.following ? "Following" : "Follow request"}
+        {post.following ? t("Following") : t("Follow request")}
       </button>
       {action.error && (
         <p className="qb-form-error" role="alert">

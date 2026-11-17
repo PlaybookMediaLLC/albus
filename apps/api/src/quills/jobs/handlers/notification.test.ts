@@ -338,7 +338,7 @@ describe.skipIf(!url)("Quills in-app notification delivery", () => {
           content: "Planned for next month",
         })
         .returning({ id: postComments.id });
-      for (const principalId of [actor.principalId, ids.mate])
+      for (const principalId of [actor.principalId, ids.mate, ids.customer])
         await db.insert(postSubscriptions).values({
           postId: row!.id,
           principalId,
@@ -364,6 +364,15 @@ describe.skipIf(!url)("Quills in-app notification delivery", () => {
       actorId: ids.owner,
     });
     await h.drain(h.a);
+    // A customer subscriber gets the same activity in-app, for the widget's activity feed.
+    expect(
+      (await inbox(ids.customer)).map(({ type, postId }) => ({ type, postId })),
+    ).toEqual(
+      expect.arrayContaining([
+        { type: "post_status_changed", postId: post.id },
+        { type: "comment_created", postId: post.id },
+      ]),
+    );
     expect(
       (await inbox(ids.mate)).map(({ type, title, postId }) => ({
         type,

@@ -8,6 +8,8 @@ export type IdentifyResult = {
   success: boolean;
   user: WidgetUser | null;
   error?: string;
+  /** Claims the API received but did not apply. */
+  warnings?: Array<{ code: string; field: string }>;
 };
 
 /** The API refused the token (invalid, expired, blocked, taken email). 429, 5xx and network errors are transient. */
@@ -39,22 +41,25 @@ export function useWidgetSession(
   const [failed, setFailed] = useState(false);
   /** The session belongs to a visitor that the host app identified with a signed token. */
   const [identified, setIdentified] = useState(false);
-  /** The API offers the portal sign-in link to this identified visitor. */
-  const [portal, setPortal] = useState(false);
+  /** How the portal opens for this identified visitor, as the API offers it; null hides it. */
+  const [portal, setPortal] = useState<"sign-in" | "link" | null>(null);
   const epoch = useRef(0);
   const counter = useRef(0);
   const ssoToken = useRef<string | null>(null);
   const active = useRef(false);
   const starting = useRef(false);
+  /** The live anonymous session's token: identify sends it so that its activity follows the person. */
+  const anonymous = useRef<string | null>(null);
 
   const reset = () => {
     const mine = ++epoch.current;
     api.setToken(null);
+    anonymous.current = null;
     starting.current = false;
     setSession(null);
     setFailed(false);
     setIdentified(false);
-    setPortal(false);
+    setPortal(null);
     setVisitor((value) => value + 1);
     return mine;
   };
@@ -62,13 +67,14 @@ export function useWidgetSession(
     mine: number,
     token: string,
     signed = true,
-    handoff = false,
+    how: "sign-in" | "link" | null = null,
   ) => {
     if (mine !== epoch.current) return;
     api.setToken(token);
+    anonymous.current = signed ? null : token;
     starting.current = false;
     setIdentified(signed);
-    setPortal(handoff);
+    setPortal(signed ? how : null);
     setSession(++counter.current);
   };
   /** The host's signed token when it still verifies, else an anonymous session. */
@@ -80,11 +86,9 @@ export function useWidgetSession(
     try {
       if (ssoToken.current) {
         try {
-          const { token, user, canPortalHandoff } = await api.identify(
-            ssoToken.current,
-          );
+          const { token, user, portal } = await api.identify(ssoToken.current);
           if (mine === epoch.current) onAuthChange(toUser(user));
-          return begin(mine, token, true, canPortalHandoff);
+          return begin(mine, token, true, portal);
         } catch (error) {
           // Only a refused token ends the identity; a transient error keeps it for a retry.
           if (!refused(error)) throw error;
@@ -124,6 +128,7 @@ export function useWidgetSession(
       void establish();
     },
     async identify(identity: Identity): Promise<IdentifyResult> {
+      const previous = anonymous.current;
       const mine = reset();
       const signed =
         identity &&
@@ -138,16 +143,26 @@ export function useWidgetSession(
         // Blocks an anonymous start from the panel while the signed identify runs.
         starting.current = true;
         try {
-          const { token, user, canPortalHandoff } = await api.identify(signed);
+          const { token, user, warnings, portal } = await api.identify(
+            signed,
+            undefined,
+            previous ?? undefined,
+          );
           if (mine !== epoch.current)
             return { success: false, user: null, error: "Superseded" };
-          begin(mine, token, true, canPortalHandoff);
-          return { success: true, user: toUser(user) };
+          begin(mine, token, true, portal);
+          return {
+            success: true,
+            user: toUser(user),
+            ...(warnings.length ? { warnings } : {}),
+          };
         } catch (error) {
           if (mine === epoch.current) {
             if (refused(error)) ssoToken.current = null;
             starting.current = false;
-            if (active.current) void establish();
+            // A refused identify ends nothing: the visitor keeps the anonymous session and its activity.
+            if (previous && refused(error)) begin(mine, previous, false);
+            else if (active.current) void establish();
           }
           return {
             success: false,

@@ -27,7 +27,10 @@ export function createApi(base: string, fetchImpl: typeof fetch = fetch) {
     path: string,
     body?: unknown,
     signal?: AbortSignal,
+    /** A Bearer for this request only, in place of the session token. */
+    bearer?: string,
   ): Promise<T> {
+    const auth = bearer ?? token;
     let res: Response;
     try {
       res = await fetchImpl(`${base}${path}`, {
@@ -37,7 +40,7 @@ export function createApi(base: string, fetchImpl: typeof fetch = fetch) {
         credentials: "omit",
         headers: {
           ...(body !== undefined && { "content-type": "application/json" }),
-          ...(token && { authorization: `Bearer ${token}` }),
+          ...(auth && { authorization: `Bearer ${auth}` }),
         },
         body: body === undefined ? undefined : JSON.stringify(body),
       });
@@ -74,17 +77,39 @@ export function createApi(base: string, fetchImpl: typeof fetch = fetch) {
       );
       return result.sessionToken;
     },
-    /** The host app's backend signs ssoToken; the widget never holds the secret. */
-    async identify(ssoToken: string, signal?: AbortSignal) {
+    /**
+     * The host app's backend signs ssoToken; the widget never holds the secret. With the anonymous
+     * session's token as `previousToken` (and as the Bearer), its activity moves to the person.
+     */
+    async identify(
+      ssoToken: string,
+      signal?: AbortSignal,
+      previousToken?: string,
+    ) {
       const result = await request<{
         sessionToken: string;
         user: WidgetUserView;
-        canPortalHandoff: boolean;
-      }>("POST", "/widget/identify", { ssoToken }, signal);
+        warnings?: Array<{ code: string; field: string }>;
+        canPortalHandoff?: boolean;
+        portalSignIn?: boolean;
+      }>(
+        "POST",
+        "/widget/identify",
+        { ssoToken, ...(previousToken && { previousToken }) },
+        signal,
+        previousToken,
+      );
+      // How the portal opens for this person: signed in from the widget (G-17), or a mailed link.
+      const portal: "sign-in" | "link" | null = result.portalSignIn
+        ? "sign-in"
+        : result.canPortalHandoff
+          ? "link"
+          : null;
       return {
         token: result.sessionToken,
         user: result.user,
-        canPortalHandoff: result.canPortalHandoff,
+        warnings: result.warnings ?? [],
+        portal,
       };
     },
     /**

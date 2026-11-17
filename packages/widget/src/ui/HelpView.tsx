@@ -4,6 +4,7 @@ import { SearchField } from "./SearchField.js";
 import { searchArticles, articleExcerpt, articleText } from "./search.js";
 import { HighlightedText } from "./HighlightedText.js";
 import type { HelpArticle, HelpFilters } from "./types.js";
+import { useT } from "./i18n/useT.js";
 
 export function HelpView({
   articles,
@@ -16,6 +17,7 @@ export function HelpView({
   filters: HelpFilters;
   onFilters: (filters: HelpFilters) => void;
 }) {
+  const t = useT();
   const { query, category } = filters;
   const search = useRef<HTMLInputElement>(null);
   const term = query.trim().toLowerCase();
@@ -23,9 +25,9 @@ export function HelpView({
   const filtered = searchArticles(articles, query, category);
   return (
     <div className="qb-list-view">
-      <h1>Help &amp; Support</h1>
+      <h1>{t("Help & Support")}</h1>
       <SearchField
-        label="Search for help"
+        label={t("Search for help")}
         value={query}
         onChange={(query) => onFilters({ ...filters, query })}
         inputRef={search}
@@ -40,7 +42,7 @@ export function HelpView({
           }}
         >
           <Icon name="back" />
-          All categories
+          {t("All categories")}
         </button>
       )}
       {!term && !category
@@ -94,12 +96,14 @@ export function HelpView({
             <Icon name={term ? "search" : "help"} />
           </span>
           <h2>
-            {term ? "No articles match your search." : "No help articles yet."}
+            {term
+              ? t("No articles match your search.")
+              : t("No help articles yet.")}
           </h2>
           <p>
             {term
-              ? "Try another word or clear your search."
-              : "Check back here for guides and answers."}
+              ? t("Try another word or clear your search.")
+              : t("Check back here for guides and answers.")}
           </p>
         </div>
       )}

@@ -22,6 +22,7 @@ import {
   type SettingsRow,
 } from "./area";
 import { widgetTabs } from "./widget-tabs";
+import { REPLY_TIMES, replyTimeOf } from "./widget-reply-time";
 
 // Widget configuration and its signing secret. The secret is returned only by the
 // secret routes below, never by the configuration read. Messenger settings and
@@ -82,6 +83,10 @@ const config = z.object({
   position: z.string(),
   launcherGreeting: z.string(),
   launcherLabel: z.string(),
+  replyTime: z.enum(REPLY_TIMES).nullable().openapi({
+    description:
+      "How soon the team usually replies, shown in the widget; null shows nothing",
+  }),
   tabs,
   visitorAnalytics: z.boolean(),
   visitorDeviceTracking: z.boolean(),
@@ -118,6 +123,7 @@ export function readConfig(row: SettingsRow) {
     position: str(stored.position) ?? "bottom-right",
     launcherGreeting: str(stored.launcherGreeting) ?? "",
     launcherLabel: str(stored.launcherLabel) ?? "",
+    replyTime: replyTimeOf(stored.replyTime),
     tabs: widgetTabs(stored),
     visitorAnalytics: bool(stored.visitorAnalytics, true),
     visitorDeviceTracking: bool(stored.visitorDeviceTracking, true),
@@ -162,6 +168,7 @@ export const widgetReceipt = [
   "widgetConfig.position",
   "widgetConfig.launcherGreeting",
   "widgetConfig.launcherLabel",
+  "widgetConfig.replyTime",
   "widgetConfig.visitorAnalytics",
   "widgetConfig.visitorDeviceTracking",
   "widgetConfig.tabs",
@@ -180,6 +187,7 @@ const area = settingsArea({
     position: z.enum(["bottom-right", "bottom-left"]).optional(),
     launcherGreeting: z.string().max(120).optional(),
     launcherLabel: z.string().max(60).optional(),
+    replyTime: z.enum(REPLY_TIMES).nullable().optional(),
     visitorAnalytics: z.boolean().optional(),
     visitorDeviceTracking: z.boolean().optional(),
     tabs: tabs.partial().optional(),
@@ -202,6 +210,7 @@ const area = settingsArea({
           position: patch.position,
           launcherGreeting: patch.launcherGreeting,
           launcherLabel: patch.launcherLabel,
+          replyTime: patch.replyTime,
           visitorAnalytics: patch.visitorAnalytics,
           visitorDeviceTracking: patch.visitorDeviceTracking,
         }),

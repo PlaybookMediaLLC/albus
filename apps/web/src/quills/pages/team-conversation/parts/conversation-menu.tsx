@@ -27,6 +27,8 @@ export interface ConversationMenuProps {
   archived: boolean;
   /** Whether the sender is blocked; null when the sender has no customer profile. */
   blocked: boolean | null;
+  /** Whether the sender's address is blocked; null when no address was recorded. */
+  ipBlocked?: boolean | null;
   disabled?: boolean;
   onSnooze: () => void;
   /** Reopens a snoozed conversation. */
@@ -37,6 +39,8 @@ export interface ConversationMenuProps {
   onUnarchive: () => void;
   onBlock: () => void;
   onUnblock: () => void;
+  onBlockIp?: () => void;
+  onUnblockIp?: () => void;
 }
 
 /**
@@ -104,6 +108,22 @@ export function ConversationMenu(props: ConversationMenuProps) {
               <MenuItem variant="destructive" onClick={props.onBlock}>
                 <Ban aria-hidden="true" />
                 {t("team-conversations.block")}
+              </MenuItem>
+            )}
+          </>
+        )}
+        {props.ipBlocked === null || props.ipBlocked === undefined ? null : (
+          <>
+            <MenuSeparator />
+            {props.ipBlocked ? (
+              <MenuItem onClick={props.onUnblockIp}>
+                <CircleSlash aria-hidden="true" />
+                {t("team-conversations.unblockIp")}
+              </MenuItem>
+            ) : (
+              <MenuItem variant="destructive" onClick={props.onBlockIp}>
+                <Ban aria-hidden="true" />
+                {t("team-conversations.blockIp")}
               </MenuItem>
             )}
           </>

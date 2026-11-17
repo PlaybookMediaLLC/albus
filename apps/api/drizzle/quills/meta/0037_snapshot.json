@@ -1,5 +1,5 @@
 {
-	"id": "7c53a850-cd31-49df-983a-9d70d3dbe756",
+	"id": "d68fb8a7-32c4-4b55-b7f4-245e5f3d1695",
 	"prevId": "a9dfa753-fdff-4af5-a295-19cadde3be00",
 	"version": "7",
 	"dialect": "postgresql",
@@ -4091,6 +4091,13 @@
 				},
 				"is_comments_locked": {
 					"name": "is_comments_locked",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": true,
+					"default": false
+				},
+				"is_hidden": {
+					"name": "is_hidden",
 					"type": "boolean",
 					"primaryKey": false,
 					"notNull": true,
@@ -16800,6 +16807,13 @@
 					"type": "jsonb",
 					"primaryKey": false,
 					"notNull": true
+				},
+				"recipient_ids": {
+					"name": "recipient_ids",
+					"type": "jsonb",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'[]'::jsonb"
 				},
 				"idempotency_key": {
 					"name": "idempotency_key",

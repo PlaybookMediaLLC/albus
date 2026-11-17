@@ -1,6 +1,7 @@
 export * from "./access.fixture";
 export * from "./access-settings.fixture";
 export * from "./config.fixture";
+export * from "./token-sign-in.fixture";
 export * from "./feedback/index.fixture";
 export * from "./invite-accept.fixture";
 export * from "./invites.fixture";

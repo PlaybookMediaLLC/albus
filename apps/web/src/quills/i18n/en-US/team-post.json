@@ -14,6 +14,12 @@
 		"working": "Summarizing…"
 	},
 	"anonymous": "Anonymous",
+	"attachments": {
+		"title": "Attachments",
+		"open": "Open {{name}}",
+		"failed": "The file could not be opened. Try again."
+	},
+	"authorOnly": "Only its author",
 	"boardIs": "Board: {{board}}",
 	"cancel": "Cancel",
 	"close": "Close",
@@ -114,6 +120,7 @@
 	"share": "Share",
 	"showVoters": "Show the voters",
 	"shownOnBoard": "Shown on board",
+	"shownToAuthor": "Shown to its author only",
 	"statusIs": "Status: {{status}}",
 	"tagName": "Name",
 	"tagTaken": "A tag with this name exists.",

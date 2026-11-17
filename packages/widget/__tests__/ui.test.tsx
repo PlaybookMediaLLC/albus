@@ -46,6 +46,11 @@ describe("widget view", () => {
       expect((button as HTMLButtonElement).type).toBe("button");
   });
 
+  it("leaves out the close button when the widget is inline in the host page", () => {
+    render(<WidgetView onClose={vi.fn()} closable={false} />);
+    expect(screen.queryByRole("button", { name: "Close widget" })).toBeNull();
+  });
+
   it("keeps keyboard focus inside the widget through help categories, details, and Back", () => {
     const close = vi.fn();
     render(

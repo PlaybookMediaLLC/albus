@@ -11,8 +11,10 @@ import {
   ownMessageIds,
   receivedEmailText,
   replyAddressConversation,
+  replyAddressPost,
   resendInbound,
 } from "../framework/signed";
+import { commentByMail } from "./post-reply";
 import { preview } from "../support/conversation-model";
 import { trustedEmailAuth } from "./email-auth";
 import { reopened } from "../support/conversation-ops";
@@ -146,6 +148,9 @@ const inbound = defineQuillsRoute({
       "from_mismatch",
     ]),
     messageId: z.string().nullable(),
+    commentId: z.string().nullable().optional().openapi({
+      description: "The comment that a reply to a post notification became",
+    }),
   }),
   responseDescription:
     "What happened to the mail. A refused mail is acknowledged so the provider stops retrying.",
@@ -162,11 +167,17 @@ const inbound = defineQuillsRoute({
     emailId ? receivedEmailText(emailId) : Promise.resolve(null),
   event: (_input, result) =>
     result.status === "received" &&
-    result.messageId !== null && {
-      type: "conversation.email_received",
-      entityType: "conversation_message",
-      entityId: result.messageId,
-    },
+    (result.commentId
+      ? {
+          type: "comment.created",
+          entityType: "comment",
+          entityId: result.commentId,
+        }
+      : result.messageId !== null && {
+          type: "conversation.email_received",
+          entityType: "conversation_message",
+          entityId: result.messageId,
+        }),
   handler: async ({ db, body, called, workspaceId }) => {
     const answer = (
       status:
@@ -188,6 +199,23 @@ const inbound = defineQuillsRoute({
       data.message_id ??
       data.email_id
     )?.slice(0, 998);
+    // A reply to a post notification becomes the subscriber's comment (inbound/post-reply.ts).
+    const postId = replyAddressPost(data.to ?? [], workspaceId);
+    if (postId) {
+      const reply = await commentByMail(db, {
+        postId: postId as never,
+        address: sender.address,
+        text: content,
+        emailMessageId,
+      });
+      return reply.status === "received"
+        ? {
+            status: "received" as const,
+            messageId: null,
+            commentId: reply.commentId,
+          }
+        : answer(reply.status);
+    }
     if (emailMessageId) {
       const [seen] = await db
         .select({ id: conversationMessages.id })

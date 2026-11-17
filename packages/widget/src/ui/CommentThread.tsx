@@ -4,6 +4,7 @@ import { Icon } from "./Icon.js";
 import { relativeTime } from "./relative-time.js";
 import { useAction } from "./useAction.js";
 import type { FeedbackComment } from "./types.js";
+import { useLocale, useT } from "./i18n/useT.js";
 
 export function CommentThread({
   comment,
@@ -22,14 +23,16 @@ export function CommentThread({
   onVote?: (id: string, voted: boolean) => Promise<unknown>;
   offline: boolean;
 }) {
+  const t = useT();
+  const locale = useLocale();
   const action = useAction();
-  const age = relativeTime(comment.createdAt);
+  const age = relativeTime(comment.createdAt, locale, t("Just now"));
   const path = [...ancestors, comment.id];
   return (
     <div className="qb-comment-thread">
       <article
         className="qb-comment"
-        aria-label={`Comment by ${comment.author}`}
+        aria-label={t("Comment by {author}", { author: comment.author })}
       >
         <Avatar
           name={comment.author}
@@ -44,12 +47,14 @@ export function CommentThread({
           <p>{comment.body}</p>
           <div className="qb-comment-actions">
             <button type="button" onClick={() => onReply(comment.id)}>
-              Reply
+              {t("Reply")}
             </button>
             <button
               type="button"
               className="qb-votes"
-              aria-label={`Vote for comment by ${comment.author}`}
+              aria-label={t("Vote for comment by {author}", {
+                author: comment.author,
+              })}
               aria-pressed={!!comment.voted}
               disabled={offline || !onVote || action.pending}
               onClick={() => {

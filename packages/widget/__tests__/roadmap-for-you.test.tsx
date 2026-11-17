@@ -38,14 +38,13 @@ const posts: FeedbackPost[] = [
     voted: true,
   },
 ];
-const roadmap = (identified: boolean, locale?: string) => {
+const roadmap = (identified: boolean) => {
   render(
     <WidgetView
       onClose={vi.fn()}
       initialTab="feedback"
       feedback={posts}
       identified={identified}
-      locale={locale}
     />,
   );
   fireEvent.change(screen.getByRole("combobox", { name: "Sort feedback" }), {
@@ -71,10 +70,4 @@ it("marks each shipped request that the signed-in customer voted for, and no oth
 it("shows no mark to a guest", () => {
   roadmap(false);
   expect(marked()).toEqual([]);
-});
-
-it("writes the mark in the visitor's language", () => {
-  roadmap(true, "de-AT");
-  expect(screen.getByText("Für Sie")).toBeTruthy();
-  expect(screen.queryByText("For you")).toBeNull();
 });

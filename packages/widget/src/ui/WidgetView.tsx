@@ -27,8 +27,11 @@ import type {
   FeedbackFilters,
   SubmissionOptions,
 } from "./types.js";
+import { isRtl, widgetLocale } from "./i18n/locales.js";
+import type { MessageKey } from "./i18n/messages/en.js";
+import { LocaleProvider, useLocale, useT } from "./i18n/useT.js";
 
-const tabs: { id: WidgetTab; label: string }[] = [
+const tabs: { id: WidgetTab; label: MessageKey }[] = [
   { id: "home", label: "Home" },
   { id: "messages", label: "Messages" },
   { id: "help", label: "Help" },
@@ -36,11 +39,19 @@ const tabs: { id: WidgetTab; label: string }[] = [
   { id: "updates", label: "Updates" },
 ];
 
-export function WidgetView({
+/** The widget panel in the visitor's language: `locale` picks the copy and the text direction. */
+export function WidgetView(props: WidgetViewProps) {
+  return (
+    <LocaleProvider locale={widgetLocale(props.locale)}>
+      <WidgetViewBody {...props} />
+    </LocaleProvider>
+  );
+}
+
+function WidgetViewBody({
   brandName = "Quills",
-  dir = "ltr",
+  dir,
   identified = false,
-  locale,
   theme = "auto",
   initialTab = "home",
   tabs: enabledTabs,
@@ -50,12 +61,17 @@ export function WidgetView({
   conversations = [],
   activities = [],
   onReadActivity,
+  contactEmail,
+  onRequestContactEmail,
+  onConfirmContactEmail,
   onArticleFeedback,
   loadState = "ready",
   connection = "online",
   onRetryLoad,
   teamAvailability,
-  onOpenPortal,
+  team,
+  replyTime,
+  greeting,
   teamMember,
   attachmentsEnabled,
   onCaptureScreenshot,
@@ -65,15 +81,21 @@ export function WidgetView({
   onCommentFeedback,
   onVoteComment,
   onClose,
+  closable = true,
+  onOpenPortal,
   onSendMessage,
   onSubmitFeedback,
   onDraftFeedback,
   feedbackFields,
   onReplyMessage,
+  onConfirmFeedbackCard,
   onReadConversation,
   onOpenFile,
   onReadUpdate,
   onVoteFeedback,
+  onFindSimilar,
+  updatesSubscribed,
+  onSubscribeUpdates,
   onFollowFeedback,
   onReactToUpdate,
   onShareUpdate,
@@ -81,6 +103,8 @@ export function WidgetView({
   onAnswerSurvey,
   onDismissSurvey,
 }: WidgetViewProps) {
+  const t = useT();
+  const locale = useLocale();
   const [attachmentReset, setAttachmentReset] = useState(0);
   const close = () => {
     nav.content.current
@@ -155,10 +179,33 @@ export function WidgetView({
     if (!navigation || navigation === requested.current) return;
     requested.current = navigation;
     if (navigation.detail) open(navigation.tab, navigation.detail);
-    else if (navigation.composer)
+    else if (navigation.activity)
+      nav.go({ tab: navigation.tab, activity: true });
+    else if (navigation.composer) {
       nav.go({ tab: navigation.tab, composer: navigation.composer });
-    else navigate(navigation.tab);
+      if (navigation.draft && !draftStore.drafts[navigation.composer]?.body)
+        draftStore.change(navigation.composer, navigation.draft);
+    } else navigate(navigation.tab);
   });
+  // A help deep link's search text and category, matched by name once articles load.
+  const helpRequest = useRef(navigation);
+  useEffect(() => {
+    if (navigation?.tab !== "help" || navigation === helpRequest.current)
+      return;
+    const { query, category } = navigation;
+    const named = category?.toLowerCase();
+    const match = named
+      ? articles.find((item) => item.category.toLowerCase() === named)?.category
+      : undefined;
+    if (named && !match && articles.length === 0) return;
+    helpRequest.current = navigation;
+    if (query !== undefined || match)
+      setHelpFilters((filters) => ({
+        ...filters,
+        ...(query !== undefined && { query }),
+        ...(match && { category: match }),
+      }));
+  }, [navigation, articles]);
   const article =
     tab === "help" ? articles.find((item) => item.id === selected) : undefined;
   const post =
@@ -196,7 +243,9 @@ export function WidgetView({
         if (nav.currentKey.current !== origin) return;
         navigate(composer === "message" ? "messages" : "feedback");
         setNotice(
-          composer === "message" ? "Message sent." : "Feedback submitted.",
+          composer === "message"
+            ? t("Message sent.")
+            : t("Feedback submitted."),
         );
       },
     );
@@ -204,12 +253,13 @@ export function WidgetView({
   return (
     <section
       className="qb-widget"
-      dir={dir}
       tabIndex={-1}
       data-theme={theme}
       data-expanded={expanded}
       data-composer={composer}
-      aria-label={`${brandName} support`}
+      aria-label={t("{brand} support", { brand: brandName })}
+      lang={locale}
+      dir={dir ?? (isRtl(locale) ? "rtl" : "ltr")}
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.stopPropagation();
@@ -223,7 +273,7 @@ export function WidgetView({
             <button
               type="button"
               className="qb-icon-button"
-              aria-label="Back"
+              aria-label={t("Back")}
               onClick={() => {
                 nav.back();
                 setNotice("");
@@ -233,11 +283,11 @@ export function WidgetView({
             </button>
             <strong>
               {composer === "feedback"
-                ? "Give feedback"
+                ? t("Give feedback")
                 : post
-                  ? "Request"
+                  ? t("Request")
                   : conversation
-                    ? "Conversation"
+                    ? t("Conversation")
                     : ""}
             </strong>
           </>
@@ -253,7 +303,11 @@ export function WidgetView({
           <button
             type="button"
             className="qb-icon-button qb-activity-trigger"
-            aria-label={`Activity${activities.some((item) => item.unread) ? ", unread updates" : ""}`}
+            aria-label={
+              activities.some((item) => item.unread)
+                ? t("Activity, unread updates")
+                : t("Activity")
+            }
             onClick={() => nav.go({ tab, activity: true })}
           >
             <Icon name="inbox" />
@@ -268,19 +322,21 @@ export function WidgetView({
             href={article.url}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Open article in new tab"
+            aria-label={t("Open article in new tab")}
           >
             <Icon name="external" />
           </a>
         )}
-        <button
-          type="button"
-          className="qb-icon-button qb-close"
-          aria-label="Close widget"
-          onClick={close}
-        >
-          <Icon name="close" />
-        </button>
+        {closable && (
+          <button
+            type="button"
+            className="qb-icon-button qb-close"
+            aria-label={t("Close widget")}
+            onClick={close}
+          >
+            <Icon name="close" />
+          </button>
+        )}
       </header>
       <ConnectionStatus
         loadState={loadState}
@@ -312,6 +368,8 @@ export function WidgetView({
             articles={articles}
             posts={feedback}
             onOpenPost={(id) => open("feedback", id)}
+            onFindSimilar={onFindSimilar}
+            onVote={onVoteFeedback}
             teamMember={teamMember}
             attachmentsEnabled={
               attachmentsEnabled === true ||
@@ -324,11 +382,6 @@ export function WidgetView({
             onBrowseHelp={() => nav.go({ tab: "help" })}
             onDraft={composer === "feedback" ? onDraftFeedback : undefined}
             fields={composer === "feedback" ? feedbackFields : undefined}
-            onVote={
-              composer === "feedback" && onVoteFeedback
-                ? (postId) => onVoteFeedback(postId, true)
-                : undefined
-            }
           />
         ) : article ? (
           <ArticleView
@@ -381,7 +434,7 @@ export function WidgetView({
                   )
                 }
               >
-                Mark update as read
+                {t("Mark update as read")}
               </button>
             )}
             {readState.error && (
@@ -430,9 +483,15 @@ export function WidgetView({
                 ? (fileId) => onOpenFile(conversation.id, fileId)
                 : undefined
             }
+            onConfirmCard={
+              onConfirmFeedbackCard
+                ? (messageId, card) =>
+                    onConfirmFeedbackCard(conversation.id, messageId, card)
+                : undefined
+            }
           />
         ) : selected ? (
-          <p className="qb-empty">This item is no longer available.</p>
+          <p className="qb-empty">{t("This item is no longer available.")}</p>
         ) : loadState !== "ready" &&
           !articles.length &&
           !feedback.length &&
@@ -453,6 +512,9 @@ export function WidgetView({
             conversations={conversations}
             openConversation={(id) => open("messages", id)}
             teamAvailability={teamAvailability}
+            team={team}
+            replyTime={replyTime}
+            greeting={greeting}
             openPortal={onOpenPortal}
             survey={
               survey &&
@@ -472,6 +534,10 @@ export function WidgetView({
             conversations={conversations}
             onOpen={(id) => open("messages", id)}
             onCompose={() => compose("message")}
+            contactEmail={contactEmail}
+            onRequestContactEmail={onRequestContactEmail}
+            onConfirmContactEmail={onConfirmContactEmail}
+            offline={offline}
           />
         ) : tab === "help" ? (
           <HelpView
@@ -487,9 +553,10 @@ export function WidgetView({
           <FeedbackView
             posts={feedback}
             identified={identified}
-            locale={locale}
             onOpen={(id) => open("feedback", id)}
             onCompose={() => compose("feedback")}
+            onVote={onVoteFeedback}
+            offline={offline}
             filters={feedbackFilters}
             onFilters={(filters) => {
               setFeedbackFilters(filters);
@@ -507,12 +574,14 @@ export function WidgetView({
             onOpen={(id) => open("updates", id)}
             onReact={offline ? undefined : onReactToUpdate}
             onShare={offline ? undefined : onShareUpdate}
+            subscribed={updatesSubscribed}
+            onSubscribe={offline ? undefined : onSubscribeUpdates}
           />
         )}
       </div>
       {!composer && !selected && !route.activity && (
         <>
-          <nav className="qb-nav" aria-label="Widget navigation">
+          <nav className="qb-nav" aria-label={t("Widget navigation")}>
             {shownTabs.map((item) => {
               const unread =
                 item.id === "messages"
@@ -535,11 +604,11 @@ export function WidgetView({
                     {unread > 0 && (
                       <i
                         className="qb-nav-unread"
-                        aria-label={`${unread} unread`}
+                        aria-label={t("{count} unread", { count: unread })}
                       />
                     )}
                   </span>
-                  {item.label}
+                  {t(item.label)}
                 </button>
               );
             })}
@@ -548,7 +617,7 @@ export function WidgetView({
       )}
       {((!selected && composer !== "feedback") || !!conversation) && (
         <footer className="qb-footer">
-          Powered by <strong>Quills</strong>
+          {t("Powered by")} <strong>Quills</strong>
         </footer>
       )}
     </section>

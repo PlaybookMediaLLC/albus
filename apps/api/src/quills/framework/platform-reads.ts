@@ -3,6 +3,7 @@ import { statement } from "@kaneo/permissions";
 import { HTTPException } from "hono/http-exception";
 import platformDb from "../../database";
 import {
+  accountTable,
   columnTable,
   projectTable,
   taskTable,
@@ -16,6 +17,7 @@ import type { PermissionMap } from "../../utils/role-permissions";
 import { findInaccessibleProjectIds } from "../../project-access/find-inaccessible-project-ids";
 import { roleHasWorkspacePermission } from "../../utils/require-workspace-permission";
 import { hasInstanceAdminRole } from "../../utils/instance-admin-role";
+import { PORTAL_TOKEN_PROVIDER } from "./portal-sign-in";
 import type { QuillsAction } from "../with-quills-request";
 import { listAccessibleProjectIds } from "../../project-access/list-accessible-project-ids";
 import { requireWorkspaceEntitlement } from "../../billing/controllers/require-entitlement";
@@ -226,11 +228,9 @@ export async function accessibleProjectIds(
  * ID match winning) names. Read before the scoped transaction, so a request never holds two
  * connections. Only the private-portal team grant reads it; it is not a Quills permission.
  */
-export async function isMemberOfNamedWorkspace(
-  workspace: string,
-  userId: string,
-) {
-  const named = platformDb
+/** The ID of the workspace a portal or widget caller names, as a subquery. */
+const namedWorkspaceId = (workspace: string) =>
+  platformDb
     .select({ id: workspaceTable.id })
     .from(workspaceTable)
     // The same choice as withQuillsAudience: an unarchived workspace, an ID match first.
@@ -245,6 +245,12 @@ export async function isMemberOfNamedWorkspace(
     )
     .orderBy(sql`${workspaceTable.id} = ${workspace} desc`)
     .limit(1);
+
+export async function isMemberOfNamedWorkspace(
+  workspace: string,
+  userId: string,
+) {
+  const named = namedWorkspaceId(workspace);
   const [row] = await platformDb
     .select({ userId: workspaceUserTable.userId })
     .from(workspaceUserTable)
@@ -256,6 +262,28 @@ export async function isMemberOfNamedWorkspace(
     )
     .limit(1);
   return Boolean(row);
+}
+
+/**
+ * The workspace customer that a portal token sign-in created this Kaneo account for (gaps G-17 and
+ * G-24): its "quills-portal" account row names `<workspace>:<customer>`. Null for any other account.
+ */
+export async function tokenCustomerOfNamedWorkspace(
+  workspace: string,
+  userId: string,
+) {
+  const [row] = await platformDb
+    .select({ accountId: accountTable.accountId })
+    .from(accountTable)
+    .where(
+      and(
+        eq(accountTable.userId, userId),
+        eq(accountTable.providerId, PORTAL_TOKEN_PROVIDER),
+        sql`${accountTable.accountId} like (${namedWorkspaceId(workspace)}) || ':%'`,
+      ),
+    )
+    .limit(1);
+  return row ? row.accountId.slice(row.accountId.indexOf(":") + 1) : null;
 }
 
 /**

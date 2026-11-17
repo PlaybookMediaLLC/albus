@@ -134,4 +134,25 @@ describe("SettingsPrivacyPage", () => {
     expect(await view.findByText("a.test")).toBeVisible();
     expect(view.queryByRole("button", { name: "Save" })).toBeNull();
   });
+
+  it("turns on holding likely spam for review, keeping the approval level", async () => {
+    api = mockApi();
+    api.reply(portal);
+    api.reply(setModerationDefaultFixture.ok());
+    api.reply(portal);
+    const view = renderPage(SettingsPrivacyPage, meta);
+    fireEvent.click(
+      await view.findByRole("switch", { name: "Hold likely spam" }),
+    );
+    await waitFor(() =>
+      expect(api.calls("setQuillsModerationDefault")).toHaveLength(1),
+    );
+    expect(await api.calls("setQuillsModerationDefault")[0]!.json()).toEqual({
+      requireApproval: "none",
+      holdSpam: true,
+    });
+    expect(
+      view.getByRole("switch", { name: "Hold sensitive information" }),
+    ).not.toBeChecked();
+  });
 });

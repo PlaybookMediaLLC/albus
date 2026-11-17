@@ -125,11 +125,10 @@ export function FeedbackHomePage(props: FeedbackHomePageProps) {
                 boards={submittable}
                 autoFocus={"openFeedback" in props.search}
                 initialTitle={urlTitle}
-                signInHref={
-                  viewer.kind === "user"
-                    ? undefined
-                    : `/auth/sign-in?redirect=${encodeURIComponent(portalHref(props.workspaceId, "", urlTitle ? { openFeedback: "1", title: urlTitle } : undefined))}`
-                }
+                signInReturn={{
+                  path: "",
+                  search: { openFeedback: urlTitle && "1", title: urlTitle },
+                }}
                 onTitleChange={setTitle}
               />
             ) : null}

@@ -1,4 +1,8 @@
-import { createSDK } from "./core/sdk.js";
+import {
+  createSDK,
+  type IdentifyResult,
+  type WidgetState,
+} from "./core/sdk.js";
 import type {
   InitOptions,
   Identity,
@@ -14,6 +18,8 @@ import { SDK_VERSION } from "./version.js";
 
 export { SDK_VERSION };
 export type {
+  IdentifyResult,
+  WidgetState,
   InitOptions,
   Identity,
   OpenOptions,
@@ -31,8 +37,9 @@ export const Quills = {
   init(options: InitOptions): void {
     sdk.dispatch("init", options);
   },
-  identify(identity?: Identity): void {
-    sdk.dispatch("identify", identity);
+  /** Resolves with the result once the widget confirms or refuses this identity. */
+  identify(identity?: Identity): Promise<IdentifyResult> {
+    return sdk.dispatch("identify", identity) as Promise<IdentifyResult>;
   },
   logout(): void {
     sdk.dispatch("logout");
@@ -42,6 +49,18 @@ export const Quills = {
   },
   close(): void {
     sdk.dispatch("close");
+  },
+  /** Opens the panel when closed, closes it when open. */
+  toggle(): void {
+    sdk.dispatch("toggle");
+  },
+  /** Overrides the workspace theme; `error` reports an invalid value. */
+  setTheme(theme: "auto" | "light" | "dark"): void {
+    sdk.dispatch("setTheme", theme);
+  },
+  /** Changes the language without a reload. */
+  setLocale(locale: string): void {
+    sdk.dispatch("setLocale", locale);
   },
   showLauncher(): void {
     sdk.dispatch("showLauncher");
@@ -58,6 +77,10 @@ export const Quills = {
   },
   isIdentified(): boolean {
     return sdk.isIdentified();
+  },
+  /** A snapshot of the widget state; `statechange` fires when it changes. */
+  getState(): WidgetState {
+    return sdk.getState();
   },
   on<T extends EventName>(name: T, handler: EventHandler<T>): Unsubscribe {
     return sdk.dispatch("on", name, handler) as Unsubscribe;

@@ -127,11 +127,7 @@ export function FeedbackBoardPage(props: FeedbackBoardPageProps) {
                 workspaceId={props.workspaceId}
                 boards={[board]}
                 defaultBoardId={board.id}
-                signInHref={
-                  viewer.kind === "user"
-                    ? undefined
-                    : `/auth/sign-in?redirect=${encodeURIComponent(portalHref(props.workspaceId, `boards/${boardId}`))}`
-                }
+                signInReturn={{ path: `boards/${boardId}` }}
                 onTitleChange={setTitle}
               />
             ) : null}

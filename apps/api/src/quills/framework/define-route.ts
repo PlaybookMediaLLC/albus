@@ -52,6 +52,8 @@ import {
   type SignedRequest,
   type SignedVerifier,
 } from "./signed";
+import { readClientIp } from "../../utils/client-ip";
+import { addressBlocked } from "./ip-block";
 
 export type { Database, QuillsActor };
 /** One change that a route's `event` records. */
@@ -439,6 +441,31 @@ async function readBody(
   if (text && /^text\/plain\b/i.test(type))
     return parseRawBody(schema, await c.req.text());
   return c.req.valid("json");
+}
+
+/**
+ * The `Idempotency-Key` header fills `idempotencyKey` when the body schema has one and the caller
+ * left it out (the REST convention); a key in the body wins. The schema decides: a body without
+ * the field is returned unchanged.
+ */
+function withIdempotencyHeader(
+  c: Context<any, string, any>,
+  schema: z.ZodType,
+  body: unknown,
+) {
+  const key = c.req.header("idempotency-key")?.trim();
+  if (
+    !key ||
+    !body ||
+    typeof body !== "object" ||
+    (body as { idempotencyKey?: unknown }).idempotencyKey !== undefined
+  )
+    return body;
+  const parsed = schema.safeParse({ ...body, idempotencyKey: key });
+  return parsed.success &&
+    (parsed.data as { idempotencyKey?: unknown }).idempotencyKey === key
+    ? parsed.data
+    : body;
 }
 
 const continueInWebResponse = {
@@ -897,7 +924,13 @@ export function buildQuillsRoute<
       const input = {
         params,
         query: d.query && c.req.valid("query"),
-        body: d.body && (await readBody(c, d.body, d.textBody)),
+        body:
+          d.body &&
+          withIdempotencyHeader(
+            c,
+            d.body,
+            await readBody(c, d.body, d.textBody),
+          ),
       };
       if (d.browserPage && prefersBrowserNavigation(c.req.raw.headers))
         return continueInWeb(
@@ -960,6 +993,14 @@ export function buildQuillsRoute<
             signIn,
             ensureCustomer: d.ensureCustomer === true,
           });
+          // A customer write from an address that the team blocked (support/ip-blocks.ts).
+          if (
+            d.method !== "get" &&
+            (await addressBlocked(db, readClientIp(c.req.raw.headers)))
+          )
+            throw new HTTPException(403, {
+              message: "Requests from this address are blocked",
+            });
           if (
             seen &&
             (seen.workspaceId !== workspace.id ||
@@ -1050,9 +1091,13 @@ export function buildQuillsRoute<
       query: d.query && c.req.valid("query"),
       body:
         d.body &&
-        (c.req.header("content-type")
-          ? c.req.valid("json")
-          : emptyBody(d.body)),
+        withIdempotencyHeader(
+          c,
+          d.body,
+          c.req.header("content-type")
+            ? c.req.valid("json")
+            : emptyBody(d.body),
+        ),
       workspaceId: c.get("workspaceId"),
       apiKeyScope:
         (c.get("apiKey") as { permissions?: PermissionMap | null } | undefined)

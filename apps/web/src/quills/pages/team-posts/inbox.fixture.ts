@@ -73,6 +73,7 @@ const post = (id: string, title: string, statusId: string, votes: number) => ({
   commentCount: 0,
   pinnedCommentId: null,
   isCommentsLocked: false,
+  isHidden: false,
   moderationState: "published",
   canonicalPostId: null,
   eta: null,

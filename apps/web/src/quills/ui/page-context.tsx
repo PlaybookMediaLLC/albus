@@ -3,14 +3,14 @@ import { useTranslation } from "react-i18next";
 import { cn } from "./upstream";
 
 export interface PageContextProps {
-  /** The host-page context that the widget sent. Other keys, such as the host app's own, stay out. */
+  /** The host-page context that the widget sent: pageUrl, browser and the host app's own metadata keys. */
   context: Record<string, string> | null | undefined;
   className?: string;
 }
 
 /**
- * The page and the browser that a widget visitor wrote from. Plain text, never a link: the values
- * come from the visitor's page.
+ * The page and the browser that a widget visitor wrote from, then the keys the host app set with
+ * `Quills.metadata`. Plain text, never a link: the values come from the visitor's page.
  */
 export function PageContext({ context, className }: PageContextProps) {
   const { t } = useTranslation("quills");
@@ -18,7 +18,13 @@ export function PageContext({ context, className }: PageContextProps) {
     { label: t("core.pageContext.page"), value: context?.pageUrl },
     { label: t("core.pageContext.browser"), value: context?.browser },
   ].filter((row) => row.value);
+  // Without a page or a browser it is not widget context (a conversation-tracked post, say).
   if (!rows.length) return null;
+  for (const [key, value] of Object.entries(context ?? {}).sort(([a], [b]) =>
+    a.localeCompare(b),
+  ))
+    if (key !== "pageUrl" && key !== "browser" && value)
+      rows.push({ label: key, value });
   return (
     <dl
       className={cn(

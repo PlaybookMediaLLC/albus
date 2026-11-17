@@ -16,6 +16,7 @@ import { PortalGate } from "../../ui/portal-gate";
 import { StateView } from "../../ui/state-view";
 import { meta } from "./meta";
 import { ConversationFileLink } from "./parts/conversation-file-link";
+import { FeedbackCardAction } from "./parts/feedback-card-action";
 export interface ConversationPageProps {
   workspaceId: string;
   params: Record<string, string>;
@@ -77,6 +78,9 @@ export function ConversationPage(props: ConversationPageProps) {
     props.workspaceId,
   ]);
 
+  const thread = [...(messages.data?.pages ?? [])]
+    .reverse()
+    .flatMap((page) => page.items);
   const sendReply = async (content: string): Promise<PortalProblem | void> => {
     try {
       await send.mutateAsync({
@@ -138,9 +142,21 @@ export function ConversationPage(props: ConversationPageProps) {
                   </Button>
                 ) : null}
                 <ConversationMessages
-                  messages={[...messages.data.pages]
-                    .reverse()
-                    .flatMap((page) => page.items)}
+                  messages={thread}
+                  renderExtra={(messageId) => {
+                    const card = thread.find(
+                      (message) => message.id === messageId,
+                    )?.feedbackCard;
+                    return card ? (
+                      <FeedbackCardAction
+                        workspaceId={props.workspaceId}
+                        conversationId={conversationId}
+                        messageId={messageId}
+                        card={card}
+                        viewer={portal.viewer}
+                      />
+                    ) : null;
+                  }}
                   renderAttachment={(file) => (
                     <ConversationFileLink
                       workspaceId={props.workspaceId}

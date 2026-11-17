@@ -15,6 +15,8 @@ export const getPortalSettingsFixture = {
           requireApproval: "value",
           holdImages: false,
           holdLinks: false,
+          holdSpam: false,
+          holdSensitive: false,
         },
         access: {
           visibility: "value",
@@ -24,6 +26,7 @@ export const getPortalSettingsFixture = {
         },
         nav: [],
         supportEnabled: false,
+        signIn: { mode: "account", widgetSignIn: false, ssoUrl: null },
       },
       ...overrides,
     }) satisfies GetPortalSettingsResponse,

@@ -8,6 +8,11 @@ import {
 } from "./bridge.js";
 import { loadArticle, type Surfaces } from "./load.js";
 import { useWidgetSurvey } from "./surveys.js";
+import { useWidgetActivity } from "./activity.js";
+import { useWidgetContactEmail } from "./contact-email.js";
+import { openPortalSignedIn } from "./portal-link.js";
+import { useUpdatesSubscription } from "./updates-subscription.js";
+import { useWidgetTeam } from "./team.js";
 import { Unavailable } from "./Unavailable.js";
 import { useWidgetData } from "./useWidgetData.js";
 import { useWidgetSession } from "./useWidgetSession.js";
@@ -18,6 +23,8 @@ import { directionOf } from "../ui/direction.js";
 
 type Config = {
   theme: "light" | "dark" | "auto";
+  replyTime: "minutes" | "hours" | "day" | null;
+  greeting: { title: string | null; subtitle: string | null };
   surfaces: Surfaces;
   tabs: WidgetTab[];
   pollIntervalMs: number;
@@ -27,22 +34,43 @@ type Target = Extract<ParentMessage, { type: "open" }>["target"];
 type Navigation = NonNullable<WidgetViewProps["navigation"]>;
 
 /** A deep link as a view request. `articleId` may be a slug, so the host resolves it first. */
-function navigationFor(
-  target: Target,
-): (Omit<Navigation, "detail"> & { detail?: string; article?: string }) | null {
+function navigationFor(target: Target):
+  | (Omit<Navigation, "detail"> & {
+      detail?: string;
+      article?: string;
+      /** The board slug or ID for the deep-linked new post. */
+      board?: string;
+    })
+  | null {
   if (target.postId) return { tab: "feedback", detail: target.postId };
   if (target.articleId) return { tab: "help", article: target.articleId };
   switch (target.view) {
-    case "new-post":
-      return { tab: "feedback", composer: "feedback" };
+    case "new-post": {
+      const draft = [target.title, target.body].filter(Boolean).join("\n");
+      return {
+        tab: "feedback",
+        composer: "feedback",
+        ...(draft && { draft }),
+        ...(target.board && { board: target.board }),
+      };
+    }
     case "changelog":
       return { tab: "updates", detail: target.entryId };
     case "help":
-      return { tab: "help" };
-    case "chat":
+      return {
+        tab: "help",
+        ...(target.query && { query: target.query }),
+        ...(target.category && { category: target.category }),
+      };
     case "messages":
+      return target.body
+        ? { tab: "messages", composer: "message", draft: target.body }
+        : { tab: "messages" };
+    case "chat":
     case "tickets":
       return { tab: "messages" };
+    case "notifications":
+      return { tab: "home", activity: true };
     case "home":
       return { tab: "home" };
     default:
@@ -66,9 +94,20 @@ export function WidgetHost({
   const [config, setConfig] = useState<Config | "off" | "error" | null>(null);
   const [active, setActive] = useState(false);
   const [locale, setLocale] = useState(params.get("locale") ?? undefined);
+  /** The host app's theme choice, over the workspace setting. */
+  const [hostTheme, setHostTheme] = useState<"auto" | "light" | "dark">();
   const [pending, setPending] =
     useState<ReturnType<typeof navigationFor>>(null);
   const [navigation, setNavigation] = useState<Navigation>();
+  /** The board of the latest new-post deep link; posts go to it when the visitor can see it. */
+  const [composeBoard, setComposeBoard] = useState<string>();
+  /** The launcher badge: unread replies and updates, plus unread activity. */
+  const unread = useRef({ data: 0, activity: 0 });
+  const postUnread = () =>
+    bridge.current?.post({
+      type: "quackback:unread",
+      count: unread.current.data + unread.current.activity,
+    });
   /** The host app's metadata and the page URL, from the SDK. */
   const [context, setContext] = useState<Record<string, string>>({});
   const capture = useHostCapture(bridge);
@@ -84,6 +123,9 @@ export function WidgetHost({
           config: {
             tabs: Surfaces & { home?: boolean };
             theme: { themeMode: "light" | "dark" | "user" };
+            // Missing from an older API.
+            replyTime?: Config["replyTime"];
+            home?: { greeting: string | null; subtitle: string | null };
             ai?: boolean;
           } | null;
         }>("GET", "/widget/config.json"),
@@ -104,6 +146,11 @@ export function WidgetHost({
       };
       setConfig({
         theme: mode === "user" ? "auto" : mode,
+        replyTime: stored.replyTime ?? null,
+        greeting: {
+          title: stored.home?.greeting ?? null,
+          subtitle: stored.home?.subtitle ?? null,
+        },
         surfaces: { feedback, changelog, help, messenger },
         tabs: (Object.keys(on) as WidgetTab[]).filter((tab) => on[tab]),
         pollIntervalMs: Math.max(5000, capabilities.chat.pollIntervalMs),
@@ -120,6 +167,7 @@ export function WidgetHost({
   const handle = useRef<(message: ParentMessage) => void>(() => {});
   handle.current = (message) => {
     if (message.type === "locale") setLocale(message.locale);
+    if (message.type === "theme") setHostTheme(message.theme);
     if (message.type === "metadata") setContext(message.metadata);
     if (message.type === "capture") capture.receive(message.id, message.image);
     if (message.type === "identify")
@@ -156,6 +204,7 @@ export function WidgetHost({
       : { feedback: false, changelog: false, help: false, messenger: false },
     locale,
     board: params.get("board") ?? undefined,
+    composeBoard,
     pollIntervalMs: ready ? config.pollIntervalMs : 10_000,
     context,
     ai: ready && config.ai,
@@ -166,8 +215,10 @@ export function WidgetHost({
           name,
           payload,
         } as OutboundMessage),
-      unread: (count) =>
-        bridge.current?.post({ type: "quackback:unread", count }),
+      unread: (count) => {
+        unread.current.data = count;
+        postUnread();
+      },
       announce: (entry, open) =>
         bridge.current?.post({
           type: "quackback:announce",
@@ -180,12 +231,54 @@ export function WidgetHost({
   });
 
   const survey = useWidgetSurvey(api, ready ? visitor.session : null, active);
+  const contact = useWidgetContactEmail(
+    api,
+    ready ? visitor.session : null,
+    visitor.identified,
+    active,
+    ready && config.surfaces.messenger,
+    (email) =>
+      bridge.current?.post({
+        type: "quackback:event",
+        name: "email-submitted",
+        payload: { email },
+      }),
+  );
+  const activity = useWidgetActivity(
+    api,
+    ready ? visitor.session : null,
+    visitor.identified,
+    active,
+    (count) => {
+      unread.current.activity = count;
+      postUnread();
+    },
+  );
+
+  const updatesSubscription = useUpdatesSubscription(
+    api,
+    ready ? visitor.session : null,
+    visitor.identified,
+    active && ready && config.surfaces.changelog,
+  );
+
+  const team = useWidgetTeam(
+    api,
+    active && ready && config.surfaces.messenger,
+    (presence) =>
+      bridge.current?.post({
+        type: "quackback:event",
+        name: "presence",
+        payload: presence,
+      }),
+  );
 
   // Apply a deep link once the data it points at has loaded.
   useEffect(() => {
     if (!pending || data.loadState !== "ready") return;
     setPending(null);
-    const { article, ...next } = pending;
+    const { article, board, ...next } = pending;
+    if (next.composer === "feedback") setComposeBoard(board);
     if (!article) return setNavigation(next);
     void loadArticle(api, article, locale)
       .then((found) => setNavigation({ tab: "help", detail: found.id }))
@@ -203,20 +296,25 @@ export function WidgetHost({
   return (
     <WidgetView
       key={visitor.visitor}
+      // Without a locale from the host page, the visitor's browser language.
+      locale={locale ?? navigator.language}
       dir={dir}
       identified={visitor.identified}
-      locale={locale}
-      theme={ready ? config.theme : "auto"}
+      theme={hostTheme ?? (ready ? config.theme : "auto")}
       // Until the config arrives no tab is known to be on.
       tabs={ready ? config.tabs : []}
       onClose={close}
+      closable={params.get("inline") !== "1"}
       onExpandedChange={(expanded) =>
         bridge.current?.post({ type: "quackback:expand", expanded })
       }
       navigation={navigation}
       {...(visitor.portal && {
         onOpenPortal: () =>
-          api.sendPortalLink().catch((error: unknown) => {
+          (visitor.portal === "sign-in"
+            ? openPortalSignedIn(api).then(() => "opened" as const)
+            : api.sendPortalLink()
+          ).catch((error: unknown) => {
             // A portal sign-in linked this profile and ended its session: identify again.
             if (error instanceof ApiError && error.status === 401)
               visitor.expire(visitor.session);
@@ -224,12 +322,22 @@ export function WidgetHost({
           }),
       })}
       {...survey}
+      {...activity}
+      {...contact}
+      {...updatesSubscription}
+      {...team}
+      {...(ready && {
+        replyTime: config.replyTime ?? undefined,
+        greeting: config.greeting,
+      })}
       {...data}
-      // Screenshots and images go with feedback only, from a visitor that the host app
-      // identified: the upload routes refuse an anonymous session (RFC 0003 feature 6).
+      // Images go with feedback and messages, from a visitor that the host app identified: the
+      // upload routes refuse an anonymous session (RFC 0003 feature 6). The camera is feedback only.
       {...(data.onSubmitFeedback &&
         visitor.identified && {
-          attachmentsEnabled: "feedback" as const,
+          attachmentsEnabled: data.onSendMessage
+            ? (true as const)
+            : ("feedback" as const),
           // The SDK in the parent page renders it; a page that is not framed has no parent.
           ...(window.parent !== window && {
             onCaptureScreenshot: capture.request,

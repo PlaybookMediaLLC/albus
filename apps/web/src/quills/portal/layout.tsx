@@ -3,6 +3,7 @@ import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { Outlet, useLocation, useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { portalReturnPath } from "../core/portal-return-path";
+import { portalSignInHref } from "../core/portal-sign-in-href";
 import { readerLocale } from "../core/reader-locale";
 import { directionOf } from "../core/text-direction";
 import { portalHref } from "../core/portal-href";
@@ -79,6 +80,15 @@ export function PortalRoute() {
       .split(/[?#]/)[0]!
       .slice(portalHref(workspaceId).length)
       .split("/")[1] ?? "";
+  const signInHref = portalSignInHref(
+    workspaceId,
+    portalReturnPath(currentPath),
+    access.data?.signIn,
+  );
+  // A token sign-in that could not finish lands here (gaps G-17 and G-24).
+  const signInNotice = new URLSearchParams(currentPath.split("?")[1] ?? "")
+    .get("signIn")
+    ?.replace(/[^a-z]/g, "");
   // Small screens have no room for the header action, so feedback pages float it at the bottom.
   const floatSubmit =
     nav.tabs.feedback &&
@@ -126,14 +136,14 @@ export function PortalRoute() {
                   <PortalSearch workspaceId={workspaceId} />
                   {viewer.kind === "user" ? (
                     <PortalAccountMenu workspaceId={workspaceId} />
-                  ) : (
+                  ) : signInHref ? (
                     <a
                       className="bg-muted text-foreground hover:bg-muted/70"
-                      href={`/auth/sign-in?redirect=${encodeURIComponent(portalReturnPath(currentPath))}`}
+                      href={signInHref}
                     >
                       {t("core.signIn")}
                     </a>
-                  )}
+                  ) : null}
                   <a
                     className="hidden bg-primary text-primary-foreground hover:bg-primary/90 sm:inline-flex"
                     href={portalHref(workspaceId, "", { openFeedback: "1" })}
@@ -148,6 +158,13 @@ export function PortalRoute() {
                   workspaceId={workspaceId}
                   workspaceName={config.data.name}
                 />
+              ) : null}
+              {signInNotice ? (
+                <p role="status" className="mb-4 text-sm text-muted-foreground">
+                  {signInNotice === "required"
+                    ? t("core.signInWithAccount")
+                    : t("core.signInLinkFailed")}
+                </p>
               ) : null}
               <Outlet />
               {floatSubmit ? (

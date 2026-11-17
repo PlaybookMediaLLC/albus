@@ -5,7 +5,9 @@ import { AttachmentControls } from "./AttachmentControls.js";
 import { FeedbackDraftPanel } from "./FeedbackDraftPanel.js";
 import { FeedbackFields } from "./FeedbackFields.js";
 import { missingFields, toFieldValues, type RawFieldValue } from "./fields.js";
-import { suggestArticles, suggestFeedback } from "./search.js";
+import { suggestArticles } from "./search.js";
+import { useAction } from "./useAction.js";
+import { useSimilarRequests } from "./useSimilarRequests.js";
 import type {
   FeedbackDraft,
   FeedbackField,
@@ -16,6 +18,7 @@ import type {
   WidgetViewProps,
 } from "./types.js";
 import type { Draft } from "./useDrafts.js";
+import { useT } from "./i18n/useT.js";
 
 export function Composer({
   kind,
@@ -26,6 +29,8 @@ export function Composer({
   posts = [],
   onOpenArticle,
   onOpenPost,
+  onFindSimilar,
+  onVote,
   onBrowseHelp,
   offline = false,
   teamMember,
@@ -35,7 +40,6 @@ export function Composer({
   onCapture,
   articleContext,
   onDraft,
-  onVote,
   fields = [],
 }: {
   kind: "message" | "feedback" | "reply" | "comment";
@@ -49,6 +53,8 @@ export function Composer({
   posts?: readonly FeedbackPost[];
   onOpenArticle?: (id: string) => void;
   onOpenPost?: (id: string) => void;
+  onFindSimilar?: WidgetViewProps["onFindSimilar"];
+  onVote?: WidgetViewProps["onVoteFeedback"];
   onBrowseHelp?: () => void;
   offline?: boolean;
   teamMember?: WidgetPerson;
@@ -59,11 +65,10 @@ export function Composer({
   articleContext?: string;
   /** Feedback: suggests a title and a board from the visitor's words. */
   onDraft?: (body: string) => Promise<FeedbackDraft>;
-  /** Feedback: votes for a similar request instead of posting. */
-  onVote?: (postId: string) => Promise<unknown>;
   /** Feedback: the public custom fields of the board that the post goes to. */
   fields?: readonly FeedbackField[];
 }) {
+  const t = useT();
   const form = useRef<HTMLFormElement>(null);
   const fieldId = useId();
   const [preparing, setPreparing] = useState(false);
@@ -83,20 +88,28 @@ export function Composer({
   const compact = kind === "reply" || kind === "comment";
   const label =
     kind === "feedback"
-      ? "Your feedback"
+      ? t("Your feedback")
       : kind === "reply"
-        ? "Your reply"
+        ? t("Your reply")
         : kind === "comment"
-          ? "Your comment"
-          : "Your message";
-  const suggestions =
-    body.trim().length >= 3 && !shown
-      ? kind === "feedback"
-        ? suggestFeedback(posts, body)
-        : kind === "message"
-          ? suggestArticles(articles, body)
-          : []
-      : [];
+          ? t("Your comment")
+          : t("Your message");
+  const similar = useSimilarRequests(
+    body,
+    posts,
+    onFindSimilar,
+    kind === "feedback",
+  );
+  // Votes cast here, for requests the widget has not loaded.
+  const [votedHere, setVotedHere] = useState<Record<string, boolean>>({});
+  const voting = useAction();
+  const suggestions = shown
+    ? []
+    : kind === "feedback"
+      ? similar
+      : kind === "message" && body.trim().length >= 3
+        ? suggestArticles(articles, body)
+        : [];
   // A suggested board asks for its own fields.
   const asked = kind === "feedback" ? (shown?.board?.fields ?? fields) : [];
   const missing = missingFields(asked, values);
@@ -123,8 +136,10 @@ export function Composer({
       {kind === "message" && (
         <div className="qb-conversation-intro">
           <Avatar {...(teamMember ?? { name: "Quills" })} />
-          <h1>What can we help you with?</h1>
-          <p id={`${fieldId}-hint`}>Ask a question or share what you need.</p>
+          <h1>{t("What can we help you with?")}</h1>
+          <p id={`${fieldId}-hint`}>
+            {t("Ask a question or share what you need.")}
+          </p>
         </div>
       )}
       <label
@@ -135,11 +150,13 @@ export function Composer({
       </label>
       {kind === "reply" && (
         <p className="qb-composer-hint" id={`${fieldId}-hint`}>
-          Continue the conversation with the team.
+          {t("Continue the conversation with the team.")}
         </p>
       )}
       {articleContext && (
-        <p className="qb-article-context">About: {articleContext}</p>
+        <p className="qb-article-context">
+          {t("About: {title}", { title: articleContext })}
+        </p>
       )}
       <div className="qb-writing-area">
         <textarea
@@ -152,12 +169,12 @@ export function Composer({
           }
           placeholder={
             kind === "feedback"
-              ? "What's on your mind?"
+              ? t("What's on your mind?")
               : kind === "comment"
-                ? "Add a comment…"
+                ? t("Add a comment…")
                 : kind === "message"
-                  ? "Message…"
-                  : "Write a message…"
+                  ? t("Message…")
+                  : t("Write a message…")
           }
           value={body}
           onChange={(event) => onChange(event.target.value)}
@@ -189,8 +206,8 @@ export function Composer({
           <span className="qb-send-status" aria-live="polite">
             {pending
               ? kind === "feedback"
-                ? "Posting your feedback…"
-                : "Sending your message…"
+                ? t("Posting your feedback…")
+                : t("Sending your message…")
               : ""}
           </span>
           <button
@@ -199,21 +216,21 @@ export function Composer({
             type="submit"
             aria-label={
               pending
-                ? "Sending…"
+                ? t("Sending…")
                 : kind === "feedback"
-                  ? "Post"
+                  ? t("Post")
                   : kind === "reply"
-                    ? "Send reply"
+                    ? t("Send reply")
                     : kind === "comment"
-                      ? "Post comment"
-                      : "Send"
+                      ? t("Post comment")
+                      : t("Send")
             }
           >
             {kind === "feedback" ? (
               pending ? (
-                "Sending…"
+                t("Sending…")
               ) : (
-                "Post"
+                t("Post")
               )
             ) : (
               <Icon name="up" />
@@ -279,34 +296,75 @@ export function Composer({
           }
           onDismiss={() => setSuggested(null)}
           onOpenPost={onOpenPost}
-          onVote={onVote}
+          onVote={onVote && ((postId) => onVote(postId, true))}
         />
       )}
       {!!suggestions.length && (
         <aside
           className="qb-suggestions"
           aria-label={
-            kind === "feedback" ? "Similar requests" : "Suggested help"
+            kind === "feedback" ? t("Similar requests") : t("Suggested help")
           }
         >
           <h2>
-            {kind === "feedback" ? "Similar requests" : "Suggested articles"}
+            {kind === "feedback"
+              ? t("Similar requests")
+              : t("Suggested articles")}
           </h2>
-          {suggestions.map((item) => (
-            <button
-              type="button"
-              key={item.id}
-              onClick={() =>
-                kind === "feedback"
-                  ? onOpenPost?.(item.id)
-                  : onOpenArticle?.(item.id)
-              }
-            >
-              <Icon name={kind === "feedback" ? "feedback" : "help"} />
-              {item.title}
-              <Icon name="chevron" />
-            </button>
-          ))}
+          {kind === "feedback"
+            ? similar.map((item) => {
+                const voted = votedHere[item.id] ?? !!item.voted;
+                // A loaded post's count already moved; an unloaded one moves by this vote.
+                const votes =
+                  item.votes === undefined
+                    ? undefined
+                    : item.votes + Number(voted) - Number(!!item.voted);
+                return (
+                  <div className="qb-suggestion" key={item.id}>
+                    <button type="button" onClick={() => onOpenPost?.(item.id)}>
+                      <Icon name="feedback" />
+                      {item.title}
+                      <Icon name="chevron" />
+                    </button>
+                    {onVote && (
+                      <button
+                        type="button"
+                        className="qb-votes"
+                        aria-pressed={voted}
+                        aria-label={
+                          voted
+                            ? t("Voted for {title}", { title: item.title })
+                            : t("Vote for {title}", { title: item.title })
+                        }
+                        disabled={offline || voting.forKey(item.id).pending}
+                        onClick={() =>
+                          void voting.run(async () => {
+                            await onVote(item.id, !voted);
+                            setVotedHere((map) => ({
+                              ...map,
+                              [item.id]: !voted,
+                            }));
+                          }, item.id)
+                        }
+                      >
+                        <Icon name="up" />
+                        {votes}
+                      </button>
+                    )}
+                  </div>
+                );
+              })
+            : suggestions.map((item) => (
+                <button
+                  type="button"
+                  key={item.id}
+                  onClick={() => onOpenArticle?.(item.id)}
+                >
+                  <Icon name="help" />
+                  {item.title}
+                  <Icon name="chevron" />
+                </button>
+              ))}
         </aside>
       )}
       {onBrowseHelp && kind === "message" && !!body.trim() && (
@@ -315,19 +373,19 @@ export function Composer({
           className="qb-text-button qb-browse-help"
           onClick={onBrowseHelp}
         >
-          Browse help without losing your draft <Icon name="arrow" />
+          {t("Browse help without losing your draft")} <Icon name="arrow" />
         </button>
       )}
       {(!onSubmit || offline) && (
         <p className="qb-form-note">
           {offline
-            ? "You’re offline. Your draft stays here until you reconnect."
-            : "Sending is not available right now."}
+            ? t("You’re offline. Your draft stays here until you reconnect.")
+            : t("Sending is not available right now.")}
         </p>
       )}
       {error && (
         <p className="qb-form-error" role="alert" id={`${fieldId}-error`}>
-          {error}
+          {t.text(error)}
         </p>
       )}
     </form>

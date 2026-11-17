@@ -49,6 +49,34 @@ describe("PostVisibility", () => {
     ).resolves.toEqual({ visible: true });
   });
 
+  it("shows a request to its author only, and on the board again", async () => {
+    const api = mockApi();
+    api.reply(
+      setPostVisibilityFixture.ok({
+        moderationState: "published",
+        isHidden: true,
+      }),
+    );
+    const view = render();
+    press("Visibility: On board");
+    fireEvent.click(
+      await view.findByRole("menuitemradio", {
+        name: "Shown to its author only",
+      }),
+    );
+    await waitFor(() =>
+      expect(api.calls("setQuillsPostVisibility")).toHaveLength(1),
+    );
+    await expect(
+      api.calls("setQuillsPostVisibility")[0]!.clone().json(),
+    ).resolves.toEqual({ visible: true, authorOnly: true });
+    view.unmount();
+    const hidden = render({ ...postDetail, isHidden: true });
+    expect(
+      hidden.getByRole("button", { name: "Visibility: Only its author" }),
+    ).toBeEnabled();
+  });
+
   it("approves a request that waits for review to show it", async () => {
     const api = mockApi();
     api.reply(approvePostFixture.ok());

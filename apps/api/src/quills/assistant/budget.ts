@@ -23,6 +23,10 @@ export function monthlyTokenLimit() {
   return Number.isSafeInteger(value) && value > 0 ? value : null;
 }
 
+// shortcut: above what current providers charge for one image (OpenAI, Anthropic and Gemini stay
+// under 2,000 tokens); raise it if a provider bills an image higher.
+const IMAGE_TOKENS = 5_000;
+
 /**
  * The most a chat completion can cost. Byte-level tokenizers never make more tokens than the
  * text has UTF-8 bytes, so this bounds any prompt in any language.
@@ -32,7 +36,16 @@ export const tokenCeiling = (messages: readonly Message[], maxTokens: number) =>
     (sum, message) =>
       sum +
       MESSAGE_OVERHEAD +
-      Buffer.byteLength("content" in message ? (message.content ?? "") : ""),
+      (Array.isArray(message.content)
+        ? message.content.reduce(
+            (bytes, part) =>
+              bytes +
+              (part.type === "text"
+                ? Buffer.byteLength(part.text)
+                : IMAGE_TOKENS),
+            0,
+          )
+        : Buffer.byteLength(message.content ?? "")),
     maxTokens,
   );
 

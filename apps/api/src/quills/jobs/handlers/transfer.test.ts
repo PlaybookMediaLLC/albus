@@ -19,6 +19,7 @@ import { exportRuns } from "../../../database/quills/schema/export-runs";
 import { postExternalLinks } from "../../../database/quills/schema/external-links";
 import { files } from "../../../database/quills/schema/files";
 import { importRuns } from "../../../database/quills/schema/import-runs";
+import { postStatuses } from "../../../database/quills/schema/statuses";
 import { boardProjects } from "../../../database/quills/schema/platform-links";
 import {
   posts,
@@ -726,6 +727,60 @@ describe.skipIf(!url)("Transfer run jobs", () => {
       totals: { rows: 3, created: 2, skipped: 1 },
     });
     expect(await titled(["Imported one"])).toHaveLength(1);
+  });
+
+  it("imports another tool's export as it is: its headers, status words and plain dates", async () => {
+    const csv = [
+      "Post Title,Post Details,Post Status,Score,Email,Created,URL",
+      "Exported shipped,Done there,Shipped,12,,2024-03-01 10:00:00,https://feedback.example.test/p/1",
+      "Exported building,Being built,in development,3,,2024-03-02 11:30,https://feedback.example.test/p/2",
+      "Exported plain,,,0,,,https://feedback.example.test/p/3",
+    ].join("\n");
+    const run = await startImport(csv);
+    await drain();
+    expect(await importRun(run.runId)).toMatchObject({
+      status: "completed",
+      totals: { rows: 3, created: 3, errors: 0 },
+    });
+    const rows = await inA((db) =>
+      db
+        .select({
+          title: posts.title,
+          content: posts.content,
+          status: postStatuses.slug,
+          createdAt: posts.createdAt,
+        })
+        .from(posts)
+        .innerJoin(postStatuses, eq(postStatuses.id, posts.statusId))
+        .where(
+          inArray(posts.title, [
+            "Exported shipped",
+            "Exported building",
+            "Exported plain",
+          ]),
+        )
+        .orderBy(posts.title),
+    );
+    expect(rows).toEqual([
+      {
+        title: "Exported building",
+        content: "Being built",
+        status: "in_progress",
+        createdAt: new Date("2024-03-02T11:30:00Z"),
+      },
+      {
+        title: "Exported plain",
+        content: "",
+        status: "open",
+        createdAt: expect.any(Date),
+      },
+      {
+        title: "Exported shipped",
+        content: "Done there",
+        status: "complete",
+        createdAt: new Date("2024-03-01T10:00:00Z"),
+      },
+    ]);
   });
 
   it("imports a source_id once when two runs settle at the same time", async () => {

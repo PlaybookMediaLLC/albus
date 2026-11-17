@@ -1018,7 +1018,8 @@ export type ConversationSystemEventKind =
   | "external_status_changed"
   | "priority_changed"
   | "snoozed"
-  | "csat_submitted";
+  | "csat_submitted"
+  | "away_reply";
 
 export interface ConversationSystemEvent {
   kind: ConversationSystemEventKind;
@@ -1297,6 +1298,15 @@ export interface ConversationMessageMetadata {
    *  (§4.8). Bcc is never stored — it is stripped at ingest. */
   subject?: string;
   cc?: string[];
+  /** A customer agent's answer (G-31); the visitor sees it as the assistant's. */
+  assistantReply?: boolean;
+  /** A feedback request the customer agent proposed; the visitor confirms it once. */
+  feedbackCard?: {
+    title: string;
+    body: string;
+    status: "proposed" | "confirmed";
+    postId?: string;
+  };
   /** For 'system' messages: the structured event, so clients can localize the
    *  notice instead of rendering the stored (English) content. */
   systemEvent?: ConversationSystemEvent;

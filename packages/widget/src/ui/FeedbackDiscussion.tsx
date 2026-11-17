@@ -3,6 +3,7 @@ import { CommentThread } from "./CommentThread.js";
 import { Composer } from "./Composer.js";
 import { emptyDraft, type useDrafts } from "./useDrafts.js";
 import type { FeedbackPost, WidgetViewProps } from "./types.js";
+import { useT } from "./i18n/useT.js";
 
 export function FeedbackDiscussion({
   post,
@@ -17,6 +18,7 @@ export function FeedbackDiscussion({
   onVote?: WidgetViewProps["onVoteComment"];
   offline: boolean;
 }) {
+  const t = useT();
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const comments = post.comments ?? [];
   const draftKey = (parentId: string | null) =>
@@ -31,7 +33,7 @@ export function FeedbackDiscussion({
             className="qb-text-button"
             onClick={() => setReplyTo(null)}
           >
-            Cancel reply
+            {t("Cancel reply")}
           </button>
         )}
         <Composer
@@ -61,7 +63,7 @@ export function FeedbackDiscussion({
   };
   const ids = new Set(comments.map((comment) => comment.id));
   return (
-    <section className="qb-discussion" aria-label="Request discussion">
+    <section className="qb-discussion" aria-label={t("Request discussion")}>
       {composer(null)}
       {comments
         .filter((comment) => !comment.parentId || !ids.has(comment.parentId))

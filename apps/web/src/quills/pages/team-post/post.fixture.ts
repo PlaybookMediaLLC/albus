@@ -36,6 +36,7 @@ export const postDetail: GetPostResponse = {
   commentCount: 3,
   pinnedCommentId: null,
   isCommentsLocked: false,
+  isHidden: false,
   moderationState: "published",
   canonicalPostId: null,
   eta: null,
@@ -48,6 +49,7 @@ export const postDetail: GetPostResponse = {
   hasVoted: false,
   viewerPrincipalId: "principal_team",
   widgetMetadata: null,
+  attachments: [],
   customFields: [],
 };
 

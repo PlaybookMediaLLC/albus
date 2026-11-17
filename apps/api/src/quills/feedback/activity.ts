@@ -44,6 +44,7 @@ type Activity =
   | { type: "owner.unassigned"; metadata: { previousOwnerName: Text } }
   | { type: "tags.added" | "tags.removed"; metadata: { tagNames: string[] } }
   | { type: "comments.locked" | "comments.unlocked"; metadata?: undefined }
+  | { type: "post.hidden" | "post.shown"; metadata?: undefined }
   | {
       type: "vote.proxy" | "vote.removed";
       metadata: { voterPrincipalId: string; voterName: Text; source?: string };

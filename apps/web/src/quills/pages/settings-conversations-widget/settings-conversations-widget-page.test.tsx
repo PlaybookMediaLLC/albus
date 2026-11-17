@@ -75,4 +75,22 @@ describe("SettingsConversationsWidgetPage", () => {
       position: "bottom-left",
     });
   });
+
+  it("sets and clears the team's reply time", async () => {
+    api = mockApi();
+    api.reply(settings);
+    api.reply(updateWidgetSettingsFixture.ok());
+    api.reply({ ...settings, replyTime: "hours" });
+    const view = renderPage(SettingsConversationsWidgetPage, meta);
+    expect(
+      await view.findByRole("combobox", { name: "Reply time" }),
+    ).toHaveTextContent("Do not show");
+    await choose("Reply time", "Within a few hours");
+    await waitFor(() =>
+      expect(api.calls("updateQuillsWidgetSettings")).toHaveLength(1),
+    );
+    expect(await api.calls("updateQuillsWidgetSettings")[0]!.json()).toEqual({
+      replyTime: "hours",
+    });
+  });
 });

@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Icon } from "./Icon.js";
 import type { Attachment } from "./types.js";
+import { useT } from "./i18n/useT.js";
 
 /** Receives only URLs already checked by AttachmentGallery; the host owns them. */
 export function ImageViewer({
@@ -12,6 +13,7 @@ export function ImageViewer({
   initialId: string;
   onClose: () => void;
 }) {
+  const t = useT();
   const dialog = useRef<HTMLDialogElement>(null);
   const returnFocus = useRef(document.activeElement);
   const title = useId();
@@ -64,11 +66,11 @@ export function ImageViewer({
       }}
     >
       <header>
-        <strong id={title}>{item?.name ?? "Image"}</strong>
+        <strong id={title}>{item?.name ?? t("Image")}</strong>
         <button
           type="button"
           className="qb-icon-button"
-          aria-label="Close image viewer"
+          aria-label={t("Close image viewer")}
           autoFocus
           onClick={onClose}
         >
@@ -80,7 +82,7 @@ export function ImageViewer({
         className="qb-image-viewport"
         role="region"
         tabIndex={0}
-        aria-label="Image preview"
+        aria-label={t("Image preview")}
         data-zoomed={zoomed}
       >
         {item && !failed ? (
@@ -92,7 +94,7 @@ export function ImageViewer({
             onError={() => setFailedUrl(item.url)}
           />
         ) : (
-          <p role="alert">This image could not be loaded.</p>
+          <p role="alert">{t("This image could not be loaded.")}</p>
         )}
       </div>
       {/* oxlint-enable jsx-a11y/no-noninteractive-tabindex */}
@@ -100,19 +102,22 @@ export function ImageViewer({
         <button
           type="button"
           className="qb-icon-button"
-          aria-label="Previous image"
+          aria-label={t("Previous image")}
           disabled={index <= 0}
           onClick={() => move(index - 1)}
         >
           <Icon name="back" />
         </button>
         <span aria-live="polite">
-          {index + 1} of {attachments.length}
+          {t("{index} of {count}", {
+            index: index + 1,
+            count: attachments.length,
+          })}
         </span>
         <button
           type="button"
           className="qb-icon-button"
-          aria-label="Next image"
+          aria-label={t("Next image")}
           disabled={index >= attachments.length - 1}
           onClick={() => move(index + 1)}
         >
@@ -126,7 +131,7 @@ export function ImageViewer({
           onClick={() => setZoomed((value) => !value)}
         >
           <Icon name="search" />
-          {zoomed ? "Fit image" : "Zoom in"}
+          {zoomed ? t("Fit image") : t("Zoom in")}
         </button>
       </footer>
     </dialog>
