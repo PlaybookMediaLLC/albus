@@ -164,7 +164,8 @@ Merged: the nine `widgetQuills*` ticket rows and `createQuillsMyTicket`, `getQui
 | Event | Who | How | Read again at send time |
 |---|---|---|---|
 | `message.created` | the customer of an email conversation | direct mail, `ConversationReplyEmail`, ledger `mail:{eventId}:direct` | the message is a live agent message with text, not internal; the conversation channel is `email`; the address and the visitor's block |
-| `ticket.replied` | the requester (email pair, `payload.messageId`) and watching teammates | direct mail as above; in-app `ticket_watch` | as above; watcher mute |
+| `message.created` | the portal customer of a portal conversation (a profile linked to a Kaneo account) | direct mail, `ConversationMessageEmail` with a link to the conversation page; the job waits `PORTAL_REPLY_DELAY_SECONDS` (120); ledger `mail:{eventId}:direct` | the message is a live agent message with text, not internal, still unread, and no newer reply exists (that one mails instead); the portal and support are on; the private-portal gate admits the customer; the Kaneo account address is verified; the customer has not muted mail (the unsubscribe-all link) and is not blocked or a test customer |
+| `ticket.replied` | the requester (email pair or portal ticket, `payload.messageId`) and watching teammates | direct mail as above; in-app `ticket_watch` | as above; watcher mute |
 | `ticket.status_changed`, `ticket.note_added` | watching teammates | in-app `ticket_watch` (title and ticket title, never note text) | watcher mute |
 | `message.note_created` | mentioned teammates | in-app `note_mention` and `NoteMentionEmail` | the note is live |
 | `post.status_changed`, `comment.created` | customer subscribers (new) | mail with the P3c unsubscribe link | verified account address, the portal or widget switch, the private-portal gate, the public post visibility rule, the comment visibility rule (never a private or held comment), the mail preference |
@@ -176,8 +177,12 @@ Merged: the nine `widgetQuills*` ticket rows and `createQuillsMyTicket`, `getQui
   `SendingIdentity` is minted.
 - Fan-out sends no per-watcher mail for a direct entry, and mails customer subscribers only for
   entries with `customers: true`. A direct entry may decide at fan-out whether the event has mail
-  (`direct` as a function), so a messenger or visitor message queues no mail job; the mail
-  handler still reads everything again at send time.
+  (`direct` as a function), so a visitor message, a note or a widget visitor's reply queues no mail
+  job; the mail handler still reads everything again at send time.
+- A portal reply's job waits two minutes (`directDelay`). The open conversation page polls every
+  10 seconds and marks the reply read, so a customer who is on the page gets no mail, and a burst
+  of replies mails once, for the newest. A widget visitor has no portal page to link and gets no
+  reply mail.
 
 ## Widget RFC differences (adapter notes)
 
@@ -206,7 +211,7 @@ Merged: the nine `widgetQuills*` ticket rows and `createQuillsMyTicket`, `getQui
 | Contact email change (`confirmQuillsEmailChange`, `getQuillsEmailChangeState`, `requestQuillsEmailChange`, `sendQuillsCurrentAddressCode`) | built for anonymous visitors | `widget/contact-email.ts` (`/widget/contact-email...`). A portal customer's address is the Kaneo account email, which Kaneo's auth owns; an identified widget visitor's comes from the host's signed token (both 403). Codes are derived from the widget secret and the pending request (`framework/signed.ts#contactEmailCode`), never stored; 15 minutes, 5 tries, single use, 5 code mails per visitor and hour plus the per-client rate limit. The worker mails them (`user.contact_email_code_requested`). |
 | Status incident subscriber mail and its token reconciliation | built | `jobs/handlers/status-mail.ts`; one unsubscribe mint (`portal/unsubscribe-token.ts#mintUnsubscribeToken`). See `content/public/ROUTES.md`. |
 | The mail that carries CSAT rating links | built | `conversation.status_changed` to closed on an email conversation (the source's close mail): one `CsatRequestEmail` per conversation (ledger key `mail:csat:{conversationId}`, and not when the mail log already holds one), with five links from `mintCsatToken` to the portal rating page `/portal/{workspace}/csat?token=&rating=` (as in the source; apps/web has no such page yet, so the links wait for it). Not for spam, a rated conversation, or a close by the customer. A bulk close (`conversation.bulk_updated`) names no conversation and sends none. |
-| Delivery to the requesters of tickets that a tracker links | built | The one tracker event fans out at delivery: reply-all copies carry `repliedAllFromMessageId`, so the mail entry queues one mail per copy on an email pair (`mail:{eventId}:{messageId}`), and the socket tells each linked requester once. A status move tells the requesters of linked tickets now in the new status. |
+| Delivery to the requesters of tickets that a tracker links | built | The one tracker event fans out at delivery: reply-all copies carry `repliedAllFromMessageId`, so the mail entry queues one mail per copy on an email pair or a portal ticket (`mail:{eventId}:{messageId}`; a copy does not wait, because a reply-all is a broadcast), and the socket tells each linked requester once. A status move tells the requesters of linked tickets now in the new status. |
 | Mail for an embed-only reply ("share post", "track as feedback") | not built | The message has no text; the mail would be empty. The customer sees the embed in the thread, and portal customers get the socket invalidation. |
 | Reply-To and threading headers on customer reply mail | built | Reply-To is the conversation's signed reply address (`framework/signed.ts#replyAddress`); Message-ID is `<{messageId}@{inbound domain}>`; In-Reply-To and References name up to 20 earlier mails of the thread. |
 | Teammate mail for a new visitor message | not built | The source mails an offline assignee; Kaneo has no presence to decide "offline". Teammates get the `QUILLS_CHANGED` invalidation. |

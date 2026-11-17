@@ -83,7 +83,10 @@ import {
   OnboardingEmail,
   type OnboardingEmailContent,
 } from "./templates/onboarding-email";
-import { StatusChangeEmail } from "./templates/status-change";
+import {
+  StatusChangeEmail,
+  statusChangeHeadline,
+} from "./templates/status-change";
 import { ShippedEmail } from "./templates/shipped";
 import {
   WeeklyDigestEmail,
@@ -1052,6 +1055,8 @@ interface SendStatusChangeParams {
   oneClickUnsubscribeUrl?: string;
   preferencesUrl?: string;
   logoUrl?: string;
+  /** The recipient wrote the feedback; anyone else gets copy for a follower. */
+  yours?: boolean;
 }
 
 export async function sendStatusChangeEmail(
@@ -1067,13 +1072,14 @@ export async function sendStatusChangeEmail(
     unsubscribeUrl,
     preferencesUrl,
     logoUrl,
+    yours,
   } = params;
 
   const formattedNewStatus = newStatus.replace(/_/g, " ");
 
   return sendEmail({
     to,
-    subject: `Your feedback is now ${formattedNewStatus}!`,
+    subject: statusChangeHeadline(formattedNewStatus, yours),
     react: StatusChangeEmail({
       postTitle,
       postUrl,
@@ -1083,6 +1089,7 @@ export async function sendStatusChangeEmail(
       unsubscribeUrl,
       preferencesUrl,
       logoUrl,
+      yours,
     }),
     extraHeaders: listUnsubscribeHeaders(
       params.oneClickUnsubscribeUrl ?? unsubscribeUrl,
@@ -1238,8 +1245,9 @@ interface SendConversationMessageEmailParams {
   /** The full message body as pre-rendered, sanitized HTML. When present it is
    *  shown inline in place of the truncated `messagePreview` quote. */
   bodyHtml?: string;
-  /** Link to the conversation (admin inbox for agents; portal/widget for visitors). */
-  ctaUrl: string;
+  /** Link to the conversation (admin inbox for agents; portal/widget for visitors). Absent when
+   *  the visitor cannot open it, such as the sender of an inbound mail: they reply by mail. */
+  ctaUrl?: string;
   workspaceName: string;
   logoUrl?: string;
   /** Conversation-specific reply address so a visitor's reply routes back to

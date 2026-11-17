@@ -173,7 +173,8 @@ New queues: `quills.webhook`, `quills.mail`, `quills.notification` (`jobs/handle
   uncertain. The provider also receives one idempotency key per send. The address and membership are read
   at send time. Each outcome writes an `email_log` row.
 - A mail content may name its own ledger key (`ledgerKey`): the CSAT request uses `mail:csat:{conversationId}`,
-  one per conversation across events. A `copies` entry (a tracker's reply-all) queues one mail per copy;
+  one per conversation across events. A direct entry's `directDelay` makes its job wait (a portal
+  conversation reply, two minutes). A `copies` entry (a tracker's reply-all) queues one mail per copy;
   the handler checks again that the entry still names the copy. A `customerAddress` hook decides a
   customer's address at send time for mail that is not about a post (status subscribers).
 - Every send carries Resend tags with its workspace and `email_log` row, signed with an HMAC

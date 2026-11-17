@@ -16,7 +16,15 @@ interface StatusChangeEmailProps {
   unsubscribeUrl: string;
   preferencesUrl?: string;
   logoUrl?: string;
+  /** The recipient wrote the feedback. Followers get copy that does not call it theirs. */
+  yours?: boolean;
 }
+
+/** The subject and heading: "your feedback" only for the person who wrote it. */
+export const statusChangeHeadline = (status: string, yours = false) =>
+  yours
+    ? `Your feedback is now ${status}!`
+    : `Feedback you follow is now ${status}`;
 
 function capitalizeStatus(status: string): string {
   return status
@@ -34,6 +42,7 @@ export function StatusChangeEmail({
   unsubscribeUrl,
   preferencesUrl,
   logoUrl,
+  yours = false,
 }: StatusChangeEmailProps) {
   const formattedNewStatus = capitalizeStatus(newStatus);
   const formattedPreviousStatus = capitalizeStatus(previousStatus);
@@ -47,17 +56,18 @@ export function StatusChangeEmail({
           preferencesUrl={preferencesUrl}
         />
       }
-      preview={`Your feedback is now ${formattedNewStatus}`}
+      preview={statusChangeHeadline(formattedNewStatus, yours)}
       logoUrl={logoUrl}
       logoAlt={organizationName}
     >
       {/* Content */}
       <Heading className="k-text" style={typography.h1}>
-        Your feedback is now {formattedNewStatus}!
+        {statusChangeHeadline(formattedNewStatus, yours)}
       </Heading>
       <Text className="k-text-85" style={typography.text}>
-        Great news! The status of your feedback has been updated on{" "}
-        {organizationName}.
+        {yours
+          ? `Great news! The status of your feedback has been updated on ${organizationName}.`
+          : `The status of feedback you follow has been updated on ${organizationName}.`}
       </Text>
 
       {/* Post Title */}

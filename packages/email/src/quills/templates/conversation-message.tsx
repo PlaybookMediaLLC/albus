@@ -20,7 +20,8 @@ interface ConversationMessageEmailProps {
    * gets the whole reply inline. Absent = fall back to the preview excerpt.
    */
   bodyHtml?: string;
-  ctaUrl: string;
+  /** Absent when the reader cannot open the conversation; the mail then has no link. */
+  ctaUrl?: string;
   ctaLabel: string;
   organizationName: string;
   reason: string;
@@ -95,17 +96,23 @@ export function ConversationMessageEmail({
         <Spacer size={20} />
       </>
 
-      <Section
-        style={{ textAlign: "start", marginTop: "24px", marginBottom: "24px" }}
-      >
-        <Link
-          className="k-link"
-          href={ctaUrl}
-          style={{ ...utils.link, fontWeight: 500, fontSize: "15px" }}
+      {ctaUrl ? (
+        <Section
+          style={{
+            textAlign: "start",
+            marginTop: "24px",
+            marginBottom: "24px",
+          }}
         >
-          {ctaLabel}
-        </Link>
-      </Section>
+          <Link
+            className="k-link"
+            href={ctaUrl}
+            style={{ ...utils.link, fontWeight: 500, fontSize: "15px" }}
+          >
+            {ctaLabel}
+          </Link>
+        </Section>
+      ) : null}
 
       <Text className="k-text-85" style={typography.footer}>
         {reason}

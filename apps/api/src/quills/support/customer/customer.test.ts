@@ -1182,8 +1182,13 @@ describe.skipIf(!url)("Quills customer support routes and delivery", () => {
     await drain();
     await drain();
     await drain();
-    expect(mail.map((m) => m.to)).toEqual([[address]]);
-    expect(readable(mail[0]!.data)).toContain("ReplyAllMarker-fixed");
+    // One copy per linked requester: the email pair at its address, and the portal ticket's
+    // customer at the verified account address, because the reply landed in their ticket.
+    expect(mail.map((m) => m.to).sort()).toEqual(
+      [[address], [`${env.customerA}@example.test`]].sort(),
+    );
+    for (const sent of mail)
+      expect(readable(sent.data)).toContain("ReplyAllMarker-fixed");
     const [kept] = await env.scoped(env.a, (db) =>
       db
         .select({
@@ -1211,7 +1216,7 @@ describe.skipIf(!url)("Quills customer support routes and delivery", () => {
     for (const event of replied) await fanOut(env.a, event.eventId);
     await drain();
     await drain();
-    expect(mail).toHaveLength(1);
+    expect(mail).toHaveLength(2);
 
     // The status cascade tells the linked portal requester.
     await settle();
