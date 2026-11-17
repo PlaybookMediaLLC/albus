@@ -8,6 +8,8 @@ export interface PanelOptions {
   defaultBoard?: string;
   showCloseButton?: boolean;
   locale?: string;
+  /** Renders the panel inside this element, always open, instead of floating. */
+  container?: Element;
   onBackdropClick: () => void;
 }
 
@@ -50,6 +52,7 @@ export function createPanel(opts: PanelOptions): PanelHandle {
   if (opts.defaultBoard)
     params.push(`board=${encodeURIComponent(opts.defaultBoard)}`);
   if (opts.showCloseButton) params.push("showClose=1");
+  if (opts.container) params.push("inline=1");
   if (opts.locale) params.push(`locale=${encodeURIComponent(opts.locale)}`);
   const url = opts.widgetUrl + (params.length ? "?" + params.join("&") : "");
 
@@ -63,10 +66,12 @@ export function createPanel(opts: PanelOptions): PanelHandle {
 
   const panel = document.createElement("div");
   panel.className = "quackback-panel quackback-widget-iframe-wrapper";
+  const inline = Boolean(opts.container);
+  if (inline) panel.classList.add("quackback-inline");
   // Closed, the panel is only transparent: inert keeps its frame out of the
   // host page's tab order and the accessibility tree until it opens.
-  panel.inert = true;
-  document.body.appendChild(panel);
+  panel.inert = !inline;
+  (opts.container ?? document.body).appendChild(panel);
 
   const iframe = document.createElement("iframe");
   Object.assign(iframe.style, {
@@ -93,7 +98,7 @@ export function createPanel(opts: PanelOptions): PanelHandle {
   fallbackClose.addEventListener("click", opts.onBackdropClick, {
     signal: listeners.signal,
   });
-  panel.appendChild(fallbackClose);
+  if (!inline) panel.appendChild(fallbackClose);
 
   let open = false;
   let closeTimer: ReturnType<typeof setTimeout> | undefined;
@@ -106,7 +111,7 @@ export function createPanel(opts: PanelOptions): PanelHandle {
   document.addEventListener(
     "keydown",
     (event) => {
-      if (open && event.key === "Escape") opts.onBackdropClick();
+      if (open && !inline && event.key === "Escape") opts.onBackdropClick();
     },
     { signal: listeners.signal },
   );
@@ -114,7 +119,7 @@ export function createPanel(opts: PanelOptions): PanelHandle {
   return {
     iframe,
     show() {
-      if (open) return;
+      if (open || inline) return;
       open = true;
       clearTimeout(closeTimer);
       previousFocus =
@@ -130,7 +135,7 @@ export function createPanel(opts: PanelOptions): PanelHandle {
       iframe.focus();
     },
     hide() {
-      if (!open) return;
+      if (!open || inline) return;
       open = false;
       restoreFocus();
       clearTimeout(closeTimer);

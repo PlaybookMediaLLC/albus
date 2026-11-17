@@ -115,6 +115,17 @@ export const customerMessageSchema = z.object({
   ),
   createdAt: responseTimestamp,
   editedAt: nullableResponseTimestamp,
+  /** The customer agent wrote it (gap G-31). */
+  fromAssistant: z.boolean(),
+  /** A feedback request the customer agent proposed; the visitor confirms it once. */
+  feedbackCard: z
+    .object({
+      title: z.string(),
+      body: z.string(),
+      status: z.enum(["proposed", "confirmed"]),
+      postId: z.string().nullable(),
+    })
+    .nullable(),
 });
 
 export const customerConversationSchema = z.object({
@@ -232,6 +243,8 @@ export const selectCustomerMessages = (
       attachments: conversationMessages.attachments,
       createdAt: conversationMessages.createdAt,
       editedAt: conversationMessages.editedAt,
+      // Read for the assistant marker and the feedback card only; the rest never leaves.
+      metadata: conversationMessages.metadata,
     })
     .from(conversationMessages)
     .leftJoin(principal, eq(principal.id, conversationMessages.principalId))
@@ -263,6 +276,15 @@ export const toMessages = (rows: MessageRow[]) =>
     })),
     createdAt: row.createdAt,
     editedAt: row.editedAt,
+    fromAssistant: row.metadata?.assistantReply === true,
+    feedbackCard: row.metadata?.feedbackCard
+      ? {
+          title: row.metadata.feedbackCard.title,
+          body: row.metadata.feedbackCard.body,
+          status: row.metadata.feedbackCard.status,
+          postId: row.metadata.feedbackCard.postId ?? null,
+        }
+      : null,
   }));
 
 /** A customer-visible message of this conversation (deleted included, for cursors), or 404. */

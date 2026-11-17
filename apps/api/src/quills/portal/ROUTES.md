@@ -148,7 +148,7 @@ Rules of the public profile:
 
 | Source | Reason |
 |---|---|
-| `routes/api/auth/portal-signin.ts#POST` | Portal sign-in is Kaneo's existing `/api/auth/*` (magic link, email OTP, password, social). No Quills route. |
+| `routes/api/auth/portal-signin.ts#POST` | Portal sign-in is Kaneo's existing `/api/auth/*` (magic link, email OTP, password, social). No Quills route. The widget handoff and SSO sign-in (gaps G-17, G-24) also end in a Kaneo session: see `token-sign-in.ts`. |
 | `routes/api/widget/sdk[.]js.ts#GET` | Built: `widget/host.ts` serves `GET /quills-public/{workspace}/widget/sdk.js` from the built `packages/widget` browser bundle. |
 | `routes/api/widget-sso.ts#GET` | Quackback Cloud dogfood: a token signed with an environment secret for the vendor's own dashboard. |
 | Portal invites (`portal-invites.ts`, `portal-invite.$inviteId.tsx`) | Built in P3c; see `CUSTOMER-ROUTES.md`. |

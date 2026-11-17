@@ -30,8 +30,32 @@ export interface InitOptions {
   workspace: string;
   placement?: "left" | "right";
   defaultBoard?: string;
-  /** Set `launcher: false` to hide the default floating button and open programmatically. */
-  launcher?: boolean;
+  /**
+   * Set `launcher: false` to hide the default floating button and open programmatically, or
+   * `{ selector }` to open the widget from your own element. That element gets a
+   * `data-quills-unread` attribute with the unread count.
+   */
+  launcher?: boolean | { selector: string };
+  /**
+   * A CSS selector of an element on your page: the widget renders inside it, always open,
+   * instead of floating. There is no launcher or close button; `open({ view })` still picks the
+   * view. Give the element a height (at least 480px works well).
+   */
+  container?: string;
+  /**
+   * How a new, unread update is announced: `whisper` (default) shows its title beside the
+   * launcher, `full` opens it once per visit, `none` only fires the `announcement` event.
+   */
+  announcements?: "whisper" | "full" | "none";
+  /**
+   * How much of the page address goes with feedback and messages: `path` (default) is the
+   * origin and path, `origin` only the origin, `none` nothing. The query and fragment never go.
+   */
+  pageUrl?: "path" | "origin" | "none";
+  /** `auto` follows the visitor's system; the default follows the workspace setting. */
+  theme?: "auto" | "light" | "dark";
+  /** The default launcher's distance in pixels from the bottom and the side edge (20 each). */
+  offset?: { bottom?: number; side?: number };
   /**
    * Override the auto-detected UI language. Accepts any BCP-47 tag — the host
    * forwards it and the Kaneo instance resolves the closest catalog it has.
@@ -72,9 +96,10 @@ export type Identity =
  * - omit the payload or `{ view: 'home' }` to open the home view
  * - `{ view: 'new-post', title?, body?, board? }` pre-fills the new-post form
  * - `{ view: 'changelog', entryId? }` opens the changelog, optionally to one entry
- * - `{ view: 'help', query? }` opens help, optionally with search prefilled
+ * - `{ view: 'help', query?, category? }` opens help, optionally with search prefilled or one category
  * - `{ view: 'chat' }` opens the live chat view
- * - `{ view: 'messages' }` opens the messenger conversations view, when it is enabled
+ * - `{ view: 'messages', body? }` opens the messenger, or a new message prefilled with `body`
+ * - `{ view: 'notifications' }` opens the identified visitor's activity
  * - `{ view: 'tickets' }` opens the visitor's tickets list, or messages when that is unavailable
  * - `{ postId }` deep-links to a specific post
  * - `{ articleId }` deep-links to a help article (`article_…` TypeID or slug;
@@ -92,9 +117,10 @@ export type OpenOptions =
   | { view?: "home" }
   | { view: "new-post"; title?: string; body?: string; board?: string }
   | { view: "changelog"; entryId?: string }
-  | { view: "help"; query?: string }
+  | { view: "help"; query?: string; category?: string }
   | { view: "chat" }
-  | { view: "messages" }
+  | { view: "messages"; body?: string }
+  | { view: "notifications" }
   | { view: "tickets" }
   | { postId: string }
   | { articleId: string };

@@ -17,6 +17,11 @@ export const setQuillsConversationRouting = body({
 });
 export const getQuillsEmailAutoAck = empty;
 export const setQuillsEmailAutoAck = body({ enabled: true });
+export const getQuillsAwayReply = empty;
+export const setQuillsAwayReply = body({
+  enabled: true,
+  message: "We are away and will reply soon.",
+});
 export const getQuillsSpamFilterConfig = empty;
 export const updateQuillsSpamFilterConfig = body({
   trustedSenders: ["Acme.com", "not an address"],

@@ -1,4 +1,6 @@
 import { useTranslation } from "react-i18next";
+import { problemOf } from "../../../core/problem-of";
+import { useSetAwayReply } from "../../../hooks/team/use-set-away-reply";
 import { useSetConversationRouting } from "../../../hooks/team/use-set-conversation-routing";
 import { useSetEmailAutoAck } from "../../../hooks/team/use-set-email-auto-ack";
 import { useSetWorkflowAbandonedAutoClose } from "../../../hooks/team/use-set-workflow-abandoned-auto-close";
@@ -11,11 +13,13 @@ import {
   SettingsRow,
   SettingsSection,
 } from "../../../ui/upstream";
+import { AwayReplyForm } from "./away-reply-form";
 
 export interface AutomationSectionProps {
   workspaceId: string;
   routing: boolean;
   autoAck: boolean;
+  awayReply: { enabled: boolean; message: string };
   abandoned: { enabled: boolean; waitMinutes: number };
   closeSpam: boolean;
 }
@@ -27,6 +31,7 @@ export function AutomationSection({
   workspaceId,
   routing,
   autoAck,
+  awayReply,
   abandoned,
   closeSpam,
 }: AutomationSectionProps) {
@@ -34,6 +39,7 @@ export function AutomationSection({
   const team = useTeamRuntime();
   const setRouting = useSetConversationRouting(team.viewer);
   const setAutoAck = useSetEmailAutoAck(team.viewer);
+  const setAway = useSetAwayReply(team.viewer);
   const setAbandoned = useSetWorkflowAbandonedAutoClose(team.viewer);
   const setCloseSpam = useSetWorkflowCloseSpam(team.viewer);
   const param = { workspaceId };
@@ -65,6 +71,31 @@ export function AutomationSection({
             await setAutoAck.mutateAsync({ param, json: { enabled } });
           }}
         />
+        <SettingSwitchRow
+          title={t("settings-conversations.general.awayReply")}
+          description={t("settings-conversations.general.awayReplyText")}
+          checked={awayReply.enabled}
+          disabled={locked}
+          onCheckedChange={async (enabled) => {
+            await setAway.mutateAsync({
+              param,
+              json: { ...awayReply, enabled },
+            });
+          }}
+        />
+        {awayReply.enabled && !locked ? (
+          <AwayReplyForm
+            values={{ message: awayReply.message }}
+            onSubmit={(values) =>
+              problemOf(
+                setAway.mutateAsync({
+                  param,
+                  json: { enabled: true, message: values.message },
+                }),
+              )
+            }
+          />
+        ) : null}
         <SettingSwitchRow
           title={t("settings-conversations.general.abandoned")}
           description={t("settings-conversations.general.abandonedText")}

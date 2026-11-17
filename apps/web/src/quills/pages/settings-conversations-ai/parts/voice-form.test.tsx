@@ -8,6 +8,7 @@ const values: VoiceValues = {
   tone: "friendly",
   responseLength: "concise",
   additionalInstructions: "",
+  productDescription: "",
 };
 
 describe("VoiceForm", () => {

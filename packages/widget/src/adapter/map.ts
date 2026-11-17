@@ -73,6 +73,12 @@ export interface ApiMessage {
   createdAt: string;
   /** A file with a fileId downloads through the conversation file route. */
   attachments?: ReadonlyArray<{ fileId: string | null; name: string }>;
+  fromAssistant?: boolean;
+  feedbackCard?: {
+    title: string;
+    body: string;
+    status: "proposed" | "confirmed";
+  } | null;
 }
 
 /** The widget's comment vote is the 👍 reaction (portal/feedback/ROUTES.md). */
@@ -89,7 +95,8 @@ export function toPost(
   return {
     id: post.id,
     title: post.title,
-    body: post.content,
+    // The view shows text, not Markdown: previews and the detail read clean.
+    body: blocksText(markdownBlocks(post.content)),
     author: post.author.name ?? "Anonymous",
     avatarUrl: optional(post.author.avatarUrl),
     votes: post.voteCount,
@@ -136,7 +143,8 @@ export function toUpdate(entry: ApiChangelogEntry): UpdateEntry {
     title: entry.title,
     body: blocksText(blocks),
     blocks,
-    // The view shows `date` as text; the copy is English, like the rest of the view.
+    // The view formats publishedAt in its language; `date` is the English fallback.
+    publishedAt: entry.publishedAt,
     date: new Date(entry.publishedAt).toLocaleDateString("en-US", {
       month: "long",
       day: "numeric",
@@ -180,6 +188,14 @@ export function toMessage(
     sentAt: message.createdAt,
     fromVisitor: message.fromVisitor,
     ...(files.length ? { files } : {}),
+    ...(message.fromAssistant && { fromAssistant: true }),
+    ...(message.feedbackCard && {
+      feedbackCard: {
+        title: message.feedbackCard.title,
+        body: message.feedbackCard.body,
+        confirmed: message.feedbackCard.status === "confirmed",
+      },
+    }),
   };
 }
 

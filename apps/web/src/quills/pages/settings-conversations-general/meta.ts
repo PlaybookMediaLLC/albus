@@ -13,6 +13,8 @@ export const meta = {
     "setQuillsConversationRouting",
     "getQuillsEmailAutoAck",
     "setQuillsEmailAutoAck",
+    "getQuillsAwayReply",
+    "setQuillsAwayReply",
     "getQuillsWorkflowAbandonedAutoClose",
     "setQuillsWorkflowAbandonedAutoClose",
     "getQuillsWorkflowCloseSpam",

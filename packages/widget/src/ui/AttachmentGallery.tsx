@@ -2,12 +2,14 @@ import { safeMediaUrl } from "./media.js";
 import { useState } from "react";
 import { ImageViewer } from "./ImageViewer.js";
 import type { Attachment } from "./types.js";
+import { useT } from "./i18n/useT.js";
 
 export function AttachmentGallery({
   attachments = [],
 }: {
   attachments?: readonly Attachment[];
 }) {
+  const t = useT();
   const [selected, setSelected] = useState<string | null>(null);
   const images = attachments.filter((item) => safeMediaUrl(item.url, true));
   if (!images.length) return null;
@@ -18,7 +20,7 @@ export function AttachmentGallery({
           key={item.id}
           type="button"
           onClick={() => setSelected(item.id)}
-          aria-label={`Open attachment ${item.name}`}
+          aria-label={t("Open attachment {name}", { name: item.name })}
         >
           <img
             src={item.url}

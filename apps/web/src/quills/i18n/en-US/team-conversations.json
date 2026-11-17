@@ -6,6 +6,7 @@
 	"attachment": "Attachment: {{name}}",
 	"attachmentFailed": "The file could not be opened. Try again.",
 	"block": "Block sender",
+	"blockIp": "Block IP address for 30 days",
 	"cancel": "Cancel",
 	"conversation": "Conversation",
 	"customer": {
@@ -155,6 +156,7 @@
 	"unarchive": "Unarchive",
 	"unassigned": "Unassigned",
 	"unblock": "Unblock sender",
+	"unblockIp": "Unblock IP address",
 	"unknown": "Unknown",
 	"unsnooze": "Unsnooze",
 	"views": {

@@ -19,13 +19,14 @@ const team = {
   },
 };
 
-const render = () =>
+const render = (awayReply = { enabled: false, message: "Away" }) =>
   renderComponent(
     <TeamRuntimeProvider value={team}>
       <AutomationSection
         workspaceId="workspace_1"
         routing={false}
         autoAck={false}
+        awayReply={awayReply}
         abandoned={{ enabled: true, waitMinutes: 7 }}
         closeSpam={false}
       />
@@ -65,5 +66,34 @@ describe("AutomationSection", () => {
     expect(
       await api.calls("setQuillsWorkflowAbandonedAutoClose")[0]!.json(),
     ).toEqual({ waitMinutes: 30 });
+  });
+
+  it("turns the away reply on and saves its message", async () => {
+    const api = mockApi();
+    api.reply({ enabled: true, message: "Away" });
+    const view = render();
+    fireEvent.click(view.getByRole("switch", { name: "Away reply" }));
+    await waitFor(() =>
+      expect(api.calls("setQuillsAwayReply")).toHaveLength(1),
+    );
+    expect(await api.calls("setQuillsAwayReply")[0]!.json()).toEqual({
+      enabled: true,
+      message: "Away",
+    });
+    view.unmount();
+    const editing = mockApi();
+    editing.reply({ enabled: true, message: "Back at 9" });
+    const form = render({ enabled: true, message: "Away" });
+    fireEvent.change(form.getByLabelText("Away message"), {
+      target: { value: "Back at 9" },
+    });
+    fireEvent.click(form.getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(editing.calls("setQuillsAwayReply")).toHaveLength(1),
+    );
+    expect(await editing.calls("setQuillsAwayReply")[0]!.json()).toEqual({
+      enabled: true,
+      message: "Back at 9",
+    });
   });
 });

@@ -371,6 +371,39 @@ describe("sdk", () => {
     ]);
   });
 
+  it("shares only as much of the page address as pageUrl allows", () => {
+    const { postMessage } = stubIframe();
+    window.history.replaceState(null, "", "/billing?token=secret");
+    sdk = createSDK();
+    sdk.dispatch("init", {
+      instanceUrl: ORIGIN,
+      workspace: WORKSPACE,
+      pageUrl: "origin",
+    });
+    fireReady();
+    sdk.dispatch("metadata", { plan: "pro" });
+    expect(postMessage).toHaveBeenLastCalledWith(
+      {
+        type: "quackback:metadata",
+        data: { plan: "pro", pageUrl: window.location.origin },
+      },
+      ORIGIN,
+    );
+    sdk.dispatch("destroy");
+    sdk = createSDK();
+    sdk.dispatch("init", {
+      instanceUrl: ORIGIN,
+      workspace: WORKSPACE,
+      pageUrl: "none",
+    });
+    fireReady();
+    sdk.dispatch("metadata", { plan: "pro" });
+    expect(postMessage).toHaveBeenLastCalledWith(
+      { type: "quackback:metadata", data: { plan: "pro" } },
+      ORIGIN,
+    );
+  });
+
   it("metadata merges and sends to iframe", () => {
     const { postMessage, spy } = stubIframe();
     sdk = createSDK();

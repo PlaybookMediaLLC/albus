@@ -55,6 +55,7 @@ import { shippedSubscribers } from "./handlers/shipped-mail";
 import { statusSubscribers } from "./handlers/status-mail";
 import { supportSubscribers } from "./handlers/support-mail";
 import { enqueueQuillsJob, type QuillsQueue } from "./queue";
+import { postReplyAddress } from "../framework/signed";
 import { recipientDirection } from "./handlers/recipient-language";
 
 /** Event type → the queue whose handler does the requested work after commit. */
@@ -240,7 +241,11 @@ const clip = (text: string, length: number) =>
 /** The workspace's Kaneo ID and display name. */
 async function workspaceOf(db: Database) {
   const [row] = await db
-    .select({ id: settings.workspaceId, name: settings.name })
+    .select({
+      id: settings.workspaceId,
+      name: settings.name,
+      slug: settings.slug,
+    })
     .from(settings)
     .limit(1);
   return row;
@@ -325,6 +330,8 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
         send: (to) =>
           sendStatusChangeEmail({
             to,
+            // A reply by mail becomes the subscriber's comment (inbound/email.ts).
+            replyTo: postReplyAddress(workspace, post.id) ?? undefined,
             dir,
             postTitle: post.title,
             postUrl: postUrl(workspace.id, post.id),
@@ -376,6 +383,7 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
         send: (to) =>
           sendNewCommentEmail({
             to,
+            replyTo: postReplyAddress(workspace, post.id) ?? undefined,
             dir,
             postTitle: post.title,
             postUrl: postUrl(workspace.id, post.id),
@@ -602,7 +610,7 @@ export async function fanOut(workspaceId: string, eventId: string) {
     const { principalIds, postId } = wanted
       ? await entry.recipients(db, event)
       : { principalIds: [] };
-    // Teammates; customers follow below, by mail only, for entries that set `customers`.
+    // Teammates; customers follow below, by mail and in-app, for entries that set `customers`.
     const teammates = principalIds.length
       ? await db
           .select({ id: principal.id, userId: principal.kaneoUserId })
@@ -745,7 +753,16 @@ export async function fanOut(workspaceId: string, eventId: string) {
           5,
         );
     }
-    for (const principalId of plan.customers)
+    for (const principalId of plan.customers) {
+      // The widget's activity feed reads these; it rechecks the post's visibility at read time.
+      if (plan.entry?.notification)
+        await enqueueQuillsJob(
+          db,
+          "quills.notification",
+          { eventId, principalId },
+          `${eventId}:${principalId}`,
+          3,
+        );
       await enqueueQuillsJob(
         db,
         "quills.mail",
@@ -753,5 +770,6 @@ export async function fanOut(workspaceId: string, eventId: string) {
         `${eventId}:${principalId}`,
         5,
       );
+    }
   });
 }

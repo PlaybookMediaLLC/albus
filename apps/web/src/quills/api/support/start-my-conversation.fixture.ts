@@ -14,6 +14,8 @@ export const startMyConversationFixture = {
           attachments: [],
           createdAt: "2026-01-01T00:00:00.000Z",
           editedAt: null,
+          fromAssistant: false,
+          feedbackCard: null,
         },
         conversation: {
           id: "id_test_1",

@@ -3,6 +3,7 @@ import {
   and,
   eq,
   exists,
+  gte,
   inArray,
   isNotNull,
   isNull,
@@ -52,6 +53,10 @@ export const listFilters = z.object({
     .enum(["true", "false"])
     .optional()
     .transform((value) => value === "true"),
+  updatedSince: z.iso.datetime({ offset: true }).max(64).optional().openapi({
+    description:
+      "Only conversations changed at or after this time, for an integration that syncs changes",
+  }),
   /** Only conversations with a customer message after the team last read them. */
   unreadOnly: z
     .enum(["true", "false"])
@@ -153,6 +158,9 @@ function conditions(
     filters.channel ? eq(conversations.channel, filters.channel) : undefined,
     filters.source ? eq(conversations.source, filters.source) : undefined,
     filters.waitingOnly ? isNotNull(conversations.waitingSince) : undefined,
+    filters.updatedSince
+      ? gte(conversations.updatedAt, new Date(filters.updatedSince))
+      : undefined,
     filters.unreadOnly
       ? exists(
           db

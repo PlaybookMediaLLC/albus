@@ -2,6 +2,7 @@ import type { GetPostResponse } from "../../../api/team/get-post";
 import { PostCustomFields } from "./post-custom-fields";
 import { PostDemand } from "./post-demand";
 import { PostLinks } from "./post-links";
+import { PostAttachments } from "./post-attachments";
 import { PostMerge } from "./post-merge";
 import { PostPageContext } from "./post-page-context";
 import { PostScore } from "./post-score";
@@ -12,7 +13,7 @@ export interface PostPropertiesProps {
   onScoreSaved: () => void;
 }
 
-/** The right panel of a request: custom fields, demand, RICE score, links, merges and the page it came from. Each section loads its own data. */
+/** The right panel of a request: custom fields, demand, RICE score, links, merges, attachments and the page it came from. Each section loads its own data. */
 export function PostProperties(props: PostPropertiesProps) {
   const { workspaceId, post } = props;
   return (
@@ -26,6 +27,7 @@ export function PostProperties(props: PostPropertiesProps) {
       />
       <PostLinks workspaceId={workspaceId} post={post} />
       <PostMerge workspaceId={workspaceId} post={post} />
+      <PostAttachments workspaceId={workspaceId} post={post} />
       <PostPageContext post={post} />
     </div>
   );

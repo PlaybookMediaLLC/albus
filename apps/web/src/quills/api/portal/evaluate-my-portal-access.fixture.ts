@@ -2,7 +2,11 @@ import type { EvaluateMyPortalAccessResponse } from "./evaluate-my-portal-access
 export const evaluateMyPortalAccessFixture = {
   ok: (overrides: Partial<EvaluateMyPortalAccessResponse> = {}) =>
     ({
-      ...{ granted: false, reason: "public" },
+      ...{
+        granted: false,
+        reason: "public",
+        signIn: { mode: "account", ssoUrl: null },
+      },
       ...overrides,
     }) satisfies EvaluateMyPortalAccessResponse,
   problem: (status: 403 | 404) => ({

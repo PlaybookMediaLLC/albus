@@ -6,14 +6,22 @@ import { apiRouter, z } from "../../openapi";
 import { changelogSubscriptions } from "../../database/quills/schema/changelog-subscriptions";
 import { postSubscriptions } from "../../database/quills/schema/notifications";
 import { posts } from "../../database/quills/schema/posts";
+import { principal } from "../../database/quills/schema/auth";
 import type { QuillsCaller } from "../framework/audience";
 import { defineQuillsRoute, type Database } from "../framework/define-route";
-import { postVisible, viewerFor, visibleBoards } from "./feedback/viewer";
+import { notFound as hidden } from "../feedback/visibility";
+import {
+  postVisible,
+  viewerFor,
+  visibleBoards,
+  type Customer,
+} from "./feedback/viewer";
 import { requirePortalAccess } from "./gate";
 
 // A portal customer's own subscriptions: posts, the changelog and the status page. Each route
 // changes only the caller's own row, so it records no outbox event (as the teammate twins in
-// delivery/post-subscriptions.ts). Every route needs the portal on and the caller let in.
+// delivery/post-subscriptions.ts). Every route needs the portal on and the caller let in. The
+// widget mounts the changelog routes too, for a visitor the host app identified.
 
 const personal = {
   none: "The caller's own subscription; no shared record changes.",
@@ -159,93 +167,170 @@ const deletePostSubscription = defineQuillsRoute({
 const changelogSubscription = (caller: QuillsCaller) =>
   eq(changelogSubscriptions.principalId, caller.principalId!);
 
-const getChangelogSubscription = defineQuillsRoute({
-  audience: "portal",
-  signIn: false,
-  method: "get",
-  path: "/changelog/subscription",
-  operationId: "getQuillsMyChangelogSubscription",
-  summary: "Get the caller's changelog subscription",
-  action: "read",
-  response: z.object({ subscribed: z.boolean() }),
-  responseDescription: "Whether the caller hears about new changelog entries",
-  errors: { 403: "Portal access denied", 404: "Portal not found" },
-  handler: async ({ db, caller }) => {
+/**
+ * The portal lets in a signed-in customer; the widget needs the widget on and the changelog
+ * tab on, as its changelog reads do. Returns whether the caller is a known person: an anonymous
+ * widget visitor has no address for updates.
+ */
+async function changelogCaller(
+  db: Database,
+  audience: Customer,
+  caller: QuillsCaller,
+) {
+  if (audience === "portal") {
     await requirePortalAccess(db, caller);
-    const [row] = caller.principalId
-      ? await db
-          .select({ unsubscribedAt: changelogSubscriptions.unsubscribedAt })
-          .from(changelogSubscriptions)
-          .where(changelogSubscription(caller))
-      : [];
-    return { subscribed: Boolean(row && !row.unsubscribedAt) };
-  },
-});
+    return !!caller.principalId;
+  }
+  const viewer = await viewerFor(db, "widget", caller);
+  if (!viewer.tabs.changelog) throw hidden("Changelog");
+  const [me] = caller.principalId
+    ? await db
+        .select({ type: principal.type })
+        .from(principal)
+        .where(eq(principal.id, caller.principalId))
+    : [];
+  return me?.type === "user";
+}
+const identifiedOnly = () =>
+  new HTTPException(403, {
+    message: "Only a visitor that the host app identified subscribes",
+  });
+const where = (audience: Customer) =>
+  audience === "portal" ? "Portal" : "Widget or its changelog tab";
 
-const subscribeChangelog = defineQuillsRoute({
-  audience: "portal",
-  ensureCustomer: true,
-  method: "put",
-  path: "/changelog/subscription",
-  operationId: "subscribeQuillsMyChangelog",
-  summary: "Subscribe the caller to the changelog",
-  description: "An explicit subscribe also undoes an earlier unsubscribe.",
-  action: "update",
-  rateLimit: { limit: 30, windowSeconds: 600 },
-  response: z.object({ subscribed: z.boolean() }),
-  responseDescription: "The caller is subscribed",
-  errors: { 403: "Portal access denied", 404: "Portal not found" },
-  event: personal,
-  handler: async ({ db, caller }) => {
-    await requirePortalAccess(db, caller);
-    await db
-      .insert(changelogSubscriptions)
-      .values({ principalId: caller.principalId!, source: "self_serve" })
-      .onConflictDoUpdate({
-        target: [
-          changelogSubscriptions.workspaceId,
-          changelogSubscriptions.principalId,
-        ],
-        set: { unsubscribedAt: null },
-      });
-    return { subscribed: true };
-  },
-});
+const getChangelogSubscription = (audience: Customer) =>
+  defineQuillsRoute({
+    audience,
+    signIn: audience === "widget",
+    method: "get",
+    path:
+      audience === "portal"
+        ? "/changelog/subscription"
+        : "/widget/changelog/subscription",
+    operationId:
+      audience === "portal"
+        ? "getQuillsMyChangelogSubscription"
+        : "getQuillsWidgetChangelogSubscription",
+    summary: "Get the caller's changelog subscription",
+    description:
+      audience === "widget"
+        ? "subscribed is false for an anonymous visitor."
+        : undefined,
+    action: "read",
+    response: z.object({ subscribed: z.boolean() }),
+    responseDescription: "Whether the caller hears about new changelog entries",
+    errors: {
+      403: "Portal access denied",
+      404: `${where(audience)} not found`,
+    },
+    handler: async ({ db, caller }) => {
+      const known = await changelogCaller(db, audience, caller);
+      const [row] = known
+        ? await db
+            .select({ unsubscribedAt: changelogSubscriptions.unsubscribedAt })
+            .from(changelogSubscriptions)
+            .where(changelogSubscription(caller))
+        : [];
+      return { subscribed: Boolean(row && !row.unsubscribedAt) };
+    },
+  });
 
-const unsubscribeChangelog = defineQuillsRoute({
-  audience: "portal",
-  method: "delete",
-  path: "/changelog/subscription",
-  operationId: "unsubscribeQuillsMyChangelog",
-  summary: "Unsubscribe the caller from the changelog",
-  description:
-    "Keeps the row, so an import or auto-subscribe never subscribes the caller again.",
-  action: "update",
-  response: z.object({ changed: z.boolean() }),
-  responseDescription: "Whether a subscription ended",
-  errors: { 403: "Portal access denied", 404: "Portal not found" },
-  event: personal,
-  handler: async ({ db, caller }) => {
-    await requirePortalAccess(db, caller);
-    if (!caller.principalId) return { changed: false };
-    const rows = await db
-      .update(changelogSubscriptions)
-      .set({ unsubscribedAt: new Date() })
-      .where(
-        and(
-          changelogSubscription(caller),
-          isNull(changelogSubscriptions.unsubscribedAt),
-        ),
-      )
-      .returning({ id: changelogSubscriptions.id });
-    return { changed: rows.length > 0 };
-  },
-});
+const subscribeChangelog = (audience: Customer) =>
+  defineQuillsRoute({
+    audience,
+    ensureCustomer: audience === "portal",
+    method: "put",
+    path:
+      audience === "portal"
+        ? "/changelog/subscription"
+        : "/widget/changelog/subscription",
+    operationId:
+      audience === "portal"
+        ? "subscribeQuillsMyChangelog"
+        : "subscribeQuillsWidgetChangelog",
+    summary: "Subscribe the caller to the changelog",
+    description: `An explicit subscribe also undoes an earlier unsubscribe.${audience === "widget" ? " Only a visitor that the host app identified, so updates reach their address." : ""}`,
+    action: "update",
+    rateLimit: { limit: 30, windowSeconds: 600 },
+    response: z.object({ subscribed: z.boolean() }),
+    responseDescription: "The caller is subscribed",
+    errors: {
+      403:
+        audience === "portal"
+          ? "Portal access denied"
+          : "Portal access denied, or an anonymous visitor",
+      404: `${where(audience)} not found`,
+    },
+    event: personal,
+    handler: async ({ db, caller }) => {
+      if (!(await changelogCaller(db, audience, caller)))
+        throw identifiedOnly();
+      await db
+        .insert(changelogSubscriptions)
+        .values({ principalId: caller.principalId!, source: "self_serve" })
+        .onConflictDoUpdate({
+          target: [
+            changelogSubscriptions.workspaceId,
+            changelogSubscriptions.principalId,
+          ],
+          set: { unsubscribedAt: null },
+        });
+      return { subscribed: true };
+    },
+  });
+
+const unsubscribeChangelog = (audience: Customer) =>
+  defineQuillsRoute({
+    audience,
+    signIn: audience === "widget",
+    method: "delete",
+    path:
+      audience === "portal"
+        ? "/changelog/subscription"
+        : "/widget/changelog/subscription",
+    operationId:
+      audience === "portal"
+        ? "unsubscribeQuillsMyChangelog"
+        : "unsubscribeQuillsWidgetChangelog",
+    summary: "Unsubscribe the caller from the changelog",
+    description:
+      "Keeps the row, so an import or auto-subscribe never subscribes the caller again.",
+    action: "update",
+    response: z.object({ changed: z.boolean() }),
+    responseDescription: "Whether a subscription ended",
+    errors: {
+      403: "Portal access denied",
+      404: `${where(audience)} not found`,
+    },
+    event: personal,
+    handler: async ({ db, caller }) => {
+      if (!(await changelogCaller(db, audience, caller)))
+        return { changed: false };
+      const rows = await db
+        .update(changelogSubscriptions)
+        .set({ unsubscribedAt: new Date() })
+        .where(
+          and(
+            changelogSubscription(caller),
+            isNull(changelogSubscriptions.unsubscribedAt),
+          ),
+        )
+        .returning({ id: changelogSubscriptions.id });
+      return { changed: rows.length > 0 };
+    },
+  });
+
+/** The widget's changelog subscription, under /widget/changelog/subscription. */
+export const widgetChangelogSubscription = () =>
+  apiRouter()
+    .openapi(...getChangelogSubscription("widget"))
+    .openapi(...subscribeChangelog("widget"))
+    .openapi(...unsubscribeChangelog("widget"));
 
 export default apiRouter()
   .openapi(...getPostSubscription)
   .openapi(...setPostSubscription)
   .openapi(...deletePostSubscription)
-  .openapi(...getChangelogSubscription)
-  .openapi(...subscribeChangelog)
-  .openapi(...unsubscribeChangelog);
+  .openapi(...getChangelogSubscription("portal"))
+  .openapi(...subscribeChangelog("portal"))
+  .openapi(...unsubscribeChangelog("portal"));

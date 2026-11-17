@@ -350,4 +350,28 @@ describe("browser-queue", () => {
       undefined,
     ]);
   });
+  it("answers the state reads by name and as methods", async () => {
+    vi.doMock("../src/core/sdk", () => ({
+      createSDK: () => ({
+        dispatch: () => undefined,
+        isOpen: () => true,
+        getUser: () => ({ id: "u1", name: "Ada", email: "a@x.test" }),
+        isIdentified: () => true,
+      }),
+    }));
+    await import("../src/browser-queue");
+    const quills = window.Quills as unknown as ((
+      ...args: unknown[]
+    ) => unknown) & {
+      isOpen: () => boolean;
+    };
+    expect(quills("isOpen")).toBe(true);
+    expect(quills("isIdentified")).toBe(true);
+    expect(quills("getUser")).toEqual({
+      id: "u1",
+      name: "Ada",
+      email: "a@x.test",
+    });
+    expect(quills.isOpen()).toBe(true);
+  });
 });

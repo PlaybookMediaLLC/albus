@@ -1,20 +1,46 @@
 import { useEffect, useId, useRef, useState, type PointerEvent } from "react";
 import { validateImage } from "./media.js";
 import { Icon } from "./Icon.js";
-import { drawMarks, type Mark, type Tool } from "./annotation-draw.js";
+import { drawMarks, RED, type Mark, type Tool } from "./annotation-draw.js";
+import type { MessageKey } from "./i18n/messages/en.js";
+import { useT } from "./i18n/useT.js";
 
-const TOOLS: readonly [Tool, string][] = [
-  ["box", "Box"],
-  ["arrow", "Arrow"],
-  ["blur", "Blur"],
-  ["redact", "Redact"],
+/** Each tool, its button and its Add button. */
+const TOOLS: readonly [Tool, MessageKey, MessageKey][] = [
+  ["box", "Box", "Add box"],
+  ["arrow", "Arrow", "Add arrow"],
+  ["pen", "Pen", "Add pen"],
+  ["text", "Text", "Add text"],
+  ["blur", "Blur", "Add blur"],
+  ["redact", "Redact", "Add redact"],
 ];
+/** Each position field and its accessible name. */
 const POINTS = [
-  ["x", "From x"],
-  ["y", "From y"],
-  ["x2", "To x"],
-  ["y2", "To y"],
-] as const;
+  ["x", "From x", "Mark from x"],
+  ["y", "From y", "Mark from y"],
+  ["x2", "To x", "Mark to x"],
+  ["y2", "To y", "Mark to y"],
+] as const satisfies readonly (readonly [string, MessageKey, MessageKey])[];
+
+/** A new mark at a point; the tools that paint take the chosen color. */
+function newMark(
+  tool: Tool,
+  x: number,
+  y: number,
+  color: string,
+  text: string,
+): Mark {
+  return {
+    tool,
+    x,
+    y,
+    x2: x,
+    y2: y,
+    ...(tool !== "blur" && tool !== "redact" && { color }),
+    ...(tool === "pen" && { points: [[x, y] as const] }),
+    ...(tool === "text" && { text }),
+  };
+}
 
 export function ImageAnnotation({
   file,
@@ -25,6 +51,7 @@ export function ImageAnnotation({
   onSave: (file: File) => void | Promise<void>;
   onCancel: () => void;
 }) {
+  const t = useT();
   const titleId = useId();
   const dialog = useRef<HTMLDialogElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -32,6 +59,7 @@ export function ImageAnnotation({
   const start = useRef<{ x: number; y: number } | null>(null);
   const [marks, setMarks] = useState<Mark[]>([]);
   const [tool, setTool] = useState<Tool>("box");
+  const [color, setColor] = useState(RED);
   const [ready, setReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -62,7 +90,7 @@ export function ImageAnnotation({
     };
     image.onerror = () => {
       if (active.current)
-        setError("This image could not be opened. Choose another image.");
+        setError(t("This image could not be opened. Choose another image."));
     };
     image.src = url;
     return () => {
@@ -74,7 +102,7 @@ export function ImageAnnotation({
       if (previous instanceof HTMLElement && previous.isConnected)
         previous.focus();
     };
-  }, [file]);
+  }, [file, t]);
   useEffect(() => {
     const image = source.current;
     const context = canvas.current?.getContext("2d");
@@ -115,8 +143,8 @@ export function ImageAnnotation({
       if (active.current)
         setError(
           error instanceof Error
-            ? error.message
-            : "Could not save the image. Please try again.",
+            ? t.text(error.message)
+            : t("Could not save the image. Please try again."),
         );
     } finally {
       if (active.current) setSaving(false);
@@ -137,22 +165,22 @@ export function ImageAnnotation({
       }}
     >
       <header>
-        <h2 id={titleId}>Review image</h2>
+        <h2 id={titleId}>{t("Review image")}</h2>
         <button
           type="button"
           className="qb-icon-button"
-          aria-label="Cancel image editing"
+          aria-label={t("Cancel image editing")}
           onClick={onCancel}
         >
           <Icon name="close" />
         </button>
       </header>
       <p>
-        Draw a box or an arrow, and blur or redact private information before
-        attaching. Check the whole image: anything you do not cover stays
-        visible.
+        {t(
+          "Draw a box, an arrow, a line or text, and blur or redact private information before attaching. Check the whole image: anything you do not cover stays visible.",
+        )}
       </p>
-      <div className="qb-annotation-tools" role="group" aria-label="Tool">
+      <div className="qb-annotation-tools" role="group" aria-label={t("Tool")}>
         {TOOLS.map(([value, label]) => (
           <button
             type="button"
@@ -160,17 +188,39 @@ export function ImageAnnotation({
             aria-pressed={tool === value}
             onClick={() => setTool(value)}
           >
-            {label}
+            {t(label)}
           </button>
         ))}
+        <label className="qb-annotation-color">
+          {t("Color")}
+          <input
+            type="color"
+            value={color}
+            onChange={(event) => setColor(event.target.value)}
+          />
+        </label>
         <button
           type="button"
           disabled={!ready || saving}
           onClick={() =>
-            setMarks([...marks, { tool, x: 20, y: 20, x2: 50, y2: 40 }])
+            setMarks([
+              ...marks,
+              {
+                ...newMark(tool, 20, 20, color, t("Text")),
+                x2: 50,
+                y2: 40,
+                ...(tool === "pen" && {
+                  points: [
+                    [20, 20],
+                    [35, 30],
+                    [50, 40],
+                  ] as const,
+                }),
+              },
+            ])
           }
         >
-          Add {TOOLS.find(([value]) => value === tool)![1].toLowerCase()}
+          {t(TOOLS.find(([value]) => value === tool)![2])}
         </button>
         <button
           type="button"
@@ -178,33 +228,42 @@ export function ImageAnnotation({
           onClick={() => setMarks(marks.slice(0, -1))}
         >
           <Icon name="undo" />
-          Undo
+          {t("Undo")}
         </button>
       </div>
       <canvas
         ref={canvas}
-        aria-label="Image preview. Draw with a pointer, or use the Add button and the position fields."
+        aria-label={t(
+          "Image preview. Draw with a pointer, or use the Add button and the position fields.",
+        )}
         onPointerDown={(event) => {
           if (!ready || saving) return;
           event.currentTarget.setPointerCapture(event.pointerId);
           start.current = point(event);
           setMarks([
             ...marks,
-            {
-              tool,
-              ...start.current,
-              x2: start.current.x,
-              y2: start.current.y,
-            },
+            newMark(tool, start.current.x, start.current.y, color, t("Text")),
           ]);
         }}
         onPointerMove={(event) => {
           if (!start.current) return;
           const p = point(event);
-          setMarks((current) => [
-            ...current.slice(0, -1),
-            { ...current[current.length - 1]!, x2: p.x, y2: p.y },
-          ]);
+          setMarks((current) => {
+            const last = current[current.length - 1]!;
+            // Text stays where it was placed; a pen line grows by each point.
+            if (last.tool === "text") return current;
+            return [
+              ...current.slice(0, -1),
+              {
+                ...last,
+                x2: p.x,
+                y2: p.y,
+                ...(last.points && {
+                  points: [...last.points, [p.x, p.y] as const],
+                }),
+              },
+            ];
+          });
         }}
         onPointerUp={() => {
           start.current = null;
@@ -213,14 +272,34 @@ export function ImageAnnotation({
           start.current = null;
         }}
       />
-      {selected && (
+      {selected && selected.tool !== "pen" && (
         <fieldset disabled={saving}>
-          <legend>Last mark position (%)</legend>
-          {POINTS.map(([key, label]) => (
-            <label key={key}>
-              {label}
+          <legend>{t("Last mark position (%)")}</legend>
+          {selected.tool === "text" && (
+            <label>
+              {t("Text")}
               <input
-                aria-label={`Mark ${label.toLowerCase()}`}
+                aria-label={t("Mark text")}
+                maxLength={80}
+                value={selected.text ?? ""}
+                onChange={(event) => {
+                  const text = event.target.value;
+                  setMarks((current) =>
+                    current.map((mark, i) =>
+                      i === current.length - 1 ? { ...mark, text } : mark,
+                    ),
+                  );
+                }}
+              />
+            </label>
+          )}
+          {POINTS.filter(
+            ([key]) => selected.tool !== "text" || key === "x" || key === "y",
+          ).map(([key, label, name]) => (
+            <label key={key}>
+              {t(label)}
+              <input
+                aria-label={t(name)}
                 type="number"
                 min="0"
                 max="100"
@@ -247,7 +326,7 @@ export function ImageAnnotation({
       {error && <p role="alert">{error}</p>}
       <footer>
         <button type="button" onClick={onCancel}>
-          Cancel
+          {t("Cancel")}
         </button>
         <button
           type="button"
@@ -255,7 +334,7 @@ export function ImageAnnotation({
           disabled={!ready || saving}
           onClick={() => void save()}
         >
-          {saving ? "Saving…" : "Use image"}
+          {saving ? t("Saving…") : t("Use image")}
         </button>
       </footer>
     </dialog>

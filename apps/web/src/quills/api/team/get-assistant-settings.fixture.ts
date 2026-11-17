@@ -8,6 +8,8 @@ export const getAssistantSettingsFixture = {
         embeddingsConfigured: false,
         identity: { name: "value" },
         agent: {
+          enabled: false,
+          productDescription: "value",
           voice: {
             tone: "friendly",
             responseLength: "concise",

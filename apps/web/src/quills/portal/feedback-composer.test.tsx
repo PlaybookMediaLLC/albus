@@ -31,7 +31,11 @@ const runtime: PortalRuntimeValue = {
     },
   },
   viewer: { kind: "user", id: "account_test_1" },
-  access: { granted: true, reason: "public" },
+  access: {
+    granted: true,
+    reason: "public",
+    signIn: { mode: "account", ssoUrl: null },
+  },
   accessLoading: false,
   accessProblem: null,
 };

@@ -228,6 +228,43 @@ describe.skipIf(!url)("Quills widget identity", () => {
     secret = ((await rotated.json()) as { secret: string }).secret;
   });
 
+  it("shows the team's reply time, Home greeting and up to four avatars that a teammate set", async () => {
+    const env = contractEnv();
+    const saved = await app.request(`/quills/${env.a}/settings/widget`, {
+      method: "PUT",
+      headers: { "x-test-user": env.owner, "content-type": "application/json" },
+      body: JSON.stringify({
+        enabled: true,
+        replyTime: "hours",
+        home: { greeting: "Hello from Acme", showTeamAvatars: true },
+      }),
+    });
+    expect(saved.status).toBe(200);
+    expect(((await saved.json()) as { replyTime: string }).replyTime).toBe(
+      "hours",
+    );
+    const config = (await call("GET", "/widget/config.json")).body.config;
+    expect(config).toMatchObject({
+      replyTime: "hours",
+      home: { greeting: "Hello from Acme", showTeamAvatars: true },
+    });
+    expect(
+      (await call("GET", "/widget/team-avatars")).body.items.length,
+    ).toBeLessThanOrEqual(4);
+    await app.request(`/quills/${env.a}/settings/widget`, {
+      method: "PUT",
+      headers: { "x-test-user": env.owner, "content-type": "application/json" },
+      body: JSON.stringify({
+        replyTime: null,
+        home: { showTeamAvatars: false },
+      }),
+    });
+    expect(
+      (await call("GET", "/widget/config.json")).body.config.replyTime,
+    ).toBe(null);
+    expect((await call("GET", "/widget/team-avatars")).body.items).toEqual([]);
+  });
+
   it("refuses identify while the widget is off", async () => {
     const env = contractEnv();
     await env.scoped(env.a, (db) =>

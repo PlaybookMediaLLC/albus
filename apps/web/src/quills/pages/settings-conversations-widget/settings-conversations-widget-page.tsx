@@ -16,6 +16,7 @@ import {
 } from "../../ui/upstream";
 import { HomeSection } from "./parts/home-section";
 import { LauncherForm } from "./parts/launcher-form";
+import { ReplyTimeRow } from "./parts/reply-time-row";
 
 export interface SettingsConversationsWidgetPageProps {
   workspaceId: string;
@@ -113,6 +114,11 @@ export function SettingsConversationsWidgetPage({
                       onValueChange={(position) => save({ position })}
                     />
                   </SettingsRow>
+                  <ReplyTimeRow
+                    value={data.replyTime}
+                    disabled={locked}
+                    onChange={(replyTime) => save({ replyTime })}
+                  />
                   {locked ? null : (
                     <LauncherForm
                       values={{

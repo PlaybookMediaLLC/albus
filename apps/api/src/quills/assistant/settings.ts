@@ -39,6 +39,10 @@ const response = z.object({
   embeddingsConfigured: z.boolean(),
   identity: z.object({ name: z.string() }),
   agent: z.object({
+    enabled: z.boolean().openapi({
+      description: "The customer agent answers widget and portal conversations",
+    }),
+    productDescription: z.string(),
     voice,
     knowledge: agentKnowledge,
     toolRules,
@@ -73,6 +77,11 @@ export function readConfig(config: Config) {
   return {
     identity: { name: config?.identity?.name || "Quinn" },
     agent: {
+      enabled: config?.agents?.agent?.enabled === true,
+      productDescription:
+        typeof config?.agents?.agent?.productDescription === "string"
+          ? config.agents.agent.productDescription.slice(0, 1000)
+          : "",
       voice: {
         tone: stored?.tone ?? "balanced",
         responseLength: stored?.responseLength ?? "balanced",
@@ -134,6 +143,8 @@ const updateSettings = defineQuillsRoute({
   body: z.object({
     revision: z.number().int().min(1).max(2147483647),
     name: z.string().trim().min(1).max(60).optional(),
+    agentEnabled: z.boolean().optional(),
+    agentProductDescription: z.string().trim().max(1000).optional(),
     agentVoice: voice.optional(),
     agentKnowledge: agentKnowledge.optional(),
     agentToolRules: toolRules.optional(),
@@ -169,6 +180,9 @@ const updateSettings = defineQuillsRoute({
         ...agents,
         agent: {
           ...agents.agent,
+          enabled: body.agentEnabled ?? current.agent.enabled,
+          productDescription:
+            body.agentProductDescription ?? current.agent.productDescription,
           voice: body.agentVoice ?? current.agent.voice,
           knowledge: body.agentKnowledge ?? current.agent.knowledge,
           toolRules: toMap(body.agentToolRules ?? current.agent.toolRules),

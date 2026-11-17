@@ -8,6 +8,7 @@ export type InboundMessage =
   | { type: "quackback:metadata"; data: Record<string, string> }
   | { type: "quackback:open"; data?: unknown }
   | { type: "quackback:locale"; data: string }
+  | { type: "quackback:theme"; data: "auto" | "light" | "dark" }
   | { type: "quackback:mobile"; data: boolean }
   | {
       type: "quackback:capture-result";

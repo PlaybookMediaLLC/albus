@@ -27,8 +27,21 @@ import {
   initOptionsSchema,
   identitySchema,
   isSafeHttpUrl,
+  themeSchema,
   type RuntimeInitOptions,
 } from "./options.js";
+import type { EventMap } from "./protocol.js";
+import { launcherCopy } from "./launcher-copy.js";
+
+export type WidgetState = EventMap["statechange"];
+export type IdentifyResult = {
+  success: boolean;
+  user: WidgetUser | null;
+  error?: string;
+  /** Token claims that Kaneo received but did not apply, such as an attribute with no definition. */
+  warnings?: Array<{ code: string; field: string }>;
+};
+type Theme = WidgetState["theme"];
 
 type Command =
   | "init"
@@ -42,13 +55,17 @@ type Command =
   | "metadata"
   | "tracking"
   | "on"
-  | "off";
+  | "off"
+  | "toggle"
+  | "setTheme"
+  | "setLocale";
 
 export interface SDK {
   dispatch(command: Command, arg1?: unknown, arg2?: unknown): unknown;
   isOpen(): boolean;
   getUser(): WidgetUser | null;
   isIdentified(): boolean;
+  getState(): WidgetState;
 }
 
 export function createSDK(): SDK {
@@ -81,6 +98,37 @@ export function createSDK(): SDK {
     null;
   let pendingDevice: string | null = null;
   const emitter = createEmitter();
+  let unreadCount = 0;
+  /** The host's theme choice (init `theme` or setTheme); null follows the workspace setting. */
+  let hostTheme: Theme | null = null;
+  let serverTheme: ServerConfig["theme"];
+  /** A host element bound with `launcher: { selector }`, and its click handler. */
+  let bound: { el: Element; onClick: () => void } | null = null;
+  /** identify() promises: the one sent to the iframe, and the one queued behind it. */
+  let sentResult: ((result: IdentifyResult) => void) | null = null;
+  /** `announcements: "full"` opens an update at most once per initialization. */
+  let announcedOpen = false;
+  let queuedResult: ((result: IdentifyResult) => void) | null = null;
+
+  function state(): WidgetState {
+    return {
+      initialized: config !== null,
+      open: panelOpen,
+      placement,
+      theme: hostTheme ?? serverThemeMode(),
+      locale: config?.locale ?? null,
+      unreadCount,
+      user: currentUser,
+      identified: currentUser !== null,
+    };
+  }
+  const changed = () => emitter.emit("statechange", state());
+  const fail = (code: string, message: string) =>
+    emitter.emit("error", { code, message });
+  function serverThemeMode(): Theme {
+    const mode = serverTheme?.themeMode ?? "user";
+    return mode === "user" ? "auto" : mode;
+  }
 
   function sendMobileState(): void {
     if (ready && bridge) bridge.send("quackback:mobile", !!mobileMql?.matches);
@@ -97,9 +145,13 @@ export function createSDK(): SDK {
   function sendContext(): void {
     if (!ready || !bridge) return;
     const { protocol, origin, pathname } = window.location;
+    const share = config?.pageUrl ?? "path";
     bridge.send("quackback:metadata", {
       ...metadata,
-      ...(/^https?:$/.test(protocol) && { pageUrl: origin + pathname }),
+      ...(/^https?:$/.test(protocol) &&
+        share !== "none" && {
+          pageUrl: share === "origin" ? origin : origin + pathname,
+        }),
     });
   }
 
@@ -135,6 +187,7 @@ export function createSDK(): SDK {
         panel?.markReady();
         flushIdentity();
         if (config?.locale) bridge!.send("quackback:locale", config.locale);
+        if (hostTheme) bridge!.send("quackback:theme", hostTheme);
         sendContext();
         if (pendingDevice && hostTracking && !privacyOptedOut()) {
           bridge!.send("quackback:device", pendingDevice);
@@ -151,15 +204,11 @@ export function createSDK(): SDK {
         dispatch("close");
         break;
       case "quackback:unread": {
+        unreadCount = msg.count;
         launcher?.setUnread(msg.count);
+        bound?.el.setAttribute("data-quills-unread", String(msg.count));
         emitter.emit("unread", { count: msg.count });
-        break;
-      }
-      case "quackback:announce": {
-        const entry = { view: "changelog" as const, entryId: msg.entryId };
-        if (msg.open) {
-          if (!panelOpen) dispatch("open", entry);
-        } else launcher?.announce(msg.title, () => dispatch("open", entry));
+        changed();
         break;
       }
       case "quackback:expand":
@@ -168,7 +217,11 @@ export function createSDK(): SDK {
       case "quackback:identify-result": {
         if (!identifying) break;
         identifying = false;
+        const settle = sentResult;
+        sentResult = null;
         if (pendingIdentifyPresent) {
+          // A newer identity is waiting: this result is obsolete.
+          settle?.({ success: false, user: null, error: "Superseded" });
           flushIdentity();
           break;
         }
@@ -178,7 +231,17 @@ export function createSDK(): SDK {
           user: currentUser,
           anonymous: msg.success && !currentUser,
           error: msg.error,
+          ...(msg.warnings?.length && { warnings: msg.warnings }),
         });
+        settle?.({
+          success: msg.success,
+          user: currentUser,
+          ...(msg.error && { error: msg.error }),
+          ...(msg.warnings?.length && { warnings: msg.warnings }),
+        });
+        if (!msg.success)
+          fail("IDENTIFY_FAILED", msg.error ?? "The identity was refused");
+        changed();
         break;
       }
       case "quackback:auth-change":
@@ -190,6 +253,31 @@ export function createSDK(): SDK {
       case "quackback:capture":
         void capture(msg.id);
         break;
+      case "quackback:announce": {
+        emitter.emit("announcement", {
+          entryId: msg.entryId,
+          title: msg.title,
+        });
+        const mode = config?.announcements ?? "whisper";
+        const target = { view: "changelog" as const, entryId: msg.entryId };
+        if (mode === "none" || panelOpen) break;
+        // The workspace may open each new update once (`open`); the host's `full` opens it too.
+        if (msg.open || mode === "full") {
+          if (!announcedOpen && document.visibilityState === "visible") {
+            announcedOpen = true;
+            dispatch("open", target);
+          }
+          break;
+        }
+        launcher?.announce(
+          launcherCopy(config?.locale ?? navigator.language).newUpdate.replace(
+            "{title}",
+            msg.title,
+          ),
+          () => dispatch("open", target),
+        );
+        break;
+      }
       case "quackback:navigate": {
         if (isSafeHttpUrl(msg.url)) {
           // noopener: prevent tabnabbing via window.opener on the new tab.
@@ -248,12 +336,16 @@ export function createSDK(): SDK {
   function ensurePanel(): PanelHandle {
     if (panel) return panel;
     cancelPanelPreload();
+    const container = config!.container
+      ? (document.querySelector(config!.container) ?? undefined)
+      : undefined;
     panel = createPanel({
       widgetUrl: widgetBase(config!.instanceUrl, config!.workspace),
       placement,
       defaultBoard: config!.defaultBoard,
-      // The open panel covers the launcher; closing belongs inside the iframe.
-      showCloseButton: true,
+      container,
+      // The open panel covers the launcher; closing belongs inside the iframe. Inline has neither.
+      showCloseButton: !container,
       locale: config!.locale,
       onBackdropClick: () => dispatch("close"),
     });
@@ -275,6 +367,8 @@ export function createSDK(): SDK {
     pendingIdentify = null;
     pendingIdentifyPresent = false;
     identifying = true;
+    sentResult = queuedResult;
+    queuedResult = null;
     try {
       bridge.send("quackback:identify", identity);
     } catch (error) {
@@ -283,17 +377,28 @@ export function createSDK(): SDK {
     }
   }
 
-  function sendIdentity(data: unknown): void {
+  function sendIdentity(data: unknown): Promise<IdentifyResult> {
     currentUser = null;
+    // Only the latest queued identity is sent; an older queued one settles as superseded.
+    queuedResult?.({ success: false, user: null, error: "Superseded" });
+    const result = new Promise<IdentifyResult>((resolve) => {
+      queuedResult = resolve;
+    });
     pendingIdentify = data;
     pendingIdentifyPresent = true;
     flushIdentity();
+    return result;
   }
 
   function applyServerTheme(serverCfg: ServerConfig) {
+    serverTheme = serverCfg.theme;
     if (!launcher || !serverCfg.theme) return;
     const t = serverCfg.theme;
-    const themeMode = t.themeMode ?? "user";
+    const themeMode = hostTheme
+      ? hostTheme === "auto"
+        ? "user"
+        : hostTheme
+      : (t.themeMode ?? "user");
     const prefersDark =
       typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -367,13 +472,32 @@ export function createSDK(): SDK {
   }
 
   function createLauncherIfNeeded(): void {
-    if (launcher || !config || config.launcher === false) return;
+    if (
+      launcher ||
+      bound ||
+      !config ||
+      config.launcher === false ||
+      config.container
+    )
+      return;
+    if (typeof config.launcher === "object") {
+      // The host's own element opens the widget, with the unread count as a data attribute.
+      const el = document.querySelector(config.launcher.selector);
+      if (!el)
+        return fail(
+          "LAUNCHER_NOT_FOUND",
+          `No element matches ${config.launcher.selector}`,
+        );
+      const onClick = () => dispatch("toggle");
+      el.addEventListener("click", onClick);
+      bound = { el, onClick };
+      return;
+    }
     launcher = createLauncher({
       placement,
-      onClick: () => {
-        if (panelOpen) dispatch("close");
-        else dispatch("open");
-      },
+      offset: config.offset,
+      locale: config.locale,
+      onClick: () => dispatch("toggle"),
     });
   }
 
@@ -381,9 +505,16 @@ export function createSDK(): SDK {
     switch (cmd) {
       case "init": {
         const next = initOptionsSchema.parse(a);
+        if (next.container && !document.querySelector(next.container))
+          return fail(
+            "CONTAINER_NOT_FOUND",
+            `No element matches ${next.container}`,
+          );
         // Validate before destroy so a bad re-init leaves the working instance intact.
         if (config) dispatch("destroy");
         config = next;
+        hostTheme = next.theme ?? null;
+        announcedOpen = false;
         // Only an explicit option changes the host's choice, so a withdrawal
         // made before init, or before a re-init, is never silently undone.
         if (next.tracking !== undefined) hostTracking = next.tracking;
@@ -394,7 +525,9 @@ export function createSDK(): SDK {
         // init typically runs while the host is still loading, and the iframe
         // immediately competes for its bandwidth. An open() before the idle
         // slot fires still creates the panel on the spot.
-        schedulePanelPreload();
+        // Inline, the widget shows at once, in the host element.
+        if (next.container) dispatch("open");
+        else schedulePanelPreload();
         sendIdentity(config.identity ?? { anonymous: true });
         const targetLauncher = launcher;
         const reveal = () => {
@@ -427,6 +560,7 @@ export function createSDK(): SDK {
               if (config !== next) return;
               launcher?.remove();
               launcher = null;
+              fail("WIDGET_DISABLED", "The widget is off for this workspace");
             })
             .finally(() => {
               window.clearTimeout(fallback);
@@ -439,17 +573,18 @@ export function createSDK(): SDK {
         return;
       }
       case "identify":
-        sendIdentity(identitySchema.parse(a ?? { anonymous: true }));
-        return;
+        return sendIdentity(identitySchema.parse(a ?? { anonymous: true }));
       case "logout":
         launcher?.setOpen(false);
         panel?.hide();
         panelOpen = false;
         currentUser = null;
-        sendIdentity(null);
+        void sendIdentity(null);
+        changed();
         return;
       case "open": {
-        if (!config) return; // open before init is a no-op, matching close/hide
+        // open before init is a no-op, matching close/hide
+        if (!config) return fail("NOT_READY", "Call init before open");
         const opts = (a as OpenOptions) ?? {};
         // The page may have changed since the last open in a single-page app.
         sendContext();
@@ -467,7 +602,8 @@ export function createSDK(): SDK {
             | "help"
             | "chat"
             | "messages"
-            | "tickets";
+            | "tickets"
+            | "notifications";
           postId?: string;
           articleId?: string;
           entryId?: string;
@@ -478,14 +614,41 @@ export function createSDK(): SDK {
           articleId: ctx.articleId,
           entryId: ctx.entryId,
         });
+        changed();
         return;
       }
       case "close":
+        if (config?.container) return;
         launcher?.setOpen(false);
         panel?.hide();
         panelOpen = false;
         emitter.emit("close", {});
+        changed();
         return;
+      case "toggle":
+        return dispatch(panelOpen ? "close" : "open");
+      case "setTheme": {
+        const theme = themeSchema.safeParse(a);
+        if (!theme.success)
+          return fail(
+            "INVALID_OPTIONS",
+            "The theme must be auto, light or dark",
+          );
+        hostTheme = theme.data;
+        if (serverTheme) applyServerTheme({ theme: serverTheme });
+        if (ready && bridge) bridge.send("quackback:theme", theme.data);
+        changed();
+        return;
+      }
+      case "setLocale": {
+        if (typeof a !== "string" || !a || a.length > 35)
+          return fail("INVALID_OPTIONS", "The locale must be a language tag");
+        if (config) config = { ...config, locale: a };
+        if (ready && bridge) bridge.send("quackback:locale", a);
+        launcher?.setLocale(a);
+        changed();
+        return;
+      }
       case "showLauncher":
         if (!launcher) createLauncherIfNeeded();
         else launcher.el.style.display = "flex";
@@ -522,6 +685,18 @@ export function createSDK(): SDK {
         }
         return;
       case "destroy":
+        if (bound) {
+          bound.el.removeEventListener("click", bound.onClick);
+          bound.el.removeAttribute("data-quills-unread");
+        }
+        bound = null;
+        for (const settle of [sentResult, queuedResult])
+          settle?.({ success: false, user: null, error: "Destroyed" });
+        sentResult = null;
+        queuedResult = null;
+        unreadCount = 0;
+        hostTheme = null;
+        serverTheme = undefined;
         config = null;
         configAbort?.abort();
         configAbort = null;
@@ -550,6 +725,7 @@ export function createSDK(): SDK {
         currentUser = null;
         placement = "right";
         config = null;
+        changed();
         return;
     }
   }
@@ -559,5 +735,6 @@ export function createSDK(): SDK {
     isOpen: () => panelOpen,
     getUser: () => currentUser,
     isIdentified: () => currentUser !== null,
+    getState: state,
   };
 }

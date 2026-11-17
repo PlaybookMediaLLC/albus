@@ -34,8 +34,8 @@ export const writes = (api: Api) => ({
       {
         content,
         idempotencyKey,
-        ...(boardId && { boardId }),
         ...(context.title && { title: context.title }),
+        ...(boardId && { boardId }),
         ...(context.customFields && { customFields: context.customFields }),
         ...(context.attachmentIds?.length && {
           attachmentIds: context.attachmentIds,
@@ -118,11 +118,17 @@ export const writes = (api: Api) => ({
     idempotencyKey: string,
     signal?: AbortSignal,
     metadata?: Record<string, string>,
+    attachmentIds: string[] = [],
   ) =>
     api.request<Sent>(
       "POST",
       "/widget/conversations",
-      { content, idempotencyKey, ...(metadata && { metadata }) },
+      {
+        content,
+        idempotencyKey,
+        ...(metadata && { metadata }),
+        ...(attachmentIds.length && { attachmentIds }),
+      },
       signal,
     ),
   reply: (
@@ -131,11 +137,17 @@ export const writes = (api: Api) => ({
     idempotencyKey: string,
     signal?: AbortSignal,
     metadata?: Record<string, string>,
+    attachmentIds: string[] = [],
   ) =>
     api.request<Sent>(
       "POST",
       `/widget/conversations/${id(conversationId)}/messages`,
-      { content, idempotencyKey, ...(metadata && { metadata }) },
+      {
+        content,
+        idempotencyKey,
+        ...(metadata && { metadata }),
+        ...(attachmentIds.length && { attachmentIds }),
+      },
       signal,
     ),
   /** A short-lived download URL of a file that a teammate sent in the conversation. */
@@ -149,6 +161,19 @@ export const writes = (api: Api) => ({
       )
       .then((file) => file.downloadUrl),
   /** The watermark only moves forward on the server. */
+  /** Marks the assistant's proposed request as submitted with the visitor's post. */
+  confirmFeedbackCard: (
+    conversationId: string,
+    messageId: string,
+    postId: string,
+    signal?: AbortSignal,
+  ) =>
+    api.request<{ message: ApiMessage }>(
+      "PUT",
+      `/widget/conversations/${id(conversationId)}/messages/${id(messageId)}/feedback-card`,
+      { postId },
+      signal,
+    ),
   markRead: (
     conversationId: string,
     throughMessageId: string,

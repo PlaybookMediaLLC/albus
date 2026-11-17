@@ -1,6 +1,17 @@
-import { and, desc, eq, inArray, isNull, notInArray } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  inArray,
+  isNull,
+  ne,
+  notInArray,
+  sql,
+} from "drizzle-orm";
 import type { PrincipalId } from "@kaneo/ids";
+import { principal } from "../../database/quills/schema/auth";
 import { changelogSubscriptions } from "../../database/quills/schema/changelog-subscriptions";
+import { companies } from "../../database/quills/schema/companies";
 import { postVotes, posts } from "../../database/quills/schema/posts";
 import { segments, userSegments } from "../../database/quills/schema/segments";
 import { userAttributeDefinitions } from "../../database/quills/schema/user-attributes";
@@ -20,7 +31,12 @@ const RESERVED = new Set([
   "name",
   "avatarURL",
   "avatarUrl",
+  "avatar",
+  "firstName",
+  "lastName",
   "segments",
+  "companies",
+  "traits",
   "exp",
   "iat",
   "nbf",
@@ -31,7 +47,31 @@ const RESERVED = new Set([
 const MAX_ATTRIBUTES = 50;
 const MAX_SEGMENTS = 50;
 
-/** Custom claims that match a user attribute definition, coerced to its type. Others are dropped. */
+/** A claim that identify received but did not apply. The call still succeeds. */
+export type IdentifyWarning = {
+  code:
+    | "ATTRIBUTE_IGNORED"
+    | "SEGMENT_IGNORED"
+    | "COMPANY_IGNORED"
+    | "COMPANY_DOMAIN_IGNORED";
+  field: string;
+};
+
+/** The custom attribute candidates: top-level claims, then a `traits` object (top level wins). */
+export function attributeClaims(claims: Record<string, unknown>) {
+  const traits =
+    claims.traits &&
+    typeof claims.traits === "object" &&
+    !Array.isArray(claims.traits)
+      ? (claims.traits as Record<string, unknown>)
+      : {};
+  return { ...traits, ...claims };
+}
+
+/**
+ * Custom claims that match a user attribute definition, coerced to its type. Others are dropped and
+ * reported in `ignored`: a definition is created by a teammate, never by a host token.
+ */
 export async function claimedAttributes(
   db: Database,
   claims: Record<string, unknown>,
@@ -47,7 +87,7 @@ export async function claimedAttributes(
     )
       values.set(key, value);
   }
-  if (!values.size) return {};
+  if (!values.size) return { set: {}, ignored: [] as string[] };
   const definitions = await db
     .select({
       key: userAttributeDefinitions.key,
@@ -60,7 +100,7 @@ export async function claimedAttributes(
     const coerced = coerce(values.get(key)!, type);
     if (coerced !== undefined) set[key] = coerced;
   }
-  return set;
+  return { set, ignored: [...values.keys()].filter((key) => !(key in set)) };
 }
 
 /**
@@ -81,20 +121,19 @@ export async function reconcileClaimedSegments(
       ),
     ),
   ].slice(0, MAX_SEGMENTS);
-  const wanted = slugs.length
-    ? (
-        await db
-          .select({ id: segments.id })
-          .from(segments)
-          .where(
-            and(
-              inArray(segments.slug, slugs),
-              eq(segments.type, "manual"),
-              isNull(segments.deletedAt),
-            ),
-          )
-      ).map((row) => row.id)
+  const found = slugs.length
+    ? await db
+        .select({ id: segments.id, slug: segments.slug })
+        .from(segments)
+        .where(
+          and(
+            inArray(segments.slug, slugs),
+            eq(segments.type, "manual"),
+            isNull(segments.deletedAt),
+          ),
+        )
     : [];
+  const wanted = found.map((row) => row.id);
   await db
     .delete(userSegments)
     .where(
@@ -115,6 +154,98 @@ export async function reconcileClaimedSegments(
         })),
       )
       .onConflictDoNothing();
+  const known = new Set(found.map((row) => row.slug));
+  return slugs.filter((slug) => !known.has(slug));
+}
+
+const companyClaim = (value: unknown) => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const { id, name, domain } = value as Record<string, unknown>;
+  const external =
+    typeof id === "number"
+      ? String(id)
+      : typeof id === "string"
+        ? id.trim()
+        : "";
+  if (!external || external.length > 255) return null;
+  return {
+    externalId: external,
+    name:
+      typeof name === "string" && name.trim()
+        ? name.trim().slice(0, 200)
+        : external,
+    domain:
+      typeof domain === "string" && /^[a-z0-9.-]{1,253}$/i.test(domain.trim())
+        ? domain.trim().toLowerCase()
+        : null,
+  };
+};
+
+/**
+ * Links the person to the first company of the `companies` claim, created or updated by its
+ * external ID. A person has one company: the others are reported. A domain that another company
+ * holds is left out. A missing claim leaves the current company alone.
+ */
+export async function linkClaimedCompany(
+  db: Database,
+  principalId: PrincipalId,
+  claim: unknown,
+): Promise<IdentifyWarning[]> {
+  if (!Array.isArray(claim) || !claim.length) return [];
+  const warnings: IdentifyWarning[] = claim.slice(1).map((_, index) => ({
+    code: "COMPANY_IGNORED" as const,
+    field: `companies[${index + 1}]`,
+  }));
+  const company = companyClaim(claim[0]);
+  if (!company)
+    return [{ code: "COMPANY_IGNORED", field: "companies[0]" }, ...warnings];
+  // Two identifies naming a new company at once would both insert.
+  await db.execute(
+    sql`select pg_advisory_xact_lock(hashtext(${`quills-company:${company.externalId}`}))`,
+  );
+  const [existing] = await db
+    .select({ id: companies.id })
+    .from(companies)
+    .where(eq(companies.externalId, company.externalId))
+    .limit(1);
+  const domainTaken =
+    company.domain &&
+    (
+      await db
+        .select({ id: companies.id })
+        .from(companies)
+        .where(
+          and(
+            sql`lower(${companies.domain}) = ${company.domain}`,
+            ...(existing ? [ne(companies.id, existing.id)] : []),
+          ),
+        )
+        .limit(1)
+    ).length > 0;
+  if (domainTaken)
+    warnings.unshift({
+      code: "COMPANY_DOMAIN_IGNORED",
+      field: "companies[0].domain",
+    });
+  const fields = {
+    name: company.name,
+    ...(company.domain && !domainTaken && { domain: company.domain }),
+  };
+  const [row] = existing
+    ? await db
+        .update(companies)
+        .set(fields)
+        .where(eq(companies.id, existing.id))
+        .returning({ id: companies.id })
+    : await db
+        .insert(companies)
+        .values({ ...fields, externalId: company.externalId })
+        .returning({ id: companies.id });
+  await db
+    .update(principal)
+    .set({ companyId: row!.id })
+    .where(eq(principal.id, principalId));
+  return warnings;
 }
 
 /**

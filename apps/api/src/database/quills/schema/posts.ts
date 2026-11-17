@@ -88,6 +88,8 @@ export const posts = quillsSchema
       ),
       // Lock thread: prevent portal users from commenting (team members can still comment)
       isCommentsLocked: boolean("is_comments_locked").default(false).notNull(),
+      // Hidden from the board: only its author and the team see it (one request on a public board)
+      isHidden: boolean("is_hidden").default(false).notNull(),
       // Moderation state for imported/pending content
       moderationState: text("moderation_state", {
         enum: MODERATION_STATES,

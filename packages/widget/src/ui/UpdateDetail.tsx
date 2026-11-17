@@ -2,6 +2,8 @@ import { Avatar } from "./Avatar.js";
 import { RichContent } from "./RichContent.js";
 import { UpdateActions } from "./UpdateActions.js";
 import type { FeedbackPost, UpdateEntry, WidgetViewProps } from "./types.js";
+import { useLocale, useT } from "./i18n/useT.js";
+import { updateDate } from "./message-time.js";
 
 export function UpdateDetail({
   entry,
@@ -16,12 +18,14 @@ export function UpdateDetail({
   onReact?: WidgetViewProps["onReactToUpdate"];
   onShare?: WidgetViewProps["onShareUpdate"];
 }) {
+  const t = useT();
+  const locale = useLocale();
   const related = (entry.relatedPostIds ?? []).flatMap((id) =>
     posts.filter((post) => post.id === id),
   );
   return (
     <article className="qb-detail qb-reader qb-update-detail">
-      <span className="qb-date">{entry.date}</span>
+      <span className="qb-date">{updateDate(entry, locale)}</span>
       <h1>{entry.title}</h1>
       <RichContent body={entry.body} blocks={entry.blocks} />
       <div className="qb-byline">
@@ -34,7 +38,7 @@ export function UpdateDetail({
       <UpdateActions entry={entry} onReact={onReact} onShare={onShare} />
       {!!related.length && (
         <section className="qb-linked-requests">
-          <h2>From the board</h2>
+          <h2>{t("From the board")}</h2>
           {entry.requesterCount !== undefined && (
             <p>{entry.requesterCount} people asked for this</p>
           )}

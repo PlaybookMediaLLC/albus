@@ -1,5 +1,9 @@
 import { eq } from "drizzle-orm";
 import { principal } from "../../../database/quills/schema/auth";
+import { boards } from "../../../database/quills/schema/boards";
+import { conversationMessages } from "../../../database/quills/schema/conversation";
+import { posts } from "../../../database/quills/schema/posts";
+import { postStatuses } from "../../../database/quills/schema/statuses";
 import {
   fixture,
   type ContractEnv,
@@ -154,6 +158,77 @@ export const [
 export const [submitQuillsWidgetCsat, submitQuillsCsat] = both((audience) =>
   onConversation(audience, () => ({ body: { rating: 4, comment: "Quick" } })),
 );
+
+/** A post by `author` (the workspace actor when absent), as a card's confirmation names. */
+const postIn = (env: ContractEnv, workspaceId: string, author?: string) =>
+  env.scoped(workspaceId, async (db, actor) => {
+    const [board] = await db
+      .insert(boards)
+      .values({ name: "Contract", slug: env.id("board") })
+      .returning({ id: boards.id });
+    const [status] = await db
+      .select({ id: postStatuses.id })
+      .from(postStatuses)
+      .limit(1);
+    const [post] = await db
+      .insert(posts)
+      .values({
+        title: "Contract card",
+        content: "Contract card",
+        boardId: board!.id,
+        principalId: (author ?? actor.principalId) as typeof actor.principalId,
+        statusId: status!.id,
+      })
+      .returning({ id: posts.id });
+    return post!.id;
+  });
+/** The assistant's proposed card on the caller's reply and the caller's own post made from it. */
+export const [confirmQuillsWidgetFeedbackCard, confirmQuillsFeedbackCard] =
+  both((audience) =>
+    fixture({
+      seed: async (env) => {
+        const w = await world(env, audience);
+        await env.scoped(env.a, (db) =>
+          db
+            .update(conversationMessages)
+            .set({
+              metadata: {
+                assistantReply: true,
+                feedbackCard: {
+                  title: "Dark mode",
+                  body: "Add a dark theme",
+                  status: "proposed",
+                },
+              },
+            })
+            .where(eq(conversationMessages.id, w.mine.replyId)),
+        );
+        return {
+          ...w,
+          postId: await postIn(env, env.a, w.principalId),
+          foreignPostId: await postIn(env, env.b),
+        };
+      },
+      valid: (w) => ({
+        bearer: w.bearer,
+        params: {
+          conversationId: w.mine.conversationId,
+          messageId: w.mine.replyId,
+        },
+        body: { postId: w.postId },
+      }),
+      foreign: (w) => ({
+        conversationId: w.foreign.conversationId,
+        messageId: w.foreign.replyId,
+        postId: w.foreignPostId,
+      }),
+      hidden,
+      ...(audience === "portal" && {
+        own,
+        probe: (env: ContractEnv, w: World) => snapshotOf(env, w.principalId),
+      }),
+    }),
+  );
 
 export const [getQuillsWidgetMyTickets, getQuillsMyTickets] = both((audience) =>
   customerFixture(audience),

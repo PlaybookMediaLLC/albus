@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { Icon } from "./Icon.js";
+import type { WidgetViewProps } from "./types.js";
+import { useT } from "./i18n/useT.js";
 
-/** "Open in portal": the host mails a sign-in link to the identified visitor's email. */
+/** "Open in portal": a new tab signs the identified visitor in, or Kaneo mails them a sign-in link. */
 export function PortalLink({
   send,
 }: {
-  send: () => Promise<"sent" | "if_account">;
+  send: NonNullable<WidgetViewProps["onOpenPortal"]>;
 }) {
+  const t = useT();
   const [state, setState] = useState<
-    "idle" | "sending" | "sent" | "if_account" | "failed"
+    "idle" | "sending" | "opened" | "sent" | "if_account" | "failed"
   >("idle");
   return (
     <>
@@ -23,24 +26,25 @@ export function PortalLink({
         }}
       >
         <Icon name="external" />
-        <span>Open in portal</span>
+        <span>{t("Open in portal")}</span>
         <Icon name="chevron" />
       </button>
       {state === "sent" && (
         <p className="qb-notice" role="status">
-          Check your email for a sign-in link to the portal.
+          {t("Check your email for a sign-in link to the portal.")}
         </p>
       )}
       {/* Registration is closed: the API never says whether this address has an account. */}
       {state === "if_account" && (
         <p className="qb-notice" role="status">
-          If your email has an account on the portal, a sign-in link is on its
-          way. Check your email.
+          {t(
+            "If your email has an account on the portal, a sign-in link is on its way. Check your email.",
+          )}
         </p>
       )}
       {state === "failed" && (
         <p className="qb-form-error" role="alert">
-          The sign-in link could not be sent. Try again later.
+          {t("The portal could not be opened. Try again later.")}
         </p>
       )}
     </>

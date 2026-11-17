@@ -204,6 +204,37 @@ const findByEmail = defineQuillsRoute({
   },
 });
 
+const findByExternalId = defineQuillsRoute({
+  method: "get",
+  path: "/users/by-external-id",
+  operationId: "findQuillsUserByExternalId",
+  summary: "Find the customer with your app's user ID",
+  description:
+    "The ID your app gave the person (the signed `sub` of the widget, or externalId on create). Use the returned principal ID with the voter and subscriber routes to vote or subscribe on their behalf.",
+  action: "read",
+  query: z.object({ externalId: z.string().trim().min(1).max(255) }),
+  response: person,
+  responseDescription: "The customer",
+  errors: { 404: "No customer has this ID" },
+  handler: async ({ db, query }) => {
+    const [row] = await db
+      .select(personColumns)
+      .from(principal)
+      .innerJoin(user, eq(user.id, principal.userId))
+      .where(
+        and(
+          isCustomer,
+          eq(principal.type, "user"),
+          eq(user.externalId, query.externalId),
+        ),
+      )
+      .limit(1);
+    if (!row)
+      throw new HTTPException(404, { message: "No customer has this ID" });
+    return toPerson(row);
+  },
+});
+
 const createUser = defineQuillsRoute({
   method: "post",
   path: "/users",
@@ -521,6 +552,7 @@ const listDuplicates = defineQuillsRoute({
 export default apiRouter<BaseVariables & { workspaceId: string }>()
   .openapi(...listUsers)
   .openapi(...findByEmail)
+  .openapi(...findByExternalId)
   .openapi(...createUser)
   .openapi(...identifyUser)
   .openapi(...getUser)

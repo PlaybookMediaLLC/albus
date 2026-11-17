@@ -16,6 +16,7 @@ export const setPostStatusFixture = {
         commentCount: 0,
         pinnedCommentId: null,
         isCommentsLocked: false,
+        isHidden: false,
         moderationState: "value",
         canonicalPostId: null,
         eta: null,

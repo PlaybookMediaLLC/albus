@@ -4,7 +4,9 @@ import { changelogSubscriptions } from "../../database/quills/schema/changelog-s
 import { postSubscriptions } from "../../database/quills/schema/notifications";
 import { statusSubscriptions } from "../../database/quills/schema/status";
 import { fixture, type ContractEnv } from "../framework/contract";
+import { enableWidget } from "../widget/seed.fixture";
 import { customerPost, enablePortal } from "./customer-seed.fixture";
+import { world } from "./feedback/seed.fixture";
 
 /** The portal on in A, a visible post in A and B, and customer A's profile in A. */
 async function posts(env: ContractEnv) {
@@ -99,3 +101,28 @@ export const unsubscribeQuillsMyChangelog = selfServe(
   true,
 );
 // Status page subscriptions are content/public/status/subscriptions.ts (P6b).
+
+/** The widget and the changelog tab on in A, an identified visitor; with `subscribe`, a live subscription. */
+const widgetSelfServe = (subscribe = false) =>
+  fixture({
+    seed: async (env) => {
+      await enableWidget(env, env.a);
+      await world(env, env.a);
+      const visitor = await env.widgetVisitor(env.a);
+      const id = visitor.principalId as PrincipalId;
+      if (subscribe)
+        await env.scoped(env.a, (db) =>
+          db
+            .insert(changelogSubscriptions)
+            .values({ principalId: id, source: "self_serve" }),
+        );
+      return { principalId: id, token: visitor.token };
+    },
+    valid: (ids) => ({ bearer: ids.token }),
+    own: () => [],
+    probe: rowsOf(changelogSubscriptions),
+  });
+
+export const getQuillsWidgetChangelogSubscription = widgetSelfServe();
+export const subscribeQuillsWidgetChangelog = widgetSelfServe();
+export const unsubscribeQuillsWidgetChangelog = widgetSelfServe(true);

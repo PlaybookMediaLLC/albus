@@ -3,6 +3,7 @@ import { ApiError, type Api } from "./api.js";
 import {
   emptySnapshot,
   loadArticle,
+  findSimilar,
   loadPost,
   loadSnapshot,
   loadUpdate,
@@ -22,6 +23,7 @@ import {
   toPost,
   toReactions,
   VOTE_EMOJI,
+  type ApiMessage,
 } from "./map.js";
 import { postMetadata } from "./post-context.js";
 import { uploadImage } from "./uploads.js";
@@ -55,6 +57,8 @@ interface Options {
   surfaces: Surfaces;
   locale?: string;
   board?: string;
+  /** A board for the next post, from a new-post deep link; an unseen board falls back to `board`. */
+  composeBoard?: string;
   host: HostEvents;
   pollIntervalMs: number;
   /** The host app's metadata and the page URL from the SDK, sent with a new post. */
@@ -86,6 +90,7 @@ export function useWidgetData({
   surfaces,
   locale,
   board,
+  composeBoard,
   host,
   pollIntervalMs,
   context = {},
@@ -148,6 +153,22 @@ export function useWidgetData({
       throw error;
     }
   };
+  /** Uploads each attached file once; a retry reuses the IDs, so its idempotency key still fits. */
+  const uploadFiles = async (
+    options: SubmissionOptions,
+    signal: AbortSignal,
+  ) => {
+    const ids: string[] = [];
+    for (const file of options.attachments ?? []) {
+      let id = uploaded.current.get(file);
+      if (!id) {
+        id = await uploadImage(api, file, signal);
+        uploaded.current.set(file, id);
+      }
+      ids.push(id);
+    }
+    return ids;
+  };
   const reportUnread = async (signal: AbortSignal) => {
     const { unreadCount } = await send.unread(signal);
     if (!signal.aborted && unreadCount !== unread.current) {
@@ -209,25 +230,39 @@ export function useWidgetData({
         throw error;
       }
     });
-  const sent = (signal: AbortSignal, result: Sent) =>
-    patch(signal, (value) => {
-      const known = value.conversations.find(
-        (item) => item.id === result.conversation.id,
-      );
-      return {
-        ...value,
-        conversations: upsert(
-          value.conversations,
-          {
-            ...toConversation(result.conversation, []),
-            messages: mergeMessages(known?.messages ?? [], [
-              toMessage(result.message),
-            ]),
-          },
-          "end",
-        ),
-      };
-    });
+  const sent = async (signal: AbortSignal, result: Sent) => {
+    const merge = (incoming: ApiMessage[]) =>
+      patch(signal, (value) => {
+        const known = value.conversations.find(
+          (item) => item.id === result.conversation.id,
+        );
+        return {
+          ...value,
+          conversations: upsert(
+            value.conversations,
+            {
+              ...toConversation(result.conversation, []),
+              messages: mergeMessages(
+                known?.messages ?? [],
+                incoming.map(toMessage),
+              ),
+            },
+            "end",
+          ),
+        };
+      });
+    merge([result.message]);
+    // An automatic answer (the away reply) is written with the message: read what follows it.
+    const page = await api
+      .request<{ items: ApiMessage[] }>(
+        "GET",
+        `/widget/conversations/${encodeURIComponent(result.conversation.id)}/messages?${new URLSearchParams({ after: result.message.id, limit: "100" })}`,
+        undefined,
+        signal,
+      )
+      .catch(() => null);
+    if (page?.items.length && !signal.aborted) merge(page.items);
+  };
 
   useEffect(() => {
     if (session === null) return;
@@ -350,20 +385,18 @@ export function useWidgetData({
       feedbackFields: target?.fields ?? [],
       onSubmitFeedback: (body: string, options: SubmissionOptions) =>
         run(async (signal) => {
-          const attachmentIds: string[] = [];
-          for (const file of options.attachments ?? []) {
-            let id = uploaded.current.get(file);
-            if (!id) {
-              id = await uploadImage(api, file, signal);
-              uploaded.current.set(file, id);
-            }
-            attachmentIds.push(id);
-          }
+          const attachmentIds = await uploadFiles(options, signal);
+          const chosen = composeBoard
+            ? await resolveBoard(api, composeBoard, signal).catch(
+                () => undefined,
+              )
+            : undefined;
           const created = await send.createPost(
             // A post needs a title: a screenshot alone gets a plain one.
             body || (attachmentIds.length ? "Screenshot" : body),
             options.idempotencyKey,
-            options.boardId ?? (boardId.current || target?.id),
+            // A board picked in the composer, else the one the host page opened, else the default.
+            options.boardId ?? chosen ?? (boardId.current || target?.id),
             signal,
             {
               attachmentIds,
@@ -429,6 +462,8 @@ export function useWidgetData({
             voteCount: result.voteCount,
           });
         }),
+      onFindSimilar: (text: string, signal: AbortSignal) =>
+        findSimilar(api, text, signal),
       onFollowFeedback: (postId: string, following: boolean) =>
         run(async (signal) => {
           const result = await send.follow(postId, following, signal);
@@ -539,6 +574,7 @@ export function useWidgetData({
               options.idempotencyKey,
               signal,
               postMetadata(page.current, navigator.userAgent),
+              await uploadFiles(options, signal),
             ),
           ),
         ),
@@ -556,11 +592,59 @@ export function useWidgetData({
               options.idempotencyKey,
               signal,
               postMetadata(page.current, navigator.userAgent),
+              await uploadFiles(options, signal),
             ),
           ),
         ),
       onOpenFile: (conversationId: string, fileId: string) =>
         run((signal) => send.fileUrl(conversationId, fileId, signal)),
+      ...(available.feedback && {
+        onConfirmFeedbackCard: (
+          conversationId: string,
+          messageId: string,
+          card: { title: string; body: string },
+        ) =>
+          run(async (signal) => {
+            // The message ID keys the post, so a retry after a failed confirm posts it once.
+            const created = await send.createPost(
+              card.body || card.title,
+              `card:${messageId}`,
+              boardId.current || undefined,
+              signal,
+              {
+                title: card.title,
+                metadata: postMetadata(page.current, navigator.userAgent),
+              },
+            );
+            const result = await send.confirmFeedbackCard(
+              conversationId,
+              messageId,
+              created.id,
+              signal,
+            );
+            const post = toPost(created);
+            patch(signal, (value) => ({
+              ...value,
+              conversations: value.conversations.map((item) =>
+                item.id === conversationId
+                  ? {
+                      ...item,
+                      messages: mergeMessages(item.messages, [
+                        toMessage(result.message),
+                      ]),
+                    }
+                  : item,
+              ),
+              ...(post && { feedback: upsert(value.feedback, post, "start") }),
+            }));
+            events.current.event("post:created", {
+              id: created.id,
+              title: created.title,
+              board: created.board,
+              statusId: created.status?.id ?? null,
+            });
+          }),
+      }),
       onReadConversation: (conversationId: string, throughMessageId: string) =>
         run(async (signal) => {
           const result = await send.markRead(

@@ -166,6 +166,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/teams",
   },
   {
+    operationId: "blockQuillsConversationIp",
+    method: "PUT",
+    path: "/api/quills/{workspaceId}/conversations/{conversationId}/ip-block",
+  },
+  {
     operationId: "blockQuillsUser",
     method: "PUT",
     path: "/api/quills/{workspaceId}/users/{principalId}/block",
@@ -234,6 +239,16 @@ export const quillsOperationRoutes = [
     operationId: "confirmQuillsEmailChange",
     method: "POST",
     path: "/api/quills-public/{workspace}/widget/contact-email/confirm",
+  },
+  {
+    operationId: "confirmQuillsFeedbackCard",
+    method: "PUT",
+    path: "/api/quills-public/{workspace}/support/conversations/{conversationId}/messages/{messageId}/feedback-card",
+  },
+  {
+    operationId: "confirmQuillsWidgetFeedbackCard",
+    method: "PUT",
+    path: "/api/quills-public/{workspace}/widget/conversations/{conversationId}/messages/{messageId}/feedback-card",
   },
   {
     operationId: "createQuillsAdminAssistantCopilot",
@@ -559,6 +574,11 @@ export const quillsOperationRoutes = [
     operationId: "createQuillsWidgetMyTicket",
     method: "POST",
     path: "/api/quills-public/{workspace}/widget/tickets",
+  },
+  {
+    operationId: "createQuillsWidgetPortalSignIn",
+    method: "POST",
+    path: "/api/quills-public/{workspace}/widget/portal-sign-in",
   },
   {
     operationId: "createQuillsWidgetPost",
@@ -981,6 +1001,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills-public/{workspace}/portal/posts/similar",
   },
   {
+    operationId: "findQuillsUserByExternalId",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/users/by-external-id",
+  },
+  {
     operationId: "findQuillsUsersByEmail",
     method: "GET",
     path: "/api/quills/{workspaceId}/users/by-email",
@@ -1014,6 +1039,11 @@ export const quillsOperationRoutes = [
     operationId: "getQuillsAutomaticWebsiteBrandingStatus",
     method: "GET",
     path: "/api/quills/{workspaceId}/settings/website-branding",
+  },
+  {
+    operationId: "getQuillsAwayReply",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/support/away-reply",
   },
   {
     operationId: "getQuillsBoard",
@@ -1074,6 +1104,11 @@ export const quillsOperationRoutes = [
     operationId: "getQuillsConversationAssistantActivity",
     method: "GET",
     path: "/api/quills/{workspaceId}/conversations/{conversationId}/assistant-activity",
+  },
+  {
+    operationId: "getQuillsConversationIpBlock",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/conversations/{conversationId}/ip-block",
   },
   {
     operationId: "getQuillsConversationLinkedTicket",
@@ -1619,6 +1654,11 @@ export const quillsOperationRoutes = [
     operationId: "getQuillsWidgetChangelogEntry",
     method: "GET",
     path: "/api/quills-public/{workspace}/widget/changelog/{entryId}",
+  },
+  {
+    operationId: "getQuillsWidgetChangelogSubscription",
+    method: "GET",
+    path: "/api/quills-public/{workspace}/widget/changelog/subscription",
   },
   {
     operationId: "getQuillsWidgetChangelogUnread",
@@ -2411,6 +2451,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/assistant/web-sources",
   },
   {
+    operationId: "listQuillsWidgetActivity",
+    method: "GET",
+    path: "/api/quills-public/{workspace}/widget/activity",
+  },
+  {
     operationId: "listQuillsWidgetBoards",
     method: "GET",
     path: "/api/quills-public/{workspace}/widget/boards",
@@ -2529,6 +2574,11 @@ export const quillsOperationRoutes = [
     operationId: "markQuillsTicketUnread",
     method: "POST",
     path: "/api/quills/{workspaceId}/tickets/{ticketId}/unread",
+  },
+  {
+    operationId: "markQuillsWidgetActivityRead",
+    method: "PUT",
+    path: "/api/quills-public/{workspace}/widget/activity/{activityId}/read",
   },
   {
     operationId: "markQuillsWidgetChangelogAnnounced",
@@ -3176,6 +3226,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/support/availability",
   },
   {
+    operationId: "setQuillsAwayReply",
+    method: "PUT",
+    path: "/api/quills/{workspaceId}/support/away-reply",
+  },
+  {
     operationId: "setQuillsBoardDelivery",
     method: "PUT",
     path: "/api/quills/{workspaceId}/boards/{boardId}/delivery",
@@ -3531,6 +3586,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/oauth/notion/connect",
   },
   {
+    operationId: "startQuillsPortalTokenSignIn",
+    method: "GET",
+    path: "/api/quills-public/signed/portal-sign-in",
+  },
+  {
     operationId: "startQuillsSalesforceOAuthConnect",
     method: "GET",
     path: "/api/quills/{workspaceId}/oauth/salesforce/connect",
@@ -3601,6 +3661,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills-public/{workspace}/status/subscription",
   },
   {
+    operationId: "subscribeQuillsWidgetChangelog",
+    method: "PUT",
+    path: "/api/quills-public/{workspace}/widget/changelog/subscription",
+  },
+  {
     operationId: "suggestQuillsAppPosts",
     method: "GET",
     path: "/api/quills/{workspaceId}/apps/suggest",
@@ -3629,6 +3694,11 @@ export const quillsOperationRoutes = [
     operationId: "unarchiveQuillsConversation",
     method: "POST",
     path: "/api/quills/{workspaceId}/conversations/{conversationId}/unarchive",
+  },
+  {
+    operationId: "unblockQuillsConversationIp",
+    method: "DELETE",
+    path: "/api/quills/{workspaceId}/conversations/{conversationId}/ip-block",
   },
   {
     operationId: "unblockQuillsUser",
@@ -3724,6 +3794,11 @@ export const quillsOperationRoutes = [
     operationId: "unsubscribeQuillsStatusByToken",
     method: "POST",
     path: "/api/quills-public/{workspace}/status/unsubscribe",
+  },
+  {
+    operationId: "unsubscribeQuillsWidgetChangelog",
+    method: "DELETE",
+    path: "/api/quills-public/{workspace}/widget/changelog/subscription",
   },
   {
     operationId: "unwatchQuillsMyTicket",
@@ -3889,6 +3964,11 @@ export const quillsOperationRoutes = [
     operationId: "updateQuillsPortalSettings",
     method: "PUT",
     path: "/api/quills/{workspaceId}/settings/portal",
+  },
+  {
+    operationId: "updateQuillsPortalSignIn",
+    method: "PUT",
+    path: "/api/quills/{workspaceId}/settings/portal/sign-in",
   },
   {
     operationId: "updateQuillsPost",

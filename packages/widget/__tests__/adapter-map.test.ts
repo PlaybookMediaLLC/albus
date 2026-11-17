@@ -100,6 +100,14 @@ describe("API to view mapping", () => {
       createdAt: "2026-11-01T10:00:00.000Z",
     });
     expect(toPost({ ...post, stage: null })).toBeNull();
+    // Markdown in a post reads as text in the list preview and the detail.
+    expect(
+      toPost({
+        ...post,
+        content:
+          "We want **dark mode**.\n\n### Why\n- Late nights\n- Less glare",
+      })!.body,
+    ).toBe("We want dark mode.\n\nWhy\n\nLate nights\nLess glare");
   });
 
   it("maps a comment's 👍 reaction to its vote and a deleted comment to a notice", () => {

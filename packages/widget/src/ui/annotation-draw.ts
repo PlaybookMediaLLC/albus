@@ -1,11 +1,21 @@
 // Drawing for the image editor. A mark goes from one point to another, in percent of the image:
 // a box, a blur and a redaction fill the rectangle between the points; an arrow points from the
-// first point to the second.
+// first point to the second. A pen line follows its points; text starts at the first point.
 
-export type Tool = "box" | "arrow" | "blur" | "redact";
-export type Mark = { tool: Tool; x: number; y: number; x2: number; y2: number };
+export type Tool = "box" | "arrow" | "pen" | "text" | "blur" | "redact";
+export type Mark = {
+  tool: Tool;
+  x: number;
+  y: number;
+  x2: number;
+  y2: number;
+  /** Box, arrow, pen and text only; red without one. */
+  color?: string;
+  points?: ReadonlyArray<readonly [number, number]>;
+  text?: string;
+};
 
-const RED = "#e53935";
+export const RED = "#e53935";
 const DARK = "#171717";
 
 /** The two short lines of an arrowhead at (x2, y2), each `size` long and 25 degrees off the line. */
@@ -69,10 +79,29 @@ export function drawMarks(
         context.imageSmoothingEnabled = true;
       }
     } else {
-      context.strokeStyle = RED;
+      context.strokeStyle = mark.color ?? RED;
+      context.fillStyle = mark.color ?? RED;
       context.lineWidth = line;
       if (mark.tool === "box") context.strokeRect(x, y, w, h);
-      else {
+      else if (mark.tool === "pen") {
+        context.lineCap = "round";
+        context.lineJoin = "round";
+        context.beginPath();
+        for (const [i, [px, py]] of (mark.points ?? []).entries())
+          context[i ? "lineTo" : "moveTo"](
+            (px * width) / 100,
+            (py * height) / 100,
+          );
+        context.stroke();
+      } else if (mark.tool === "text") {
+        context.font = `600 ${Math.max(14, Math.round(width / 32))}px sans-serif`;
+        context.textBaseline = "top";
+        context.fillText(
+          mark.text ?? "",
+          (mark.x * width) / 100,
+          (mark.y * height) / 100,
+        );
+      } else {
         const [x1, y1, x2, y2] = [
           (mark.x * width) / 100,
           (mark.y * height) / 100,

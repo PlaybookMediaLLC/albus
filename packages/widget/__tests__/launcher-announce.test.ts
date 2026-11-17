@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
-// #108: the launcher shows a new changelog entry's title; a click opens that entry, × hides it.
+// #108: the launcher shows a new changelog entry (the SDK passes the text in the visitor's language);
+// a click opens that entry, × hides it.
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { createLauncher } from "../src/core/launcher";
 
@@ -22,7 +23,7 @@ describe("launcher announcement", () => {
     const onOpen = vi.fn();
     const launcher = createLauncher({ placement: "right", onClick });
     launcher.setGreeting("Hi there");
-    launcher.announce("Roadmap export to CSV", onOpen);
+    launcher.announce("New: Roadmap export to CSV", onOpen);
     expect(bubble().style.display).toBe("flex");
     expect(text().textContent).toBe("New: Roadmap export to CSV");
     text().click();

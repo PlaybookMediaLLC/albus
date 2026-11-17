@@ -3,6 +3,7 @@ import { RichContent } from "./RichContent.js";
 import { messageTime } from "./message-time.js";
 import { useAction } from "./useAction.js";
 import type { HelpArticle, WidgetViewProps } from "./types.js";
+import { useLocale, useT } from "./i18n/useT.js";
 
 export function ArticleView({
   article,
@@ -19,6 +20,8 @@ export function ArticleView({
   onContact?: () => void;
   offline: boolean;
 }) {
+  const t = useT();
+  const locale = useLocale();
   const action = useAction();
   const state = action.forKey(article.id);
   const related = articles
@@ -26,7 +29,7 @@ export function ArticleView({
       (item) => item.id !== article.id && item.category === article.category,
     )
     .slice(0, 3);
-  const stamp = messageTime(article.updatedAt);
+  const stamp = messageTime(article.updatedAt, locale);
   return (
     <article className="qb-detail qb-article qb-reader">
       <h1>{article.title}</h1>
@@ -45,10 +48,13 @@ export function ArticleView({
       )}
       <RichContent body={article.body} blocks={article.blocks} />
       {(onFeedback || onContact) && (
-        <section className="qb-article-feedback" aria-label="Article feedback">
+        <section
+          className="qb-article-feedback"
+          aria-label={t("Article feedback")}
+        >
           {onFeedback && (
             <>
-              <h2>Was this helpful?</h2>
+              <h2>{t("Was this helpful?")}</h2>
               <div className="qb-helpful-actions">
                 {[true, false].map((helpful) => (
                   <button
@@ -63,15 +69,15 @@ export function ArticleView({
                       )
                     }
                   >
-                    {helpful ? "Yes" : "No"}
+                    {helpful ? t("Yes") : t("No")}
                   </button>
                 ))}
               </div>
               <p role="status">
                 {state.pending
-                  ? "Saving your feedback…"
+                  ? t("Saving your feedback…")
                   : article.helpful !== undefined
-                    ? "Thanks for your feedback."
+                    ? t("Thanks for your feedback.")
                     : ""}
               </p>
               {state.error && (
@@ -87,14 +93,14 @@ export function ArticleView({
               className="qb-text-button"
               onClick={onContact}
             >
-              Still need help? Send a message
+              {t("Still need help? Send a message")}
             </button>
           )}
         </section>
       )}
       {related.length > 0 && (
         <section className="qb-related">
-          <h2>Related articles</h2>
+          <h2>{t("Related articles")}</h2>
           {related.map((item) => (
             <button
               type="button"
