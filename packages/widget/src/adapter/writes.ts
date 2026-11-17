@@ -92,11 +92,17 @@ export const writes = (api: Api) => ({
     idempotencyKey: string,
     signal?: AbortSignal,
     metadata?: Record<string, string>,
+    attachmentIds: string[] = [],
   ) =>
     api.request<Sent>(
       "POST",
       "/widget/conversations",
-      { content, idempotencyKey, ...(metadata && { metadata }) },
+      {
+        content,
+        idempotencyKey,
+        ...(metadata && { metadata }),
+        ...(attachmentIds.length && { attachmentIds }),
+      },
       signal,
     ),
   reply: (
@@ -105,11 +111,17 @@ export const writes = (api: Api) => ({
     idempotencyKey: string,
     signal?: AbortSignal,
     metadata?: Record<string, string>,
+    attachmentIds: string[] = [],
   ) =>
     api.request<Sent>(
       "POST",
       `/widget/conversations/${id(conversationId)}/messages`,
-      { content, idempotencyKey, ...(metadata && { metadata }) },
+      {
+        content,
+        idempotencyKey,
+        ...(metadata && { metadata }),
+        ...(attachmentIds.length && { attachmentIds }),
+      },
       signal,
     ),
   /** A short-lived download URL of a file that a teammate sent in the conversation. */

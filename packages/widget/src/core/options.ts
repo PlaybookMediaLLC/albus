@@ -24,6 +24,10 @@ export const identitySchema = z.union([
   z.object({ anonymous: z.literal(true) }),
 ]);
 
+export const themeSchema = z.enum(["auto", "light", "dark"]);
+/** Launcher distance from the viewport edges. */
+const pixels = z.number().check(z.minimum(0), z.maximum(400));
+
 export const initOptionsSchema = z.object({
   instanceUrl: z
     .string()
@@ -40,7 +44,18 @@ export const initOptionsSchema = z.object({
     ),
   placement: z.optional(z.enum(["left", "right"])),
   defaultBoard: z.optional(z.string()),
-  launcher: z.optional(z.boolean()),
+  launcher: z.optional(
+    z.union([
+      z.boolean(),
+      z.object({ selector: z.string().check(z.minLength(1)) }),
+    ]),
+  ),
+  theme: z.optional(themeSchema),
+  announcements: z.optional(z.enum(["whisper", "full", "none"])),
+  pageUrl: z.optional(z.enum(["path", "origin", "none"])),
+  offset: z.optional(
+    z.object({ bottom: z.optional(pixels), side: z.optional(pixels) }),
+  ),
   locale: z.optional(z.string()),
   identity: z.optional(identitySchema),
   tracking: z.optional(z.boolean()),

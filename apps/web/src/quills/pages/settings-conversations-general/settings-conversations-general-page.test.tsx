@@ -1,5 +1,6 @@
 import { fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vite-plus/test";
+import { getAwayReplyFixture } from "../../api/team/get-away-reply.fixture";
 import { getConversationRoutingFixture } from "../../api/team/get-conversation-routing.fixture";
 import { getDefaultSlaPolicyFixture } from "../../api/team/get-default-sla-policy.fixture";
 import { getEmailAutoAckFixture } from "../../api/team/get-email-auto-ack.fixture";
@@ -39,6 +40,7 @@ const ready = () => {
     }),
   );
   api.reply(getPortalSettingsFixture.ok({ supportEnabled: true }));
+  api.reply(getAwayReplyFixture.ok());
 };
 
 describe("SettingsConversationsGeneralPage", () => {
@@ -46,13 +48,13 @@ describe("SettingsConversationsGeneralPage", () => {
     loading: {
       prepare: () => {
         const api = mockApi();
-        for (let index = 0; index < 8; index += 1) api.defer(() => undefined);
+        for (let index = 0; index < 9; index += 1) api.defer(() => undefined);
       },
     },
     failed: {
       prepare: () => {
         const api = mockApi();
-        for (let index = 0; index < 8; index += 1) api.fail();
+        for (let index = 0; index < 9; index += 1) api.fail();
       },
     },
     ready: {

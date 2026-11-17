@@ -25,6 +25,7 @@ import {
   onVisibleBoard,
   visiblePost,
 } from "./visibility";
+import { recordActivity } from "./activity";
 
 type Db = Parameters<AnyQuillsRoute["handler"]>[0]["db"];
 
@@ -45,11 +46,21 @@ const moderationDefault = z.object({
   requireApproval,
   holdImages: z.boolean(),
   holdLinks: z.boolean(),
+  holdSpam: z.boolean().openapi({
+    description:
+      "Hold a post or comment that the spam rules flag (links, phrases, shouting, repetition)",
+  }),
+  holdSensitive: z.boolean().openapi({
+    description:
+      "Hold a post or comment that shows an email, a phone or card number, an IBAN or a secret key",
+  }),
 });
 const DEFAULT: z.output<typeof moderationDefault> = {
   requireApproval: "none",
   holdImages: false,
   holdLinks: false,
+  holdSpam: false,
+  holdSensitive: false,
 };
 const resolveDefault = (value: unknown) => ({
   ...DEFAULT,
@@ -82,14 +93,23 @@ const setPostVisibility = defineQuillsRoute({
   method: "put",
   path: "/posts/{postId}/visibility",
   operationId: "setQuillsPostVisibility",
-  summary: "Show a post on its board or hide it",
+  summary: "Show a post on its board, to its author only, or hide it",
   description:
-    "Moves a published post to archived (hidden) or back. A post that waits for review uses approveQuillsPost. Sends no mail or notification.",
+    "Moves a published post to archived (hidden) or back. With visible and authorOnly the post stays published but only its author and the team see it. A post that waits for review uses approveQuillsPost. Sends no mail or notification.",
   action: "update",
   params: postParams,
-  body: z.object({ visible: z.boolean() }),
+  body: z.object({
+    visible: z.boolean(),
+    authorOnly: z.boolean().optional().openapi({
+      description: "With visible: only the post's author and the team see it",
+    }),
+  }),
   load: loadProjects,
-  response: z.object({ id: z.string(), moderationState: z.string() }),
+  response: z.object({
+    id: z.string(),
+    moderationState: z.string(),
+    isHidden: z.boolean(),
+  }),
   responseDescription: "The post and its new moderation state",
   errors: {
     404: "Post not found",
@@ -101,9 +121,9 @@ const setPostVisibility = defineQuillsRoute({
     entityId: params.postId,
     payload: { fields: "visibility" },
   }),
-  handler: async ({ db, params: { postId }, body, loaded }) => {
+  handler: async ({ db, actor, params: { postId }, body, loaded }) => {
     const [post] = await db
-      .select({ state: posts.moderationState })
+      .select({ state: posts.moderationState, isHidden: posts.isHidden })
       .from(posts)
       .where(
         and(
@@ -119,12 +139,17 @@ const setPostVisibility = defineQuillsRoute({
         message: "The post is neither published nor hidden",
       });
     const moderationState = body.visible ? "published" : "archived";
-    if (post.state !== moderationState)
+    const isHidden = body.visible && body.authorOnly === true;
+    if (post.state !== moderationState || post.isHidden !== isHidden)
       await db
         .update(posts)
-        .set({ moderationState })
+        .set({ moderationState, isHidden })
         .where(eq(posts.id, postId));
-    return { id: postId, moderationState };
+    if (post.isHidden !== isHidden)
+      await recordActivity(db, actor, postId, {
+        type: isHidden ? "post.hidden" : "post.shown",
+      });
+    return { id: postId, moderationState, isHidden };
   },
 });
 
@@ -450,6 +475,8 @@ const setDefault = defineQuillsRoute({
     requireApproval,
     holdImages: z.boolean().optional(),
     holdLinks: z.boolean().optional(),
+    holdSpam: z.boolean().optional(),
+    holdSensitive: z.boolean().optional(),
   }),
   response: z.object({ moderationDefault }),
   responseDescription: "The stored moderation default",
@@ -471,6 +498,8 @@ const setDefault = defineQuillsRoute({
           requireApproval: body.requireApproval,
           holdImages: body.holdImages ?? stored.holdImages,
           holdLinks: body.holdLinks ?? stored.holdLinks,
+          holdSpam: body.holdSpam ?? stored.holdSpam,
+          holdSensitive: body.holdSensitive ?? stored.holdSensitive,
         };
       },
     ),

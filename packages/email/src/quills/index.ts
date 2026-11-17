@@ -1043,6 +1043,8 @@ export async function sendSendingDomainAttentionEmail(
 
 interface SendStatusChangeParams {
   to: string;
+  /** A signed reply address: a reply by mail becomes a comment on the post. */
+  replyTo?: string;
   postTitle: string;
   postUrl: string;
   previousStatus: string;
@@ -1089,6 +1091,7 @@ export async function sendStatusChangeEmail(
     ),
     emailType: "StatusChangeEmail",
     preview: { postUrl },
+    ...(params.replyTo && { replyTo: params.replyTo }),
   });
 }
 
@@ -1174,6 +1177,8 @@ export async function sendWeeklyDigestEmail(
 
 interface SendNewCommentParams {
   to: string;
+  /** A signed reply address: a reply by mail becomes a comment on the post. */
+  replyTo?: string;
   postTitle: string;
   postUrl: string;
   commenterName: string;
@@ -1221,6 +1226,7 @@ export async function sendNewCommentEmail(
     ),
     emailType: "NewCommentEmail",
     preview: { postUrl },
+    ...(params.replyTo && { replyTo: params.replyTo }),
   });
 }
 

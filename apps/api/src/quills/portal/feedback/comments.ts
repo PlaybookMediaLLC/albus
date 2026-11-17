@@ -264,7 +264,7 @@ export async function findComment(
 }
 
 /** Moves the post's public comment count, as the teammate path does. */
-async function countComment(
+export async function countComment(
   db: Database,
   postId: PostId,
   author: PrincipalId,

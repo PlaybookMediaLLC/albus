@@ -1,4 +1,5 @@
 import { apiRouter } from "../../openapi";
+import activity from "./activity";
 import config from "./config";
 import contactEmail from "./contact-email";
 import identify from "./identify";
@@ -12,4 +13,5 @@ export default apiRouter()
   .route("/", install)
   .route("/", identify)
   .route("/", contactEmail)
-  .route("/", session);
+  .route("/", session)
+  .route("/", activity);

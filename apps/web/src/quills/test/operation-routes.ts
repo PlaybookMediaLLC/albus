@@ -166,6 +166,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/teams",
   },
   {
+    operationId: "blockQuillsConversationIp",
+    method: "PUT",
+    path: "/api/quills/{workspaceId}/conversations/{conversationId}/ip-block",
+  },
+  {
     operationId: "blockQuillsUser",
     method: "PUT",
     path: "/api/quills/{workspaceId}/users/{principalId}/block",
@@ -991,6 +996,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/settings/website-branding",
   },
   {
+    operationId: "getQuillsAwayReply",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/support/away-reply",
+  },
+  {
     operationId: "getQuillsBoard",
     method: "GET",
     path: "/api/quills/{workspaceId}/boards/{boardId}",
@@ -1049,6 +1059,11 @@ export const quillsOperationRoutes = [
     operationId: "getQuillsConversationAssistantActivity",
     method: "GET",
     path: "/api/quills/{workspaceId}/conversations/{conversationId}/assistant-activity",
+  },
+  {
+    operationId: "getQuillsConversationIpBlock",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/conversations/{conversationId}/ip-block",
   },
   {
     operationId: "getQuillsConversationLinkedTicket",
@@ -1584,6 +1599,11 @@ export const quillsOperationRoutes = [
     operationId: "getQuillsWidgetChangelogEntry",
     method: "GET",
     path: "/api/quills-public/{workspace}/widget/changelog/{entryId}",
+  },
+  {
+    operationId: "getQuillsWidgetChangelogSubscription",
+    method: "GET",
+    path: "/api/quills-public/{workspace}/widget/changelog/subscription",
   },
   {
     operationId: "getQuillsWidgetChangelogUnread",
@@ -2351,6 +2371,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/assistant/web-sources",
   },
   {
+    operationId: "listQuillsWidgetActivity",
+    method: "GET",
+    path: "/api/quills-public/{workspace}/widget/activity",
+  },
+  {
     operationId: "listQuillsWidgetBoards",
     method: "GET",
     path: "/api/quills-public/{workspace}/widget/boards",
@@ -2464,6 +2489,11 @@ export const quillsOperationRoutes = [
     operationId: "markQuillsTicketUnread",
     method: "POST",
     path: "/api/quills/{workspaceId}/tickets/{ticketId}/unread",
+  },
+  {
+    operationId: "markQuillsWidgetActivityRead",
+    method: "PUT",
+    path: "/api/quills-public/{workspace}/widget/activity/{activityId}/read",
   },
   {
     operationId: "markQuillsWidgetChangelogRead",
@@ -3086,6 +3116,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/support/availability",
   },
   {
+    operationId: "setQuillsAwayReply",
+    method: "PUT",
+    path: "/api/quills/{workspaceId}/support/away-reply",
+  },
+  {
     operationId: "setQuillsChangelogSubscriber",
     method: "PUT",
     path: "/api/quills/{workspaceId}/changelog-subscribers/{principalId}",
@@ -3496,6 +3531,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills-public/{workspace}/status/subscription",
   },
   {
+    operationId: "subscribeQuillsWidgetChangelog",
+    method: "PUT",
+    path: "/api/quills-public/{workspace}/widget/changelog/subscription",
+  },
+  {
     operationId: "suggestQuillsAppPosts",
     method: "GET",
     path: "/api/quills/{workspaceId}/apps/suggest",
@@ -3524,6 +3564,11 @@ export const quillsOperationRoutes = [
     operationId: "unarchiveQuillsConversation",
     method: "POST",
     path: "/api/quills/{workspaceId}/conversations/{conversationId}/unarchive",
+  },
+  {
+    operationId: "unblockQuillsConversationIp",
+    method: "DELETE",
+    path: "/api/quills/{workspaceId}/conversations/{conversationId}/ip-block",
   },
   {
     operationId: "unblockQuillsUser",
@@ -3619,6 +3664,11 @@ export const quillsOperationRoutes = [
     operationId: "unsubscribeQuillsStatusByToken",
     method: "POST",
     path: "/api/quills-public/{workspace}/status/unsubscribe",
+  },
+  {
+    operationId: "unsubscribeQuillsWidgetChangelog",
+    method: "DELETE",
+    path: "/api/quills-public/{workspace}/widget/changelog/subscription",
   },
   {
     operationId: "unwatchQuillsMyTicket",

@@ -342,7 +342,15 @@ export async function mintWidgetSession(
   return { token };
 }
 
-/** The claims of an HS256 JWT signed with `secret`, or null. The token must carry exp. */
+/** The longest identify token lifetime, from iat (or from now without one). */
+export const IDENTITY_TOKEN_MAX_SECONDS = 3600;
+/** How far a host server's clock may run ahead when it sets iat. */
+const CLOCK_SKEW_SECONDS = 60;
+
+/**
+ * The claims of an HS256 JWT signed with `secret`, or null. The token must carry exp, at most an
+ * hour after iat (or after now without iat), and an iat that is not in the future.
+ */
 export function verifyIdentityToken(token: string, secret: string) {
   const [header, payload, signature, extra] = token.split(".");
   if (!header || !payload || !signature || extra !== undefined) return null;
@@ -359,11 +367,26 @@ export function verifyIdentityToken(token: string, secret: string) {
       Buffer.from(payload, "base64url").toString(),
     );
     if (!claims || typeof claims !== "object") return null;
-    const { exp, nbf } = claims as { exp?: unknown; nbf?: unknown };
+    const { exp, nbf, iat } = claims as {
+      exp?: unknown;
+      nbf?: unknown;
+      iat?: unknown;
+    };
     const now = Date.now() / 1000;
     // Stricter than the source: a token without exp would never expire.
     if (typeof exp !== "number" || now > exp) return null;
     if (typeof nbf === "number" && now < nbf) return null;
+    if (
+      iat !== undefined &&
+      (typeof iat !== "number" || iat > now + CLOCK_SKEW_SECONDS)
+    )
+      return null;
+    // A short lifetime limits what a leaked token can do.
+    if (
+      exp - (typeof iat === "number" ? iat : now) >
+      IDENTITY_TOKEN_MAX_SECONDS
+    )
+      return null;
     return claims as Record<string, unknown>;
   } catch {
     return null;

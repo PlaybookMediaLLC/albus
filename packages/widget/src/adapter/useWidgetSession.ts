@@ -8,6 +8,8 @@ export type IdentifyResult = {
   success: boolean;
   user: WidgetUser | null;
   error?: string;
+  /** Claims the API received but did not apply. */
+  warnings?: Array<{ code: string; field: string }>;
 };
 
 /** The API refused the token (invalid, expired, blocked, taken email). 429, 5xx and network errors are transient. */
@@ -44,10 +46,13 @@ export function useWidgetSession(
   const ssoToken = useRef<string | null>(null);
   const active = useRef(false);
   const starting = useRef(false);
+  /** The live anonymous session's token: identify sends it so that its activity follows the person. */
+  const anonymous = useRef<string | null>(null);
 
   const reset = () => {
     const mine = ++epoch.current;
     api.setToken(null);
+    anonymous.current = null;
     starting.current = false;
     setSession(null);
     setFailed(false);
@@ -58,6 +63,7 @@ export function useWidgetSession(
   const begin = (mine: number, token: string, signed = true) => {
     if (mine !== epoch.current) return;
     api.setToken(token);
+    anonymous.current = signed ? null : token;
     starting.current = false;
     setIdentified(signed);
     setSession(++counter.current);
@@ -112,6 +118,7 @@ export function useWidgetSession(
       void establish();
     },
     async identify(identity: Identity): Promise<IdentifyResult> {
+      const previous = anonymous.current;
       const mine = reset();
       const signed =
         identity &&
@@ -126,16 +133,26 @@ export function useWidgetSession(
         // Blocks an anonymous start from the panel while the signed identify runs.
         starting.current = true;
         try {
-          const { token, user } = await api.identify(signed);
+          const { token, user, warnings } = await api.identify(
+            signed,
+            undefined,
+            previous ?? undefined,
+          );
           if (mine !== epoch.current)
             return { success: false, user: null, error: "Superseded" };
           begin(mine, token);
-          return { success: true, user: toUser(user) };
+          return {
+            success: true,
+            user: toUser(user),
+            ...(warnings.length ? { warnings } : {}),
+          };
         } catch (error) {
           if (mine === epoch.current) {
             if (refused(error)) ssoToken.current = null;
             starting.current = false;
-            if (active.current) void establish();
+            // A refused identify ends nothing: the visitor keeps the anonymous session and its activity.
+            if (previous && refused(error)) begin(mine, previous, false);
+            else if (active.current) void establish();
           }
           return {
             success: false,

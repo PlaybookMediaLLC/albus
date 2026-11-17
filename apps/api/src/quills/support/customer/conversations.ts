@@ -15,6 +15,8 @@ import { files } from "../../../database/quills/schema/files";
 import { defineQuillsRoute } from "../../framework/define-route";
 import { createDownload } from "../../framework/files";
 import { widgetMetadata } from "../../portal/feedback/posts";
+import { CUSTOMER_SOURCES } from "../../portal/feedback/attachments";
+import { attachmentIds, attachMessageFiles } from "../message-attachments";
 import {
   claimReceipt,
   conversationParams,
@@ -39,6 +41,8 @@ import {
   type MessageId,
   type PrincipalId,
 } from "./model";
+import { sendAwayReply } from "../away-reply";
+import { rememberSender } from "../ip-blocks";
 
 // The customer's own conversations, for the widget (`/widget/...`, widget session) and the portal
 // (`/support/...`, Kaneo session). Messages are plain text. Replies and notices reach the customer
@@ -57,6 +61,14 @@ const PAGE = 30;
 const messageMetadata = widgetMetadata.describe(
   "Context from the host page, such as pageUrl and browser, and keys that the host app set with the widget's metadata command. Stored with the message for the team; never returned to the visitor.",
 );
+/** What a receipt hashes: the text and the attached files, so a retry with other files is a conflict. */
+const receiptText = (body: {
+  content: string;
+  attachmentIds: readonly string[];
+}) =>
+  body.attachmentIds.length
+    ? `${body.content}\u0000${body.attachmentIds.join(",")}`
+    : body.content;
 const metadataOf = (body: object) =>
   (body as { metadata?: Record<string, string> }).metadata;
 
@@ -333,6 +345,8 @@ export function conversationRoutes(audience: Customer) {
     body: z.object({
       content: messageText,
       idempotencyKey,
+      /** The visitor's own uploads (POST /uploads, then /files), at most 10. */
+      attachmentIds,
       ...(widget && { metadata: messageMetadata }),
     }),
     response: sent,
@@ -345,7 +359,7 @@ export function conversationRoutes(audience: Customer) {
         entityId: result.conversation.id,
         payload: { messageId: result.message.id },
       },
-    handler: async ({ db, caller, body }) => {
+    handler: async ({ db, caller, body, request }) => {
       await requireSurface(db, audience, caller, "messenger");
       const me = caller.principalId!;
       const receipt = await claimReceipt(
@@ -353,7 +367,7 @@ export function conversationRoutes(audience: Customer) {
         me,
         "new",
         body.idempotencyKey,
-        body.content,
+        receiptText(body),
         {
           conversationId: createId("conversation"),
           messageId: createId("conversation_message"),
@@ -378,6 +392,15 @@ export function conversationRoutes(audience: Customer) {
           receipt.messageId,
           body.content,
           metadataOf(body),
+        );
+        await rememberSender(db, created!.id, request.ip);
+        await sendAwayReply(db, created!.id);
+        await attachMessageFiles(
+          db,
+          me,
+          receipt.messageId,
+          body.attachmentIds,
+          CUSTOMER_SOURCES,
         );
       }
       return loadSent(
@@ -408,6 +431,8 @@ export function conversationRoutes(audience: Customer) {
     body: z.object({
       content: messageText,
       idempotencyKey,
+      /** The visitor's own uploads (POST /uploads, then /files), at most 10. */
+      attachmentIds,
       ...(widget && { metadata: messageMetadata }),
     }),
     response: sent,
@@ -434,13 +459,13 @@ export function conversationRoutes(audience: Customer) {
         me,
         conversation.id,
         body.idempotencyKey,
-        body.content,
+        receiptText(body),
         {
           conversationId: conversation.id,
           messageId: createId("conversation_message"),
         },
       );
-      if (receipt.claimed)
+      if (receipt.claimed) {
         await insertVisitorMessage(
           db,
           me,
@@ -449,6 +474,15 @@ export function conversationRoutes(audience: Customer) {
           body.content,
           metadataOf(body),
         );
+        await sendAwayReply(db, conversation.id);
+        await attachMessageFiles(
+          db,
+          me,
+          receipt.messageId,
+          body.attachmentIds,
+          CUSTOMER_SOURCES,
+        );
+      }
       return loadSent(
         db,
         me,

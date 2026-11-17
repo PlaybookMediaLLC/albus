@@ -1,5 +1,6 @@
 import type { RefObject } from "react";
 import { Icon } from "./Icon.js";
+import { useT } from "./i18n/useT.js";
 
 export function SearchField({
   label,
@@ -12,6 +13,7 @@ export function SearchField({
   onChange: (value: string) => void;
   inputRef: RefObject<HTMLInputElement | null>;
 }) {
+  const t = useT();
   return (
     <div className="qb-search">
       <Icon name="search" />
@@ -27,7 +29,7 @@ export function SearchField({
         <button
           type="button"
           className="qb-search-clear"
-          aria-label="Clear search"
+          aria-label={t("Clear search")}
           onClick={() => {
             onChange("");
             inputRef.current?.focus();

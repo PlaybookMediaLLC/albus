@@ -1,18 +1,40 @@
+import { ContactEmailCard } from "./ContactEmailCard.js";
 import { Icon } from "./Icon.js";
-import type { Conversation } from "./types.js";
+import type { Conversation, ContactEmail, WidgetViewProps } from "./types.js";
+import { useT } from "./i18n/useT.js";
 
 export function MessagesView({
   conversations,
   onOpen,
   onCompose,
+  contactEmail,
+  onRequestContactEmail,
+  onConfirmContactEmail,
+  offline,
 }: {
   conversations: readonly Conversation[];
   onOpen: (id: string) => void;
   onCompose: () => void;
+  contactEmail?: ContactEmail;
+  onRequestContactEmail?: WidgetViewProps["onRequestContactEmail"];
+  onConfirmContactEmail?: WidgetViewProps["onConfirmContactEmail"];
+  offline?: boolean;
 }) {
+  const t = useT();
   return (
     <div className="qb-list-view">
-      <h1>Messages</h1>
+      <h1>{t("Messages")}</h1>
+      {contactEmail &&
+        conversations.length > 0 &&
+        onRequestContactEmail &&
+        onConfirmContactEmail && (
+          <ContactEmailCard
+            contact={contactEmail}
+            onRequest={onRequestContactEmail}
+            onConfirm={onConfirmContactEmail}
+            offline={offline}
+          />
+        )}
       {conversations.length ? (
         conversations.map((conversation) => (
           <button
@@ -33,7 +55,9 @@ export function MessagesView({
             {(conversation.unreadCount ?? 0) > 0 && (
               <span
                 className="qb-unread-count"
-                aria-label={`${conversation.unreadCount} unread replies`}
+                aria-label={t("{count} unread replies", {
+                  count: conversation.unreadCount ?? 0,
+                })}
               >
                 {conversation.unreadCount}
               </span>
@@ -55,11 +79,11 @@ export function MessagesView({
             ))}
           </div>
           <div className="qb-message-empty">
-            <h2>No conversations yet</h2>
+            <h2>{t("No conversations yet")}</h2>
             <p>
-              Send us a message and we’ll be happy to help.
+              {t("Send us a message and we’ll be happy to help.")}
               <br />
-              Your conversations will appear here.
+              {t("Your conversations will appear here.")}
             </p>
           </div>
         </>
@@ -67,7 +91,7 @@ export function MessagesView({
       <div className="qb-floating-action">
         <button type="button" className="qb-primary" onClick={onCompose}>
           <Icon name="pen" />
-          New conversation
+          {t("New conversation")}
         </button>
       </div>
     </div>

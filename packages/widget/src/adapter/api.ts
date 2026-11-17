@@ -27,7 +27,10 @@ export function createApi(base: string, fetchImpl: typeof fetch = fetch) {
     path: string,
     body?: unknown,
     signal?: AbortSignal,
+    /** A Bearer for this request only, in place of the session token. */
+    bearer?: string,
   ): Promise<T> {
+    const auth = bearer ?? token;
     let res: Response;
     try {
       res = await fetchImpl(`${base}${path}`, {
@@ -37,7 +40,7 @@ export function createApi(base: string, fetchImpl: typeof fetch = fetch) {
         credentials: "omit",
         headers: {
           ...(body !== undefined && { "content-type": "application/json" }),
-          ...(token && { authorization: `Bearer ${token}` }),
+          ...(auth && { authorization: `Bearer ${auth}` }),
         },
         body: body === undefined ? undefined : JSON.stringify(body),
       });
@@ -74,13 +77,31 @@ export function createApi(base: string, fetchImpl: typeof fetch = fetch) {
       );
       return result.sessionToken;
     },
-    /** The host app's backend signs ssoToken; the widget never holds the secret. */
-    async identify(ssoToken: string, signal?: AbortSignal) {
+    /**
+     * The host app's backend signs ssoToken; the widget never holds the secret. With the anonymous
+     * session's token as `previousToken` (and as the Bearer), its activity moves to the person.
+     */
+    async identify(
+      ssoToken: string,
+      signal?: AbortSignal,
+      previousToken?: string,
+    ) {
       const result = await request<{
         sessionToken: string;
         user: WidgetUserView;
-      }>("POST", "/widget/identify", { ssoToken }, signal);
-      return { token: result.sessionToken, user: result.user };
+        warnings?: Array<{ code: string; field: string }>;
+      }>(
+        "POST",
+        "/widget/identify",
+        { ssoToken, ...(previousToken && { previousToken }) },
+        signal,
+        previousToken,
+      );
+      return {
+        token: result.sessionToken,
+        user: result.user,
+        warnings: result.warnings ?? [],
+      };
     },
   };
 }

@@ -1,7 +1,21 @@
 import type { ReactNode } from "react";
+import { Avatar } from "./Avatar.js";
 import { Icon } from "./Icon.js";
 import { UpdateCard } from "./UpdateCard.js";
-import type { UpdateEntry, WidgetTab, Conversation } from "./types.js";
+import type {
+  UpdateEntry,
+  WidgetTab,
+  Conversation,
+  WidgetViewProps,
+} from "./types.js";
+import type { MessageKey } from "./i18n/messages/en.js";
+import { useT } from "./i18n/useT.js";
+
+const REPLY_TIME = {
+  minutes: "Usually replies in minutes.",
+  hours: "Usually replies in a few hours.",
+  day: "Usually replies within a day.",
+} as const satisfies Record<string, MessageKey>;
 
 export function HomeView({
   latest,
@@ -12,6 +26,9 @@ export function HomeView({
   conversations,
   openConversation,
   teamAvailability,
+  team,
+  replyTime,
+  greeting,
   survey,
 }: {
   latest?: UpdateEntry;
@@ -23,9 +40,13 @@ export function HomeView({
   conversations: readonly Conversation[];
   openConversation: (id: string) => void;
   teamAvailability?: string;
+  team?: WidgetViewProps["team"];
+  replyTime?: WidgetViewProps["replyTime"];
+  greeting?: WidgetViewProps["greeting"];
   /** A waiting survey, shown under the greeting. */
   survey?: ReactNode;
 }) {
+  const t = useT();
   const recent = has("messages")
     ? (conversations.find((item) => (item.unreadCount ?? 0) > 0) ??
       conversations[conversations.length - 1])
@@ -33,8 +54,12 @@ export function HomeView({
   return (
     <div className={`qb-home${recent ? " qb-home-returning" : ""}`}>
       <h1>
-        Hi there <span className="qb-wave">👋</span>
-        <span>How can we help?</span>
+        {greeting?.title ?? (
+          <>
+            {t("Hi there")} <span className="qb-wave">👋</span>
+          </>
+        )}
+        <span>{greeting?.subtitle ?? t("How can we help?")}</span>
       </h1>
       {survey}
       {recent && (
@@ -47,8 +72,8 @@ export function HomeView({
           <span>
             <strong>
               {(recent.unreadCount ?? 0) > 0
-                ? "You have a new reply"
-                : "Continue your conversation"}
+                ? t("You have a new reply")
+                : t("Continue your conversation")}
             </strong>
             <small>{recent.title}</small>
           </span>
@@ -57,17 +82,39 @@ export function HomeView({
       )}
       {has("messages") && (
         <div className="qb-contact-card">
-          <span className="qb-avatar qb-team-avatar">
-            <Icon name="messages" />
+          <span className="qb-team">
+            {team?.avatars.length ? (
+              <span className="qb-team-avatars">
+                {team.avatars.map((person) => (
+                  <Avatar key={person.name} {...person} />
+                ))}
+              </span>
+            ) : (
+              <span className="qb-avatar qb-team-avatar">
+                <Icon name="messages" />
+              </span>
+            )}
+            {team?.online && (
+              <span className="qb-online-dot" aria-hidden="true" />
+            )}
           </span>
-          <h2>Send us a message</h2>
-          <p>{teamAvailability ?? "Ask a question or share what you need."}</p>
+          <h2>{t("Send us a message")}</h2>
+          <p>
+            {teamAvailability ??
+              ([
+                team?.online ? t("We’re online now.") : "",
+                replyTime ? t(REPLY_TIME[replyTime]) : "",
+              ]
+                .filter(Boolean)
+                .join(" ") ||
+                t("Ask a question or share what you need."))}
+          </p>
           <button
             type="button"
             className="qb-message-prompt"
             onClick={() => compose("message")}
           >
-            <span>Write a message…</span>
+            <span>{t("Write a message…")}</span>
             <span className="qb-send-icon">
               <Icon name="arrow" />
             </span>
@@ -81,7 +128,7 @@ export function HomeView({
           onClick={() => navigate("help")}
         >
           <Icon name="support" weight="fill" />
-          <span>Search for help</span>
+          <span>{t("Search for help")}</span>
           <Icon name="chevron" />
         </button>
       )}
@@ -92,7 +139,7 @@ export function HomeView({
           onClick={() => compose("feedback")}
         >
           <Icon name="inbox" weight="fill" />
-          <span>Submit a request</span>
+          <span>{t("Submit a request")}</span>
           <Icon name="chevron" />
         </button>
       )}
@@ -101,10 +148,10 @@ export function HomeView({
           <div className="qb-section-label">
             <span>
               <Icon name="updates" />
-              {latest.unread ? "New update" : "Latest update"}
+              {latest.unread ? t("New update") : t("Latest update")}
             </span>
             <button type="button" onClick={() => navigate("updates")}>
-              See all <Icon name="chevron" />
+              {t("See all")} <Icon name="chevron" />
             </button>
           </div>
           <UpdateCard entry={latest} onOpen={() => openUpdate(latest.id)} />

@@ -53,7 +53,14 @@ type Thread = { conversation: ApiConversation; messages: ApiMessage[] };
 
 // ponytail: one page per list (50 posts and updates, 100 articles, 20 conversations with
 // their latest 30 messages, 100 comments). The view has no "load more" control yet.
-const LIMITS = { posts: 50, updates: 50, articles: 100, conversations: 20 };
+const LIMITS = {
+  posts: 50,
+  updates: 50,
+  articles: 100,
+  conversations: 20,
+  roadmap: 20,
+};
+const ROADMAP_STAGES = ["in_progress", "planned", "shipped"] as const;
 
 const query = (values: Record<string, string | number | undefined>) => {
   const params = new URLSearchParams();
@@ -123,13 +130,23 @@ export async function loadSnapshot(
   const { surfaces, locale, boardId } = options;
   const [feedback, updates, articles, conversations] = await Promise.all([
     surface(surfaces.feedback, async () => {
-      const { items } = await api.request<{ items: ApiPost[] }>(
-        "GET",
-        `/widget/posts${query({ limit: LIMITS.posts, boardId })}`,
-        undefined,
-        signal,
-      );
-      return items.flatMap((item) => toPost(item) ?? []);
+      const list = (path: string) =>
+        api.request<{ items: ApiPost[] }>("GET", path, undefined, signal);
+      // The Roadmap reads each stage on its own, so it is not limited to the newest posts. A failed
+      // stage read only shortens the Roadmap.
+      const [main, ...stages] = await Promise.all([
+        list(`/widget/posts${query({ limit: LIMITS.posts, boardId })}`),
+        ...ROADMAP_STAGES.map((stage) =>
+          list(
+            `/widget/posts${query({ limit: LIMITS.roadmap, boardId, stage, sort: "votes" })}`,
+          ).catch(() => ({ items: [] as ApiPost[] })),
+        ),
+      ]);
+      const seen = new Set<string>();
+      return [main, ...stages]
+        .flatMap(({ items }) => items)
+        .filter((item) => !seen.has(item.id) && Boolean(seen.add(item.id)))
+        .flatMap((item) => toPost(item) ?? []);
     }),
     surface(surfaces.changelog, async () => {
       const { entries } = await api.request<{ entries: ApiChangelogEntry[] }>(
@@ -182,6 +199,27 @@ export async function loadPost(api: Api, id: string, signal?: AbortSignal) {
     ),
   ]);
   return toPost(post, comments.items.map(toComment));
+}
+
+/** Up to three requests anywhere on the visible boards with a title like the text. */
+export async function findSimilar(
+  api: Api,
+  text: string,
+  signal?: AbortSignal,
+) {
+  const { items } = await api.request<{
+    items: Array<{ id: string; title: string; voteCount?: number }>;
+  }>(
+    "GET",
+    `/widget/posts/similar${query({ title: text, limit: 3 })}`,
+    undefined,
+    signal,
+  );
+  return items.map((item) => ({
+    id: item.id,
+    title: item.title,
+    ...(item.voteCount !== undefined && { votes: item.voteCount }),
+  }));
 }
 
 /** One changelog entry: a deep link can point past the first page. */

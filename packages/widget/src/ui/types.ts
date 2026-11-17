@@ -41,6 +41,14 @@ export type ArticleBlock =
   | { type: "paragraph" | "heading" | "code"; text: string }
   | { type: "list"; items: readonly string[]; ordered?: boolean };
 
+/** A request like the visitor's draft, from anywhere on the board. */
+export interface SimilarRequest {
+  id: string;
+  title: string;
+  votes?: number;
+  voted?: boolean;
+}
+
 export interface FeedbackPost {
   id: string;
   title: string;
@@ -71,6 +79,12 @@ export interface HelpArticle {
   helpful?: boolean;
 }
 
+/** An anonymous visitor's contact address and a change that waits for its code. */
+export interface ContactEmail {
+  email: string | null;
+  pendingEmail: string | null;
+}
+
 export interface RequestActivity {
   id: string;
   postId: string;
@@ -86,6 +100,8 @@ export interface UpdateEntry {
   title: string;
   body: string;
   date: string;
+  /** ISO time; with it the view shows the date in the widget's language instead of `date`. */
+  publishedAt?: string;
   author: string;
   authorRole?: string;
   avatarUrl?: string;
@@ -138,6 +154,8 @@ export interface SurveyAnswer {
 export interface WidgetViewProps {
   brandName?: string;
   theme?: "light" | "dark" | "auto";
+  /** A BCP-47 tag for the widget's language; unsupported tags show English. */
+  locale?: string;
   initialTab?: WidgetTab;
   /** The tabs that the workspace turned on; omit for all. A route to another tab shows the first of these. */
   tabs?: readonly WidgetTab[];
@@ -146,6 +164,12 @@ export interface WidgetViewProps {
   updates?: readonly UpdateEntry[];
   conversations?: readonly Conversation[];
   activities?: readonly RequestActivity[];
+  /** Anonymous visitors only: the "Get replies by email" card in Messages. */
+  contactEmail?: ContactEmail;
+  /** Mails a code to the address; resolves after the API accepts it. */
+  onRequestContactEmail?: (email: string) => Promise<unknown>;
+  /** Sets the address with its code; rejects on a wrong code. */
+  onConfirmContactEmail?: (email: string, code: string) => Promise<unknown>;
   onReadActivity?: (id: string) => Promise<unknown>;
   onArticleFeedback?: (articleId: string, helpful: boolean) => Promise<unknown>;
   /** The host owns loading and connectivity; offline disables mutations, not reading. */
@@ -154,6 +178,12 @@ export interface WidgetViewProps {
   onRetryLoad?: () => Promise<unknown>;
   /** Display only availability verified by the host; omit when unknown. */
   teamAvailability?: string;
+  /** The team's live availability and up to four teammate avatars, from the API. */
+  team?: { online: boolean; avatars: readonly WidgetPerson[] };
+  /** How soon the team usually replies, as a teammate set it. */
+  replyTime?: "minutes" | "hours" | "day";
+  /** Home's greeting and subtitle from the workspace; null keeps the default. */
+  greeting?: { title: string | null; subtitle: string | null };
   teamMember?: WidgetPerson;
   /** The host resizes its container or sends the existing quackback:expand message. */
   onExpandedChange?: (expanded: boolean) => void;
@@ -164,6 +194,14 @@ export interface WidgetViewProps {
     tab: WidgetTab;
     detail?: string;
     composer?: "message" | "feedback";
+    /** Text for an empty composer; a draft the visitor already typed stays. */
+    draft?: string;
+    /** Help search text. */
+    query?: string;
+    /** A help category to show, by name. */
+    category?: string;
+    /** The activity page. */
+    activity?: boolean;
   };
   /**
    * Opt in only when submission callbacks process SubmissionOptions.attachments. "feedback" turns
@@ -193,7 +231,16 @@ export interface WidgetViewProps {
   /** Resolves with a short-lived download URL of a file in a conversation. */
   onOpenFile?: (conversationId: string, fileId: string) => Promise<string>;
   onReadUpdate?: (entryId: string) => Promise<unknown>;
+  /** Whether the identified visitor hears about new updates; with it, the Updates tab offers a toggle. */
+  updatesSubscribed?: boolean;
+  /** Resolve only after the API saved the choice. */
+  onSubscribeUpdates?: (subscribed: boolean) => Promise<unknown>;
   onVoteFeedback?: (postId: string, voted: boolean) => Promise<unknown>;
+  /** Requests on the whole board with a title like the text; the loaded posts are used without it. */
+  onFindSimilar?: (
+    text: string,
+    signal: AbortSignal,
+  ) => Promise<readonly SimilarRequest[]>;
   onFollowFeedback?: (postId: string, following: boolean) => Promise<unknown>;
   onClose: () => void;
   /** Resolve only after the action succeeds. Rejections keep the draft and show an error. */

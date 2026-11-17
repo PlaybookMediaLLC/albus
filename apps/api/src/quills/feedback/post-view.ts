@@ -20,6 +20,9 @@ export const postSchema = z.object({
   commentCount: z.number(),
   pinnedCommentId: z.string().nullable(),
   isCommentsLocked: z.boolean(),
+  isHidden: z.boolean().openapi({
+    description: "Hidden from the board: only the author and the team see it",
+  }),
   moderationState: z.string(),
   canonicalPostId: z.string().nullable(),
   eta: nullableResponseTimestamp,
@@ -71,6 +74,7 @@ const fields = {
   commentCount: posts.commentCount,
   pinnedCommentId: posts.pinnedCommentId,
   isCommentsLocked: posts.isCommentsLocked,
+  isHidden: posts.isHidden,
   moderationState: posts.moderationState,
   canonicalPostId: posts.canonicalPostId,
   eta: posts.eta,

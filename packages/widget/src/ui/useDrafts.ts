@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { SubmissionOptions } from "./types.js";
+import { useT } from "./i18n/useT.js";
 
 export interface Draft {
   body: string;
@@ -17,6 +18,7 @@ export const emptyDraft: Draft = {
 
 /** Session-owned drafts survive view changes; the host remounts on identity changes. */
 export function useDrafts() {
+  const t = useT();
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const current = useRef(drafts);
   const generation = useRef(0);
@@ -82,8 +84,9 @@ export function useDrafts() {
             ...draft,
             requestId,
             pending: false,
-            error:
+            error: t(
               "Could not send. Your draft is still here. Please try again.",
+            ),
           });
       }
     },

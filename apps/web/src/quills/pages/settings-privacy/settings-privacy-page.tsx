@@ -90,6 +90,25 @@ export function SettingsPrivacyPage({ workspaceId }: SettingsPrivacyPageProps) {
                   }}
                 />
               </SettingsRow>
+              {(["holdSpam", "holdSensitive"] as const).map((key) => (
+                <SettingSwitchRow
+                  key={key}
+                  title={t(`settings-product.privacy.${key}`)}
+                  description={t(`settings-product.privacy.${key}Text`)}
+                  checked={data?.moderationDefault[key] ?? false}
+                  disabled={locked}
+                  onCheckedChange={async (value) => {
+                    await moderation.mutateAsync({
+                      param,
+                      json: {
+                        requireApproval: (data?.moderationDefault
+                          .requireApproval ?? "none") as Approval,
+                        [key]: value,
+                      },
+                    });
+                  }}
+                />
+              ))}
             </SettingsCard>
           </SettingsSection>
           <SettingsSection title={t("settings-product.privacy.access")}>

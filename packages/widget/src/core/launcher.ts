@@ -1,8 +1,11 @@
 import { ensureStyles } from "./style.js";
 import { CHAT_CIRCLE, X } from "../icons/phosphor.js";
+import { launcherCopy } from "./launcher-copy.js";
 
 export interface LauncherOptions {
   placement: "left" | "right";
+  /** Pixels from the bottom and the side edge; 20 by default. */
+  offset?: { bottom?: number; side?: number };
   onClick: () => void;
   /**
    * Mount the button (and greeting) inside this element with absolute
@@ -10,6 +13,8 @@ export interface LauncherOptions {
    * the fake page instead of `position: fixed` on the viewport.
    */
   root?: HTMLElement;
+  /** The language of the launcher's accessible names; the browser language when unset. */
+  locale?: string;
 }
 
 export interface LauncherHandle {
@@ -28,11 +33,15 @@ export interface LauncherHandle {
    *  only while closed and not dismissed this browser session; clicking it opens
    *  the widget. Driven by the server config. */
   setGreeting(text: string | null | undefined): void;
+  /** A one-off bubble (a new update) over the greeting; null removes it. Dismissal lasts this page. */
+  announce(text: string | null, onClick?: () => void): void;
   /** Text label beside the icon — turns the circular button into a pill.
    *  Empty/unset restores the icon-only circle. Driven by the server config. */
   setLabel(text: string | null | undefined): void;
   /** Move the button (and its greeting bubble) between bottom corners. */
   setPlacement(side: "left" | "right"): void;
+  /** Change the language of the launcher's accessible names. */
+  setLocale(locale: string | undefined): void;
   /** Fade the button in. Called after initial colors are set to avoid a color flash. */
   reveal(): void;
   remove(): void;
@@ -61,9 +70,11 @@ export function createLauncher(opts: LauncherOptions): LauncherHandle {
   // the bubble invites once without nagging on every page. A contained preview
   // must not write that key — it would hide the bubble for a later host visit.
   let greetingText: string | null = null;
+  let announcement: { text: string; onClick: () => void } | null = null;
   let localDismissed = false;
   const contained = Boolean(opts.root);
-  const edge = contained ? "0px" : "20px";
+  const edge = contained ? "0px" : `${opts.offset?.side ?? 20}px`;
+  const bottom = contained ? 0 : (opts.offset?.bottom ?? 20);
   const GREETING_DISMISS_KEY = "quackback:launcher-greeting-dismissed";
   const greetingDismissed = (): boolean => {
     if (contained) return localDismissed;
@@ -80,7 +91,7 @@ export function createLauncher(opts: LauncherOptions): LauncherHandle {
   btn.inert = true;
   Object.assign(btn.style, {
     position: contained ? "absolute" : "fixed",
-    bottom: contained ? "0px" : "20px",
+    bottom: `${bottom}px`,
     [opts.placement === "left" ? "left" : "right"]: edge,
     zIndex: "2147483647",
     display: "flex",
@@ -104,7 +115,8 @@ export function createLauncher(opts: LauncherOptions): LauncherHandle {
     transition:
       "opacity 450ms ease, background-color 200ms cubic-bezier(0.32,0.72,0,1), transform 150ms ease-out",
   });
-  btn.setAttribute("aria-label", "Open feedback widget");
+  let copy = launcherCopy(opts.locale ?? navigator.language);
+  btn.setAttribute("aria-label", copy.open);
   btn.setAttribute("aria-expanded", "false");
 
   const wrapper = document.createElement("div");
@@ -169,7 +181,7 @@ export function createLauncher(opts: LauncherOptions): LauncherHandle {
   const bubble = document.createElement("div");
   Object.assign(bubble.style, {
     position: contained ? "absolute" : "fixed",
-    bottom: "84px",
+    bottom: `${bottom + 64}px`,
     [side]: edge,
     zIndex: "2147483646",
     display: "none",
@@ -198,10 +210,14 @@ export function createLauncher(opts: LauncherOptions): LauncherHandle {
     textAlign: "start",
     padding: "0",
   });
-  bubbleText.addEventListener("click", opts.onClick, listen);
+  bubbleText.addEventListener(
+    "click",
+    () => (announcement ? announcement.onClick() : opts.onClick()),
+    listen,
+  );
   const bubbleClose = document.createElement("button");
   bubbleClose.type = "button";
-  bubbleClose.setAttribute("aria-label", "Dismiss");
+  bubbleClose.setAttribute("aria-label", copy.dismiss);
   bubbleClose.innerHTML = `<svg aria-hidden="true" width="12" height="12" viewBox="0 0 256 256" fill="currentColor"><path d="${X}"/></svg>`;
   Object.assign(bubbleClose.style, {
     flexShrink: "0",
@@ -217,12 +233,18 @@ export function createLauncher(opts: LauncherOptions): LauncherHandle {
     cursor: "pointer",
   });
   const renderGreeting = () => {
-    const show = !!greetingText && !isOpen && !greetingDismissed();
+    bubbleText.textContent = announcement?.text ?? greetingText ?? "";
+    const show =
+      !isOpen && (!!announcement || (!!greetingText && !greetingDismissed()));
     bubble.style.display = show ? "flex" : "none";
   };
   bubbleClose.addEventListener(
     "click",
     () => {
+      if (announcement) {
+        announcement = null;
+        return renderGreeting();
+      }
       if (contained) {
         localDismissed = true;
       } else {
@@ -255,7 +277,7 @@ export function createLauncher(opts: LauncherOptions): LauncherHandle {
       btn.setAttribute("aria-expanded", open ? "true" : "false");
       btn.setAttribute(
         "aria-label",
-        open ? "Close feedback widget" : labelText || "Open feedback widget",
+        open ? copy.close : labelText || copy.open,
       );
       renderBadge();
       renderGreeting();
@@ -278,7 +300,10 @@ export function createLauncher(opts: LauncherOptions): LauncherHandle {
       const next = text?.trim() || null;
       if (contained && next !== greetingText) localDismissed = false;
       greetingText = next;
-      bubbleText.textContent = greetingText ?? "";
+      renderGreeting();
+    },
+    announce(text, onClick) {
+      announcement = text && onClick ? { text, onClick } : null;
       renderGreeting();
     },
     setLabel(text) {
@@ -291,8 +316,15 @@ export function createLauncher(opts: LauncherOptions): LauncherHandle {
       btn.style.borderRadius = show ? "20px" : "50%";
       btn.style.padding = show ? "0 16px 0 10px" : "0";
       btn.style.gap = show ? "8px" : "0";
-      if (!isOpen)
-        btn.setAttribute("aria-label", labelText || "Open feedback widget");
+      if (!isOpen) btn.setAttribute("aria-label", labelText || copy.open);
+    },
+    setLocale(locale) {
+      copy = launcherCopy(locale ?? navigator.language);
+      bubbleClose.setAttribute("aria-label", copy.dismiss);
+      btn.setAttribute(
+        "aria-label",
+        isOpen ? copy.close : labelText || copy.open,
+      );
     },
     setPlacement(side) {
       btn.style.left = side === "left" ? edge : "";

@@ -3,6 +3,7 @@ import { settings } from "../../database/quills/schema/auth";
 import { widgetEnabled } from "../framework/audience";
 import { defineQuillsRoute } from "../framework/define-route";
 import { bool, parseJson, record, str } from "../settings/area";
+import { REPLY_TIMES, replyTimeOf } from "../settings/widget-reply-time";
 import { widgetTabs } from "../settings/widget-tabs";
 
 // Public boot reads for the widget: its server config, the realtime transport and the locale.
@@ -39,6 +40,15 @@ const widgetConfig = defineQuillsRoute({
         visitorDeviceTracking: z.boolean(),
         launcherGreeting: z.string(),
         launcherLabel: z.string(),
+        replyTime: z.enum(REPLY_TIMES).nullable().openapi({
+          description:
+            "How soon the team usually replies; null shows no reply-time line",
+        }),
+        home: z.object({
+          greeting: z.string().nullable(),
+          subtitle: z.string().nullable(),
+          showTeamAvatars: z.boolean(),
+        }),
         position: z.enum(["left", "right"]),
         theme: z.object({
           themeMode: z.enum(["light", "dark", "user"]),
@@ -74,6 +84,12 @@ const widgetConfig = defineQuillsRoute({
         visitorDeviceTracking: bool(stored.visitorDeviceTracking, true),
         launcherGreeting: str(stored.launcherGreeting) ?? "",
         launcherLabel: str(stored.launcherLabel) ?? "",
+        replyTime: replyTimeOf(stored.replyTime),
+        home: {
+          greeting: str(record(stored.home).greeting) ?? null,
+          subtitle: str(record(stored.home).subtitle) ?? null,
+          showTeamAvatars: bool(record(stored.home).showTeamAvatars, true),
+        },
         position:
           stored.position === "bottom-left"
             ? ("left" as const)

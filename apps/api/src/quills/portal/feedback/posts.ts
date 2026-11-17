@@ -61,6 +61,7 @@ import {
   type Customer,
   type Viewer,
 } from "./viewer";
+import { postSearch } from "../../feedback/post-search";
 
 // Customer post routes. Each shared factory is declared twice, with audience: "portal" here and
 // with audience: "widget" in ../../widget/feedback. Writes keep the teammate invariants: the
@@ -370,9 +371,7 @@ export const listPosts = (audience: Customer) =>
           isNull(posts.canonicalPostId),
           query.boardId && eq(posts.boardId, query.boardId),
           query.stage && stageWhere(query.stage),
-          query.search
-            ? sql`${posts.searchVector} @@ websearch_to_tsquery('english', ${query.search})`
-            : undefined,
+          query.search ? postSearch(query.search) : undefined,
           query.cursor && afterCursor(query.cursor, sort),
         ),
       )
@@ -548,7 +547,7 @@ export const createPost = (audience: Customer) =>
     operationId: `createQuills${title(audience)}Post`,
     summary: "Submit a feedback post",
     description:
-      "Without boardId, the first board (by name) that accepts the caller's submissions. Without title, the first line of content. The author's vote and subscription are added. A held post waits for review and is visible only to its author. idempotencyKey returns the first post for a repeated request; another payload under the same key is 409.",
+      "Without boardId, the first board (by name) that accepts the caller's submissions. Without title, the first line of content; with AI configured and neither title nor boardId sent, a job then writes a short title and may move the post to a board with the same access rules. The author's vote and subscription are added. A held post waits for review and is visible only to its author. idempotencyKey returns the first post for a repeated request; another payload under the same key is 409.",
     action: "create",
     rateLimit: { limit: 20, windowSeconds: 600 },
     body: z
@@ -566,12 +565,16 @@ export const createPost = (audience: Customer) =>
     response: postItem.extend({ replayed: z.boolean() }),
     responseDescription: "The created post",
     errors: writeErrors,
-    event: (_input, result) =>
+    event: (input, result) =>
       !result.replayed && {
         type: "post.created",
         entityType: "post",
         entityId: result.id,
-        payload: { boardId: result.board.id },
+        payload: {
+          boardId: result.board.id,
+          // One sentence and no board: the AI job may write a title and pick a like board.
+          ...(!input.body.title && !input.body.boardId && { untitled: "true" }),
+        },
       },
     handler: async ({ db, caller, body }) => {
       const viewer = await viewerFor(db, audience, caller);

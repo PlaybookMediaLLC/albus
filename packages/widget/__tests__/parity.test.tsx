@@ -94,6 +94,46 @@ it("retains roadmap expansion through request navigation", () => {
   expect(screen.getByRole("button", { name: /Idea 3/ })).toBeDefined();
 });
 
+it("votes from the roadmap list and marks a shipped request the visitor voted for", async () => {
+  const vote = vi.fn().mockResolvedValue(undefined);
+  render(
+    <WidgetView
+      onClose={vi.fn()}
+      initialTab="feedback"
+      feedback={[
+        {
+          ...post,
+          id: "a",
+          title: "Planned idea",
+          status: "planned",
+          votes: 3,
+          voted: false,
+        },
+        {
+          ...post,
+          id: "b",
+          title: "Shipped idea",
+          status: "shipped",
+          votes: 9,
+          voted: true,
+        },
+      ]}
+      onVoteFeedback={vote}
+    />,
+  );
+  fireEvent.change(screen.getByRole("combobox"), {
+    target: { value: "roadmap" },
+  });
+  fireEvent.click(
+    screen.getByRole("button", { name: "Vote for Planned idea · 3" }),
+  );
+  await waitFor(() => expect(vote).toHaveBeenCalledWith("a", true));
+  expect(screen.getByText("For you")).toBeDefined();
+  expect(
+    screen.queryByRole("button", { name: /Vote for Shipped idea/ }),
+  ).toBeNull();
+});
+
 it("keeps comment and reply drafts separate and retries with the same operation key", async () => {
   const comment = vi
     .fn()

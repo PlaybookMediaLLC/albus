@@ -71,6 +71,8 @@ export default settingsArea({
       requireApproval: z.string(),
       holdImages: z.boolean(),
       holdLinks: z.boolean(),
+      holdSpam: z.boolean(),
+      holdSensitive: z.boolean(),
     }),
     access: z.object({
       visibility: z.string(),
@@ -107,6 +109,8 @@ export default settingsArea({
         requireApproval: str(moderation.requireApproval) ?? "none",
         holdImages: bool(moderation.holdImages, false),
         holdLinks: bool(moderation.holdLinks, false),
+        holdSpam: bool(moderation.holdSpam, false),
+        holdSensitive: bool(moderation.holdSensitive, false),
       },
       access: {
         visibility: access.visibility === "private" ? "private" : "public",

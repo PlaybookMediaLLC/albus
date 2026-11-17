@@ -10,7 +10,6 @@ import {
   lt,
   max,
   min,
-  sql,
   type SQL,
 } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
@@ -29,6 +28,7 @@ import { bucketsBetween, parseBucket } from "./roadmap-buckets";
 import { roadmapById, roadmapParams, type Db } from "./roadmaps";
 import { pageQuery } from "./schemas";
 import { loadProjects, visiblePost } from "./visibility";
+import { postSearch } from "./post-search";
 
 type Roadmap = Awaited<ReturnType<typeof roadmapById>>;
 
@@ -139,10 +139,7 @@ const listRoadmapPosts = defineQuillsRoute({
             )!,
       );
     }
-    if (query.search)
-      conditions.push(
-        sql`${posts.searchVector} @@ websearch_to_tsquery('english', ${query.search})`,
-      );
+    if (query.search) conditions.push(postSearch(query.search));
     const where = and(...conditions);
     const rows = await db
       .select({

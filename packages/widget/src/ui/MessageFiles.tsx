@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useT } from "./i18n/useT.js";
 
 /**
  * The files a teammate sent with a message. A click opens a tab while the click still counts (a
@@ -12,6 +13,7 @@ export function MessageFiles({
   files?: ReadonlyArray<{ id: string; name: string }>;
   onOpen?: (fileId: string) => Promise<string>;
 }) {
+  const t = useT();
   // The file that could not open, and whether the browser blocked its tab.
   const [failed, setFailed] = useState<{ id: string; blocked: boolean } | null>(
     null,
@@ -45,9 +47,10 @@ export function MessageFiles({
           )}
           {failed?.id === file.id && (
             <span role="alert">
+              {" "}
               {failed.blocked
-                ? " Could not open the file. Allow pop-ups for this page."
-                : " Could not open the file. Try again."}
+                ? t("Could not open the file. Allow pop-ups for this page.")
+                : t("Could not open the file. Try again.")}
             </span>
           )}
         </li>

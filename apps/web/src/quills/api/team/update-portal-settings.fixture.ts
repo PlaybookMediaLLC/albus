@@ -15,6 +15,8 @@ export const updatePortalSettingsFixture = {
           requireApproval: "value",
           holdImages: false,
           holdLinks: false,
+          holdSpam: false,
+          holdSensitive: false,
         },
         access: {
           visibility: "value",

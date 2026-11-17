@@ -43,7 +43,7 @@ it("adds boxes, arrows, blurs and redactions from the keyboard, and undoes them"
   const tools = screen.getByRole("group", { name: "Tool" });
   expect(
     Array.from(tools.querySelectorAll("[aria-pressed]"), (b) => b.textContent),
-  ).toEqual(["Box", "Arrow", "Blur", "Redact"]);
+  ).toEqual(["Box", "Arrow", "Pen", "Text", "Blur", "Redact"]);
   fireEvent.click(screen.getByRole("button", { name: "Arrow" }));
   expect(
     screen.getByRole("button", { name: "Arrow" }).getAttribute("aria-pressed"),
@@ -64,4 +64,54 @@ it("adds boxes, arrows, blurs and redactions from the keyboard, and undoes them"
   expect(screen.getByLabelText<HTMLInputElement>("Mark to x").value).toBe("70");
   fireEvent.click(screen.getByRole("button", { name: "Undo" }));
   expect(screen.queryByLabelText("Mark to x")).toBeNull();
+});
+
+it("adds a pen line and text in the chosen color from the keyboard", async () => {
+  vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:shot");
+  vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+  vi.stubGlobal(
+    "Image",
+    class {
+      naturalWidth = 800;
+      naturalHeight = 600;
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      set src(_value: string) {
+        queueMicrotask(() => this.onload?.());
+      }
+    },
+  );
+  render(
+    <ImageAnnotation
+      file={new File(["png"], "shot.png", { type: "image/png" })}
+      onSave={vi.fn()}
+      onCancel={vi.fn()}
+    />,
+  );
+  const color = screen.getByLabelText<HTMLInputElement>("Color");
+  expect(color.value).toBe("#e53935");
+  fireEvent.change(color, { target: { value: "#1e88e5" } });
+  fireEvent.click(screen.getByRole("button", { name: "Text" }));
+  const add = await screen.findByRole("button", { name: "Add text" });
+  await vi.waitFor(() =>
+    expect((add as HTMLButtonElement).disabled).toBe(false),
+  );
+  fireEvent.click(add);
+  fireEvent.change(screen.getByLabelText("Mark text"), {
+    target: { value: "Broken here" },
+  });
+  expect(screen.getByLabelText<HTMLInputElement>("Mark text").value).toBe(
+    "Broken here",
+  );
+  // Text has a place, not an end point.
+  expect(screen.getByLabelText("Mark from x")).toBeTruthy();
+  expect(screen.queryByLabelText("Mark to x")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Pen" }));
+  fireEvent.click(screen.getByRole("button", { name: "Add pen" }));
+  // A pen line has no position fields.
+  expect(screen.queryByLabelText("Mark from x")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+  expect(screen.getByLabelText<HTMLInputElement>("Mark text").value).toBe(
+    "Broken here",
+  );
 });

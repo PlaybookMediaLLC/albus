@@ -1016,7 +1016,8 @@ export type ConversationSystemEventKind =
   | "external_status_changed"
   | "priority_changed"
   | "snoozed"
-  | "csat_submitted";
+  | "csat_submitted"
+  | "away_reply";
 
 export interface ConversationSystemEvent {
   kind: ConversationSystemEventKind;

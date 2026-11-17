@@ -1,6 +1,6 @@
 # RFC 0005: Followed-request activity and article feedback
 
-Status: **Proposed — backend not implemented**. Depends on the authenticated visitor adapter in RFC 0001, transactional writes/events in RFC 0002, and content visibility/follows in RFC 0003. The Storybook service is an in-memory mock; it is not an authorization boundary.
+Status: **Activity and article feedback implemented** (`GET /widget/activity`, `PUT /widget/activity/{id}/read`, `PUT /widget/help/articles/{id}/feedback`); conversation article context is still proposed. Depends on the authenticated visitor adapter in RFC 0001, transactional writes/events in RFC 0002, and content visibility/follows in RFC 0003. The Storybook service is an in-memory mock; it is not an authorization boundary.
 
 ## Frontend contract
 

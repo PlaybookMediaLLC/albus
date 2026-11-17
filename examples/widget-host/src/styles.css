@@ -1,0 +1,44 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+  line-height: 1.4;
+}
+body {
+  margin: 0;
+  background: Canvas;
+  color: CanvasText;
+}
+/* A left column: the open widget panel sits on the right and must not cover the controls. */
+main {
+  max-width: 720px;
+  padding: 16px;
+}
+fieldset {
+  margin: 0 0 12px;
+  border: 1px solid color-mix(in srgb, CanvasText 25%, transparent);
+  border-radius: 6px;
+}
+.controls div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin: 4px 0;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+.hint {
+  opacity: 0.75;
+}
+.log {
+  max-height: 360px;
+  overflow: auto;
+  padding-left: 20px;
+  font-size: 13px;
+}
+.log code {
+  word-break: break-all;
+}

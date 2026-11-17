@@ -477,7 +477,18 @@ describe.skipIf(!url)("Quills portal and widget uploads", () => {
       const teammate = await app.request(`/quills/${env.a}/posts/${postId}`, {
         headers: { "x-test-user": env.owner },
       });
-      expect((await teammate.json()).widgetMetadata).toEqual(metadata);
+      const teammatePost = await teammate.json();
+      expect(teammatePost.widgetMetadata).toEqual(metadata);
+      // Teammates see the screenshot and can open it.
+      expect(teammatePost.attachments).toEqual([
+        expect.objectContaining({ id: fileId, name: "screenshot.png" }),
+      ]);
+      const teammateFile = await app.request(
+        `/quills/${env.a}/files/${fileId}`,
+        { headers: { "x-test-user": env.owner } },
+      );
+      expect(teammateFile.status).toBe(200);
+      expect((await teammateFile.json()).downloadUrl).toMatch(/^http/);
 
       // An unattached widget upload is removed by retention after a day.
       const draft = await screenshot(visitor.token);
@@ -500,6 +511,70 @@ describe.skipIf(!url)("Quills portal and widget uploads", () => {
             .where(eq(files.id, fileId as never)),
         ).toEqual([{ postId }]);
       });
+    } finally {
+      await setWidget({ enabled: true });
+    }
+  });
+  it("attaches a visitor's own image to a widget message, once, and lets only that visitor read it", async () => {
+    const env = contractEnv();
+    const visitor = await env.widgetVisitor(env.a);
+    const other = await env.widgetVisitor(env.a);
+    await setWidget({
+      enabled: true,
+      tabs: { feedback: true, messenger: true },
+    });
+    const upload = async (bearer: string) => {
+      const created = await call("POST", "/widget/uploads", {
+        bearer,
+        body: { purpose: "customer_image", filename: "error.png", ...image },
+      });
+      const file = await call("POST", "/widget/files", {
+        bearer,
+        body: { key: created.body.key, name: "error.png", ...image },
+      });
+      return file.body.id as string;
+    };
+    try {
+      const mine = await upload(visitor.token);
+      const theirs = await upload(other.token);
+      const send = (bearer: string, ids: string[], key = env.id("key")) =>
+        call("POST", "/widget/conversations", {
+          bearer,
+          body: {
+            content: "See the error",
+            idempotencyKey: key,
+            attachmentIds: ids,
+          },
+        });
+      // Another visitor's file attaches nothing and creates no conversation.
+      expect((await send(visitor.token, [theirs])).status).toBe(404);
+      const key = env.id("key");
+      const started = await send(visitor.token, [mine], key);
+      expect(started.status).toBe(200);
+      expect(started.body.message.attachments).toEqual([
+        expect.objectContaining({ fileId: mine, name: "error.png" }),
+      ]);
+      // A retry is the same message; other files under the same key are a conflict.
+      expect((await send(visitor.token, [mine], key)).body.replayed).toBe(true);
+      expect((await send(visitor.token, [], key)).status).toBe(409);
+      // An attached file does not attach again.
+      expect((await send(visitor.token, [mine])).status).toBe(404);
+      const conversationId = started.body.conversation.id as string;
+      const read = await call(
+        "GET",
+        `/widget/conversations/${conversationId}/files/${mine}`,
+        { bearer: visitor.token },
+      );
+      expect(read.status).toBe(200);
+      expect(
+        (
+          await call(
+            "GET",
+            `/widget/conversations/${conversationId}/files/${mine}`,
+            { bearer: other.token },
+          )
+        ).status,
+      ).toBe(404);
     } finally {
       await setWidget({ enabled: true });
     }

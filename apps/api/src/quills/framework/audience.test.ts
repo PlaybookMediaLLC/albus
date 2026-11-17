@@ -19,7 +19,8 @@ import {
   startContract,
   stopContract,
 } from "./contract";
-import { widgetEnabled } from "./audience";
+import { verifyIdentityToken, widgetEnabled } from "./audience";
+import { signIdentity } from "../widget/seed.fixture";
 
 let pool: Pool;
 vi.mock("../../database/index", () => ({
@@ -105,6 +106,38 @@ describe("widgetEnabled", () => {
     expect(widgetEnabled('{"enabled":true}')).toBe(true);
     expect(widgetEnabled('{"enabled":false}')).toBe(false);
     expect(widgetEnabled("{not json")).toBe(false);
+  });
+});
+
+describe("verifyIdentityToken", () => {
+  const secret = "wgt_test";
+  const now = Math.floor(Date.now() / 1000);
+  const claims = { sub: "u1", email: "u1@example.test" };
+  it("accepts a token of up to an hour", () => {
+    expect(
+      verifyIdentityToken(
+        signIdentity({ ...claims, exp: now + 600 }, secret),
+        secret,
+      ),
+    ).toMatchObject(claims);
+    expect(
+      verifyIdentityToken(
+        signIdentity({ ...claims, iat: now - 30, exp: now + 3570 }, secret),
+        secret,
+      ),
+    ).toMatchObject(claims);
+  });
+  it("refuses a longer lifetime, a future iat, a bad signature and another algorithm", () => {
+    for (const token of [
+      signIdentity({ ...claims, exp: now + 3700 }, secret),
+      signIdentity({ ...claims, iat: now, exp: now + 3601 }, secret),
+      signIdentity({ ...claims, iat: now + 120, exp: now + 600 }, secret),
+      signIdentity({ ...claims, iat: "now", exp: now + 600 }, secret),
+      signIdentity({ ...claims, exp: now + 600 }, "wgt_other"),
+      signIdentity({ ...claims, exp: now + 600 }, secret, "HS512"),
+      signIdentity({ ...claims, exp: now - 1 }, secret),
+    ])
+      expect(verifyIdentityToken(token, secret)).toBeNull();
   });
 });
 

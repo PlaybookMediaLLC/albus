@@ -230,6 +230,9 @@ describe("ConversationHeader", () => {
   it("explains a refused close", async () => {
     answer({
       getQuillsUser: user(),
+      getQuillsConversationIpBlock: {
+        body: { available: false, blockedUntil: null },
+      },
       setQuillsConversationStatus: {
         body: { message: "Missing required attributes" },
         status: 409,
@@ -239,6 +242,28 @@ describe("ConversationHeader", () => {
     press("Resolve");
     expect(await view.findByRole("alert")).toHaveTextContent(
       /required fields/i,
+    );
+  });
+
+  it("blocks the sender's address for 30 days from the menu", async () => {
+    const api = answer({
+      getQuillsUser: { body: {}, status: 404 },
+      getQuillsConversationIpBlock: {
+        body: { available: true, blockedUntil: null },
+      },
+      blockQuillsConversationIp: {
+        body: { available: true, blockedUntil: "2026-12-17T00:00:00.000Z" },
+      },
+    });
+    const view = render(header());
+    press("More actions");
+    fireEvent.click(
+      await view.findByRole("menuitem", {
+        name: "Block IP address for 30 days",
+      }),
+    );
+    await waitFor(() =>
+      expect(api.calls("blockQuillsConversationIp")).toHaveLength(1),
     );
   });
 });

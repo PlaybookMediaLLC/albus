@@ -10,7 +10,6 @@ import {
   lt,
   max,
   min,
-  sql,
   type SQL,
 } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
@@ -46,6 +45,7 @@ import {
   visibleBoards,
   type Viewer,
 } from "./viewer";
+import { postSearch } from "../../feedback/post-search";
 
 // Public roadmaps (audience: "portal"). A team roadmap never shows; a segment roadmap shows only
 // to a signed-in member of one of its segments. The admin filter and segment IDs stay server-side.
@@ -262,10 +262,7 @@ const listRoadmapPosts = defineQuillsRoute({
             )!,
       );
     }
-    if (query.search)
-      conditions.push(
-        sql`${posts.searchVector} @@ websearch_to_tsquery('english', ${query.search})`,
-      );
+    if (query.search) conditions.push(postSearch(query.search));
     const where = and(...conditions);
     const rows = await db
       .select({

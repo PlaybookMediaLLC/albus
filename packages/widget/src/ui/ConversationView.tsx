@@ -6,6 +6,7 @@ import { MessageFiles } from "./MessageFiles.js";
 import { messageTime } from "./message-time.js";
 import type { Conversation } from "./types.js";
 import type { Draft } from "./useDrafts.js";
+import { useLocale, useT } from "./i18n/useT.js";
 
 export function ConversationView({
   conversation,
@@ -37,6 +38,8 @@ export function ConversationView({
   /** Resolves with a short-lived download URL of a file of this conversation. */
   onOpenFile?: (fileId: string) => Promise<string>;
 }) {
+  const t = useT();
+  const locale = useLocale();
   const scroll = useConversationScroll(conversation, scrollContainer);
   const acknowledged = useRef(false);
   useEffect(() => {
@@ -47,7 +50,7 @@ export function ConversationView({
     }
   }, [onRead]);
   const stamps = conversation.messages.map((message) =>
-    messageTime(message.sentAt),
+    messageTime(message.sentAt, locale),
   );
   return (
     <article className="qb-conversation-view">
@@ -60,7 +63,7 @@ export function ConversationView({
             disabled={reading || offline}
             onClick={onRead}
           >
-            {reading ? "Marking as read…" : "Mark as read"}
+            {reading ? t("Marking as read…") : t("Mark as read")}
           </button>
         )}
         {readError && (
@@ -80,7 +83,7 @@ export function ConversationView({
             <Fragment key={message.id}>
               {message.id === scroll.firstUnread && (
                 <div className="qb-unread-divider" ref={scroll.unread}>
-                  New messages
+                  {t("New messages")}
                 </div>
               )}
               {newDay && stamp && <p className="qb-message-day">{stamp.day}</p>}
@@ -96,7 +99,7 @@ export function ConversationView({
                 {(stamp || message.fromVisitor) && (
                   <span className="qb-message-meta">
                     {stamp && <time dateTime={stamp.iso}>{stamp.time}</time>}
-                    {message.fromVisitor && <span>Sent</span>}
+                    {message.fromVisitor && <span>{t("Sent")}</span>}
                   </span>
                 )}
               </div>
@@ -113,7 +116,7 @@ export function ConversationView({
             scrollContainer.current?.focus({ preventScroll: true });
           }}
         >
-          Jump to latest
+          {t("Jump to latest")}
         </button>
       )}
       <Composer

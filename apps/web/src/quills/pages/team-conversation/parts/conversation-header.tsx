@@ -2,7 +2,10 @@ import { useTranslation } from "react-i18next";
 import type { GetConversationResponse } from "../../../api/team/get-conversation";
 import { useArchiveConversation } from "../../../hooks/team/use-archive-conversation";
 import { useAssignConversation } from "../../../hooks/team/use-assign-conversation";
+import { useBlockConversationIp } from "../../../hooks/team/use-block-conversation-ip";
 import { useBlockUser } from "../../../hooks/team/use-block-user";
+import { useGetConversationIpBlock } from "../../../hooks/team/use-get-conversation-ip-block";
+import { useUnblockConversationIp } from "../../../hooks/team/use-unblock-conversation-ip";
 import { useEndConversation } from "../../../hooks/team/use-end-conversation";
 import { useGetUser } from "../../../hooks/team/use-get-user";
 import { useRestoreConversationFromSpam } from "../../../hooks/team/use-restore-conversation-from-spam";
@@ -49,6 +52,8 @@ export function ConversationHeader({
   const restore = useRestoreConversationFromSpam(team.viewer);
   const block = useBlockUser(team.viewer);
   const unblock = useUnblockUser(team.viewer);
+  const blockIp = useBlockConversationIp(team.viewer);
+  const unblockIp = useUnblockConversationIp(team.viewer);
   const archive = useArchiveConversation(team.viewer);
   const unarchive = useUnarchiveConversation(team.viewer);
   const changes = [
@@ -58,6 +63,8 @@ export function ConversationHeader({
     restore,
     block,
     unblock,
+    blockIp,
+    unblockIp,
     archive,
     unarchive,
   ];
@@ -71,6 +78,11 @@ export function ConversationHeader({
     team.viewer,
   ).data;
   const param = { workspaceId, conversationId: conversation?.id ?? "" };
+  // The sender's address, kept 90 days, can be blocked for 30 days (an anonymous visitor too).
+  const ip = useGetConversationIpBlock(
+    { param: { ...param, workspaceId: conversation ? workspaceId : "" } },
+    team.viewer,
+  ).data;
   const locked = !team.permissions.update || changes.some((m) => m.isPending);
   const reset = () => {
     for (const change of changes) change.reset();
@@ -115,6 +127,7 @@ export function ConversationHeader({
                 spam={spam}
                 archived={Boolean(conversation.archivedAt)}
                 blocked={profile ? Boolean(profile.blockedAt) : null}
+                ipBlocked={ip?.available ? Boolean(ip.blockedUntil) : null}
                 disabled={locked}
                 onSnooze={() => {
                   reset();
@@ -147,6 +160,14 @@ export function ConversationHeader({
                 onUnblock={() => {
                   reset();
                   unblock.mutate({ param: sender });
+                }}
+                onBlockIp={() => {
+                  reset();
+                  blockIp.mutate({ param });
+                }}
+                onUnblockIp={() => {
+                  reset();
+                  unblockIp.mutate({ param });
                 }}
               />
             </>

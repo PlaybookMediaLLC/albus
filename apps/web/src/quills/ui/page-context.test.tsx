@@ -3,7 +3,7 @@ import { renderComponent } from "../test/render";
 import { PageContext } from "./page-context";
 
 describe("PageContext", () => {
-  it("shows the page and the browser as plain text, and no other key", () => {
+  it("shows the page, the browser and the host app's keys as plain text", () => {
     const view = renderComponent(
       <PageContext
         context={{
@@ -19,8 +19,9 @@ describe("PageContext", () => {
     expect(view.getByText("Browser").nextElementSibling).toHaveTextContent(
       "Chrome 153 on Linux",
     );
+    // The host app's own metadata follows the page and the browser.
+    expect(view.getByText("plan").nextElementSibling).toHaveTextContent("pro");
     expect(view.container.querySelector("a")).toBeNull();
-    expect(view.queryByText("pro")).toBeNull();
   });
 
   it("renders nothing without a page or a browser", () => {

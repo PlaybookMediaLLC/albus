@@ -35,6 +35,7 @@ import { votingOf } from "../../feedback/board-voting";
 import { notFound, notTest } from "../../feedback/visibility";
 import { bool, parseJson, record, str } from "../../settings/area";
 import { navTabs } from "../nav";
+import { hasSensitive, looksLikeSpam } from "../../feedback/content-checks";
 
 export type Customer = "portal" | "widget";
 export const title = (audience: Customer) =>
@@ -123,6 +124,8 @@ export async function viewerFor(
     allowDelete: bool(features.allowDeleteAfterEngagement, false),
     requireApproval: str(moderation.requireApproval) ?? "none",
     holdLinks: bool(moderation.holdLinks, false),
+    holdSpam: bool(moderation.holdSpam, false),
+    holdSensitive: bool(moderation.holdSensitive, false),
     changelogPublic:
       record(parseJson(row?.metadata ?? null).changelogSettings).audience !==
       "authenticated",
@@ -267,6 +270,8 @@ export function postVisible(viewer: Viewer, boardIds: BoardId[]): SQL {
       and(eq(posts.moderationState, "pending"), mine),
     ),
     or(notTest(posts.principalId), mine),
+    // A post that the team hid shows only to its author.
+    or(eq(posts.isHidden, false), mine),
   )!;
 }
 
@@ -323,7 +328,10 @@ const LINK = /https?:\/\/|www\./i;
 
 /** True when a new post or comment waits for review: the board rule, else the workspace default. */
 export function held(
-  viewer: Viewer,
+  viewer: Pick<
+    Viewer,
+    "signedIn" | "requireApproval" | "holdLinks" | "holdSpam" | "holdSensitive"
+  >,
   access: Access,
   kind: "post" | "comment",
   text: string,
@@ -343,8 +351,28 @@ export function held(
   return (
     rule === "on" ||
     (rule === "inherit" && byDefault) ||
-    (viewer.holdLinks && LINK.test(text))
+    (viewer.holdLinks && LINK.test(text)) ||
+    (viewer.holdSpam && looksLikeSpam(text)) ||
+    (viewer.holdSensitive && hasSensitive(text))
   );
+}
+
+/** The workspace moderation rules for a known person outside a request (a reply by mail). */
+export async function moderationFor(db: Database) {
+  const [row] = await db
+    .select({ portalConfig: settings.portalConfig })
+    .from(settings)
+    .limit(1);
+  const moderation = record(
+    parseJson(row?.portalConfig ?? null).moderationDefault,
+  );
+  return {
+    signedIn: true,
+    requireApproval: str(moderation.requireApproval) ?? "none",
+    holdLinks: bool(moderation.holdLinks, false),
+    holdSpam: bool(moderation.holdSpam, false),
+    holdSensitive: bool(moderation.holdSensitive, false),
+  };
 }
 
 export const STAGES = ["open", "planned", "in_progress", "shipped"] as const;

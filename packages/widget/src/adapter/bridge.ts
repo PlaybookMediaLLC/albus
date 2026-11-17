@@ -10,6 +10,7 @@ export type ParentMessage =
     }
   | { type: "open"; target: z.infer<typeof openSchema> }
   | { type: "locale"; locale: string }
+  | { type: "theme"; theme: "auto" | "light" | "dark" }
   /** The host app's metadata and the page URL, for the next feedback post or message. */
   | { type: "metadata"; metadata: Record<string, string> }
   /** The answer to a capture request: a PNG of the host page, or null. */
@@ -34,11 +35,18 @@ const metadataOf = (data: unknown): Record<string, string> =>
 
 /** A TypeID, UUID or slug. No dots or slashes, so a deep link cannot move up the API path. */
 const ref = z.string().check(z.regex(/^[A-Za-z0-9_-]{1,200}$/));
+// Composer text is bounded like a post: a title of 200 and a body of 10,000 characters.
+const text = (max: number) => z.string().check(z.maxLength(max));
 const openSchema = z.object({
   view: z.optional(viewSchema),
   postId: z.optional(ref),
   articleId: z.optional(ref),
   entryId: z.optional(ref),
+  title: z.optional(text(200)),
+  body: z.optional(text(10_000)),
+  board: z.optional(ref),
+  query: z.optional(text(200)),
+  category: z.optional(text(200)),
 });
 
 /**
@@ -71,6 +79,11 @@ export function createParentBridge(
       onMessage({ type: "open", target: parsed.success ? parsed.data : {} });
     } else if (type === "quackback:locale" && typeof data === "string")
       onMessage({ type: "locale", locale: data.slice(0, 35) });
+    else if (
+      type === "quackback:theme" &&
+      (data === "auto" || data === "light" || data === "dark")
+    )
+      onMessage({ type: "theme", theme: data });
     else if (type === "quackback:metadata")
       onMessage({ type: "metadata", metadata: metadataOf(data) });
     else if (type === "quackback:capture-result") {

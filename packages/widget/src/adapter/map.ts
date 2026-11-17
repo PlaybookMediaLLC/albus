@@ -89,7 +89,8 @@ export function toPost(
   return {
     id: post.id,
     title: post.title,
-    body: post.content,
+    // The view shows text, not Markdown: previews and the detail read clean.
+    body: blocksText(markdownBlocks(post.content)),
     author: post.author.name ?? "Anonymous",
     avatarUrl: optional(post.author.avatarUrl),
     votes: post.voteCount,
@@ -136,7 +137,8 @@ export function toUpdate(entry: ApiChangelogEntry): UpdateEntry {
     title: entry.title,
     body: blocksText(blocks),
     blocks,
-    // The view shows `date` as text; the copy is English, like the rest of the view.
+    // The view formats publishedAt in its language; `date` is the English fallback.
+    publishedAt: entry.publishedAt,
     date: new Date(entry.publishedAt).toLocaleDateString("en-US", {
       month: "long",
       day: "numeric",

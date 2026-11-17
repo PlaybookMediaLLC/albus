@@ -136,7 +136,8 @@ describe("snapshot loading", () => {
     const snapshot = await loadSnapshot(api, { surfaces: allOn, locale: "de" });
     expect(snapshot.feedback.map((item) => item.id)).toEqual(["p1"]);
     expect(snapshot.conversations.map((item) => item.id)).toEqual(["c1", "c2"]);
-    expect(calls).toHaveLength(6);
+    // The main list, then the three roadmap stages, then the other surfaces.
+    expect(calls).toHaveLength(9);
   });
 
   it("hides a surface that a private portal denies (403) and keeps the rest", async () => {
@@ -179,6 +180,9 @@ describe("snapshot loading", () => {
     expect(snapshot.available).toMatchObject({ feedback: true, help: false });
     expect(calls.map((call) => call.key)).toEqual([
       "GET /widget/posts?limit=50&boardId=board_1",
+      "GET /widget/posts?limit=20&boardId=board_1&stage=in_progress&sort=votes",
+      "GET /widget/posts?limit=20&boardId=board_1&stage=planned&sort=votes",
+      "GET /widget/posts?limit=20&boardId=board_1&stage=shipped&sort=votes",
       "GET /widget/help/articles?limit=100",
     ]);
   });

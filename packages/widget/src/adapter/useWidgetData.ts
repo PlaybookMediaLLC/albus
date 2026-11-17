@@ -3,6 +3,7 @@ import { ApiError, type Api } from "./api.js";
 import {
   emptySnapshot,
   loadArticle,
+  findSimilar,
   loadPost,
   loadSnapshot,
   loadUpdate,
@@ -20,6 +21,7 @@ import {
   toPost,
   toReactions,
   VOTE_EMOJI,
+  type ApiMessage,
 } from "./map.js";
 import { postMetadata } from "./post-context.js";
 import { uploadImage } from "./uploads.js";
@@ -38,6 +40,8 @@ export interface HostEvents {
     payload: EventMap[K],
   ): void;
   unread(count: number): void;
+  /** The newest update is unread: the SDK may announce it on the launcher. */
+  announce(entryId: string, title: string): void;
   /** The API answered 401: this session ended. */
   expired(session: number | null): void;
 }
@@ -51,6 +55,8 @@ interface Options {
   surfaces: Surfaces;
   locale?: string;
   board?: string;
+  /** A board for the next post, from a new-post deep link; an unseen board falls back to `board`. */
+  composeBoard?: string;
   host: HostEvents;
   pollIntervalMs: number;
   /** The host app's metadata and the page URL from the SDK, sent with a new post. */
@@ -80,6 +86,7 @@ export function useWidgetData({
   surfaces,
   locale,
   board,
+  composeBoard,
   host,
   pollIntervalMs,
   context = {},
@@ -107,6 +114,7 @@ export function useWidgetData({
   const unread = useRef(-1);
   /** Unread changelog updates; the launcher badge shows them with the unread replies. */
   const updatesUnread = useRef(0);
+  const announced = useRef(false);
   const badge = () =>
     events.current.unread(Math.max(0, unread.current) + updatesUnread.current);
   /** The threads are loaded; until then a poll only reports the unread count. */
@@ -140,6 +148,22 @@ export function useWidgetData({
       throw error;
     }
   };
+  /** Uploads each attached file once; a retry reuses the IDs, so its idempotency key still fits. */
+  const uploadFiles = async (
+    options: SubmissionOptions,
+    signal: AbortSignal,
+  ) => {
+    const ids: string[] = [];
+    for (const file of options.attachments ?? []) {
+      let id = uploaded.current.get(file);
+      if (!id) {
+        id = await uploadImage(api, file, signal);
+        uploaded.current.set(file, id);
+      }
+      ids.push(id);
+    }
+    return ids;
+  };
   const reportUnread = async (signal: AbortSignal) => {
     const { unreadCount } = await send.unread(signal);
     if (!signal.aborted && unreadCount !== unread.current) {
@@ -154,6 +178,16 @@ export function useWidgetData({
     if (!signal.aborted) {
       updatesUnread.current = count;
       badge();
+    }
+    // The newest entry is unread: hand it to the SDK once per session for the launcher.
+    if (count > 0 && !signal.aborted && !announced.current) {
+      announced.current = true;
+      const { entries } = await api.request<{
+        entries: Array<{ id: string; title: string }>;
+      }>("GET", "/widget/changelog?limit=1", undefined, signal);
+      const latest = entries[0];
+      if (latest && !signal.aborted)
+        events.current.announce(latest.id, latest.title);
     }
   };
   const load = (signal: AbortSignal) =>
@@ -184,25 +218,39 @@ export function useWidgetData({
         throw error;
       }
     });
-  const sent = (signal: AbortSignal, result: Sent) =>
-    patch(signal, (value) => {
-      const known = value.conversations.find(
-        (item) => item.id === result.conversation.id,
-      );
-      return {
-        ...value,
-        conversations: upsert(
-          value.conversations,
-          {
-            ...toConversation(result.conversation, []),
-            messages: mergeMessages(known?.messages ?? [], [
-              toMessage(result.message),
-            ]),
-          },
-          "end",
-        ),
-      };
-    });
+  const sent = async (signal: AbortSignal, result: Sent) => {
+    const merge = (incoming: ApiMessage[]) =>
+      patch(signal, (value) => {
+        const known = value.conversations.find(
+          (item) => item.id === result.conversation.id,
+        );
+        return {
+          ...value,
+          conversations: upsert(
+            value.conversations,
+            {
+              ...toConversation(result.conversation, []),
+              messages: mergeMessages(
+                known?.messages ?? [],
+                incoming.map(toMessage),
+              ),
+            },
+            "end",
+          ),
+        };
+      });
+    merge([result.message]);
+    // An automatic answer (the away reply) is written with the message: read what follows it.
+    const page = await api
+      .request<{ items: ApiMessage[] }>(
+        "GET",
+        `/widget/conversations/${encodeURIComponent(result.conversation.id)}/messages?${new URLSearchParams({ after: result.message.id, limit: "100" })}`,
+        undefined,
+        signal,
+      )
+      .catch(() => null);
+    if (page?.items.length && !signal.aborted) merge(page.items);
+  };
 
   useEffect(() => {
     if (session === null) return;
@@ -319,20 +367,17 @@ export function useWidgetData({
     ...(available.feedback && {
       onSubmitFeedback: (body: string, options: SubmissionOptions) =>
         run(async (signal) => {
-          const attachmentIds: string[] = [];
-          for (const file of options.attachments ?? []) {
-            let id = uploaded.current.get(file);
-            if (!id) {
-              id = await uploadImage(api, file, signal);
-              uploaded.current.set(file, id);
-            }
-            attachmentIds.push(id);
-          }
+          const attachmentIds = await uploadFiles(options, signal);
+          const chosen = composeBoard
+            ? await resolveBoard(api, composeBoard, signal).catch(
+                () => undefined,
+              )
+            : undefined;
           const created = await send.createPost(
             // A post needs a title: a screenshot alone gets a plain one.
             body || (attachmentIds.length ? "Screenshot" : body),
             options.idempotencyKey,
-            boardId.current || undefined,
+            chosen ?? (boardId.current || undefined),
             signal,
             {
               attachmentIds,
@@ -366,6 +411,8 @@ export function useWidgetData({
             voteCount: result.voteCount,
           });
         }),
+      onFindSimilar: (text: string, signal: AbortSignal) =>
+        findSimilar(api, text, signal),
       onFollowFeedback: (postId: string, following: boolean) =>
         run(async (signal) => {
           const result = await send.follow(postId, following, signal);
@@ -476,6 +523,7 @@ export function useWidgetData({
               options.idempotencyKey,
               signal,
               postMetadata(page.current, navigator.userAgent),
+              await uploadFiles(options, signal),
             ),
           ),
         ),
@@ -493,6 +541,7 @@ export function useWidgetData({
               options.idempotencyKey,
               signal,
               postMetadata(page.current, navigator.userAgent),
+              await uploadFiles(options, signal),
             ),
           ),
         ),

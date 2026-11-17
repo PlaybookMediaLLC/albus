@@ -114,7 +114,8 @@ async function main() {
   await waitHealthy();
   const env = demoEnv(process.env, secrets, null);
   await finish(
-    // The root build:dependencies filter matches no package, so name the two apps here.
+    // The root build:dependencies filter matches no package, so name the two apps here. The API
+    // serves the widget's sdk.js and iframe page from packages/widget/dist (503 until it is built).
     run(
       "build",
       "pnpm",
@@ -126,6 +127,8 @@ async function main() {
         "@kaneo/api^...",
         "--filter",
         "@kaneo/web^...",
+        "--filter",
+        "@quills/widget",
         "build",
       ],
       env,
