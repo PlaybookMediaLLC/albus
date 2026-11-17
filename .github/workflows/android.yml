@@ -5,7 +5,9 @@ name: Android APK
 # Without them (forks, or before the key exists) it falls back to the debug key.
 
 on:
+  # Branch policy lets only staging target main, so this runs on the staging-to-main pull request.
   pull_request:
+    branches: [main]
     paths:
       - "apps/mobile/**"
       - "packages/editor/**"

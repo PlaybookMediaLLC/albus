@@ -1,14 +1,16 @@
 name: Desktop release
 
 # Builds the Quills desktop app (apps/desktop) for macOS and Windows. A manual run adds the
-# installers to a draft GitHub release. A pull request that changes the app builds the same
-# installers and keeps them as workflow artifacts, so a release never meets an untested build.
+# installers to a draft GitHub release. A staging-to-main pull request that changes the app builds
+# the same installers and keeps them as workflow artifacts, so a release never meets an untested build.
 # Code signing, notarization and updates turn on only when their secrets and variables are set,
 # so a build without them still works. See apps/desktop/README.md.
 
 on:
   workflow_dispatch:
+  # Branch policy lets only staging target main, so this runs on the staging-to-main pull request.
   pull_request:
+    branches: [main]
     paths:
       - apps/desktop/**
       - .github/workflows/desktop.yml
