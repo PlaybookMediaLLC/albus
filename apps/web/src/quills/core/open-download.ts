@@ -5,6 +5,12 @@
  * blocks the tab or `load` fails; the empty tab then closes.
  */
 export async function openDownload(load: () => Promise<string>) {
+  // The desktop app sends each new window to the system browser and cannot point an empty one at
+  // a later URL, so it opens the browser when the URL is ready.
+  if ("__TAURI_INTERNALS__" in window) {
+    window.open(await load(), "_blank");
+    return;
+  }
   const tab = window.open("", "_blank");
   if (!tab) throw new Error("The browser blocked the new tab");
   tab.opener = null;
