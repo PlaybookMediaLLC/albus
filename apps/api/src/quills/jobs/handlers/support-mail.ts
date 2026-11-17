@@ -1,4 +1,15 @@
-import { and, desc, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  gt,
+  inArray,
+  isNull,
+  lte,
+  notExists,
+  or,
+  sql,
+} from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { HTTPException } from "hono/http-exception";
 import {
@@ -50,8 +61,11 @@ import {
   visibleBoards,
 } from "../../portal/feedback/viewer";
 import type { DeliveryEvent, Subscribers } from "../fanout";
+import { wants } from "../preferences";
 import { loadMailAttachments, messageFiles } from "./mail-attachments";
 import { portalPaths } from "../../portal/paths";
+import { parseJson } from "../../settings/area";
+import { requireSurface } from "../../support/customer/model";
 
 // Support delivery: the customer's copy of a teammate reply on an email conversation, mention and
 // ticket-watcher notices for teammates, and the send-time decision for customer post mail.
@@ -63,8 +77,33 @@ type TicketRow = typeof tickets.$inferSelect;
 
 const clip = (text: string, length: number) =>
   text.length > length ? `${text.slice(0, length - 1)}…` : text;
-const customerConversationUrl = (workspaceId: string, conversationId: string) =>
-  portalPaths.conversation(workspaceId, conversationId);
+/**
+ * The portal page of a conversation, only when its customer can open it there: a profile linked to
+ * a Kaneo account while the portal is on. An inbound mail's sender has no such link (a profile is
+ * never matched to an account by email), so that customer replies by mail instead.
+ */
+export async function customerConversationLink(
+  db: Database,
+  workspaceId: string,
+  conversation: Pick<
+    typeof conversations.$inferSelect,
+    "id" | "visitorPrincipalId"
+  >,
+) {
+  const [visitor] = await db
+    .select({ account: customer.kaneoUserId })
+    .from(principal)
+    .innerJoin(customer, eq(customer.id, principal.userId))
+    .where(eq(principal.id, conversation.visitorPrincipalId));
+  if (!visitor?.account) return undefined;
+  const [row] = await db
+    .select({ portalConfig: settings.portalConfig })
+    .from(settings)
+    .limit(1);
+  return parseJson(row?.portalConfig ?? null).enabled === true
+    ? portalPaths.conversation(workspaceId, conversation.id)
+    : undefined;
+}
 const teammateConversationUrl = (workspaceId: string, conversationId: string) =>
   portalPaths.teammateConversation(workspaceId, conversationId);
 
@@ -135,10 +174,10 @@ async function sendingIdentity(
 
 /**
  * The event's message (or `target`, a copy the entry names) when it is a live, customer-visible
- * agent message with text on an email conversation, with that conversation. A message with only
- * an embed (a shared post) has no text to mail.
+ * agent message with text, with its conversation. A message with only an embed (a shared post) has
+ * no text to mail.
  */
-async function emailReply(db: Database, event: DeliveryEvent, target?: string) {
+async function agentReply(db: Database, event: DeliveryEvent, target?: string) {
   const messageId = (target ??
     (event.entityType === "conversation_message"
       ? event.entityId
@@ -172,10 +211,55 @@ async function emailReply(db: Database, event: DeliveryEvent, target?: string) {
     .select()
     .from(conversations)
     .where(eq(conversations.id, message.conversationId));
-  return conversation?.channel === "email"
-    ? { message, conversation }
+  return conversation ? { message, conversation } : undefined;
+}
+
+/** The reply on an email conversation: the customer's mail thread is the conversation. */
+async function emailReply(db: Database, event: DeliveryEvent, target?: string) {
+  const reply = await agentReply(db, event, target);
+  return reply?.conversation.channel === "email" ? reply : undefined;
+}
+
+/** A portal reply waits this long: the open conversation page polls every 10 s and marks it read. */
+export const PORTAL_REPLY_DELAY_SECONDS = 120;
+
+/**
+ * The reply on a portal conversation or ticket whose customer has a Kaneo account. Whether it is
+ * mailed is decided at send time (`portalReplyMail`). A widget visitor has no portal page to link.
+ */
+async function portalReply(
+  db: Database,
+  event: DeliveryEvent,
+  target?: string,
+) {
+  const reply = await agentReply(db, event, target);
+  if (!reply || reply.conversation.channel === "email") return undefined;
+  const [visitor] = await db
+    .select({
+      customerId: customer.id,
+      account: customer.kaneoUserId,
+      blockedAt: principal.blockedAt,
+      test: principal.testOwnerPrincipalId,
+    })
+    .from(principal)
+    .innerJoin(customer, eq(customer.id, principal.userId))
+    .where(eq(principal.id, reply.conversation.visitorPrincipalId));
+  return visitor?.account && !visitor.blockedAt && !visitor.test
+    ? { ...reply, customerId: visitor.customerId, account: visitor.account }
     : undefined;
 }
+
+/** A reply that reaches the customer by mail: on an email pair, or on a portal conversation. */
+const customerReply = async (
+  db: Database,
+  event: DeliveryEvent,
+  target?: string,
+) =>
+  (await emailReply(db, event, target)) ??
+  (await portalReply(db, event, target));
+
+const replyDelay = async (db: Database, event: DeliveryEvent) =>
+  (await portalReply(db, event)) ? PORTAL_REPLY_DELAY_SECONDS : 0;
 
 /** The conversation's customer address: the captured one, else the contact or profile address. */
 async function visitorAddress(
@@ -271,7 +355,7 @@ const replyMail: NonNullable<Subscribers["mail"]> = async (
   target,
 ) => {
   const reply = await emailReply(db, event, target);
-  if (!reply) return undefined;
+  if (!reply) return portalReplyMail(db, event, target);
   const { message, conversation } = reply;
   const to = await visitorAddress(db, conversation);
   const workspace = await workspaceOf(db);
@@ -279,6 +363,7 @@ const replyMail: NonNullable<Subscribers["mail"]> = async (
   const from = await sendingIdentity(db, conversation);
   const thread = await threading(db, workspace, conversation.id, message);
   const stored = await messageFiles(db, message.id);
+  const ctaUrl = await customerConversationLink(db, workspace.id, conversation);
   let attachments: EmailAttachment[] = [];
   return {
     type: "conversation_reply",
@@ -296,7 +381,7 @@ const replyMail: NonNullable<Subscribers["mail"]> = async (
         attachments,
         senderName: message.author ?? workspace.name,
         messagePreview: clip(message.content, 500),
-        ctaUrl: customerConversationUrl(workspace.id, conversation.id),
+        ctaUrl,
         workspaceName: workspace.name,
         channel: "email",
         correspondence: true,
@@ -307,6 +392,106 @@ const replyMail: NonNullable<Subscribers["mail"]> = async (
       }),
   };
 };
+
+/**
+ * A teammate's reply on a portal conversation, decided at send time: the customer has not read it,
+ * no newer reply exists (that one mails instead), the portal and support still admit the customer,
+ * and the Kaneo account's address is verified. The mail links to the conversation page.
+ */
+async function portalReplyMail(
+  db: Database,
+  event: DeliveryEvent,
+  target?: string,
+) {
+  const reply = await portalReply(db, event, target);
+  const workspace = reply && (await workspaceOf(db));
+  if (!reply || !workspace) return undefined;
+  const { message, conversation } = reply;
+  // Unread, and no newer reply (that one mails instead). In SQL: a JS Date drops microseconds.
+  const newer = alias(conversationMessages, "newer");
+  const [due] = await db
+    .select({ id: conversationMessages.id })
+    .from(conversationMessages)
+    .innerJoin(
+      conversations,
+      eq(conversations.id, conversationMessages.conversationId),
+    )
+    .where(
+      and(
+        eq(conversationMessages.id, message.id),
+        sql`${conversationMessages.createdAt} > coalesce(${conversations.visitorLastReadAt}, '-infinity'::timestamptz)`,
+        notExists(
+          db
+            .select({ id: newer.id })
+            .from(newer)
+            .where(
+              and(
+                eq(newer.conversationId, conversationMessages.conversationId),
+                eq(newer.senderType, "agent"),
+                eq(newer.isInternal, false),
+                isNull(newer.deletedAt),
+                gt(newer.createdAt, conversationMessages.createdAt),
+              ),
+            ),
+        ),
+      ),
+    );
+  if (!due) return undefined;
+  // A customer who muted mail (the unsubscribe-all link) gets none.
+  if (
+    !(await wants(
+      db,
+      conversation.visitorPrincipalId,
+      "conversation_reply",
+      "email",
+    ))
+  )
+    return undefined;
+  const ctaUrl = await customerConversationLink(db, workspace.id, conversation);
+  const account = ctaUrl
+    ? await portalAccount(workspace.id, reply.account)
+    : undefined;
+  // An unverified account address may belong to someone else.
+  const to = account?.emailVerified ? realEmail(account.email) : undefined;
+  if (!account || !to) return undefined;
+  try {
+    await requireSurface(
+      db,
+      "portal",
+      {
+        principalId: conversation.visitorPrincipalId,
+        customerId: reply.customerId,
+        account,
+      },
+      "messenger",
+    );
+  } catch (error) {
+    // A private portal that no longer admits the customer, or support turned off.
+    if (error instanceof HTTPException) return undefined;
+    throw error;
+  }
+  const from = await sendingIdentity(db, conversation);
+  return {
+    type: "conversation_reply",
+    emailType: "ConversationMessageEmail",
+    to,
+    conversationId: conversation.id,
+    send: (address: string) =>
+      sendConversationMessageEmail({
+        // Sealed: the verified account address read at send time.
+        to: address as SealedEmail,
+        direction: "agent_reply",
+        senderName: message.author ?? workspace.name,
+        messagePreview: clip(message.content, 500),
+        ctaUrl,
+        workspaceName: workspace.name,
+        channel: conversation.channel,
+        conversationSubject: conversation.subject,
+        conversationId: conversation.id,
+        from,
+      }),
+  };
+}
 
 /** The live note's mentioned principals; fan-out keeps current teammates and drops the author. */
 const mentioned: Subscribers["recipients"] = async (db, event) => {
@@ -548,8 +733,10 @@ async function csatConversation(db: Database, event: DeliveryEvent) {
 export const supportSubscribers: Partial<Record<string, Subscribers>> = {
   "message.created": {
     recipients: noRecipients,
-    // Decided at fan-out, so a messenger message or a visitor message queues no mail job.
-    direct: async (db, event) => Boolean(await emailReply(db, event)),
+    // Decided at fan-out, so a visitor message, a note or a widget visitor's reply queues no mail
+    // job. A portal reply's job waits, and runs only if the customer has not read it by then.
+    direct: async (db, event) => Boolean(await customerReply(db, event)),
+    directDelay: replyDelay,
     mail: replyMail,
   },
   "message.note_created": {
@@ -592,12 +779,13 @@ export const supportSubscribers: Partial<Record<string, Subscribers>> = {
   "ticket.replied": {
     recipients: watchers,
     // A reply on a customer pair is a conversation message (`payload.messageId`).
-    direct: async (db, event) => Boolean(await emailReply(db, event)),
-    // A tracker's reply-all: one mail per copy on an email pair, keyed by the copy.
+    direct: async (db, event) => Boolean(await customerReply(db, event)),
+    directDelay: replyDelay,
+    // A tracker's reply-all: one mail per copy on an email pair or portal ticket, keyed by the copy.
     copies: async (db, event, only) => {
       const mailed: string[] = [];
       for (const copy of await replyAllCopies(db, event, only))
-        if (await emailReply(db, event, copy.id)) mailed.push(copy.id);
+        if (await customerReply(db, event, copy.id)) mailed.push(copy.id);
       return mailed;
     },
     notification: watcherNotice((ref) => `New reply on ticket ${ref}`),

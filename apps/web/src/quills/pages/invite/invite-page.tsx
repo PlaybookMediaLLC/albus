@@ -35,6 +35,8 @@ export function InvitePage(props: InvitePageProps) {
     : !token && viewer.kind === "user"
       ? { kind: "gone" as const }
       : accept.error;
+  // Accept answers 403 for another or unverified address; a record 403 reads as notFound.
+  const refusal = problem?.kind === "notFound" ? "invite.wrongAccount" : null;
 
   return (
     <PageFrame
@@ -56,6 +58,8 @@ export function InvitePage(props: InvitePageProps) {
             {t("core.signIn")}
           </Button>
         </div>
+      ) : refusal ? (
+        <p role="alert">{t(refusal)}</p>
       ) : (
         <StateView
           loading={accept.isPending}

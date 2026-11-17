@@ -9,7 +9,7 @@ export const Route = createFileRoute(
   "/portal/$workspaceId/conversations/$conversationId",
 )({
   validateSearch: searchSchema,
-  beforeLoad: async ({ context, params }) => {
+  beforeLoad: ({ context, params }) => {
     if (
       !context.quillsPortal.accessGranted ||
       context.quillsPortal.viewer.kind !== "user"
@@ -21,7 +21,7 @@ export const Route = createFileRoute(
         conversationId: params.conversationId,
       },
     };
-    await Promise.all([
+    void Promise.all([
       context.queryClient.prefetchQuery(
         getMyConversationQuery(input, context.quillsPortal.viewer),
       ),

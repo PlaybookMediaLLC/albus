@@ -3,7 +3,7 @@ export const meta = {
   id: "status-incident",
   feature: "status-incident",
   route: "/portal/$workspaceId/status/incidents/$incidentId",
-  audience: "public",
+  audience: "portal",
   mailLinked: true,
   token: "none",
   operations: ["getQuillsPublicStatusIncident"],

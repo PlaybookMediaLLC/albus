@@ -2,6 +2,7 @@ import * as Sentry from "@sentry/react";
 import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 import { handleUnauthorized, isUnauthorizedError } from "@/lib/http-error";
 import { isForbiddenOrNotFound } from "@/lib/is-forbidden-or-not-found";
+import { retryPortalProblem } from "@/quills/api/retry-portal-problem";
 
 // TanStack raises these before any fetcher-level message exists; CORS rejections
 // from the browser also surface here. Used both to skip auto-retry and to tag
@@ -94,8 +95,10 @@ const queryClient = new QueryClient({
 
 // Quills: a change event refetches only the views on screen. A closed view keeps its invalidated
 // cache, so it refetches when it opens again; unchanged Quills data still comes from the cache.
+// A Quills fetcher throws a PortalProblem, which the retry rule above cannot read.
 queryClient.setQueryDefaults(["quills"], {
   refetchOnMount: (query) => query.state.isInvalidated,
+  retry: retryPortalProblem,
 });
 
 export default queryClient;

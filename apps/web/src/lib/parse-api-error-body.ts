@@ -1,4 +1,12 @@
-export type ApiErrorIssue = { path: string; message: string };
+export type ApiErrorIssue = {
+  path: string;
+  message: string;
+  // zod's issue code and size bounds, for a translated message (see the API's ApiError schema).
+  code?: string;
+  origin?: string;
+  minimum?: number;
+  maximum?: number;
+};
 
 export type ApiErrorDetails = {
   code?: string;

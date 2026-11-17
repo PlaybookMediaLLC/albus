@@ -111,6 +111,19 @@ describe("InvitePage", () => {
       expect(api.calls()).toHaveLength(0);
     });
 
+    it.each([[403, /sent to another email address/i]])(
+      "says why the API refused the invite (%i)",
+      async (status, message) => {
+        const api = mockApi();
+        api.reply({ message: "Refused" }, status);
+        stashToken(scope, "mail_link_value", true);
+        const view = renderPage(InvitePage, meta, signedIn);
+        press("Accept invitation");
+        expect(await view.findByText(message)).toBeInTheDocument();
+        expect(view.queryByText(/could not be found|This changed/i)).toBeNull();
+      },
+    );
+
     it("refuses confirmation inside a frame", async () => {
       const api = mockApi();
       stashToken(scope, "mail_link_value", true);

@@ -17,6 +17,11 @@ export interface HelpCenterLocalePageProps {
 
 export function HelpCenterLocalePage(props: HelpCenterLocalePageProps) {
   const portal = usePortalRuntime();
+  // As on the feedback pages: no request until the private-portal gate admits the caller.
+  const workspace =
+    !portal.accessLoading && portal.access?.granted === true
+      ? props.workspaceId
+      : "";
   const { viewer } = portal;
   const locale = (
     [
@@ -38,12 +43,12 @@ export function HelpCenterLocalePage(props: HelpCenterLocalePageProps) {
   const searchQuery =
     typeof props.search.query === "string" ? props.search.query.trim() : "";
   const home = useGetPublicHelpCenter(
-    { param: { workspace: props.workspaceId }, query: { locale } },
+    { param: { workspace }, query: { locale } },
     viewer,
   );
   const results = useSearchPublicHelpCenter(
     {
-      param: { workspace: props.workspaceId },
+      param: { workspace },
       json: { query: searchQuery, locale, limit: 10 },
     },
     viewer,
@@ -74,7 +79,10 @@ export function HelpCenterLocalePage(props: HelpCenterLocalePageProps) {
       >
         <PortalGate
           workspaceId={props.workspaceId}
-          currentPath={portalHref(props.workspaceId, `hc/${locale}`)}
+          currentPath={portalHref(
+            props.workspaceId,
+            `hc/${props.params.locale}`,
+          )}
           audience={meta.audience}
           portalEnabled
           accessGranted={portal.access?.granted ?? false}

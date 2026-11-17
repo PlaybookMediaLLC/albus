@@ -17,16 +17,21 @@ export interface HelpCenterPageProps {
 
 export function HelpCenterPage(props: HelpCenterPageProps) {
   const portal = usePortalRuntime();
+  // As on the feedback pages: no request until the private-portal gate admits the caller.
+  const workspace =
+    !portal.accessLoading && portal.access?.granted === true
+      ? props.workspaceId
+      : "";
   const { viewer } = portal;
   const searchQuery =
     typeof props.search.query === "string" ? props.search.query.trim() : "";
   const home = useGetPublicHelpCenter(
-    { param: { workspace: props.workspaceId }, query: {} },
+    { param: { workspace }, query: {} },
     viewer,
   );
   const results = useSearchPublicHelpCenter(
     {
-      param: { workspace: props.workspaceId },
+      param: { workspace },
       json: { query: searchQuery, limit: 10 },
     },
     viewer,

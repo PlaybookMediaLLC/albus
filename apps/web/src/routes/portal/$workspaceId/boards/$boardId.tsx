@@ -15,10 +15,10 @@ const searchSchema = z.object({
 });
 export const Route = createFileRoute("/portal/$workspaceId/boards/$boardId")({
   validateSearch: searchSchema,
-  beforeLoad: async ({ context, params, search, cause }) => {
+  beforeLoad: ({ context, params, search, cause }) => {
     if (!context.quillsPortal.accessGranted || cause === "stay") return;
     const viewer = context.quillsPortal.viewer;
-    await Promise.all([
+    void Promise.all([
       context.queryClient.prefetchQuery(
         listPortalBoardsQuery(
           {
