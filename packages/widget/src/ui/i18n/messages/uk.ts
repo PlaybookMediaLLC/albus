@@ -269,6 +269,9 @@ const uk: Catalog = {
   New: "Нове",
   "Team member": "Учасник команди",
   "See all": "Усі",
+  Assistant: "Асистент",
+  "Submit request": "Надіслати запит",
+  "Request submitted": "Запит надіслано",
 };
 
 export default uk;

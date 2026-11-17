@@ -117,7 +117,7 @@
 		"moderate": "Moderate submissions",
 		"moderateText": "Hold new posts for review before they show on the portal.",
 		"holdSensitive": "Hold sensitive information",
-		"holdSensitiveText": "Send a post or comment that shows an email address, a phone or card number, an IBAN or a secret key to review first.",
+		"holdSensitiveText": "Send a post or comment that shows an email address, a phone or card number, an IBAN or a secret key to review first. With AI set up, a post's images are checked too, just after it is posted.",
 		"holdSpam": "Hold likely spam",
 		"holdSpamText": "Send a post or comment that looks like spam (many links, spam phrases, shouting, repetition) to review first.",
 		"noDomains": "No domains",

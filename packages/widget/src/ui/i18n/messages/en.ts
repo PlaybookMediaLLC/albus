@@ -256,6 +256,9 @@ export const en = {
   New: "New",
   "Team member": "Team member",
   "See all": "See all",
+  Assistant: "Assistant",
+  "Submit request": "Submit request",
+  "Request submitted": "Request submitted",
 } as const;
 
 export type MessageKey = keyof typeof en;

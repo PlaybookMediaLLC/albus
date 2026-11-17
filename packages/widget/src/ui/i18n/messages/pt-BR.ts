@@ -262,6 +262,9 @@ const pt_BR: Catalog = {
   New: "Novo",
   "Team member": "Membro da equipe",
   "See all": "Ver tudo",
+  Assistant: "Assistente",
+  "Submit request": "Enviar solicitação",
+  "Request submitted": "Solicitação enviada",
 };
 
 export default pt_BR;

@@ -32,7 +32,7 @@ const createRun = defineQuillsRoute({
   operationId: "createQuillsImport",
   summary: "Start a post CSV import run",
   description:
-    "Upload the CSV with a URL from POST /files/uploads (purpose `file`), then start the run. Columns: `title` and `content` (required), and `status`, `tags`, `board`, `author_email`, `author_name`, `created_at` and `source_id`. Rows without `board` go to `boardId`. The job checks every row first: one invalid row fails the run with an error report and imports nothing. A row whose `source_id` an earlier import created is skipped.",
+    "Upload the CSV with a URL from POST /files/uploads (purpose `file`), then start the run. Columns: `title` (required), and `content`, `status`, `tags`, `board`, `author_email`, `author_name`, `created_at` and `source_id`. Headers match case and spacing aside, and the common names of other feedback tools' exports also match (for example `Post Title`, `Details`, `Description`, `Post Status`, `Email`, `Created`, `URL`), so such an export imports as it is. Their status words (for example `shipped`, `declined`, `in development`) map to the default status of the same meaning, and a date and time without a zone is read as UTC. Vote counts are not imported. Rows without `board` go to `boardId`. The job checks every row first: one invalid row fails the run with an error report and imports nothing. A row whose `source_id` an earlier import created is skipped.",
   action: "manage_settings",
   body: uploadedObject.extend({
     name: z

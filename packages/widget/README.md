@@ -108,6 +108,7 @@ Quills.init({
   placement: 'right' | 'left', // default 'right'
   defaultBoard: 'bugs', // filter widget to one board
   launcher: true, // false = hide default button; { selector: '#help' } = open from your own element
+  container: undefined, // '#feedback' = render inline in that element, always open, no launcher (give it a height)
   theme: 'auto', // 'auto' | 'light' | 'dark'; default: the workspace setting
   announcements: 'whisper', // a new unread update: 'whisper' (its title beside the launcher), 'full' (opens it once per visit) or 'none'
   offset: { bottom: 20, side: 20 }, // default launcher distance from the edges, in pixels
@@ -237,7 +238,7 @@ unsubscribe()
 | `statechange`     | the `getState()` snapshot, after any change |
 | `presence`        | `{ online, withinOfficeHours }`: the team's messenger availability, read when the panel opens |
 | `announcement`    | `{ entryId, title }`: a new update the visitor has not read (for a custom launcher) |
-| `error`           | `{ code, message }`: `NOT_READY`, `IDENTIFY_FAILED`, `INVALID_OPTIONS`, `LAUNCHER_NOT_FOUND`, `WIDGET_DISABLED` |
+| `error`           | `{ code, message }`: `NOT_READY`, `IDENTIFY_FAILED`, `INVALID_OPTIONS`, `LAUNCHER_NOT_FOUND`, `CONTAINER_NOT_FOUND`, `WIDGET_DISABLED` |
 
 ## Lifecycle and iframe boundaries
 
@@ -339,6 +340,8 @@ Session rules:
 5. An unverified identity (`{ id, email }`) is refused: Kaneo identifies visitors only with a signed token.
 
 When a teammate turns on the away reply (Settings → Conversations → General), a message sent while no teammate is online, or outside office hours, gets that answer as a system message; the adapter reads it right after the send.
+
+When a teammate turns on the customer agent (Settings → Conversations → AI → Answer customers) on an instance with an AI provider, the assistant answers new messenger conversations from the help center and documents. Its messages are labelled Assistant. It hands the conversation to the team when it cannot help, and it can offer one feedback request per conversation as a card: **Submit request** posts it as the visitor (`post:created` fires) and marks the card submitted. A conversation the agent answered last that stays quiet for a day closes on its own.
 
 With messages on, Home's message card shows up to four teammate avatars (`GET /widget/team-avatars`, empty while Home's team avatars are off), a green dot and "We’re online now." while a teammate has the inbox open (`GET /widget/presence`), and the reply time a teammate chose in Settings → Widget ("Usually replies in a few hours."). Home's greeting and subtitle come from the same settings. The host hears the availability as a `presence` event.
 

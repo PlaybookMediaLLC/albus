@@ -241,6 +241,9 @@ const th: Catalog = {
   New: "ใหม่",
   "Team member": "สมาชิกทีม",
   "See all": "ดูทั้งหมด",
+  Assistant: "ผู้ช่วย",
+  "Submit request": "ส่งคำขอ",
+  "Request submitted": "ส่งคำขอแล้ว",
 };
 
 export default th;

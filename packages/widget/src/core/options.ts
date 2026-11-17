@@ -44,6 +44,7 @@ export const initOptionsSchema = z.object({
     ),
   placement: z.optional(z.enum(["left", "right"])),
   defaultBoard: z.optional(z.string()),
+  container: z.optional(z.string().check(z.minLength(1))),
   launcher: z.optional(
     z.union([
       z.boolean(),

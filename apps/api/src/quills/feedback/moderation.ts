@@ -52,7 +52,7 @@ const moderationDefault = z.object({
   }),
   holdSensitive: z.boolean().openapi({
     description:
-      "Hold a post or comment that shows an email, a phone or card number, an IBAN or a secret key",
+      "Hold a post or comment that shows an email, a phone or card number, an IBAN or a secret key. With AI configured, a customer post's images are checked after it commits, and a sensitive image returns the post to review.",
   }),
 });
 const DEFAULT: z.output<typeof moderationDefault> = {

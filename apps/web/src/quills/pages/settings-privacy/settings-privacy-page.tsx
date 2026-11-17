@@ -90,11 +90,24 @@ export function SettingsPrivacyPage({ workspaceId }: SettingsPrivacyPageProps) {
                   }}
                 />
               </SettingsRow>
-              {(["holdSpam", "holdSensitive"] as const).map((key) => (
+              {(
+                [
+                  [
+                    "holdSpam",
+                    t("settings-product.privacy.holdSpam"),
+                    t("settings-product.privacy.holdSpamText"),
+                  ],
+                  [
+                    "holdSensitive",
+                    t("settings-product.privacy.holdSensitive"),
+                    t("settings-product.privacy.holdSensitiveText"),
+                  ],
+                ] as const
+              ).map(([key, title, description]) => (
                 <SettingSwitchRow
                   key={key}
-                  title={t(`settings-product.privacy.${key}`)}
-                  description={t(`settings-product.privacy.${key}Text`)}
+                  title={title}
+                  description={description}
                   checked={data?.moderationDefault[key] ?? false}
                   disabled={locked}
                   onCheckedChange={async (value) => {

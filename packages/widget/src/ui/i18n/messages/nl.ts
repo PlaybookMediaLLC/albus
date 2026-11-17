@@ -263,6 +263,9 @@ const nl: Catalog = {
   New: "Nieuw",
   "Team member": "Teamlid",
   "See all": "Alles bekijken",
+  Assistant: "Assistent",
+  "Submit request": "Verzoek indienen",
+  "Request submitted": "Verzoek ingediend",
 };
 
 export default nl;

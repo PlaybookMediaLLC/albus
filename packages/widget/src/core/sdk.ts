@@ -338,12 +338,16 @@ export function createSDK(): SDK {
   function ensurePanel(): PanelHandle {
     if (panel) return panel;
     cancelPanelPreload();
+    const container = config!.container
+      ? (document.querySelector(config!.container) ?? undefined)
+      : undefined;
     panel = createPanel({
       widgetUrl: widgetBase(config!.instanceUrl, config!.workspace),
       placement,
       defaultBoard: config!.defaultBoard,
-      // The open panel covers the launcher; closing belongs inside the iframe.
-      showCloseButton: true,
+      container,
+      // The open panel covers the launcher; closing belongs inside the iframe. Inline has neither.
+      showCloseButton: !container,
       locale: config!.locale,
       onBackdropClick: () => dispatch("close"),
     });
@@ -470,7 +474,14 @@ export function createSDK(): SDK {
   }
 
   function createLauncherIfNeeded(): void {
-    if (launcher || bound || !config || config.launcher === false) return;
+    if (
+      launcher ||
+      bound ||
+      !config ||
+      config.launcher === false ||
+      config.container
+    )
+      return;
     if (typeof config.launcher === "object") {
       // The host's own element opens the widget, with the unread count as a data attribute.
       const el = document.querySelector(config.launcher.selector);
@@ -496,6 +507,11 @@ export function createSDK(): SDK {
     switch (cmd) {
       case "init": {
         const next = initOptionsSchema.parse(a);
+        if (next.container && !document.querySelector(next.container))
+          return fail(
+            "CONTAINER_NOT_FOUND",
+            `No element matches ${next.container}`,
+          );
         // Validate before destroy so a bad re-init leaves the working instance intact.
         if (config) dispatch("destroy");
         config = next;
@@ -511,7 +527,9 @@ export function createSDK(): SDK {
         // init typically runs while the host is still loading, and the iframe
         // immediately competes for its bandwidth. An open() before the idle
         // slot fires still creates the panel on the spot.
-        schedulePanelPreload();
+        // Inline, the widget shows at once, in the host element.
+        if (next.container) dispatch("open");
+        else schedulePanelPreload();
         sendIdentity(config.identity ?? { anonymous: true });
         const targetLauncher = launcher;
         const reveal = () => {
@@ -602,6 +620,7 @@ export function createSDK(): SDK {
         return;
       }
       case "close":
+        if (config?.container) return;
         launcher?.setOpen(false);
         panel?.hide();
         panelOpen = false;

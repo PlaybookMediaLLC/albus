@@ -547,6 +547,53 @@ export function useWidgetData({
         ),
       onOpenFile: (conversationId: string, fileId: string) =>
         run((signal) => send.fileUrl(conversationId, fileId, signal)),
+      ...(available.feedback && {
+        onConfirmFeedbackCard: (
+          conversationId: string,
+          messageId: string,
+          card: { title: string; body: string },
+        ) =>
+          run(async (signal) => {
+            // The message ID keys the post, so a retry after a failed confirm posts it once.
+            const created = await send.createPost(
+              card.body || card.title,
+              `card:${messageId}`,
+              boardId.current || undefined,
+              signal,
+              {
+                title: card.title,
+                metadata: postMetadata(page.current, navigator.userAgent),
+              },
+            );
+            const result = await send.confirmFeedbackCard(
+              conversationId,
+              messageId,
+              created.id,
+              signal,
+            );
+            const post = toPost(created);
+            patch(signal, (value) => ({
+              ...value,
+              conversations: value.conversations.map((item) =>
+                item.id === conversationId
+                  ? {
+                      ...item,
+                      messages: mergeMessages(item.messages, [
+                        toMessage(result.message),
+                      ]),
+                    }
+                  : item,
+              ),
+              ...(post && { feedback: upsert(value.feedback, post, "start") }),
+            }));
+            events.current.event("post:created", {
+              id: created.id,
+              title: created.title,
+              board: created.board,
+              statusId: created.status?.id ?? null,
+            });
+          }),
+      }),
       onReadConversation: (conversationId: string, throughMessageId: string) =>
         run(async (signal) => {
           const result = await send.markRead(

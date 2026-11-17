@@ -22,6 +22,9 @@ import {
   providerUrl,
 } from "../assistant/provider-edge.fixture";
 import { titleUntitledPost } from "../assistant/engine/post-title";
+import { checkPostImages } from "../assistant/engine/post-images";
+import { answerCustomer } from "../assistant/engine/customer-agent";
+import { runQuillsSweeps } from "../jobs/handlers/sweeps";
 import { loadEvent } from "../jobs/fanout";
 
 // The record and ownership checks of the widget host E2E (docs/quills-port/widget-e2e-report.md),
@@ -43,6 +46,11 @@ vi.mock("../../database/index", () => ({
       },
     },
   ),
+}));
+// The image check reads stored bytes; the test storage has none.
+vi.mock("../framework/files", async (original) => ({
+  ...(await original<typeof import("../framework/files")>()),
+  readObject: vi.fn(async () => Buffer.from("fake-png")),
 }));
 vi.mock("../../utils/get-user-session", () => ({
   getUserSession: (headers: Headers) => contractSession(headers),
@@ -494,6 +502,236 @@ describe.skipIf(!url)("widget records and ownership", () => {
     }
   });
 
+  it("lets the customer agent answer, propose one request, hand off with a note, and close a quiet chat", async () => {
+    const assistant = async (body: object) => {
+      const path = `/quills/${contractEnv().a}/assistant/settings`;
+      const headers = {
+        "x-test-user": contractEnv().owner,
+        "content-type": "application/json",
+      };
+      const { revision } = await (await app.request(path, { headers })).json();
+      return app.request(path, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ revision, ...body }),
+      });
+    };
+    const eventOf = async (type: string, entityId: string) => {
+      const [row] = (
+        await pool.query(
+          "SELECT event_id FROM quills.events WHERE workspace_id = $1 AND type = $2 AND entity_id = $3",
+          [contractEnv().a, type, entityId],
+        )
+      ).rows;
+      return (await withQuillsSystemWorkspace(contractEnv().a, (db) =>
+        loadEvent(db, row.event_id),
+      ))!;
+    };
+    const run = async (type: string, entityId: string) =>
+      withQuillsSystemWorkspace(
+        contractEnv().a,
+        await answerCustomer(contractEnv().a, await eventOf(type, entityId)),
+      );
+    const agent = (value: object) =>
+      provider.reply(({ path }) =>
+        path.endsWith("/embeddings")
+          ? {
+              json: {
+                data: [{ index: 0, embedding: Array(1536).fill(0.01) }],
+                usage: { prompt_tokens: 1, total_tokens: 1 },
+              },
+            }
+          : chatReply({
+              handoff: null,
+              feedback: null,
+              sourceIds: [],
+              ...value,
+            }),
+      );
+    type Message = {
+      id: string;
+      senderType: string;
+      content: string;
+      fromAssistant: boolean;
+      feedbackCard: { status: string; postId: string | null } | null;
+    };
+    const ada = await visitor();
+    const messagesOf = async (id: string) =>
+      (
+        await call("GET", `/widget/conversations/${id}/messages`, {
+          bearer: ada.token,
+        })
+      ).body.items as Message[];
+    const send = async (id: string, content: string) => {
+      const sent = await call("POST", `/widget/conversations/${id}/messages`, {
+        bearer: ada.token,
+        body: { content, idempotencyKey: contractEnv().id("key") },
+      });
+      return sent.body.message.id as string;
+    };
+
+    expect(
+      (
+        await assistant({
+          agentEnabled: true,
+          agentProductDescription: "A CSV exporter",
+        })
+      ).status,
+    ).toBe(200);
+    try {
+      const started = await call("POST", "/widget/conversations", {
+        bearer: ada.token,
+        body: {
+          content: "Could you add a PDF export?",
+          idempotencyKey: contractEnv().id("key"),
+        },
+      });
+      const id = started.body.conversation.id as string;
+      agent({
+        reply: "Not yet. I can pass it to the team as a request.",
+        feedback: { title: "PDF export", body: "Export reports as PDF" },
+      });
+      await run("conversation.created", id);
+      const prompt = JSON.stringify(provider.requests.at(-1)!.body);
+      expect(prompt).toContain("A CSV exporter");
+      let messages = await messagesOf(id);
+      const answer = messages.find((m) => m.fromAssistant)!;
+      expect(answer).toMatchObject({
+        senderType: "agent",
+        content: "Not yet. I can pass it to the team as a request.",
+        feedbackCard: { status: "proposed", postId: null },
+      });
+
+      // A second request in the same conversation is never proposed.
+      agent({
+        reply: "Noted.",
+        feedback: { title: "Dark mode", body: "A dark theme" },
+      });
+      await run("message.created", await send(id, "And a dark mode?"));
+      messages = await messagesOf(id);
+      expect(messages.filter((m) => m.feedbackCard)).toHaveLength(1);
+
+      // The customer confirms the card with the request it made from it, once.
+      const post = await call("POST", "/widget/posts", {
+        bearer: ada.token,
+        body: { title: "PDF export", content: "Export reports as PDF" },
+      });
+      const confirm = () =>
+        call(
+          "PUT",
+          `/widget/conversations/${id}/messages/${answer.id}/feedback-card`,
+          { bearer: ada.token, body: { postId: post.body.id } },
+        );
+      const confirmed = await confirm();
+      expect(confirmed.status).toBe(200);
+      expect(confirmed.body.message.feedbackCard).toMatchObject({
+        status: "confirmed",
+        postId: post.body.id,
+      });
+      expect((await confirm()).status).toBe(409);
+
+      // Asking for a person hands off: a private note for the team and a notice for the customer.
+      agent({ reply: "I will get a teammate.", handoff: "explicit_request" });
+      await run(
+        "message.created",
+        await send(id, "I want to talk to a person"),
+      );
+      const handoff = (
+        await pool.query(
+          "SELECT status, handoff_reason FROM quills.assistant_involvements WHERE conversation_id = $1",
+          [uuid(id)],
+        )
+      ).rows;
+      expect(handoff).toEqual([
+        { status: "handed_off", handoff_reason: "explicit_request" },
+      ]);
+      const note = (
+        await pool.query(
+          "SELECT content FROM quills.conversation_messages WHERE conversation_id = $1 AND is_internal",
+          [uuid(id)],
+        )
+      ).rows;
+      expect(note[0]?.content).toContain("I want to talk to a person");
+      messages = await messagesOf(id);
+      expect(
+        messages.some(
+          (m) =>
+            m.content.includes("I want to talk to a person") &&
+            m.senderType === "system",
+        ),
+      ).toBe(false);
+      expect(messages.at(-1)).toMatchObject({
+        senderType: "system",
+        content: "A teammate will reply here.",
+      });
+      // After a handoff the agent stays out of the conversation.
+      const before = provider.requests.length;
+      await run("message.created", await send(id, "Hello?"));
+      expect(provider.requests.length).toBe(before);
+
+      // A teammate who closes the conversation while the model answers keeps it closed and quiet.
+      const taken = await call("POST", "/widget/conversations", {
+        bearer: ada.token,
+        body: {
+          content: "Is SSO on the roadmap?",
+          idempotencyKey: contractEnv().id("key"),
+        },
+      });
+      const takenId = taken.body.conversation.id as string;
+      agent({ reply: "Not yet." });
+      const pending = await answerCustomer(
+        contractEnv().a,
+        await eventOf("conversation.created", takenId),
+      );
+      await pool.query(
+        "UPDATE quills.conversations SET status = 'closed' WHERE id = $1",
+        [uuid(takenId)],
+      );
+      await withQuillsSystemWorkspace(contractEnv().a, pending);
+      expect((await messagesOf(takenId)).some((m) => m.fromAssistant)).toBe(
+        false,
+      );
+
+      // A conversation the agent answered last and nobody replied to for a day closes.
+      const quiet = await call("POST", "/widget/conversations", {
+        bearer: ada.token,
+        body: {
+          content: "Where is billing?",
+          idempotencyKey: contractEnv().id("key"),
+        },
+      });
+      const quietId = quiet.body.conversation.id as string;
+      agent({ reply: "Billing is under Settings." });
+      await run("conversation.created", quietId);
+      await pool.query(
+        "UPDATE quills.assistant_involvements SET last_assistant_answer_at = now() - interval '25 hours' WHERE conversation_id = $1",
+        [uuid(quietId)],
+      );
+      await runQuillsSweeps(contractEnv().a);
+      const closed = (
+        await pool.query(
+          "SELECT c.status, i.status AS involvement FROM quills.conversations c JOIN quills.assistant_involvements i ON i.conversation_id = c.id WHERE c.id = $1",
+          [uuid(quietId)],
+        )
+      ).rows;
+      expect(closed).toEqual([
+        { status: "closed", involvement: "resolved_assumed" },
+      ]);
+    } finally {
+      provider.reply();
+      await assistant({ agentEnabled: false });
+    }
+
+    // With the agent off, a new conversation is left to the team.
+    const off = await call("POST", "/widget/conversations", {
+      bearer: ada.token,
+      body: { content: "Hi", idempotencyKey: contractEnv().id("key") },
+    });
+    const before = provider.requests.length;
+    await run("conversation.created", off.body.conversation.id);
+    expect(provider.requests.length).toBe(before);
+  });
+
   it("answers a visitor with the away reply while the team is away, once per conversation", async () => {
     const settings = (body: unknown) =>
       app.request(`/quills/${contractEnv().a}/support/away-reply`, {
@@ -730,6 +968,56 @@ describe.skipIf(!url)("widget records and ownership", () => {
         "pending",
       );
       expect(await stateOf(`Please add CSV export ${tag}`)).toBe("published");
+
+      // An image is checked by AI after the post commits: a card in a screenshot holds the post.
+      const withImage = async (sensitive: boolean) => {
+        const created = await call("POST", "/widget/posts", {
+          bearer: ada.token,
+          body: { content: `Screenshot of the error ${contractEnv().id("i")}` },
+        });
+        await pool.query(
+          "INSERT INTO quills.files (id, workspace_id, storage_key, name, content_type, family, size, sha256, source, uploaded_by_id, post_id, attached_at, preview_status) VALUES (gen_random_uuid(), $1, $2, 'shot.png', 'image/png', 'image', 8, $3, 'customer', $4, $5, now(), 'none')",
+          [
+            contractEnv().a,
+            `quills/file/${contractEnv().id("k")}.png`,
+            "0".repeat(64),
+            ada.principal,
+            uuid(created.body.id),
+          ],
+        );
+        const [event] = (
+          await pool.query(
+            "SELECT event_id FROM quills.events WHERE workspace_id = $1 AND type = 'post.created' AND entity_id = $2",
+            [contractEnv().a, created.body.id],
+          )
+        ).rows;
+        provider.reply(() =>
+          chatReply({ sensitive, kinds: sensitive ? ["payment card"] : [] }),
+        );
+        const loaded = await withQuillsSystemWorkspace(contractEnv().a, (db) =>
+          loadEvent(db, event.event_id),
+        );
+        await withQuillsSystemWorkspace(
+          contractEnv().a,
+          await checkPostImages(contractEnv().a, loaded!),
+        );
+        return (
+          await pool.query(
+            "SELECT moderation_state FROM quills.posts WHERE id = $1",
+            [uuid(created.body.id)],
+          )
+        ).rows[0].moderation_state as string;
+      };
+      try {
+        expect(await withImage(true)).toBe("pending");
+        const sent = provider.requests.at(-1)!.body.messages[1].content;
+        expect(sent[0].image_url.url).toBe(
+          `data:image/png;base64,${Buffer.from("fake-png").toString("base64")}`,
+        );
+        expect(await withImage(false)).toBe("published");
+      } finally {
+        provider.reply();
+      }
     } finally {
       await setDefault({
         requireApproval: "none",

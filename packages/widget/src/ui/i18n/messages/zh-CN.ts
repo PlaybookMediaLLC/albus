@@ -240,6 +240,9 @@ const zh_CN: Catalog = {
   New: "新",
   "Team member": "团队成员",
   "See all": "查看全部",
+  Assistant: "助手",
+  "Submit request": "提交请求",
+  "Request submitted": "请求已提交",
 };
 
 export default zh_CN;

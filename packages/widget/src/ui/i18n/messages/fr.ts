@@ -263,6 +263,9 @@ const fr: Catalog = {
   New: "Nouveau",
   "Team member": "Membre de l’équipe",
   "See all": "Tout voir",
+  Assistant: "Assistant",
+  "Submit request": "Envoyer la demande",
+  "Request submitted": "Demande envoyée",
 };
 
 export default fr;

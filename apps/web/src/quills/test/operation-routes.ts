@@ -236,6 +236,16 @@ export const quillsOperationRoutes = [
     path: "/api/quills-public/{workspace}/widget/contact-email/confirm",
   },
   {
+    operationId: "confirmQuillsFeedbackCard",
+    method: "PUT",
+    path: "/api/quills-public/{workspace}/support/conversations/{conversationId}/messages/{messageId}/feedback-card",
+  },
+  {
+    operationId: "confirmQuillsWidgetFeedbackCard",
+    method: "PUT",
+    path: "/api/quills-public/{workspace}/widget/conversations/{conversationId}/messages/{messageId}/feedback-card",
+  },
+  {
     operationId: "createQuillsAdminAssistantCopilot",
     method: "POST",
     path: "/api/quills/{workspaceId}/assistant/copilot",
@@ -959,6 +969,11 @@ export const quillsOperationRoutes = [
     operationId: "findQuillsPortalSimilarPosts",
     method: "GET",
     path: "/api/quills-public/{workspace}/portal/posts/similar",
+  },
+  {
+    operationId: "findQuillsUserByExternalId",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/users/by-external-id",
   },
   {
     operationId: "findQuillsUsersByEmail",

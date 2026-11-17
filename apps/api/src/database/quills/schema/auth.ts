@@ -59,6 +59,10 @@ export interface StoredAssistantConfig {
       };
     };
     agent: {
+      /** The customer agent answers widget and portal conversations (Quills gap G-31). */
+      enabled?: boolean;
+      /** What the product does, for the customer agent's answers. */
+      productDescription?: string;
       voice: StoredAssistantVoice;
       knowledge: {
         helpCenter: boolean;

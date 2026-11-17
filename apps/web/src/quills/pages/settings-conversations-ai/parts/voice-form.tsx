@@ -11,6 +11,7 @@ const schema = z.object({
   tone: z.enum(["friendly", "balanced", "formal"]),
   responseLength: z.enum(["concise", "balanced", "detailed"]),
   additionalInstructions: z.string().max(2000),
+  productDescription: z.string().max(1000),
 });
 export type VoiceValues = z.infer<typeof schema>;
 
@@ -93,6 +94,17 @@ export function VoiceForm({ values, onSubmit }: VoiceFormProps) {
                 ]}
               />
             </div>
+            <Field>
+              <FieldLabel htmlFor={`${id}-product`}>
+                {t("settings-conversations.ai.product")}
+              </FieldLabel>
+              <Textarea
+                id={`${id}-product`}
+                rows={3}
+                placeholder={t("settings-conversations.ai.productPlaceholder")}
+                {...form.register("productDescription")}
+              />
+            </Field>
             <Field>
               <FieldLabel htmlFor={`${id}-instructions`}>
                 {t("settings-conversations.ai.instructions")}

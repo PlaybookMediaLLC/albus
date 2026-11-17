@@ -26,7 +26,7 @@ const F = {
     "logout(); getUser(); isIdentified()",
   ],
   "identity-unsigned-readme": [
-    "Identity: unsigned identify from the README",
+    "Identity: unsigned identify is refused",
     'Script tag: Quills("identify", {id, email, name})',
   ],
   "feedback-deeplink-prefill": [
@@ -179,6 +179,50 @@ const F = {
   "teammate-person": [
     "Teammate app: person",
     "Teammate opens /feedback/{ws}/members/{principalId}",
+  ],
+  "sdk-control-surface": [
+    "SDK: control surface",
+    "toggle(); getState(); setTheme(dark); launcher { selector }; offset",
+  ],
+  "sdk-page-url": [
+    "SDK: page URL privacy",
+    "init({ pageUrl: 'origin' }) and 'none'; post feedback each time",
+  ],
+  "sdk-inline-embed": [
+    "SDK: inline embed",
+    "Check inline: init({ container: '#inline-widget' }); close(); getState()",
+  ],
+  "changelog-announcement": [
+    "Changelog: launcher announcement",
+    "Publish an update; reload the host page",
+  ],
+  "activity-feed": [
+    "Activity: notifications page",
+    "A teammate replies on Ada's request; open({ view: 'notifications' })",
+  ],
+  "messenger-team-home": [
+    "Messenger: team presence, avatars and reply time",
+    "A teammate is online; open Home",
+  ],
+  "conversation-away-reply": [
+    "Conversation: away reply",
+    "Turn on the away reply; no teammate online; send a message",
+  ],
+  "conversation-ip-block": [
+    "Conversation: block the sender's address",
+    "Teammate: conversation menu → Block IP; the visitor sends again; Unblock IP",
+  ],
+  "teammate-hide-request": [
+    "Teammate: hide one request",
+    "Teammate: visibility → Shown to its author only; check the widget as another person",
+  ],
+  "moderation-auto-hold": [
+    "Moderation: spam and sensitive holds",
+    "Turn on the checks; post spam, a card number and a normal request",
+  ],
+  "api-search-typos": [
+    "Search: typos, partial words and minus words",
+    "GET /widget/posts?search= with a typo, a prefix and a minus word",
   ],
 };
 const esc = (s) =>

@@ -16,6 +16,7 @@ import {
 } from "../../ui/upstream";
 import { HomeSection } from "./parts/home-section";
 import { LauncherForm } from "./parts/launcher-form";
+import { ReplyTimeRow } from "./parts/reply-time-row";
 
 export interface SettingsConversationsWidgetPageProps {
   workspaceId: string;
@@ -113,29 +114,11 @@ export function SettingsConversationsWidgetPage({
                       onValueChange={(position) => save({ position })}
                     />
                   </SettingsRow>
-                  <SettingsRow
-                    title={t("settings-conversations.widget.replyTime")}
-                    description={t(
-                      "settings-conversations.widget.replyTimeText",
-                    )}
-                  >
-                    <SettingSelect
-                      label={t("settings-conversations.widget.replyTime")}
-                      value={data.replyTime ?? "none"}
-                      options={(
-                        ["none", "minutes", "hours", "day"] as const
-                      ).map((value) => ({
-                        value,
-                        label: t(
-                          `settings-conversations.widget.replyTimes.${value}`,
-                        ),
-                      }))}
-                      disabled={locked}
-                      onValueChange={(value) =>
-                        save({ replyTime: value === "none" ? null : value })
-                      }
-                    />
-                  </SettingsRow>
+                  <ReplyTimeRow
+                    value={data.replyTime}
+                    disabled={locked}
+                    onChange={(replyTime) => save({ replyTime })}
+                  />
                   {locked ? null : (
                     <LauncherForm
                       values={{

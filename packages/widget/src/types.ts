@@ -37,6 +37,12 @@ export interface InitOptions {
    */
   launcher?: boolean | { selector: string };
   /**
+   * A CSS selector of an element on your page: the widget renders inside it, always open,
+   * instead of floating. There is no launcher or close button; `open({ view })` still picks the
+   * view. Give the element a height (at least 480px works well).
+   */
+  container?: string;
+  /**
    * How a new, unread update is announced: `whisper` (default) shows its title beside the
    * launcher, `full` opens it once per visit, `none` only fires the `announcement` event.
    */

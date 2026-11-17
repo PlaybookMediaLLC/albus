@@ -289,6 +289,7 @@ export function WidgetHost({
       // Until the config arrives no tab is known to be on.
       tabs={ready ? config.tabs : []}
       onClose={close}
+      closable={params.get("inline") !== "1"}
       onExpandedChange={(expanded) =>
         bridge.current?.post({ type: "quackback:expand", expanded })
       }

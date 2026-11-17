@@ -43,6 +43,8 @@ import {
 } from "./model";
 import { sendAwayReply } from "../away-reply";
 import { rememberSender } from "../ip-blocks";
+import { posts } from "../../../database/quills/schema/posts";
+import { HTTPException } from "hono/http-exception";
 
 // The customer's own conversations, for the widget (`/widget/...`, widget session) and the portal
 // (`/support/...`, Kaneo session). Messages are plain text. Replies and notices reach the customer
@@ -634,6 +636,80 @@ export function conversationRoutes(audience: Customer) {
     },
   });
 
+  // Gap G-31: the visitor posted the customer agent's proposed request with the feedback route,
+  // and marks the card with that post. Each card is confirmed once, only with the visitor's post.
+  const confirmCard = defineQuillsRoute({
+    audience,
+    ...writer,
+    method: "put",
+    path: `${base}/conversations/{conversationId}/messages/{messageId}/feedback-card`,
+    operationId: name(
+      "confirmQuillsWidgetFeedbackCard",
+      "confirmQuillsFeedbackCard",
+    ),
+    summary: `Confirm the feedback request that the assistant proposed to ${who}`,
+    description:
+      "postId is the caller's own post made from the card. A card that is confirmed already answers 409.",
+    action: "update",
+    rateLimit: { limit: 30, windowSeconds: 600 },
+    params: conversationParams.extend({
+      messageId: flexibleToTypeIdSchema("conversation_msg"),
+    }),
+    body: z.object({ postId: flexibleToTypeIdSchema("post") }),
+    response: z.object({ message: customerMessageSchema }),
+    responseDescription: "The message with its confirmed card",
+    errors: { ...errors, 409: "The card is confirmed already" },
+    event: ({ params }) => ({
+      type: "message.updated",
+      entityType: "conversation_message",
+      entityId: params.messageId,
+      payload: { conversationId: params.conversationId },
+    }),
+    handler: async ({ db, caller, params, body }) => {
+      await requireSurface(db, audience, caller, "messenger");
+      const me = caller.principalId!;
+      const conversation = await ownConversation(db, me, params.conversationId);
+      const [row] = await db
+        .select({ metadata: conversationMessages.metadata })
+        .from(conversationMessages)
+        .where(
+          and(
+            eq(conversationMessages.id, params.messageId),
+            eq(conversationMessages.conversationId, conversation.id),
+            eq(conversationMessages.isInternal, false),
+            isNull(conversationMessages.deletedAt),
+          ),
+        )
+        .for("update");
+      const card = row?.metadata?.feedbackCard;
+      if (!card) throw notFound("Feedback card");
+      if (card.status === "confirmed")
+        throw new HTTPException(409, {
+          message: "The card is confirmed already",
+        });
+      const [post] = await db
+        .select({ id: posts.id })
+        .from(posts)
+        .where(and(eq(posts.id, body.postId), eq(posts.principalId, me)));
+      if (!post) throw notFound("Post");
+      await db
+        .update(conversationMessages)
+        .set({
+          metadata: {
+            ...row!.metadata,
+            feedbackCard: { ...card, status: "confirmed", postId: post.id },
+          },
+        })
+        .where(eq(conversationMessages.id, params.messageId));
+      const [updated] = await selectCustomerMessages(
+        db,
+        me,
+        eq(conversationMessages.id, params.messageId),
+      );
+      return { message: toMessages([updated!])[0]! };
+    },
+  });
+
   return apiRouter()
     .openapi(...list)
     .openapi(...unread)
@@ -644,5 +720,6 @@ export function conversationRoutes(audience: Customer) {
     .openapi(...send)
     .openapi(...markRead)
     .openapi(...typing)
-    .openapi(...csat);
+    .openapi(...csat)
+    .openapi(...confirmCard);
 }

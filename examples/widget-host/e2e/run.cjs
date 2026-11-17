@@ -1058,11 +1058,15 @@ const groups = {
       const tm = await L.teammate(require("playwright"));
       const url = `${L.API}/api/quills/${L.WS}/conversations/${conversationId}/ip-block`;
       const before = await (await tm.get(url)).json();
+      // The widget session exists before the block: a blocked address cannot start one either.
+      await openView("messages");
+      await frame
+        .getByRole("button", { name: "New conversation" })
+        .waitFor({ timeout: 15000 });
       const blocked = await tm.put(url);
       const until = (await blocked.json()).blockedUntil;
       // The browser and the API share 127.0.0.1 here: the next widget write is refused.
       const mark = net.mark();
-      await openView("messages");
       await frame.getByRole("button", { name: "New conversation" }).click();
       await frame
         .getByRole("textbox", { name: "Your message" })
@@ -1196,7 +1200,7 @@ const groups = {
         await page.goto(L.HOST + "/");
         await page.waitForSelector("[data-event=ready]");
         const res = await signIn("linus", variant);
-        await page.waitForSelector("[data-event=identify]:nth-of-type(1)");
+        await page.waitForSelector("[data-event=identify]");
         await sleep(800);
         const mark = net.mark();
         await openView("home");
@@ -1531,6 +1535,46 @@ const groups = {
           "init({ pageUrl: 'origin' }) stores only the origin with a post; pageUrl: 'none' stores no page address",
         actual: `origin → ${JSON.stringify(origin)}; none → ${JSON.stringify(none)}`,
         result: origin === L.HOST && none === "" ? "pass" : "fail",
+      };
+    });
+
+    await step("sdk-inline-embed", async () => {
+      await page.check("[data-testid=inline]");
+      await page.waitForSelector("#inline-widget iframe", { timeout: 20000 });
+      const inline = page.frameLocator("#inline-widget iframe");
+      await inline
+        .getByRole("button", { name: "Feedback", exact: true })
+        .first()
+        .waitFor({ timeout: 20000 });
+      const launchers = await page.locator(".quackback-launcher").count();
+      const closeButtons =
+        (await page.locator("#inline-widget .quackback-panel-close").count()) +
+        (await inline.getByRole("button", { name: "Close widget" }).count());
+      await hostButton("close").click();
+      await sleep(500);
+      const box = await page.locator("#inline-widget iframe").boundingBox();
+      await hostButton("getState").click();
+      const stateLine =
+        (await log())
+          .split("\n")
+          .filter((line) => /call getState/.test(line))
+          .at(0) ?? "";
+      const state = { open: /"open":\s*true/.test(stateLine) };
+      const shotPath = await shot("38-inline-embed");
+      await page.uncheck("[data-testid=inline]");
+      await page.waitForSelector("[data-event=ready]");
+      await sleep(1500);
+      const ok =
+        launchers === 0 &&
+        closeButtons === 0 &&
+        (box?.height ?? 0) >= 480 &&
+        state?.open === true;
+      return {
+        expected:
+          "init({ container: '#inline-widget' }) renders the widget inside the host element, open, with no launcher and no close button; close() leaves it in place",
+        actual: `launchers ${launchers}; close buttons ${closeButtons}; frame ${Math.round(box?.width ?? 0)}x${Math.round(box?.height ?? 0)}; getState().open after close() ${state?.open}`,
+        shot: shotPath,
+        result: ok ? "pass" : "fail",
       };
     });
 
@@ -2096,17 +2140,18 @@ const groups = {
         .filter((c) => c.path.endsWith("/widget/identify"));
       const event = ((await log()).match(/identify \{[^\n]*/g) || [])[0];
       const customer = L.sql(
-        "select count(*) from quills.customer_identity where external_id = 'u_123' or email = 'ada@example.com'",
+        "select count(*) from quills.customer_identity where external_id = 'u_123'",
       )[0][0];
+      // B-04: the README documents signed tokens only; an unsigned identify must say why it fails.
+      const refused =
+        identifyCalls.length === 0 &&
+        /signed ssoToken/.test(event ?? "") &&
+        customer === "0";
       return {
         expected:
-          "README: Quills.identify({ id, email, name }) identifies an unverified user",
-        actual: `identify requests sent: ${identifyCalls.length}; host identify event ${event}; customers with that id or email: ${customer}`,
-        result: customer !== "0" ? "pass" : "fail",
-        defect:
-          customer !== "0"
-            ? undefined
-            : "README shows unverified identify({ id, email, name }) in Vanilla JS, React and identify shapes, but Kaneo accepts signed tokens only; the call is silently anonymous",
+          "Unsigned Quills.identify({ id, email, name }) is refused with a clear error, as the README now documents (signed tokens only); no customer is created",
+        actual: `identify requests sent: ${identifyCalls.length}; host identify event ${event}; customers with external id u_123: ${customer}`,
+        result: refused ? "pass" : "fail",
       };
     });
   },

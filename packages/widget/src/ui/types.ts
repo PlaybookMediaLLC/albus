@@ -130,6 +130,10 @@ export interface Conversation {
     attachments?: readonly Attachment[];
     /** Files a teammate sent: each downloads through onOpenFile. */
     files?: ReadonlyArray<{ id: string; name: string }>;
+    /** The workspace's assistant wrote it. */
+    fromAssistant?: boolean;
+    /** A request the assistant proposed; the visitor submits it once. */
+    feedbackCard?: { title: string; body: string; confirmed: boolean };
   }>;
 }
 
@@ -224,6 +228,12 @@ export interface WidgetViewProps {
     body: string,
     options: SubmissionOptions,
   ) => Promise<unknown>;
+  /** Posts the request the assistant proposed in a message, and marks the card submitted. */
+  onConfirmFeedbackCard?: (
+    conversationId: string,
+    messageId: string,
+    card: { title: string; body: string },
+  ) => Promise<unknown>;
   onReadConversation?: (
     conversationId: string,
     throughMessageId: string,
@@ -243,6 +253,8 @@ export interface WidgetViewProps {
   ) => Promise<readonly SimilarRequest[]>;
   onFollowFeedback?: (postId: string, following: boolean) => Promise<unknown>;
   onClose: () => void;
+  /** False hides the close button: the widget is inline in the host page. */
+  closable?: boolean;
   /** Resolve only after the action succeeds. Rejections keep the draft and show an error. */
   onSendMessage?: (
     body: string,

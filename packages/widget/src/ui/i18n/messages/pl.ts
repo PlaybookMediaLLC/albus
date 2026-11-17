@@ -271,6 +271,9 @@ const pl: Catalog = {
   New: "Nowe",
   "Team member": "Członek zespołu",
   "See all": "Zobacz wszystko",
+  Assistant: "Asystent",
+  "Submit request": "Wyślij prośbę",
+  "Request submitted": "Prośba wysłana",
 };
 
 export default pl;

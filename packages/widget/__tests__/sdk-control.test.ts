@@ -255,4 +255,31 @@ describe("sdk control surface", () => {
     ).toBe(false);
     expect(announced).toHaveLength(4);
   });
+  it("renders inline in a host element, always open, without a launcher or close", () => {
+    stubIframe();
+    document.body.innerHTML = '<div id="feedback" style="height:600px"></div>';
+    sdk = createSDK();
+    sdk.dispatch("init", { ...init, container: "#feedback" });
+    const panel = document.querySelector("#feedback > .quackback-panel")!;
+    expect(panel.classList.contains("quackback-inline")).toBe(true);
+    const src = panel.querySelector("iframe")?.getAttribute("src");
+    expect(src).not.toContain("showClose");
+    // The iframe page hides its own close button inline.
+    expect(src).toContain("inline=1");
+    expect(panel.querySelector(".quackback-panel-close")).toBeNull();
+    expect(document.querySelector(".quackback-launcher")).toBeNull();
+    expect(sdk.getState().open).toBe(true);
+    sdk.dispatch("close");
+    expect(sdk.getState().open).toBe(true);
+    expect((panel as HTMLElement).inert).toBe(false);
+
+    const errors: string[] = [];
+    sdk.dispatch("on", "error", (error: { code: string }) =>
+      errors.push(error.code),
+    );
+    sdk.dispatch("init", { ...init, container: "#missing" });
+    expect(errors).toContain("CONTAINER_NOT_FOUND");
+    // A bad re-init leaves the working widget in place.
+    expect(document.querySelector("#feedback iframe")).not.toBeNull();
+  });
 });

@@ -54,6 +54,14 @@ export function HostPage(props: Props) {
         subscribe={subscribe}
         unsubscribe={unsubscribe}
       />
+      {/* The target of `container`: the widget renders here when "inline" is on. */}
+      {props.init.inline ? (
+        <section
+          id="inline-widget"
+          data-testid="inline-widget"
+          style={{ height: 640, maxWidth: 420 }}
+        />
+      ) : null}
       {props.children}
       <p>
         {/* The target of `launcher: { selector }`; the SDK sets data-quills-unread on it. */}

@@ -22,6 +22,53 @@ The order is: broken first, then P0, P1 and P2.
 
 What already matches the benchmark, checked in code and in the E2E run: signed identify with segments and attributes, anonymous sessions, feedback create/vote/unvote/comment/follow, screenshot capture and upload, help search and article feedback, changelog read and reactions, conversations with team replies and the unread badge, surveys, cross-user privacy, refused bad tokens and blocked people, deep links to posts, articles and entries, launcher placement, `metadata`, `on`/`off`, `destroy`, the teammate post, conversation and person pages, merge and unmerge, Trending, weekly digests, pinned comments, sitemaps and RSS, conversation topics, translation, reply-by-email for conversations, office hours, member wipe, Slack threads, REST and remote MCP.
 
+## Phase 4 status (2026-11-17)
+
+All gaps were approved for one pull request. Each row names the proof: unit or integration tests in the repository, and the browser run in [the widget E2E report](quills-port/widget-e2e-report.md) where a browser can show it. "Fake AI" means an integration test against a local OpenAI-compatible stub (`apps/api/src/quills/assistant/provider-edge.fixture.ts`); the demo has no AI provider, so no browser run covers the AI paths.
+
+| ID | Status | Evidence |
+|---|---|---|
+| B-01 | done | `packages/widget/__tests__/adapter-host.test.tsx`; E2E identity-identify-merge |
+| B-02 | done | adapter-host tests; E2E deep links |
+| B-03 | done | `browser-queue.test.ts`; E2E script tag |
+| B-04 | done | SDK README signed identity section |
+| B-05 | done | `apps/api/src/quills/files/customer.test.ts`, web post-attachments test; E2E teammate-post-attachment |
+| B-06 | done | web page-context test; E2E |
+| B-07 | done | `adapter-map.test.ts`; E2E |
+| B-08 | done | `__tests__/i18n.test.ts` (13 catalogs complete); E2E sdk-locale. Translations are machine-written and need native review |
+| B-09 | done | with G-06 |
+| B-10 | done | `scripts/dev-demo/index.mjs` builds the widget |
+| G-01 | done | contract fixtures, `widget-records.test.ts`; E2E changelog-subscribe |
+| G-02 | done | `widget/activity.ts` + contract, `notification.test.ts`; E2E activity-feed |
+| G-03 | done | adapter-load and parity tests; E2E roadmap-read |
+| G-04 | done | sdk-control and adapter-host tests; E2E changelog-announcement |
+| G-05 | done | `files/customer.test.ts`; E2E conversation-attach-file |
+| G-06 | done | adapter-host test; E2E conversation-contact-email. The "require email before sending" mode is not built: it needs a messenger setting |
+| G-07 | done | `widget.test.ts`, web settings test; E2E messenger-team-home |
+| G-08 | done | `sdk-control.test.ts`; E2E sdk-control-surface |
+| G-09 | done | adapter-host tests; E2E sdk-deep-links |
+| G-10 | done | adapter-host test; E2E feedback-similar |
+| G-11 | done | `widget-records.test.ts` (fake AI, and AI off) |
+| G-12 | done | page-capture and annotation tests; E2E screenshot |
+| G-13 | done | `sdk.test.ts`; E2E sdk-page-url |
+| G-14 | done | `widget-records.test.ts`, sdk-control; E2E identity |
+| G-15 | done | `audience.test.ts`. Host apps that sign tokens longer than 1 hour now get 403: needs a release note |
+| G-18 | done (widget) | `init({ container })` renders the widget inline in a host element: `sdk-control.test.ts`; E2E sdk-inline-embed. Portal pages are not framed; they wait for #130 |
+| G-19 | done | E2E sdk-locale (Arabic, `dir=rtl`) |
+| G-21 | done | migration `0031_post_hidden.sql`, `widget-records.test.ts`, web test; E2E teammate-hide-request |
+| G-22 | done | text: `content-checks.test.ts`, E2E moderation-auto-hold. Images: `assistant/engine/post-images.ts`, `widget-records.test.ts` (fake AI). Needs a model that reads images |
+| G-23 | done | `content-checks.test.ts`, `widget-records.test.ts`; E2E moderation-auto-hold |
+| G-25 | done (generic) | Exports from other tools import as they are (header aliases, status words, plain dates): `csv.test.ts`, `transfer.test.ts`. Checked with Canny-shaped sample files only; Nolt and ProductRoad do not publish their headers. Votes are not imported |
+| G-26 | done | `post-search.test.ts`, `widget-records.test.ts`; E2E api-search-typos |
+| G-27 | done | `signed.test.ts`. No browser run: inbound mail needs a signed webhook and domain |
+| G-28 | done | contract fixtures, `widget-records.test.ts`; E2E conversation-ip-block |
+| G-29 | done | `widget-records.test.ts`, contract |
+| G-31 | done | `assistant/engine/customer-agent.ts`, quiet-close sweep (migration `0032`), feedback-card route: `widget-records.test.ts` (fake AI), contract, widget `feedback-card.test.tsx`, web settings and portal tests |
+| G-32 | done | `widget-records.test.ts`; E2E conversation-away-reply |
+| G-17 | blocked | Decision #129 is open. Its security limit forbids signing a person in from the host's token alone, and a widget portal session needs an explicit waiver of the one-authentication-model rule. Choose option A, B or C there |
+| G-24 | blocked | The SSO mode signs people in from a host token: same decision as G-17 (#129). Portal pages: #130 |
+| G-30 | not done | A native iOS SDK (Swift, WKWebView/UIKit) cannot be compiled or run in this Linux environment, so it would ship untested. Needs a macOS run |
+
 ## Gaps
 
 | ID | Type | Priority | Size | UserJot behavior | Current Kaneo/Quills state | Data and permission boundary | Issue |

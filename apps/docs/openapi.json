@@ -11542,6 +11542,13 @@
                         "string",
                         "null"
                       ]
+                    },
+                    "commentId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The comment that a reply to a post notification became"
                     }
                   },
                   "required": [
@@ -27968,6 +27975,42 @@
                             "null"
                           ],
                           "format": "date-time"
+                        },
+                        "fromAssistant": {
+                          "type": "boolean"
+                        },
+                        "feedbackCard": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "proposed",
+                                "confirmed"
+                              ]
+                            },
+                            "postId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "title",
+                            "body",
+                            "status",
+                            "postId"
+                          ]
                         }
                       },
                       "required": [
@@ -27980,7 +28023,9 @@
                         "embeds",
                         "attachments",
                         "createdAt",
-                        "editedAt"
+                        "editedAt",
+                        "fromAssistant",
+                        "feedbackCard"
                       ]
                     },
                     "conversation": {
@@ -28403,6 +28448,42 @@
                               "null"
                             ],
                             "format": "date-time"
+                          },
+                          "fromAssistant": {
+                            "type": "boolean"
+                          },
+                          "feedbackCard": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "title": {
+                                "type": "string"
+                              },
+                              "body": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "proposed",
+                                  "confirmed"
+                                ]
+                              },
+                              "postId": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "title",
+                              "body",
+                              "status",
+                              "postId"
+                            ]
                           }
                         },
                         "required": [
@@ -28415,7 +28496,9 @@
                           "embeds",
                           "attachments",
                           "createdAt",
-                          "editedAt"
+                          "editedAt",
+                          "fromAssistant",
+                          "feedbackCard"
                         ]
                       }
                     },
@@ -28641,6 +28724,42 @@
                               "null"
                             ],
                             "format": "date-time"
+                          },
+                          "fromAssistant": {
+                            "type": "boolean"
+                          },
+                          "feedbackCard": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "title": {
+                                "type": "string"
+                              },
+                              "body": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "proposed",
+                                  "confirmed"
+                                ]
+                              },
+                              "postId": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "title",
+                              "body",
+                              "status",
+                              "postId"
+                            ]
                           }
                         },
                         "required": [
@@ -28653,7 +28772,9 @@
                           "embeds",
                           "attachments",
                           "createdAt",
-                          "editedAt"
+                          "editedAt",
+                          "fromAssistant",
+                          "feedbackCard"
                         ]
                       }
                     },
@@ -28877,6 +28998,42 @@
                             "null"
                           ],
                           "format": "date-time"
+                        },
+                        "fromAssistant": {
+                          "type": "boolean"
+                        },
+                        "feedbackCard": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "proposed",
+                                "confirmed"
+                              ]
+                            },
+                            "postId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "title",
+                            "body",
+                            "status",
+                            "postId"
+                          ]
                         }
                       },
                       "required": [
@@ -28889,7 +29046,9 @@
                         "embeds",
                         "attachments",
                         "createdAt",
-                        "editedAt"
+                        "editedAt",
+                        "fromAssistant",
+                        "feedbackCard"
                       ]
                     },
                     "conversation": {
@@ -29436,6 +29595,288 @@
           },
           "404": {
             "description": "Conversation, message or support surface not found; Workspace not found or archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quills-public/{workspace}/support/conversations/{conversationId}/messages/{messageId}/feedback-card": {
+      "put": {
+        "operationId": "confirmQuillsFeedbackCard",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Confirm the feedback request that the assistant proposed to the signed-in customer",
+        "description": "postId is the caller's own post made from the card. A card that is confirmed already answers 409.",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Workspace ID or slug"
+            },
+            "required": true,
+            "description": "Workspace ID or slug",
+            "name": "workspace",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "conversationId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "messageId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "postId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "postId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The message with its confirmed card",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "conversationId": {
+                          "type": "string"
+                        },
+                        "fromVisitor": {
+                          "type": "boolean"
+                        },
+                        "senderType": {
+                          "type": "string",
+                          "enum": [
+                            "visitor",
+                            "agent",
+                            "system"
+                          ]
+                        },
+                        "author": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "name": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "avatarUrl": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "avatarUrl"
+                          ]
+                        },
+                        "content": {
+                          "type": "string"
+                        },
+                        "embeds": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string"
+                              },
+                              "id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "id"
+                            ]
+                          }
+                        },
+                        "attachments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "fileId": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "contentType": {
+                                "type": "string"
+                              },
+                              "size": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "fileId",
+                              "name",
+                              "contentType",
+                              "size"
+                            ]
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "editedAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        },
+                        "fromAssistant": {
+                          "type": "boolean"
+                        },
+                        "feedbackCard": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "proposed",
+                                "confirmed"
+                              ]
+                            },
+                            "postId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "title",
+                            "body",
+                            "status",
+                            "postId"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "conversationId",
+                        "fromVisitor",
+                        "senderType",
+                        "author",
+                        "content",
+                        "embeds",
+                        "attachments",
+                        "createdAt",
+                        "editedAt",
+                        "fromAssistant",
+                        "feedbackCard"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This account is blocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation, message or support surface not found; Workspace not found or archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The card is confirmed already",
             "content": {
               "application/json": {
                 "schema": {
@@ -31482,6 +31923,42 @@
                             "null"
                           ],
                           "format": "date-time"
+                        },
+                        "fromAssistant": {
+                          "type": "boolean"
+                        },
+                        "feedbackCard": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "proposed",
+                                "confirmed"
+                              ]
+                            },
+                            "postId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "title",
+                            "body",
+                            "status",
+                            "postId"
+                          ]
                         }
                       },
                       "required": [
@@ -31494,7 +31971,9 @@
                         "embeds",
                         "attachments",
                         "createdAt",
-                        "editedAt"
+                        "editedAt",
+                        "fromAssistant",
+                        "feedbackCard"
                       ]
                     },
                     "conversation": {
@@ -31917,6 +32396,42 @@
                               "null"
                             ],
                             "format": "date-time"
+                          },
+                          "fromAssistant": {
+                            "type": "boolean"
+                          },
+                          "feedbackCard": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "title": {
+                                "type": "string"
+                              },
+                              "body": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "proposed",
+                                  "confirmed"
+                                ]
+                              },
+                              "postId": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "title",
+                              "body",
+                              "status",
+                              "postId"
+                            ]
                           }
                         },
                         "required": [
@@ -31929,7 +32444,9 @@
                           "embeds",
                           "attachments",
                           "createdAt",
-                          "editedAt"
+                          "editedAt",
+                          "fromAssistant",
+                          "feedbackCard"
                         ]
                       }
                     },
@@ -32155,6 +32672,42 @@
                               "null"
                             ],
                             "format": "date-time"
+                          },
+                          "fromAssistant": {
+                            "type": "boolean"
+                          },
+                          "feedbackCard": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "title": {
+                                "type": "string"
+                              },
+                              "body": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "proposed",
+                                  "confirmed"
+                                ]
+                              },
+                              "postId": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "title",
+                              "body",
+                              "status",
+                              "postId"
+                            ]
                           }
                         },
                         "required": [
@@ -32167,7 +32720,9 @@
                           "embeds",
                           "attachments",
                           "createdAt",
-                          "editedAt"
+                          "editedAt",
+                          "fromAssistant",
+                          "feedbackCard"
                         ]
                       }
                     },
@@ -32399,6 +32954,42 @@
                             "null"
                           ],
                           "format": "date-time"
+                        },
+                        "fromAssistant": {
+                          "type": "boolean"
+                        },
+                        "feedbackCard": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "proposed",
+                                "confirmed"
+                              ]
+                            },
+                            "postId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "title",
+                            "body",
+                            "status",
+                            "postId"
+                          ]
                         }
                       },
                       "required": [
@@ -32411,7 +33002,9 @@
                         "embeds",
                         "attachments",
                         "createdAt",
-                        "editedAt"
+                        "editedAt",
+                        "fromAssistant",
+                        "feedbackCard"
                       ]
                     },
                     "conversation": {
@@ -32958,6 +33551,288 @@
           },
           "404": {
             "description": "Conversation, message or support surface not found; Workspace not found or archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quills-public/{workspace}/widget/conversations/{conversationId}/messages/{messageId}/feedback-card": {
+      "put": {
+        "operationId": "confirmQuillsWidgetFeedbackCard",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Confirm the feedback request that the assistant proposed to the widget visitor",
+        "description": "postId is the caller's own post made from the card. A card that is confirmed already answers 409.",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Workspace ID or slug"
+            },
+            "required": true,
+            "description": "Workspace ID or slug",
+            "name": "workspace",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "conversationId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "messageId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "postId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "postId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The message with its confirmed card",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "conversationId": {
+                          "type": "string"
+                        },
+                        "fromVisitor": {
+                          "type": "boolean"
+                        },
+                        "senderType": {
+                          "type": "string",
+                          "enum": [
+                            "visitor",
+                            "agent",
+                            "system"
+                          ]
+                        },
+                        "author": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "name": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "avatarUrl": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "avatarUrl"
+                          ]
+                        },
+                        "content": {
+                          "type": "string"
+                        },
+                        "embeds": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string"
+                              },
+                              "id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "id"
+                            ]
+                          }
+                        },
+                        "attachments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "fileId": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "contentType": {
+                                "type": "string"
+                              },
+                              "size": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "fileId",
+                              "name",
+                              "contentType",
+                              "size"
+                            ]
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "editedAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        },
+                        "fromAssistant": {
+                          "type": "boolean"
+                        },
+                        "feedbackCard": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "proposed",
+                                "confirmed"
+                              ]
+                            },
+                            "postId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "title",
+                            "body",
+                            "status",
+                            "postId"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "conversationId",
+                        "fromVisitor",
+                        "senderType",
+                        "author",
+                        "content",
+                        "embeds",
+                        "attachments",
+                        "createdAt",
+                        "editedAt",
+                        "fromAssistant",
+                        "feedbackCard"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Valid widget session required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This account is blocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation, message or support surface not found; Workspace not found or archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The card is confirmed already",
             "content": {
               "application/json": {
                 "schema": {
@@ -83155,7 +84030,7 @@
                         },
                         "holdSensitive": {
                           "type": "boolean",
-                          "description": "Hold a post or comment that shows an email, a phone or card number, an IBAN or a secret key"
+                          "description": "Hold a post or comment that shows an email, a phone or card number, an IBAN or a secret key. With AI configured, a customer post's images are checked after it commits, and a sensitive image returns the post to review."
                         }
                       },
                       "required": [
@@ -128958,7 +129833,7 @@
           "Quills"
         ],
         "summary": "Start a post CSV import run",
-        "description": "Upload the CSV with a URL from POST /files/uploads (purpose `file`), then start the run. Columns: `title` and `content` (required), and `status`, `tags`, `board`, `author_email`, `author_name`, `created_at` and `source_id`. Rows without `board` go to `boardId`. The job checks every row first: one invalid row fails the run with an error report and imports nothing. A row whose `source_id` an earlier import created is skipped.",
+        "description": "Upload the CSV with a URL from POST /files/uploads (purpose `file`), then start the run. Columns: `title` (required), and `content`, `status`, `tags`, `board`, `author_email`, `author_name`, `created_at` and `source_id`. Headers match case and spacing aside, and the common names of other feedback tools' exports also match (for example `Post Title`, `Details`, `Description`, `Post Status`, `Email`, `Created`, `URL`), so such an export imports as it is. Their status words (for example `shipped`, `declined`, `in development`) map to the default status of the same meaning, and a date and time without a zone is read as UTC. Vote counts are not imported. Rows without `board` go to `boardId`. The job checks every row first: one invalid row fails the run with an error report and imports nothing. A row whose `source_id` an earlier import created is skipped.",
         "parameters": [
           {
             "schema": {
@@ -138811,6 +139686,13 @@
                     "agent": {
                       "type": "object",
                       "properties": {
+                        "enabled": {
+                          "type": "boolean",
+                          "description": "The customer agent answers widget and portal conversations"
+                        },
+                        "productDescription": {
+                          "type": "string"
+                        },
                         "voice": {
                           "type": "object",
                           "properties": {
@@ -138900,6 +139782,8 @@
                         }
                       },
                       "required": [
+                        "enabled",
+                        "productDescription",
                         "voice",
                         "knowledge",
                         "toolRules"
@@ -139059,6 +139943,13 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 60
+                  },
+                  "agentEnabled": {
+                    "type": "boolean"
+                  },
+                  "agentProductDescription": {
+                    "type": "string",
+                    "maxLength": 1000
                   },
                   "agentVoice": {
                     "type": "object",
@@ -139258,6 +140149,13 @@
                     "agent": {
                       "type": "object",
                       "properties": {
+                        "enabled": {
+                          "type": "boolean",
+                          "description": "The customer agent answers widget and portal conversations"
+                        },
+                        "productDescription": {
+                          "type": "string"
+                        },
                         "voice": {
                           "type": "object",
                           "properties": {
@@ -139347,6 +140245,8 @@
                         }
                       },
                       "required": [
+                        "enabled",
+                        "productDescription",
                         "voice",
                         "knowledge",
                         "toolRules"

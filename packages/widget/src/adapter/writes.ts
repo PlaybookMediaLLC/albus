@@ -24,6 +24,7 @@ export const writes = (api: Api) => ({
     context: {
       attachmentIds?: string[];
       metadata?: Record<string, string>;
+      title?: string;
     } = {},
   ) =>
     api.request<ApiPost>(
@@ -32,6 +33,7 @@ export const writes = (api: Api) => ({
       {
         content,
         idempotencyKey,
+        ...(context.title && { title: context.title }),
         ...(boardId && { boardId }),
         ...(context.attachmentIds?.length && {
           attachmentIds: context.attachmentIds,
@@ -135,6 +137,19 @@ export const writes = (api: Api) => ({
       )
       .then((file) => file.downloadUrl),
   /** The watermark only moves forward on the server. */
+  /** Marks the assistant's proposed request as submitted with the visitor's post. */
+  confirmFeedbackCard: (
+    conversationId: string,
+    messageId: string,
+    postId: string,
+    signal?: AbortSignal,
+  ) =>
+    api.request<{ message: ApiMessage }>(
+      "PUT",
+      `/widget/conversations/${id(conversationId)}/messages/${id(messageId)}/feedback-card`,
+      { postId },
+      signal,
+    ),
   markRead: (
     conversationId: string,
     throughMessageId: string,

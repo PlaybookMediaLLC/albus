@@ -73,6 +73,12 @@ export interface ApiMessage {
   createdAt: string;
   /** A file with a fileId downloads through the conversation file route. */
   attachments?: ReadonlyArray<{ fileId: string | null; name: string }>;
+  fromAssistant?: boolean;
+  feedbackCard?: {
+    title: string;
+    body: string;
+    status: "proposed" | "confirmed";
+  } | null;
 }
 
 /** The widget's comment vote is the 👍 reaction (portal/feedback/ROUTES.md). */
@@ -182,6 +188,14 @@ export function toMessage(
     sentAt: message.createdAt,
     fromVisitor: message.fromVisitor,
     ...(files.length ? { files } : {}),
+    ...(message.fromAssistant && { fromAssistant: true }),
+    ...(message.feedbackCard && {
+      feedbackCard: {
+        title: message.feedbackCard.title,
+        body: message.feedbackCard.body,
+        confirmed: message.feedbackCard.status === "confirmed",
+      },
+    }),
   };
 }
 

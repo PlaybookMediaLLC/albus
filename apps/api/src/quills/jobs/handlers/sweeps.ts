@@ -13,8 +13,12 @@ import {
   withQuillsSystemWorkspace,
   type Database,
 } from "../../../database/quills/client";
+import { assistantInvolvements } from "../../../database/quills/schema/assistant";
 import { changelogEntries } from "../../../database/quills/schema/changelog";
-import { conversations } from "../../../database/quills/schema/conversation";
+import {
+  conversationMessages,
+  conversations,
+} from "../../../database/quills/schema/conversation";
 import { events } from "../../../database/quills/schema/events";
 import { statusIncidents } from "../../../database/quills/schema/status";
 import {
@@ -22,7 +26,7 @@ import {
   startMaintenanceWindow,
 } from "../../content/status/maintenance";
 import { recordQuillsChange } from "../../events";
-import { setStatus } from "../../support/conversation-ops";
+import { requireClosable, setStatus } from "../../support/conversation-ops";
 import { queueWeeklyDigests } from "./digest";
 
 // Timed work that the earlier slices store but nothing ran. quills.runnable_workspaces (migration
@@ -54,6 +58,82 @@ async function wakeSnoozedConversations(db: Database) {
       entityType: "conversation",
       entityId: conversation.id,
       payload: { status: "open" },
+    });
+  }
+}
+
+/**
+ * Gap G-31, auto-resolve after silence: the customer agent answered and the customer stayed quiet
+ * for a day, so the conversation is resolved as assumed. When the customer wrote last (the agent
+ * never answered it), the agent steps back and the team keeps the open conversation. A
+ * conversation that a teammate took or that closed meanwhile only ends the involvement.
+ */
+async function resolveQuietAgentConversations(db: Database) {
+  const due = await db
+    .select({
+      id: assistantInvolvements.id,
+      conversationId: assistantInvolvements.conversationId,
+    })
+    .from(assistantInvolvements)
+    .where(
+      and(
+        eq(assistantInvolvements.status, "active"),
+        lte(
+          assistantInvolvements.lastAssistantAnswerAt,
+          sql`now() - interval '24 hours'`,
+        ),
+      ),
+    )
+    .orderBy(asc(assistantInvolvements.lastAssistantAnswerAt))
+    .limit(BATCH)
+    .for("update", { skipLocked: true });
+  for (const involvement of due) {
+    const [conversation] = await db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.id, involvement.conversationId))
+      .for("update");
+    const [last] = await db
+      .select({ senderType: conversationMessages.senderType })
+      .from(conversationMessages)
+      .where(
+        and(
+          eq(conversationMessages.conversationId, involvement.conversationId),
+          eq(conversationMessages.isInternal, false),
+          isNull(conversationMessages.deletedAt),
+        ),
+      )
+      .orderBy(
+        sql`${conversationMessages.createdAt} desc`,
+        sql`${conversationMessages.id} desc`,
+      )
+      .limit(1);
+    // Required attributes still gate a close: an automatic close never skips them.
+    const closable =
+      !!conversation &&
+      (await requireClosable(db, conversation).then(
+        () => true,
+        () => false,
+      ));
+    const resolve =
+      closable &&
+      conversation?.status === "open" &&
+      !conversation.assignedAgentPrincipalId &&
+      last?.senderType !== "visitor";
+    await db
+      .update(assistantInvolvements)
+      .set({
+        status: resolve ? "resolved_assumed" : "abandoned",
+        endedAt: sql`now()`,
+      })
+      .where(eq(assistantInvolvements.id, involvement.id));
+    if (!resolve || !conversation) continue;
+    await setStatus(db, conversation, "closed");
+    await recordQuillsChange(db, null, {
+      type: "conversation.status_changed",
+      entityType: "conversation",
+      entityId: conversation.id,
+      payload: { status: "closed", reason: "assistant_assumed_resolution" },
     });
   }
 }
@@ -179,6 +259,7 @@ async function runMaintenanceWindows(db: Database) {
 
 const SWEEPS = [
   wakeSnoozedConversations,
+  resolveQuietAgentConversations,
   announceScheduledChangelog,
   runMaintenanceWindows,
   // RFC 0003: the weekly digest. quills.runnable_workspaces lists a workspace until its digest

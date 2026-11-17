@@ -78,9 +78,11 @@ function WidgetViewBody({
   onCommentFeedback,
   onVoteComment,
   onClose,
+  closable = true,
   onSendMessage,
   onSubmitFeedback,
   onReplyMessage,
+  onConfirmFeedbackCard,
   onReadConversation,
   onOpenFile,
   onReadUpdate,
@@ -316,14 +318,16 @@ function WidgetViewBody({
             <Icon name="external" />
           </a>
         )}
-        <button
-          type="button"
-          className="qb-icon-button qb-close"
-          aria-label={t("Close widget")}
-          onClick={close}
-        >
-          <Icon name="close" />
-        </button>
+        {closable && (
+          <button
+            type="button"
+            className="qb-icon-button qb-close"
+            aria-label={t("Close widget")}
+            onClick={close}
+          >
+            <Icon name="close" />
+          </button>
+        )}
       </header>
       <ConnectionStatus
         loadState={loadState}
@@ -466,6 +470,12 @@ function WidgetViewBody({
             onOpenFile={
               onOpenFile
                 ? (fileId) => onOpenFile(conversation.id, fileId)
+                : undefined
+            }
+            onConfirmCard={
+              onConfirmFeedbackCard
+                ? (messageId, card) =>
+                    onConfirmFeedbackCard(conversation.id, messageId, card)
                 : undefined
             }
           />

@@ -2,6 +2,7 @@ import { Fragment, useEffect, useRef, type RefObject } from "react";
 import { useConversationScroll } from "./useConversationScroll.js";
 import { AttachmentGallery } from "./AttachmentGallery.js";
 import { Composer } from "./Composer.js";
+import { FeedbackCard } from "./FeedbackCard.js";
 import { MessageFiles } from "./MessageFiles.js";
 import { messageTime } from "./message-time.js";
 import type { Conversation } from "./types.js";
@@ -22,6 +23,7 @@ export function ConversationView({
   readError,
   scrollContainer,
   onOpenFile,
+  onConfirmCard,
 }: {
   conversation: Conversation;
   attachmentsEnabled?: boolean;
@@ -37,6 +39,10 @@ export function ConversationView({
   scrollContainer: RefObject<HTMLDivElement | null>;
   /** Resolves with a short-lived download URL of a file of this conversation. */
   onOpenFile?: (fileId: string) => Promise<string>;
+  onConfirmCard?: (
+    messageId: string,
+    card: { title: string; body: string },
+  ) => Promise<unknown>;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -92,8 +98,20 @@ export function ConversationView({
                 data-visitor={message.fromVisitor ?? false}
                 data-grouped={grouped}
               >
-                <strong>{message.author}</strong>
+                <strong>
+                  {message.fromAssistant ? t("Assistant") : message.author}
+                </strong>
                 <p>{message.body}</p>
+                {message.feedbackCard && (
+                  <FeedbackCard
+                    card={message.feedbackCard}
+                    offline={offline}
+                    onConfirm={
+                      onConfirmCard &&
+                      (() => onConfirmCard(message.id, message.feedbackCard!))
+                    }
+                  />
+                )}
                 <AttachmentGallery attachments={message.attachments} />
                 <MessageFiles files={message.files} onOpen={onOpenFile} />
                 {(stamp || message.fromVisitor) && (

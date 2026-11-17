@@ -264,6 +264,9 @@ const ar: Catalog = {
   New: "جديد",
   "Team member": "عضو في الفريق",
   "See all": "عرض الكل",
+  Assistant: "المساعد",
+  "Submit request": "إرسال الطلب",
+  "Request submitted": "تم إرسال الطلب",
 };
 
 export default ar;

@@ -267,6 +267,9 @@ const ru: Catalog = {
   New: "Новое",
   "Team member": "Участник команды",
   "See all": "Все",
+  Assistant: "Ассистент",
+  "Submit request": "Отправить запрос",
+  "Request submitted": "Запрос отправлен",
 };
 
 export default ru;

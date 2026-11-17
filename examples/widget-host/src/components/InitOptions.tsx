@@ -28,6 +28,8 @@ export type HostInit = {
   ownLauncher: boolean;
   /** Move the default launcher up 84px and in 32px. */
   offset: boolean;
+  /** Render inside the page's #inline-widget element instead of floating. */
+  inline: boolean;
 };
 
 export const DEFAULT_INIT: HostInit = {
@@ -41,6 +43,7 @@ export const DEFAULT_INIT: HostInit = {
   pageUrl: "path",
   ownLauncher: false,
   offset: false,
+  inline: false,
 };
 
 /** The init options. A change re-initializes the widget. */
@@ -91,6 +94,15 @@ export function InitOptions({
           onChange={(event) => set({ defaultBoard: event.target.value })}
           placeholder="board slug"
         />
+      </label>{" "}
+      <label>
+        <input
+          type="checkbox"
+          data-testid="inline"
+          checked={value.inline}
+          onChange={(event) => set({ inline: event.target.checked })}
+        />{" "}
+        inline (container)
       </label>{" "}
       <label>
         <input
@@ -188,4 +200,5 @@ export const initFields = (value: HostInit) => ({
   ...(value.offset && { offset: { bottom: 84, side: 32 } }),
   ...(value.locale && { locale: value.locale }),
   ...(value.defaultBoard && { defaultBoard: value.defaultBoard }),
+  ...(value.inline && { container: "#inline-widget" }),
 });

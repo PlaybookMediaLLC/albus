@@ -225,6 +225,13 @@
 			"when": 1794878712111,
 			"tag": "0031_post_hidden",
 			"breakpoints": true
+		},
+		{
+			"idx": 32,
+			"version": "7",
+			"when": 1794883887378,
+			"tag": "0032_assistant_quiet_sweep",
+			"breakpoints": true
 		}
 	]
 }

@@ -208,6 +208,8 @@ describe.skipIf(!url)("Quills taxonomy rules", () => {
         requireApproval: "anonymous",
         holdImages: false,
         holdLinks: false,
+        holdSpam: false,
+        holdSensitive: false,
       },
     });
     const after = await stored();
@@ -225,6 +227,8 @@ describe.skipIf(!url)("Quills taxonomy rules", () => {
         requireApproval: "anonymous",
         holdImages: false,
         holdLinks: false,
+        holdSpam: false,
+        holdSensitive: false,
       },
     });
     // A stored value that is not a JSON object is never overwritten.

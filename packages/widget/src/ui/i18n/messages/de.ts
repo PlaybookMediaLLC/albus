@@ -265,6 +265,9 @@ const de: Catalog = {
   New: "Neu",
   "Team member": "Teammitglied",
   "See all": "Alle anzeigen",
+  Assistant: "Assistent",
+  "Submit request": "Anfrage senden",
+  "Request submitted": "Anfrage gesendet",
 };
 
 export default de;

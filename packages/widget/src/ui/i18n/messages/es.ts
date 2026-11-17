@@ -262,6 +262,9 @@ const es: Catalog = {
   New: "Nuevo",
   "Team member": "Miembro del equipo",
   "See all": "Ver todo",
+  Assistant: "Asistente",
+  "Submit request": "Enviar solicitud",
+  "Request submitted": "Solicitud enviada",
 };
 
 export default es;

@@ -11,6 +11,8 @@ import {
 import { extractSignals } from "../../jobs/handlers/signals";
 import { runApprovedAction } from "./connector-calls";
 import { answerRun } from "./runs";
+import { answerCustomer } from "./customer-agent";
+import { checkPostImages } from "./post-images";
 import { titleUntitledPost } from "./post-title";
 import type { Work, Write } from "./shared";
 import { answerSlackHook } from "./slack";
@@ -36,7 +38,10 @@ export const assistantWork: Record<string, Work> = {
   "assistant_action.approved": runApprovedAction,
   "assistant_web_source.added": fetchWebSource,
   "assistant.embeddings_requested": backfillEmbeddings,
-  "post.created": all(titleUntitledPost, checkDuplicates),
+  "post.created": all(titleUntitledPost, checkPostImages, checkDuplicates),
+  // Gap G-31: the customer agent answers a widget or portal conversation while it is on.
+  "conversation.created": answerCustomer,
+  "message.created": answerCustomer,
   "post.merge_check_requested": checkDuplicates,
   "post.sentiment_requested": classifySentiment,
   "post.tags_backfill_requested": backfillTags,
