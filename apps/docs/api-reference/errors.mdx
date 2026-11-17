@@ -74,17 +74,21 @@ Sign-in, sign-up, and workspace membership endpoints under `/api/auth/*` return 
   "issues": [
     {
       "path": "body.title",
-      "message": "Invalid input: expected string, received undefined"
+      "message": "Invalid input: expected string, received undefined",
+      "code": "invalid_type"
     },
     {
       "path": "body.priority",
-      "message": "Invalid option: expected one of \"no-priority\"|\"low\"|\"medium\"|\"high\"|\"urgent\""
+      "message": "Invalid option: expected one of \"no-priority\"|\"low\"|\"medium\"|\"high\"|\"urgent\"",
+      "code": "invalid_value"
     }
   ]
 }
 ```
 
 Each `path` starts with the part of the request that failed: `body`, `query`, `params`, or `header`, followed by the field, for example `query.limit` or `body.customFields.0.value`.
+
+The issue `message` is English. To show the problem in another language, use `code`, the validator's issue code, such as `too_small`, `too_big`, `invalid_format`, `invalid_type` or `invalid_value`. A size issue also has `origin` (for example `string`) and `minimum` or `maximum`: `{"code": "too_big", "origin": "string", "maximum": 200}` means at most 200 characters.
 
 ## Retrying
 

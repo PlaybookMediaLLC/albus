@@ -89,6 +89,26 @@
                 "message": {
                   "type": "string",
                   "example": "Required"
+                },
+                "code": {
+                  "type": "string",
+                  "description": "The validator's issue code, such as too_small, too_big, invalid_format or invalid_type. Translate from it rather than from message.",
+                  "example": "too_small"
+                },
+                "origin": {
+                  "type": "string",
+                  "description": "The kind of value the issue is about, such as string, number or array.",
+                  "example": "string"
+                },
+                "minimum": {
+                  "type": "number",
+                  "description": "For too_small: the smallest allowed length, size or value.",
+                  "example": 1
+                },
+                "maximum": {
+                  "type": "number",
+                  "description": "For too_big: the largest allowed length, size or value.",
+                  "example": 200
                 }
               },
               "required": [
