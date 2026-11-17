@@ -8,5 +8,29 @@
 	"noAffectedComponents": "No affected components.",
 	"updates": "Updates",
 	"noUpdates": "No updates yet.",
-	"componentStatus": "{{name}}: {{status}}"
+	"componentStatus": "{{name}}: {{status}}",
+	"state": {
+		"investigating": "Investigating",
+		"identified": "Identified",
+		"monitoring": "Monitoring",
+		"resolved": "Resolved",
+		"scheduled": "Scheduled",
+		"in_progress": "In progress",
+		"verifying": "Verifying",
+		"completed": "Completed"
+	},
+	"impactLevel": {
+		"none": "None",
+		"minor": "Minor",
+		"major": "Major",
+		"critical": "Critical",
+		"maintenance": "Maintenance"
+	},
+	"componentState": {
+		"operational": "Operational",
+		"under_maintenance": "Under maintenance",
+		"degraded_performance": "Degraded performance",
+		"partial_outage": "Partial outage",
+		"major_outage": "Major outage"
+	}
 }

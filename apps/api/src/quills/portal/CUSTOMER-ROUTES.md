@@ -43,6 +43,9 @@ Completion checks:         authenticated endpoint, tenant/object access, mutatio
   reads it. The P3a routes (`access.ts`, `profile.ts`, `config.ts`) are left to the flag slice;
   `access.ts` changed here only to add the invite grant.
 - The unsubscribe routes do not read the flag: teammates get the same mail, and a link must work.
+  The unsubscribe and CSAT web pages also open while the portal is off
+  (`apps/web/src/quills/portal/layout.tsx`), and so do the status pages: the status API needs
+  only the status page's own switch. The help-center pages need the portal, as their API does.
 - A portal route that shows or changes content also runs the private-portal gate
   (`gate.ts#requirePortalAccess`): 403 for a caller the policy does not let in.
 - Every token is 32 random bytes. Only its SHA-256 hash is stored (`portal_invites.token_hashes`,
@@ -79,7 +82,9 @@ Merged: `sendPortalInviteFn`, `fetchPortalInvitesFn`, `resendPortalInviteFn`, `c
   mints the link's token at send time, reads the address from the invite row and mails it with
   the `portal-invite` template. The address is a `SealedEmail`: the token was minted for it.
 - The invite link is `KANEO_CLIENT_URL/portal/{workspaceId}/invite/{inviteId}#token=…`. The
-  token is in the fragment, so it never reaches a server log. The web page is not built.
+  token is in the fragment, so it never reaches a server log. The web page
+  (`apps/web/src/routes/portal/$workspaceId/invite/$inviteId.tsx`) moves the token to session
+  storage and out of the address bar, so a signed-out visitor can sign in and come back to it.
 - Deviations: one address per request (the framework records one event per mutation; the source's
   batch of 50 is a client loop). The "already a team member" refusal is dropped: a member gets
   the team grant anyway. An accepted invite cannot be canceled, and the access policy does not
@@ -91,7 +96,7 @@ Merged: `sendPortalInviteFn`, `fetchPortalInvitesFn`, `resendPortalInviteFn`, `c
 
 | operationId | Route | Audience | Action | Tables | Event | Tests |
 |---|---|---|---|---|---|---|
-| `previewQuillsUnsubscribeToken` | `GET /unsubscribe?token=` | public | read | `unsubscribe_tokens`, `posts` | - | contract, never spends |
+| `previewQuillsUnsubscribeToken` | `GET /unsubscribe?token=` | public | read | `unsubscribe_tokens`, `posts` | - | contract, never spends; a browser gets a 303 to the web page (`browserPage`) |
 | `createQuillsUnsubscribe` | `POST /unsubscribe?token=` (RFC 8058 one-click) | public | update | `unsubscribe_tokens` and the action's table | none (personal) | contract, rollback, single use, two-workspace |
 | `processQuillsUnsubscribeToken` | `POST /unsubscribe/confirm` (body `token`) | public | update | same | none (personal) | contract, rollback |
 
@@ -101,11 +106,14 @@ Merged: `previewUnsubscribeTokenFn`, `processUnsubscribeTokenFn`, `one-click-uns
   `unsubscribe_status`, and (RFC 0003) `unsubscribe_shipped` and `unsubscribe_digest`. The last
   two set the mail cell of the `post_shipped` or `weekly_digest` matrix type to false. Each is
   idempotent; the token is spent in the same transaction.
-- Link generation: `unsubscribe-token.ts#mintUnsubscribeToken` and `#unsubscribeUrl`
-  (`KANEO_API_URL/api/quills-public/{workspaceId}/unsubscribe?token=…`). The P4 content table
-  (`jobs/fanout.ts#subscribers`) now has mail entries for `post.status_changed` and
-  `comment.created`; each recipient gets its own `unsubscribe_post` token and the RFC 2369/8058
-  headers through the template sender.
+- Link generation: `unsubscribe-token.ts#mintUnsubscribeToken`, one token per recipient and mail.
+  The mail body links to the web page, `#unsubscribePageUrl`
+  (`KANEO_CLIENT_URL/portal/{workspaceId}/unsubscribe?token=…`). The `List-Unsubscribe` header
+  carries the one-click API URL, `#unsubscribeUrl`
+  (`KANEO_API_URL/api/quills-public/{workspaceId}/unsubscribe?token=…`); `List-Unsubscribe-Post`
+  is added only for an https link (`packages/email/src/quills/list-unsubscribe.ts`). The comment
+  and status-change mails (`jobs/fanout.ts#subscribers`), the shipped mail, the weekly digest
+  and the status-page mail each carry both links.
 - Deviation: the framework does not give the handler the raw body, so the one-click POST does not
   check the `List-Unsubscribe=One-Click` form field. The token in the URL is the only credential,
   as in the source, and a GET never writes.
@@ -184,8 +192,8 @@ appear (no platform read is allowed on portal routes).
 |---|---|---|
 | Portal uploads (`api/portal/upload`, `api/portal/files`), widget upload (`api/widget/upload`, `getWidgetImageUploadUrl`), customer avatar upload | built | `files/customer.ts` and `files/ROUTES.md`: portal and widget routes now run `prepare` and `call`, so verification happens outside the transaction. |
 | Public storage proxy (`listStorage`, `putStorage`) | not built | Signed GET URLs from `framework/files.ts` serve reads. |
-| Website-branding reads (`lookupWebsiteBranding`, `getAutomaticWebsiteBrandingStatus`) | not built | In the source these are teammate assistant features (`requireAuth`, AI module) that fetch an arbitrary website. They are not customer reads; they belong with the assistant phase and its SSRF guard. |
+| Website-branding reads (`lookupWebsiteBranding`, `getAutomaticWebsiteBrandingStatus`) | built, teammate only | `settings/website-branding.ts` (`lookupQuillsWebsiteBranding`, `getQuillsAutomaticWebsiteBrandingStatus` and the offer routes) and `settings/WEBSITE-BRANDING.md`. They are not customer reads. |
 | Identify `previousToken` merge | built | `widget/anonymous-merge.ts`: in the identify transaction, the anonymous session's activity (`directory/lead-merge.ts#repoint`: conversations, votes and the rest) moves to the identified person, and the session ends. The token must also be the Bearer token, live in this workspace, of a non-test, unblocked anonymous visitor. The response names `mergedPrincipalId`; `user.lead_merged` is recorded. The empty anonymous principal is left to the anonymous visitor sweep. A colliding vote or article rating is dropped and its count lowered; an opt-out on either side wins (issue #129 extended `repoint`). |
 | Widget handoff and portal session token | built differently (issue #129) | Kaneo accounts stay the one login system, two ways. By default, "Open in portal" mails Kaneo's sign-in link (`sendQuillsWidgetPortalLink`), and the portal links the widget profile when the account's verified email matches (`linkQuillsPortalWidgetProfile`; see `ROUTES.md`, "Widget-to-portal link"). When a teammate turns on widget sign-in or SSO (`PUT /settings/portal/sign-in`), `POST /widget/portal-sign-in` gives an identified visitor a one-time link instead; `signed/portal-sign-in` (also the SSO return) checks it, and Kaneo's `/api/auth/quills/portal-session` signs in only to a portal-only account that token sign-in created for that workspace's customer (a `quills-portal` account row), never to an existing account. On that account's first portal request the widget profile links to it, so one history carries over. |
-| Customer mail delivery | not built | Fan-out still tells teammates only. Telling a customer needs the private-portal decision at send time (verified address, membership) and the public post visibility rule of the public-feedback slice. The mail entries and per-recipient unsubscribe links are ready for it. |
-| Unsubscribe web page, invite web page, post page | not built | `apps/web` has no Quills or portal UI. A browser GET of the unsubscribe URL returns the JSON preview. |
+| Customer mail delivery | built | `jobs/fanout.ts`: the `post.status_changed` and `comment.created` entries set `customers`, so subscribed customers get mail; `jobs/handlers/support-mail.ts#customerPostAddress` decides at send time (live, unblocked, verified address, the portal or widget still admits them, the private-portal gate, the post and comment visible to them). The shipped mail (`jobs/handlers/shipped-mail.ts`), the weekly digest (`jobs/handlers/digest.ts`) and the status-page mail (`jobs/handlers/status-mail.ts`) apply the same kind of send-time check. |
+| Unsubscribe web page, invite web page, post page | built | `apps/web/src/routes/portal/$workspaceId/unsubscribe.tsx`, `invite/$inviteId.tsx` and `posts/$postId.tsx`. The token pages move the token to session storage and out of the address bar. A browser that opens the one-click API URL gets a 303 to the web page, which asks before it unsubscribes; other clients get the JSON preview. Each page, its routes and its end-to-end checks: `docs/quills-port/portal-e2e-report.md`. |

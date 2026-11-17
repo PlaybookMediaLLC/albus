@@ -7,7 +7,7 @@ import { listPortalPostCommentsQuery } from "@/quills/api/feedback/list-portal-p
 const searchSchema = z.object({});
 export const Route = createFileRoute("/portal/$workspaceId/posts/$postId")({
   validateSearch: searchSchema,
-  beforeLoad: async ({ context, params }) => {
+  beforeLoad: ({ context, params }) => {
     if (!context.quillsPortal.accessGranted) return;
     const input = {
       param: {
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/portal/$workspaceId/posts/$postId")({
         postId: params.postId,
       },
     };
-    await Promise.all([
+    void Promise.all([
       context.queryClient.prefetchQuery(
         getPortalPostQuery(input, context.quillsPortal.viewer),
       ),

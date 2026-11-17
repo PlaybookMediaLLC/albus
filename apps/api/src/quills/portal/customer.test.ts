@@ -37,7 +37,11 @@ import {
   enablePortal,
   verifyEmail,
 } from "./customer-seed.fixture";
-import { mintUnsubscribeToken, unsubscribeUrl } from "./unsubscribe-token";
+import {
+  mintUnsubscribeToken,
+  unsubscribePageUrl,
+  unsubscribeUrl,
+} from "./unsubscribe-token";
 
 let pool: Pool;
 vi.mock("../../database/index", () => ({
@@ -388,6 +392,17 @@ describe.skipIf(!url)("Quills portal invites and customer routes", () => {
       valid: true,
       action: "unsubscribe_post",
     });
+    expect(await subscribed(env.a, a.postId)).toBe(1);
+    // A browser that opens the List-Unsubscribe URL lands on the page that asks first.
+    const opened = await app.request(
+      `/quills-public/${env.a}/unsubscribe?token=${a.token}`,
+      { headers: { accept: "text/html,application/xhtml+xml" } },
+    );
+    expect([
+      opened.status,
+      opened.headers.get("location"),
+      opened.headers.get("referrer-policy"),
+    ]).toEqual([303, unsubscribePageUrl(env.a, a.token), "no-referrer"]);
     expect(await subscribed(env.a, a.postId)).toBe(1);
 
     // B's link on A's path finds nothing and changes nothing.

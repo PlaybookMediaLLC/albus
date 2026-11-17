@@ -104,8 +104,9 @@ describe("API integration: error shape", () => {
     const body = await readErrorBody(response);
     expect(body).toMatchObject({ code: "VALIDATION_ERROR" });
     expect(body.message).toMatch(/^ui: /);
+    // The issue names zod's code, so a client can translate it without the English message.
     expect(body.issues).toEqual([
-      { path: "query.ui", message: expect.any(String) },
+      { path: "query.ui", message: expect.any(String), code: "invalid_value" },
     ]);
   });
 

@@ -25,7 +25,7 @@ describe("HelpCenterArticlePage", () => {
     ready: {
       prepare: () => {
         mockApi().reply(getPublicHelpCenterArticleFixture.ok());
-        return { ...options, accessGranted: false };
+        return options;
       },
       assert: async (view) => {
         await view.findByRole("heading", { name: "Getting started" });

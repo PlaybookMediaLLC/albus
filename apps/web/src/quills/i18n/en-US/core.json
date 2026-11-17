@@ -68,5 +68,13 @@
 		"browser": "Browser",
 		"page": "Page",
 		"title": "Page context"
+	},
+	"validation": {
+		"format": "Check the format of this value.",
+		"invalid": "Check this value.",
+		"required": "Enter a value.",
+		"tooLong": "Use at most {{max}} characters.",
+		"tooShort": "Use at least {{min}} characters.",
+		"request": "Some values were not accepted. Check them and try again."
 	}
 }

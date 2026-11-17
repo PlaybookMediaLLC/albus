@@ -76,3 +76,9 @@ Only one demo runs at a time on a machine. The lock file is `~/.config/kaneo/dev
 
 The API reads its port from `KANEO_API_PORT` (default `1337`). The web app gets `--port 5190
 --strictPort`. If a demo port is in use, the command stops with a message that names the port.
+
+## The desktop app on the demo stack
+
+`pnpm dev:desktop` starts the demo stack, or uses one that already runs, and then opens the
+desktop app on `http://127.0.0.1:5190`. It needs Rust. Close the app or press Ctrl-C to stop. A
+stack that the command started stops too. See `apps/desktop/README.md` for the tests.

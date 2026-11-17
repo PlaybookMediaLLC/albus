@@ -15,10 +15,15 @@ export interface HelpCenterRedirectPageProps {
 
 export function HelpCenterRedirectPage(props: HelpCenterRedirectPageProps) {
   const portal = usePortalRuntime();
+  // As on the feedback pages: no request until the private-portal gate admits the caller.
+  const workspace =
+    !portal.accessLoading && portal.access?.granted === true
+      ? props.workspaceId
+      : "";
   const { viewer } = portal;
   const legacyPath = `/${["hc", props.params._splat].filter(Boolean).join("/")}`;
   const redirect = useResolvePublicHelpCenterRedirect(
-    { param: { workspace: props.workspaceId }, query: { path: legacyPath } },
+    { param: { workspace }, query: { path: legacyPath } },
     viewer,
   );
   const missing =

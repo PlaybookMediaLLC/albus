@@ -449,8 +449,14 @@ export function describeFormContract<TValues>(input: {
       fireEvent.change(view.getByLabelText(input.fieldName), {
         target: { value: input.invalidValue },
       });
+      const before = view.container.textContent;
       fireEvent.click(view.getByRole("button", { name: input.submitName }));
       await waitFor(() => expect(onSubmit).not.toHaveBeenCalled());
+      // The field error is a portal string, never zod's English (such as "Too small: expected …").
+      await waitFor(() => expect(view.container.textContent).not.toBe(before));
+      expect(view.container.textContent).not.toMatch(
+        /Invalid (string|input)|Too (small|big)|expected (string|number)/,
+      );
     });
   it("maps API field issues and keeps the draft", async () => {
     const onSubmit = vi.fn(async () => ({
@@ -462,6 +468,40 @@ export function describeFormContract<TValues>(input: {
     fireEvent.click(view.getByRole("button", { name: input.submitName }));
     expect(await view.findByRole("alert")).toHaveTextContent(
       "Server field issue",
+    );
+    expectDraft(view);
+  });
+  it("names the reason of an API field issue from its code", async () => {
+    const onSubmit = vi.fn(async () => ({
+      kind: "invalid" as const,
+      issues: [
+        {
+          path: input.issuePath,
+          code: "too_big",
+          origin: "string",
+          maximum: 9,
+        },
+      ],
+    }));
+    const view = input.render(onSubmit);
+    await complete(view);
+    fireEvent.click(view.getByRole("button", { name: input.submitName }));
+    expect(await view.findByRole("alert")).toHaveTextContent(
+      "Use at most 9 characters.",
+    );
+    expectDraft(view);
+  });
+  it("shows a portal string for an API field issue, which has no text of its own", async () => {
+    // toPortalProblem drops the API's English issue text (api/errors.ts).
+    const onSubmit = vi.fn(async () => ({
+      kind: "invalid" as const,
+      issues: [{ path: input.issuePath }],
+    }));
+    const view = input.render(onSubmit);
+    await complete(view);
+    fireEvent.click(view.getByRole("button", { name: input.submitName }));
+    expect(await view.findByRole("alert")).toHaveTextContent(
+      "Check this value.",
     );
     expectDraft(view);
   });

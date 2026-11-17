@@ -34,12 +34,17 @@ const locales = [
 export function HelpCenterCategoryPage(props: HelpCenterCategoryPageProps) {
   const { t } = useTranslation("quills");
   const portal = usePortalRuntime();
+  // As on the feedback pages: no request until the private-portal gate admits the caller.
+  const workspace =
+    !portal.accessLoading && portal.access?.granted === true
+      ? props.workspaceId
+      : "";
   const { viewer } = portal;
   const categorySlug = (props.params.idSlug ?? "").replace(/^\d+-/, "");
   const locale = locales.find((item) => item === props.params.locale);
   const category = useGetPublicHelpCenterCategory(
     {
-      param: { workspace: props.workspaceId, categorySlug },
+      param: { workspace, categorySlug },
       query: { locale },
     },
     viewer,
@@ -107,7 +112,9 @@ export function HelpCenterCategoryPage(props: HelpCenterCategoryPageProps) {
       >
         <PortalGate
           workspaceId={props.workspaceId}
-          currentPath={href(`hc/${locale}/collections/${props.params.idSlug}`)}
+          currentPath={href(
+            `hc/${props.params.locale}/collections/${props.params.idSlug}`,
+          )}
           audience={meta.audience}
           portalEnabled
           accessGranted={portal.access?.granted ?? false}

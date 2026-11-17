@@ -71,6 +71,8 @@ export interface RenderPageOptions {
   permissions?: Partial<TeamPermissions>;
   /** Portal pages: the portal tabs to turn off or on. All are on by default. */
   tabs?: Partial<PortalRuntimeValue["config"]["nav"]["tabs"]>;
+  /** A page that also opens while the portal is off: render it without the portal runtime. */
+  portalOff?: boolean;
 }
 
 export function renderPage(
@@ -137,7 +139,9 @@ export function renderPage(
     .replace(/\$([A-Za-z]+)/g, (_, name: string) => {
       routeParams[name] ??= `${name}_test_1`;
       return routeParams[name];
-    });
+    })
+    // A splat route ends in a bare "$"; the router names its value `_splat`.
+    .replace(/\/\$$/, () => `/${(routeParams._splat ??= "splat_test_1")}`);
   const rootRoute = createRootRoute();
   const router = createRouter({
     routeTree: rootRoute,
@@ -154,29 +158,33 @@ export function renderPage(
   const result = render(
     <Providers client={client}>
       <RouterContextProvider router={router}>
-        <PortalRuntimeProvider value={runtime}>
-          {teammate && viewer.kind === "user" ? (
-            <TeamRuntimeProvider
-              value={{
-                workspaceId,
-                viewer,
-                permissions: {
-                  read: true,
-                  create: true,
-                  update: true,
-                  delete: true,
-                  manageSettings: true,
-                  viewRevenue: true,
-                  ...options.permissions,
-                },
-              }}
-            >
-              {page}
-            </TeamRuntimeProvider>
-          ) : (
-            page
-          )}
-        </PortalRuntimeProvider>
+        {options.portalOff ? (
+          page
+        ) : (
+          <PortalRuntimeProvider value={runtime}>
+            {teammate && viewer.kind === "user" ? (
+              <TeamRuntimeProvider
+                value={{
+                  workspaceId,
+                  viewer,
+                  permissions: {
+                    read: true,
+                    create: true,
+                    update: true,
+                    delete: true,
+                    manageSettings: true,
+                    viewRevenue: true,
+                    ...options.permissions,
+                  },
+                }}
+              >
+                {page}
+              </TeamRuntimeProvider>
+            ) : (
+              page
+            )}
+          </PortalRuntimeProvider>
+        )}
       </RouterContextProvider>
     </Providers>,
   );

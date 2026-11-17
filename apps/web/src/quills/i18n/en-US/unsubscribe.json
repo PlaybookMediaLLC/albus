@@ -1,4 +1,12 @@
 {
+	"action": {
+		"all": "You will stop getting all email from this portal.",
+		"changelog": "You will stop getting changelog updates by email.",
+		"digest": "You will stop getting the weekly digest email.",
+		"post": "You will stop getting mail about this post.",
+		"shipped": "You will stop getting email when feedback you follow has shipped.",
+		"status": "You will stop getting status page updates by email."
+	},
 	"confirm": "Unsubscribe",
 	"done": "You are unsubscribed",
 	"title": "Unsubscribe from notifications"

@@ -151,6 +151,11 @@ export type QuillsRouteDeclaration<
   /** Signed JSON: exposes the web result location; GET browser navigations receive it as a 303. */
   redirect?: SignedRedirect<P, Q, R>;
   /**
+   * Public GET: the web page for a browser that opens the URL (a mail link). It gets a 303 there
+   * before the handler runs; other clients get the JSON answer.
+   */
+  browserPage?: (input: { workspace: string; query: Output<Q> }) => string;
+  /**
    * Teammate, app, signed, portal and widget: a read in its own scoped transaction, before `call`. It
    * must not write, except an AI budget reservation (assistant/budget.ts), which must commit before
    * the call. The handler then runs in a new scoped transaction with the call's result as `called`.
@@ -461,6 +466,31 @@ function withIdempotencyHeader(
     : body;
 }
 
+const continueInWebResponse = {
+  description: "Continue in the web app",
+  headers: {
+    Location: {
+      description: "The web page",
+      schema: { type: "string", format: "uri" },
+    },
+    "Cache-Control": {
+      description: "The redirect is never cached",
+      schema: { type: "string", enum: ["no-store"] },
+    },
+    "Referrer-Policy": {
+      description: "This URL is not sent to the web app",
+      schema: { type: "string", enum: ["no-referrer"] },
+    },
+  },
+};
+
+const continueInWeb = (c: Context<any, string, any>, location: string) => {
+  const response = c.redirect(location, 303);
+  response.headers.set("cache-control", "no-store");
+  response.headers.set("referrer-policy", "no-referrer");
+  return response;
+};
+
 /** Builds the route and its handler without registering them. Use defineQuillsRoute. */
 export function buildQuillsRoute<
   M extends Method,
@@ -572,6 +602,8 @@ export function buildQuillsRoute<
     throw new Error(
       `${d.operationId}: a browser redirect is for a JSON signed route`,
     );
+  if (d.browserPage && (audience !== "public" || d.method !== "get"))
+    throw new Error(`${d.operationId}: a browser page is for a public GET`);
   if (audience === "signed" || audience === "internal") {
     if (
       d.native ||
@@ -615,26 +647,7 @@ export function buildQuillsRoute<
       request: { params: d.params, query: d.query },
       responses: {
         200: ok,
-        ...(d.redirect &&
-          d.method === "get" && {
-            303: {
-              description: "Continue in the web app",
-              headers: {
-                Location: {
-                  description: "The web result page",
-                  schema: { type: "string", format: "uri" },
-                },
-                "Cache-Control": {
-                  description: "The callback response is never cached",
-                  schema: { type: "string", enum: ["no-store"] },
-                },
-                "Referrer-Policy": {
-                  description: "The callback URL is not sent to the web app",
-                  schema: { type: "string", enum: ["no-referrer"] },
-                },
-              },
-            },
-          }),
+        ...(d.redirect && d.method === "get" && { 303: continueInWebResponse }),
         401: errorResponse(signed ? "Invalid signature" : "Invalid token"),
         ...(signed &&
           d.body && {
@@ -698,19 +711,13 @@ export function buildQuillsRoute<
         params: request.params,
         query: d.query && request.query,
       } as SignedRedirectInput<P, Q>;
-      const continueInWeb = (location: string) => {
-        const response = c.redirect(location, 303);
-        response.headers.set("cache-control", "no-store");
-        response.headers.set("referrer-policy", "no-referrer");
-        return response;
-      };
       const answer = (value: unknown) => {
         if (d.redirect) {
           const location = d.redirect.success(
             value as z.output<R>,
             redirectInput,
           );
-          if (navigation) return continueInWeb(location);
+          if (navigation) return continueInWeb(c, location);
           const response = c.json(value, 200);
           response.headers.set("x-quills-result-location", location);
           return response;
@@ -721,7 +728,7 @@ export function buildQuillsRoute<
         if (!d.redirect || !(error instanceof HTTPException) || !navigation)
           throw error;
         const location = d.redirect.failure(error.status, redirectInput);
-        return continueInWeb(location);
+        return continueInWeb(c, location);
       };
       let located: Located;
       try {
@@ -877,6 +884,7 @@ export function buildQuillsRoute<
       },
       responses: {
         200: ok,
+        ...(d.browserPage && { 303: continueInWebResponse }),
         ...(signIn && {
           401: errorResponse(
             audience === "portal"
@@ -922,6 +930,14 @@ export function buildQuillsRoute<
             await readBody(c, d.body, d.textBody),
           ),
       };
+      if (d.browserPage && prefersBrowserNavigation(c.req.raw.headers))
+        return continueInWeb(
+          c,
+          d.browserPage({
+            workspace: params.workspace,
+            query: input.query as Output<Q>,
+          }),
+        );
       if (d.rateLimit)
         await enforceRateLimit(c, params.workspace, d.operationId, d.rateLimit);
       const credentials = await readCredentials(c, audience, params.workspace);

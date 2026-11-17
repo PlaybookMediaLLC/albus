@@ -149,13 +149,13 @@ Rules of the public profile:
 | Source | Reason |
 |---|---|
 | `routes/api/auth/portal-signin.ts#POST` | Portal sign-in is Kaneo's existing `/api/auth/*` (magic link, email OTP, password, social). No Quills route. The widget handoff and SSO sign-in (gaps G-17, G-24) also end in a Kaneo session: see `token-sign-in.ts`. |
-| `routes/api/widget/sdk[.]js.ts#GET` | `packages/widget/dist/browser.js` is not built, and the SDK calls Quackback paths. |
+| `routes/api/widget/sdk[.]js.ts#GET` | Built: `widget/host.ts` serves `GET /quills-public/{workspace}/widget/sdk.js` from the built `packages/widget` browser bundle. |
 | `routes/api/widget-sso.ts#GET` | Quackback Cloud dogfood: a token signed with an environment secret for the vendor's own dashboard. |
 | Portal invites (`portal-invites.ts`, `portal-invite.$inviteId.tsx`) | Built in P3c; see `CUSTOMER-ROUTES.md`. |
 | `portal-permissions.ts#getMyPortalPermissionsFn` | A portal caller is always a customer, so the list is always empty. |
 | Identify: `previousToken` merge | Built (`CUSTOMER-ROUTES.md`). The attribute and `segments` claims, changelog auto-subscribe and voted post IDs are built in P3c. |
-| Anonymous widget sessions (Better Auth anonymous sign-in in the source) | No P3a route needs one; P3b adds the mint with anonymous votes and comments. |
-| P3b rows: public boards, posts, roadmaps, changelog, RSS, sitemap, customer posts, comments, votes, reactions, widget feedback, help-center and support widget routes, uploads | Out of scope for P3a. |
+| Anonymous widget sessions (Better Auth anonymous sign-in in the source) | Built in P3b: `createQuillsWidgetAnonymousSession` (`POST /widget/anonymous-session`, `widget/feedback/session.ts`). |
+| P3b rows: public boards, posts, roadmaps, changelog, RSS, sitemap, customer posts, comments, votes, reactions, widget feedback, help-center and support widget routes, uploads | Built after P3a: `portal/feedback/ROUTES.md`, `content/public/ROUTES.md`, `support/customer/ROUTES.md` and `files/ROUTES.md`. The portal web pages and their end-to-end checks: `docs/quills-port/portal-e2e-report.md`. |
 
 ## Widget-to-portal link (issue #129, option C)
 

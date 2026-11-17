@@ -1,11 +1,38 @@
 import { useTranslation } from "react-i18next";
 import { portalHref } from "../../core/portal-href";
 import { useGetPublicStatusIncident } from "../../hooks/status/use-get-public-status-incident";
-import { usePortalRuntime } from "../../portal/runtime";
+import { usePortalViewer } from "../../core/use-portal-viewer";
+import { useOptionalPortalRuntime } from "../../portal/runtime";
 import { PageFrame } from "../../ui/page-frame";
 import { PortalGate } from "../../ui/portal-gate";
 import { StateView } from "../../ui/state-view";
 import { meta } from "./meta";
+
+// The API sends enum values; the page names them in words.
+const stateKeys = {
+  investigating: "status-incident.state.investigating",
+  identified: "status-incident.state.identified",
+  monitoring: "status-incident.state.monitoring",
+  resolved: "status-incident.state.resolved",
+  scheduled: "status-incident.state.scheduled",
+  in_progress: "status-incident.state.in_progress",
+  verifying: "status-incident.state.verifying",
+  completed: "status-incident.state.completed",
+} as const;
+const impactKeys = {
+  none: "status-incident.impactLevel.none",
+  minor: "status-incident.impactLevel.minor",
+  major: "status-incident.impactLevel.major",
+  critical: "status-incident.impactLevel.critical",
+  maintenance: "status-incident.impactLevel.maintenance",
+} as const;
+const componentKeys = {
+  operational: "status-incident.componentState.operational",
+  under_maintenance: "status-incident.componentState.under_maintenance",
+  degraded_performance: "status-incident.componentState.degraded_performance",
+  partial_outage: "status-incident.componentState.partial_outage",
+  major_outage: "status-incident.componentState.major_outage",
+} as const;
 export interface StatusIncidentPageProps {
   workspaceId: string;
   params: Record<string, string>;
@@ -13,15 +40,22 @@ export interface StatusIncidentPageProps {
 }
 export function StatusIncidentPage(props: StatusIncidentPageProps) {
   const { t } = useTranslation("quills");
-  const portal = usePortalRuntime();
+  const portal = useOptionalPortalRuntime();
+  const viewer = usePortalViewer();
+  // As on the feedback pages: no request until the private-portal gate admits the caller. With the
+  // portal off there is no decision to wait for, and the status API applies the gate itself.
+  const granted = portal
+    ? !portal.accessLoading && portal.access?.granted === true
+    : true;
+  const workspace = granted ? props.workspaceId : "";
   const incident = useGetPublicStatusIncident(
     {
       param: {
-        workspace: props.workspaceId,
+        workspace,
         incidentId: props.params.incidentId ?? "",
       },
     },
-    portal.viewer,
+    viewer,
   );
 
   return (
@@ -32,7 +66,11 @@ export function StatusIncidentPage(props: StatusIncidentPageProps) {
       tokenScope={undefined}
       persistToken={false}
     >
-      <StateView loading={false} problem={null}>
+      <StateView
+        loading={portal?.accessLoading ?? false}
+        problem={portal?.accessProblem ?? null}
+        onRetry={portal?.retryAccess}
+      >
         <PortalGate
           workspaceId={props.workspaceId}
           currentPath={portalHref(
@@ -41,8 +79,8 @@ export function StatusIncidentPage(props: StatusIncidentPageProps) {
           )}
           audience={meta.audience}
           portalEnabled
-          accessGranted={portal.access?.granted ?? false}
-          signedIn={portal.viewer.kind === "user"}
+          accessGranted={granted}
+          signedIn={viewer.kind === "user"}
         >
           <StateView
             loading={incident.isLoading}
@@ -55,12 +93,12 @@ export function StatusIncidentPage(props: StatusIncidentPageProps) {
               <article className="space-y-6 text-sm">
                 <p>
                   {t("status-incident.status", {
-                    status: incident.data.status,
+                    status: t(stateKeys[incident.data.status]),
                   })}
                 </p>
                 <p>
                   {t("status-incident.impact", {
-                    impact: incident.data.impact,
+                    impact: t(impactKeys[incident.data.impact]),
                   })}
                 </p>
                 <p>
@@ -92,7 +130,7 @@ export function StatusIncidentPage(props: StatusIncidentPageProps) {
                         <li key={component.id}>
                           {t("status-incident.componentStatus", {
                             name: component.name,
-                            status: component.componentStatus,
+                            status: t(componentKeys[component.componentStatus]),
                           })}
                         </li>
                       ))}
@@ -120,7 +158,7 @@ export function StatusIncidentPage(props: StatusIncidentPageProps) {
                         >
                           <p>
                             {t("status-incident.status", {
-                              status: update.status,
+                              status: t(stateKeys[update.status]),
                             })}
                           </p>
                           <p>{update.body}</p>

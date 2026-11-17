@@ -6627,5 +6627,10 @@
 		"value": "SELECT count(*)::int AS audit,\n       count(*) FILTER (WHERE p.kaneo_user_id=$3 AND l.metadata->>'appId'=$4)::int AS \"byApp\"\n     FROM quills.audit_log l LEFT JOIN quills.principal p ON p.id=l.actor_principal_id AND p.workspace_id=l.workspace_id\n     WHERE l.workspace_id=$1 AND l.occurred_at>=$2::timestamptz",
 		"term": "kaneo",
 		"reason": "Existing quills kaneo_user_id column in a contract-check query; a storage identifier, not product copy."
+	},
+	{
+		"file": "apps/web/src/quills/pages/desktop-sign-in/device-flow.ts",
+		"value": "kaneo-cli",
+		"reason": "Existing internal protocol, storage, editor or command identifier; preserve compatibility."
 	}
 ]

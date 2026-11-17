@@ -137,6 +137,8 @@ export type Subscribers = {
    * decides at fan-out whether this event has such mail at all.
    */
   direct?: true | ((db: Database, event: DeliveryEvent) => Promise<boolean>);
+  /** Seconds the direct mail job waits before it runs; `mail` decides again when it does. */
+  directDelay?: (db: Database, event: DeliveryEvent) => Promise<number>;
   /**
    * Direct mail about other messages than the event's own: one mail job per message ID returned,
    * for example the copies a tracker's reply-all wrote on its linked tickets. `mail` gets the
@@ -184,7 +186,12 @@ const commentIdOf = (event: DeliveryEvent) =>
 async function livePost(db: Database, postId: PostId | undefined) {
   if (!postId) return undefined;
   const [post] = await db
-    .select({ id: posts.id, title: posts.title, statusId: posts.statusId })
+    .select({
+      id: posts.id,
+      title: posts.title,
+      statusId: posts.statusId,
+      authorId: posts.principalId,
+    })
     .from(posts)
     .where(and(eq(posts.id, postId), isNull(posts.deletedAt)));
   return post;
@@ -334,6 +341,8 @@ export const subscribers: Partial<Record<string, Subscribers>> = {
             workspaceName: workspace.name,
             unsubscribeUrl: unsubscribePageUrl(workspace.id, token),
             oneClickUnsubscribeUrl: unsubscribeUrl(workspace.id, token),
+            // Only the author reads "your feedback"; a follower gets their own copy.
+            yours: post.authorId === principalId,
           }),
       };
     },
@@ -654,6 +663,10 @@ export async function fanOut(workspaceId: string, eventId: string) {
           .from(boardProjects)
           .where(eq(boardProjects.boardId, post.boardId))
       : [];
+    const direct =
+      typeof entry?.direct === "function"
+        ? await entry.direct(db, event)
+        : Boolean(entry?.direct);
     return {
       hooks: hooks.map((hook) => hook.id),
       teammates: postId && !post ? [] : teammates,
@@ -661,10 +674,9 @@ export async function fanOut(workspaceId: string, eventId: string) {
       customers: postId && !post ? [] : customers.map((row) => row.id),
       links: links.map((link) => link.projectId),
       entry,
-      direct:
-        typeof entry?.direct === "function"
-          ? await entry.direct(db, event)
-          : Boolean(entry?.direct),
+      direct,
+      directDelay:
+        direct && entry?.directDelay ? await entry.directDelay(db, event) : 0,
       copies: entry?.copies && entry.mail ? await entry.copies(db, event) : [],
     };
   });
@@ -704,6 +716,7 @@ export async function fanOut(workspaceId: string, eventId: string) {
         { eventId },
         `${eventId}:direct`,
         5,
+        plan.directDelay,
       );
     for (const messageId of plan.copies)
       await enqueueQuillsJob(

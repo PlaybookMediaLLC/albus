@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Connect to Quills</title>
+    <link rel="stylesheet" href="picker.css" />
+    <script type="module" src="picker.js"></script>
+  </head>
+  <body>
+    <main>
+      <h1 data-text="picker.title">Connect to Quills</h1>
+      <section id="saved" hidden>
+        <p id="saved-text" class="lead"></p>
+        <div class="row">
+          <button id="retry" type="button" class="primary" data-text="picker.retry">Try again</button>
+          <button id="change" type="button" data-text="picker.change">Change server</button>
+        </div>
+      </section>
+      <section id="choose" hidden>
+        <p class="lead" data-text="picker.lead">Pick the server that your team uses.</p>
+        <div id="cloud-choice" hidden>
+          <button id="cloud" type="button" class="primary" data-text="picker.cloud">Use Quills Cloud</button>
+          <p id="cloud-host" class="hint"></p>
+          <p class="divider"><span data-text="picker.or">or</span></p>
+        </div>
+        <form id="form" novalidate>
+          <label for="address" data-text="picker.address">Server address</label>
+          <input
+            id="address"
+            name="address"
+            type="text"
+            inputmode="url"
+            autocomplete="url"
+            autocapitalize="off"
+            spellcheck="false"
+            placeholder="quills.example.com"
+            aria-describedby="address-hint status"
+            required
+          />
+          <p id="address-hint" class="hint" data-text="picker.addressHint">
+            Enter the address that you open Quills at in a browser. A local or private address
+            uses http://.
+          </p>
+          <button type="submit" data-text="picker.connect">Connect</button>
+        </form>
+      </section>
+      <p id="status" role="status" aria-live="polite"></p>
+    </main>
+  </body>
+</html>
