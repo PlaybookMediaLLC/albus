@@ -1,3 +1,4 @@
+import { boards } from "../../database/quills/schema/boards";
 import type { TypeId } from "@kaneo/ids";
 import { and, asc, eq, isNull } from "drizzle-orm";
 import { principal } from "../../database/quills/schema/auth";
@@ -332,3 +333,12 @@ export const seedWith =
       b: { ...ids.b, ...(await env.scoped(env.b, (db) => extra(db, ids.b))) },
     };
   };
+
+/** The support seed with a feedback board in each workspace. */
+export const withBoard = seedWith(async (db) => {
+  const [board] = await db
+    .insert(boards)
+    .values({ name: "Ideas", slug: `ideas-${crypto.randomUUID()}` })
+    .returning({ id: boards.id });
+  return { boardId: board!.id };
+});

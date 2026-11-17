@@ -31,6 +31,7 @@ export const setPostStatusFixture = {
           effort: null,
           rice: null,
         },
+        factorValues: [],
       },
       ...overrides,
     }) satisfies SetPostStatusResponse,

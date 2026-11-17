@@ -1,6 +1,9 @@
 import { fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vite-plus/test";
 import { getRevenueAtRiskFixture } from "../../api/team/get-revenue-at-risk.fixture";
+import { getScoringFactorsFixture } from "../../api/team/get-scoring-factors.fixture";
+import { listSegmentsFixture } from "../../api/team/list-segments.fixture";
+import { setPostFactorScoresFixture } from "../../api/team/set-post-factor-scores.fixture";
 import { listPostsFixture } from "../../api/team/list-posts.fixture";
 import { setPostScoreFixture } from "../../api/team/set-post-score.fixture";
 import { choose, fill, press } from "../../test/actions";
@@ -22,11 +25,16 @@ const post = {
     mrrCents: 150000,
     importance: { nice: 1, important: 1, critical: 2 },
   },
+  teamScore: null,
 };
-const prepare = () => {
+const prepare = (
+  factors: { id: string; name: string; weight: number }[] = [],
+) => {
   const api = mockApi();
   api.reply(listPostsFixture.ok({ items: [post] }));
   api.reply(getRevenueAtRiskFixture.ok({ companies: 2, mrrCents: 150000 }));
+  api.reply(getScoringFactorsFixture.ok({ factors }));
+  api.reply(listSegmentsFixture.ok());
   return api;
 };
 
@@ -37,13 +45,13 @@ describe("TeamTriagePage", () => {
     loading: {
       prepare: () => {
         const api = mockApi();
-        for (let i = 0; i < 2; i++) api.defer(() => undefined);
+        for (let i = 0; i < 4; i++) api.defer(() => undefined);
       },
     },
     failed: {
       prepare: () => {
         const api = mockApi();
-        for (let i = 0; i < 2; i++) api.fail();
+        for (let i = 0; i < 4; i++) api.fail();
       },
     },
     ready: {
@@ -127,14 +135,88 @@ describe("TeamTriagePage", () => {
       });
     });
 
-    it("hides the score editor without the update permission", async () => {
-      prepare();
+    it("filters by revenue and votes, and sorts by the team score", async () => {
+      api = prepare();
+      api.reply(listPostsFixture.ok({ items: [post] }));
+      api.reply(listPostsFixture.ok({ items: [post] }));
+      const view = renderPage(TeamTriagePage, meta);
+      await view.findByRole("rowheader", { name: "Export history" });
+      expect(view.getByText(/Add scoring factors/)).toBeVisible();
+      fill("Minimum MRR", "100");
+      fill("Minimum votes", "3");
+      press("Apply filters");
+      await waitFor(() => expect(api.calls("listQuillsPosts")).toHaveLength(2));
+      const filtered = new URL(api.calls("listQuillsPosts")[1]!.url)
+        .searchParams;
+      expect(filtered.get("minMrrCents")).toBe("10000");
+      expect(filtered.get("minVotes")).toBe("3");
+      // The fields keep the applied filters after the list reloads.
+      expect(await view.findByLabelText("Minimum MRR")).toHaveValue("100");
+      press("Filters");
+      fireEvent.click(
+        await view.findByRole("menuitemradio", { name: "Score" }),
+      );
+      await waitFor(() => expect(api.calls("listQuillsPosts")).toHaveLength(3));
+      expect(
+        new URL(api.calls("listQuillsPosts")[2]!.url).searchParams.get("sort"),
+      ).toBe("score");
+    });
+
+    it("saves a request's factor values", async () => {
+      api = prepare([{ id: "impact", name: "Impact", weight: 3 }]);
+      api.reply(setPostFactorScoresFixture.ok({ score: 24 }));
+      api.reply(listPostsFixture.ok({ items: [post] }));
+      const view = renderPage(TeamTriagePage, meta);
+      press(
+        (
+          await view.findByRole("button", {
+            name: /edit the factor values of .export history/i,
+          })
+        ).getAttribute("aria-label")!,
+      );
+      fill("Impact (weight 3)", "8");
+      press("Save factors");
+      await waitFor(() =>
+        expect(api.calls("setQuillsPostFactorScores")).toHaveLength(1),
+      );
+      expect(await api.calls("setQuillsPostFactorScores")[0]!.json()).toEqual({
+        values: [{ factorId: "impact", value: 8 }],
+      });
+    });
+
+    it("asks for no revenue and offers no revenue order without view_revenue", async () => {
+      const api = mockApi();
+      api.reply(
+        listPostsFixture.ok({
+          items: [{ ...post, demand: { ...post.demand, mrrCents: null } }],
+        }),
+      );
+      api.reply(getScoringFactorsFixture.ok({ factors: [] }));
+      api.reply(listSegmentsFixture.ok());
+      const view = renderPage(TeamTriagePage, meta, {
+        permissions: { viewRevenue: false },
+      });
+      await view.findByRole("rowheader", { name: "Export history" });
+      expect(api.calls("getQuillsRevenueAtRisk")).toHaveLength(0);
+      expect(view.queryByText("Revenue at risk")).toBeNull();
+      expect(view.queryByLabelText("Minimum MRR")).toBeNull();
+      press("Filters");
+      await view.findByRole("menuitemradio", { name: "Votes" });
+      expect(view.queryByRole("menuitemradio", { name: "MRR" })).toBeNull();
+    });
+
+    it("hides the score editors without the update permission", async () => {
+      // With factors, so the factor editor would show if the permission were ignored.
+      prepare([{ id: "impact", name: "Impact", weight: 3 }]);
       const view = renderPage(TeamTriagePage, meta, {
         permissions: { update: false },
       });
       await view.findByRole("rowheader", { name: "Export history" });
       expect(
         view.queryByRole("button", { name: /score/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        view.queryByRole("button", { name: /edit the factor values/i }),
       ).not.toBeInTheDocument();
     });
   });

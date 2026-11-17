@@ -20,6 +20,7 @@ import {
   createDownload,
   isQuillsStorageConfigured,
 } from "../../framework/files";
+import { seesRevenue } from "../../feedback/schemas";
 import { exportRunFields, exportRunItem } from "./data-runs";
 
 // Export runs: the request records the run and its event; the quills.transfer job
@@ -61,19 +62,24 @@ const createRun = defineQuillsRoute({
   operationId: "createQuillsExportWorkspace",
   summary: "Start an export run",
   description:
-    "Queues a CSV export of posts, users, companies or conversations. The file holds only rows that the caller can read: posts on boards the caller can see, no test customers and no deleted rows. One export runs per workspace at a time. Poll GET /transfer/export-runs/{runId}, then request a download URL.",
+    "Queues a CSV export of posts, users, companies or conversations. The file holds only rows that the caller can read: posts on boards the caller can see, no test customers and no deleted rows. The companies file has the monthly_spend column only when the caller holds quills:view_revenue, at the request and when the file is built. One export runs per workspace at a time. Poll GET /transfer/export-runs/{runId}, then request a download URL.",
   action: "manage_settings",
+  callerActions: true,
   body: z.object({ kind: z.enum(exportKinds) }),
   response: z.object({ runId: z.string() }),
   responseDescription: "The queued run",
   errors: { 409: "An export is already running" },
-  event: ({ body }, result) => ({
+  event: ({ body }, result, raw) => ({
     type: "export.requested",
     entityType: "export_run",
     entityId: result.runId,
-    payload: { kind: body.kind },
+    payload: {
+      kind: body.kind,
+      // The companies file has monthly_spend only for a holder of quills:view_revenue (#79).
+      revenue: String((raw as { revenue: boolean }).revenue),
+    },
   }),
-  handler: async ({ db, actor, body }) => {
+  handler: async ({ db, actor, body, actions }) => {
     if (!isQuillsStorageConfigured())
       throw new HTTPException(503, {
         message: "File storage is not configured",
@@ -130,7 +136,7 @@ const createRun = defineQuillsRoute({
       .returning({ id: exportRuns.id });
     if (!run)
       throw new HTTPException(409, { message: "An export is already running" });
-    return { runId: run.id };
+    return { runId: run.id, revenue: seesRevenue(actions) };
   },
 });
 

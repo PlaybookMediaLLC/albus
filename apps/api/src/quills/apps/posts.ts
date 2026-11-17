@@ -55,7 +55,17 @@ const createPost = defineQuillsRoute({
   event: ({ body }, result) => {
     const post = { entityType: "post", entityId: result.id } as const;
     const changes: QuillsChange[] = [
-      { type: "post.created", ...post, payload: { boardId: result.boardId } },
+      {
+        type: "post.created",
+        ...post,
+        payload: {
+          boardId: result.boardId,
+          ...(body.requester && {
+            onBehalfOf: result.authorPrincipalId,
+            source: "app",
+          }),
+        },
+      },
       {
         type: "app.post_created",
         ...post,
@@ -89,6 +99,7 @@ const createPost = defineQuillsRoute({
       content: body.content,
       tagIds: [],
       author: author ? author.principalId : undefined,
+      source: "app",
       customFields: body.customFields,
     });
     const [link] = body.link

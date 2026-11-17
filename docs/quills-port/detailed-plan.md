@@ -118,7 +118,7 @@ Merged: 12. Visibility rule for every board and post read: if the board has rows
 
 | operationId | Route | Action | Tables | Event | Tests |
 |---|---|---|---|---|---|
-| `listQuillsPosts` | `GET /posts` (board, status, tag, owner, author, search, date, sort, cursor; `limit` ≤ 100) | read | `posts`, `post_statuses`, `post_tag_assignments`, `user_segments` | - | contract, read-leak, page-bounds |
+| `listQuillsPosts` | `GET /posts` (board, status, tag, owner, author, search, date, sort incl. `mrr`, `rice` and `score`, `minVotes`, `minMrrCents`, `segmentIds`, `minScore` (#79), cursor; `limit` ≤ 100) | read | `posts`, `post_statuses`, `post_tag_assignments`, `user_segments` | - | contract, read-leak, page-bounds |
 | `getQuillsPostFilterCounts` | `GET /posts/counts` | read | `posts` | - | contract, read-leak |
 | `getQuillsPost` | `GET /posts/{postId}` | read | `posts`, `post_votes`, `post_tags`, `principal` | - | contract, read-leak |
 | `createQuillsPost` | `POST /posts` | create | `posts`, `post_activity`, `post_subscriptions`, `post_tag_assignments` | `post.created` | contract, rollback |
@@ -142,7 +142,7 @@ The author is `actor.principalId`. Author override returns in P2 with the people
 |---|---|---|---|---|---|
 | `listQuillsPostVoters` | `GET /posts/{postId}/voters` | read | `post_votes`, `principal` | - | contract, read-leak |
 | `voteQuillsPost` | `PUT /posts/{postId}/vote` (the caller's own vote) | update | `post_votes`, `posts` | `post.voted` | contract, rollback |
-| `addQuillsPostProxyVote` | `PUT /posts/{postId}/voters/{principalId}` | update | `post_votes`, `posts`, `principal` | `post.voted` | contract, rollback |
+| `addQuillsPostProxyVote` | `PUT /posts/{postId}/voters/{principalId}` (`source` query: call, meeting, email, chat, other; one vote per person; no subscription, as a portal vote) | update | `post_votes`, `posts`, `principal` | `post.voted` | contract, rollback |
 | `removeQuillsPostVote` | `DELETE /posts/{postId}/voters/{principalId}` | update | `post_votes`, `posts` | `post.unvoted` | contract, rollback |
 
 Merged: 8. The vote count on `posts` changes in the same transaction as the vote row.

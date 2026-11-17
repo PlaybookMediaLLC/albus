@@ -34,9 +34,12 @@ export function PostDemand({ workspaceId, postId }: PostDemandProps) {
             <PropertyRow label={t("team-post.companies")}>
               {data.companies}
             </PropertyRow>
-            <PropertyRow label={t("team-post.mrr")}>
-              {money.format(data.mrrCents / 100)}
-            </PropertyRow>
+            {/* Null without quills:view_revenue (#79). */}
+            {data.mrrCents === null ? null : (
+              <PropertyRow label={t("team-post.mrr")}>
+                {money.format(data.mrrCents / 100)}
+              </PropertyRow>
+            )}
             <PropertyRow label={t("team-post.importance")}>
               {/* Three short counts read better than one sentence that wraps. */}
               <span className="flex flex-wrap gap-x-3 gap-y-0.5">

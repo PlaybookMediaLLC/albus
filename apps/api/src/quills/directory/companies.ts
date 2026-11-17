@@ -16,6 +16,7 @@ import {
 } from "../../database/quills/schema/tickets";
 import { companyAttributeDefinitions } from "../../database/quills/schema/company-attributes";
 import { defineQuillsRoute } from "../framework/define-route";
+import { revenueDenied, seesRevenue } from "../feedback/schemas";
 import {
   attributeList,
   attributeListSchema,
@@ -54,7 +55,10 @@ const company = z.object({
   domain: z.string().nullable(),
   externalId: z.string().nullable(),
   plan: z.string().nullable(),
-  mrrCents: z.number().nullable(),
+  mrrCents: z.number().nullable().openapi({
+    description:
+      "Monthly revenue in cents. Null when unset or without the quills:view_revenue permission.",
+  }),
   size: z.string().nullable(),
   website: z.string().nullable(),
   industry: z.string().nullable(),
@@ -65,8 +69,10 @@ const company = z.object({
   updatedAt: responseTimestamp,
 });
 type Row = Awaited<ReturnType<typeof loadCompany>>;
-const toCompany = ({ customAttributes, ...row }: Row) => ({
+/** The response shape. Without `revenue` (quills:view_revenue), the revenue reads as null. */
+const toCompany = ({ customAttributes, ...row }: Row, revenue: boolean) => ({
   ...row,
+  mrrCents: revenue ? row.mrrCents : null,
   memberCount: Number(row.memberCount),
   attributes: attributeList(customAttributes ?? {}),
 });
@@ -148,6 +154,7 @@ const listCompanies = defineQuillsRoute({
   operationId: "listQuillsCompanies",
   summary: "List companies",
   action: "read",
+  callerActions: true,
   query: z.object({
     search: z.string().trim().max(200).optional(),
     plan: z.string().trim().max(100).optional(),
@@ -160,7 +167,7 @@ const listCompanies = defineQuillsRoute({
     nextOffset: z.number().nullable(),
   }),
   responseDescription: "One page of companies",
-  handler: async ({ db, query }) => {
+  handler: async ({ db, query, actions }) => {
     const where = and(
       query.search
         ? or(
@@ -183,7 +190,7 @@ const listCompanies = defineQuillsRoute({
       .where(where);
     const total = Number(count?.total ?? 0);
     return {
-      companies: rows.map(toCompany),
+      companies: rows.map((row) => toCompany(row, seesRevenue(actions))),
       total,
       nextOffset:
         query.offset + rows.length < total ? query.offset + rows.length : null,
@@ -197,12 +204,13 @@ const getCompany = defineQuillsRoute({
   operationId: "getQuillsCompany",
   summary: "Get a company",
   action: "read",
+  callerActions: true,
   params: companyParams,
   response: company,
   responseDescription: "The company",
   errors: notFound,
-  handler: async ({ db, params }) =>
-    toCompany(await loadCompany(db, params.companyId)),
+  handler: async ({ db, params, actions }) =>
+    toCompany(await loadCompany(db, params.companyId), seesRevenue(actions)),
 });
 
 const createCompany = defineQuillsRoute({
@@ -211,6 +219,7 @@ const createCompany = defineQuillsRoute({
   operationId: "createQuillsCompany",
   summary: "Create a company",
   action: "create",
+  callerActions: true,
   body: z.object({ name: z.string().trim().min(1).max(200), ...fields }),
   response: company,
   responseDescription: "The new company",
@@ -220,7 +229,9 @@ const createCompany = defineQuillsRoute({
     entityType: "company",
     entityId: result.id,
   }),
-  handler: async ({ db, body }) => {
+  handler: async ({ db, body, actions }) => {
+    if (body.mrrCents !== undefined && !seesRevenue(actions))
+      throw revenueDenied();
     await assertUnique(db, body);
     const [row] = await db
       .insert(companies)
@@ -237,7 +248,7 @@ const createCompany = defineQuillsRoute({
         customAttributes: await customAttributes(db, {}, body.attributes),
       })
       .returning({ id: companies.id });
-    return toCompany(await loadCompany(db, row!.id));
+    return toCompany(await loadCompany(db, row!.id), seesRevenue(actions));
   },
 });
 
@@ -249,6 +260,7 @@ const updateCompany = defineQuillsRoute({
   description:
     "Attribute values need a company attribute definition; null removes one.",
   action: "update",
+  callerActions: true,
   params: companyParams,
   body: z
     .object({ name: z.string().trim().min(1).max(200).optional(), ...fields })
@@ -261,7 +273,9 @@ const updateCompany = defineQuillsRoute({
     entityType: "company",
     entityId: params.companyId,
   }),
-  handler: async ({ db, params, body }) => {
+  handler: async ({ db, params, body, actions }) => {
+    if (body.mrrCents !== undefined && !seesRevenue(actions))
+      throw revenueDenied();
     const current = await loadCompany(db, params.companyId);
     await assertUnique(db, body, params.companyId);
     await db
@@ -282,7 +296,10 @@ const updateCompany = defineQuillsRoute({
         ),
       })
       .where(eq(companies.id, params.companyId));
-    return toCompany(await loadCompany(db, params.companyId));
+    return toCompany(
+      await loadCompany(db, params.companyId),
+      seesRevenue(actions),
+    );
   },
 });
 
@@ -387,14 +404,17 @@ const getPersonCompany = defineQuillsRoute({
   operationId: "getQuillsUserCompany",
   summary: "Get a customer's company",
   action: "read",
+  callerActions: true,
   params: principalParams,
   response: z.object({ company: company.nullable() }),
   responseDescription: "The company, or null",
   errors: { 404: "Person not found" },
-  handler: async ({ db, params }) => {
+  handler: async ({ db, params, actions }) => {
     const { companyId } = await loadCustomer(db, params.principalId);
     return {
-      company: companyId ? toCompany(await loadCompany(db, companyId)) : null,
+      company: companyId
+        ? toCompany(await loadCompany(db, companyId), seesRevenue(actions))
+        : null,
     };
   },
 });
@@ -407,6 +427,7 @@ const setPersonCompany = defineQuillsRoute({
   description:
     "Send `companyId` to attach an existing company, or `name` to attach the company with that name (case-insensitive), created when missing.",
   action: "update",
+  callerActions: true,
   params: principalParams,
   body: z
     .object({
@@ -429,7 +450,7 @@ const setPersonCompany = defineQuillsRoute({
     entityId: params.principalId,
     payload: { companyId: result.id },
   }),
-  handler: async ({ db, params, body }) => {
+  handler: async ({ db, params, body, actions }) => {
     await loadCustomer(db, params.principalId, true);
     let companyId = body.companyId;
     if (companyId) await loadCompany(db, companyId);
@@ -459,7 +480,7 @@ const setPersonCompany = defineQuillsRoute({
       .update(principal)
       .set({ companyId })
       .where(eq(principal.id, params.principalId));
-    return toCompany(await loadCompany(db, companyId));
+    return toCompany(await loadCompany(db, companyId), seesRevenue(actions));
   },
 });
 

@@ -225,6 +225,20 @@
 			"when": 1794876076541,
 			"tag": "0031_changelog_translations",
 			"breakpoints": true
+		},
+		{
+			"idx": 32,
+			"version": "7",
+			"when": 1794906164239,
+			"tag": "0032_post_score_values",
+			"breakpoints": true
+		},
+		{
+			"idx": 33,
+			"version": "7",
+			"when": 1794906174344,
+			"tag": "0033_quills_view_revenue",
+			"breakpoints": true
 		}
 	]
 }

@@ -163,6 +163,7 @@ export function renderPage(
                   update: true,
                   delete: true,
                   manageSettings: true,
+                  viewRevenue: true,
                   ...options.permissions,
                 },
               }}

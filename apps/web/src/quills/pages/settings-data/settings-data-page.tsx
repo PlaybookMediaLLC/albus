@@ -6,6 +6,7 @@ import { useTeamRuntime } from "../../team/runtime";
 import { TeamStateView } from "../../team/team-state-view";
 import { PageFrame } from "../../ui/page-frame";
 import { SettingsCard, SettingsPage, SettingsSection } from "../../ui/upstream";
+import { CompanyImportSheet } from "./parts/company-import-sheet";
 import { DeleteWorkspaceRow } from "./parts/delete-workspace-row";
 import { DownloadButton } from "./parts/download-button";
 import { ExportDialog } from "./parts/export-dialog";
@@ -46,6 +47,9 @@ export function SettingsDataPage({ workspaceId }: SettingsDataPageProps) {
           <SettingsSection title={t("settings-connections.data.import")}>
             <SettingsCard>
               <ImportSheet workspaceId={workspaceId} />
+              {team.permissions.manageSettings ? (
+                <CompanyImportSheet workspaceId={workspaceId} />
+              ) : null}
               {imports.data?.items.map((run) => (
                 <RunRow
                   key={run.id}

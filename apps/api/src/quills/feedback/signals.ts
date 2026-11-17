@@ -30,7 +30,6 @@ import {
   type Database,
   type QuillsActor,
 } from "../framework/define-route";
-import { recordActivity } from "./activity";
 import { fieldValuesInput } from "./custom-fields";
 import { insertPost } from "./posts";
 import { page, pageQuery } from "./schemas";
@@ -256,6 +255,10 @@ const accepted = (id: string, postId: string, mode: "post" | "vote") => ({
   entityId: id,
   payload: { postId, mode },
 });
+/** Where a signal's request came from, for the post history and the audit log (#73). */
+const sourceOf = (signal: { conversationId: string | null }) =>
+  signal.conversationId ? ("conversation" as const) : ("ticket" as const);
+type Behalf = { onBehalfOf: string; source: string };
 const decisionErrors = {
   404: "Signal, board or post not found",
   409: "The signal is not pending",
@@ -269,6 +272,8 @@ const acceptAsPost = defineQuillsRoute({
   description:
     "Creates a post on a board that you can see, as createQuillsPost does: the customer is its author and first voter, you are the teammate who tracks it, and the excerpt is its content. The board's custom fields are checked as on createQuillsPost, so a required field needs a value. The post and the decision commit together. 409 when the signal is not pending.",
   action: "create",
+  // Acting for the signal's customer needs update too, as createQuillsPost does (#73).
+  alsoRequires: ["update"],
   params,
   body: z.object({
     boardId: flexibleToTypeIdSchema("board"),
@@ -282,26 +287,36 @@ const acceptAsPost = defineQuillsRoute({
     ...decisionErrors,
     400: "A custom field value is missing, unknown or of the wrong type",
   },
-  event: ({ body }, result) => [
+  event: ({ body }, result, raw) => [
     {
       type: "post.created",
       entityType: "post",
       entityId: result.resultingPostId!,
-      payload: { boardId: body.boardId },
+      payload: {
+        boardId: body.boardId,
+        onBehalfOf: (raw as Behalf).onBehalfOf,
+        source: (raw as Behalf).source,
+      },
     },
     accepted(result.id, result.resultingPostId!, "post"),
   ],
   handler: async ({ db, actor, params, body, loaded }) => {
     const signal = await pendingSignal(db, params.signalId);
+    const source = sourceOf(signal);
     const postId = await insertPost(db, actor, loaded, {
       boardId: body.boardId,
       title: body.title,
       content: signal.excerpt,
       tagIds: [],
       author: signal.principalId,
+      source,
       customFields: body.customFields,
     });
-    return accept(db, actor, signal.id, postId);
+    return {
+      ...(await accept(db, actor, signal.id, postId)),
+      onBehalfOf: signal.principalId,
+      source,
+    };
   },
 });
 
@@ -313,6 +328,8 @@ const acceptAsVote = defineQuillsRoute({
   description:
     "Adds the customer's vote to a post that you can see, usually the matched post, as addQuillsPostProxyVote does: a merged post's vote counts on the post it was merged into, and a vote that exists already is kept (`voteAdded` false). The vote and the decision commit together. 409 when the signal is not pending.",
   action: "create",
+  // Acting for the signal's customer needs update too, as addQuillsPostProxyVote does (#73).
+  alsoRequires: ["update"],
   params,
   body: z.object({ postId: flexibleToTypeIdSchema("post") }),
   load: loadProjects,
@@ -322,14 +339,17 @@ const acceptAsVote = defineQuillsRoute({
   }),
   responseDescription: "The accepted signal and the post that holds the vote",
   errors: decisionErrors,
-  event: (_input, result) => [
+  event: (_input, result, raw) => [
     ...(result.voteAdded
       ? [
           {
             type: "post.voted" as const,
             entityType: "post" as const,
             entityId: result.resultingPostId!,
-            payload: { principalId: result.voterPrincipalId },
+            payload: {
+              principalId: result.voterPrincipalId,
+              source: (raw as Behalf).source,
+            },
           },
         ]
       : []),
@@ -337,27 +357,17 @@ const acceptAsVote = defineQuillsRoute({
   ],
   handler: async ({ db, actor, params, body, loaded }) => {
     const signal = await pendingSignal(db, params.signalId);
+    const source = sourceOf(signal);
     const vote = await addVote(
       db,
       body.postId,
       loaded,
       signal.principalId,
       actor,
+      source,
     );
-    if (vote.changed) {
-      const [voter] = await db
-        .select({ name: principal.displayName })
-        .from(principal)
-        .where(eq(principal.id, signal.principalId));
-      await recordActivity(db, actor, vote.postId, {
-        type: "vote.proxy",
-        metadata: {
-          voterPrincipalId: signal.principalId,
-          voterName: voter?.name ?? null,
-        },
-      });
-    }
     return {
+      source,
       ...(await accept(db, actor, signal.id, vote.postId)),
       voteAdded: vote.changed,
       voterPrincipalId: signal.principalId,

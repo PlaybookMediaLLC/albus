@@ -31,6 +31,7 @@ export const setPostTagsFixture = {
           effort: null,
           rice: null,
         },
+        factorValues: [],
       },
       ...overrides,
     }) satisfies SetPostTagsResponse,
