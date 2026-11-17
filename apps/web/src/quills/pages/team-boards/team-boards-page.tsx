@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "../../ui/upstream";
 import { BoardSegments } from "./parts/board-segments";
+import { BoardFieldsForm } from "./parts/board-fields-form";
 import { BoardVotingForm } from "./parts/board-voting-form";
 import { TaskSyncForm } from "./parts/task-sync-form";
 
@@ -173,6 +174,13 @@ export function TeamBoardsPage({ workspaceId }: TeamBoardsPageProps) {
                       statusOnTaskDone={settings.data.taskSync.statusOnTaskDone}
                       statuses={statuses.data?.statuses ?? []}
                       onSubmit={(taskSync) => saveSettings({ taskSync })}
+                    />
+                    <BoardFieldsForm
+                      key={`${boardId}:fields`}
+                      fields={settings.data.customFields}
+                      onSubmit={(customFields) =>
+                        saveSettings({ customFields })
+                      }
                     />
                   </>
                 ) : null}

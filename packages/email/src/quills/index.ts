@@ -12,6 +12,7 @@ export {
   type RawEmailOptions,
 } from "./input";
 export { emailAttachmentSchema } from "./attachment";
+export { directionOf } from "./direction";
 /**
  * Email sending module for Quackback
  *
@@ -1042,6 +1043,8 @@ export async function sendSendingDomainAttentionEmail(
 // ============================================================================
 
 interface SendStatusChangeParams {
+  /** "rtl" lays the email out right to left (issue #117). */
+  dir?: "ltr" | "rtl";
   to: string;
   postTitle: string;
   postUrl: string;
@@ -1075,6 +1078,7 @@ export async function sendStatusChangeEmail(
     to,
     subject: `Your feedback is now ${formattedNewStatus}!`,
     react: StatusChangeEmail({
+      dir: params.dir,
       postTitle,
       postUrl,
       previousStatus,
@@ -1097,6 +1101,8 @@ export async function sendStatusChangeEmail(
 // ============================================================================
 
 interface SendShippedParams {
+  /** "rtl" lays the email out right to left (issue #117). */
+  dir?: "ltr" | "rtl";
   to: string;
   entryTitle: string;
   entryUrl: string;
@@ -1116,6 +1122,7 @@ export async function sendShippedEmail(
     to: params.to,
     subject: `Shipped: ${params.requestTitle}`,
     react: ShippedEmail({
+      dir: params.dir,
       entryTitle: params.entryTitle,
       entryUrl: params.entryUrl,
       requestTitle: params.requestTitle,
@@ -1137,6 +1144,8 @@ export async function sendShippedEmail(
 // ============================================================================
 
 interface SendWeeklyDigestParams {
+  /** "rtl" lays the email out right to left (issue #117). */
+  dir?: "ltr" | "rtl";
   to: string;
   items: readonly WeeklyDigestItem[];
   myFeedbackUrl: string;
@@ -1154,6 +1163,7 @@ export async function sendWeeklyDigestEmail(
     to: params.to,
     subject: `Your feedback at ${params.workspaceName} this week`,
     react: WeeklyDigestEmail({
+      dir: params.dir,
       items: params.items,
       myFeedbackUrl: params.myFeedbackUrl,
       organizationName: params.workspaceName,
@@ -1173,6 +1183,8 @@ export async function sendWeeklyDigestEmail(
 // ============================================================================
 
 interface SendNewCommentParams {
+  /** "rtl" lays the email out right to left (issue #117). */
+  dir?: "ltr" | "rtl";
   to: string;
   postTitle: string;
   postUrl: string;
@@ -1206,6 +1218,7 @@ export async function sendNewCommentEmail(
     to,
     subject: `New comment on "${postTitle}"`,
     react: NewCommentEmail({
+      dir: params.dir,
       postTitle,
       postUrl,
       commenterName,

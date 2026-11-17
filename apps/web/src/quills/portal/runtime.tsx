@@ -1,6 +1,7 @@
 import { createContext, type ReactNode, useContext } from "react";
 import type { EvaluateMyPortalAccessResponse } from "../api/portal/evaluate-my-portal-access";
 import type { GetPublicPortalConfigResponse } from "../api/portal/get-public-portal-config";
+import { readerLocale } from "../core/reader-locale";
 import type { PortalProblem, Viewer } from "../core/types";
 
 export interface PortalRuntimeValue {
@@ -10,6 +11,8 @@ export interface PortalRuntimeValue {
   accessLoading: boolean;
   accessProblem: PortalProblem | null;
   retryAccess?: () => void;
+  /** The signed-in customer's saved language (portal preferences), or null. */
+  savedLanguage?: string | null;
 }
 
 export interface PortalRouteContext {
@@ -42,4 +45,12 @@ export function usePortalRuntime() {
       "usePortalRuntime must be used inside PortalRuntimeProvider",
     );
   return value;
+}
+
+/**
+ * The reader's language (issues #76, #117): the saved one, else the browser's. Outside a portal
+ * runtime, as in a component test, the browser's.
+ */
+export function useReaderLocale() {
+  return readerLocale(useContext(PortalRuntimeContext)?.savedLanguage);
 }

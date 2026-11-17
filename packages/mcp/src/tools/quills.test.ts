@@ -115,6 +115,22 @@ describe("Quills MCP tools", () => {
         { boardId: "board_1", title: "Dark mode", content: "Please" },
       ],
       [
+        "quills_create_post",
+        {
+          workspaceId: ws,
+          boardId: "board_1",
+          title: "Dark mode",
+          customFields: { plan: "Pro", seats: 3, areas: ["UI"], ok: true },
+        },
+        "POST",
+        "/api/quills/ws_1/posts",
+        {
+          boardId: "board_1",
+          title: "Dark mode",
+          customFields: { plan: "Pro", seats: 3, areas: ["UI"], ok: true },
+        },
+      ],
+      [
         "quills_add_proxy_vote",
         { workspaceId: ws, postId: "post_1", principalId: "principal_9" },
         "PUT",

@@ -82,6 +82,7 @@ export function Icon({
   return (
     <svg
       aria-hidden="true"
+      className={`qb-icon-${name}`}
       width="20"
       height="20"
       viewBox="0 0 256 256"

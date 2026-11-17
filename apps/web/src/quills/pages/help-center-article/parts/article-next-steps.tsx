@@ -44,7 +44,7 @@ export function ArticleNextSteps(props: ArticleNextStepsProps) {
           )}
           {next ? (
             <a
-              className={`${step} sm:text-right`}
+              className={`${step} sm:text-end`}
               href={portalHref(props.workspaceId, next.path)}
             >
               <span className="text-xs text-muted-foreground">

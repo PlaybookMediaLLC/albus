@@ -75,7 +75,7 @@ export function AttachmentPicker(props: AttachmentPickerProps) {
       {chips.map((chip) => (
         <span
           key={chip.key}
-          className="flex max-w-48 items-center gap-0.5 rounded-md bg-muted py-0.5 pl-2 text-xs"
+          className="flex max-w-48 items-center gap-0.5 rounded-md bg-muted py-0.5 ps-2 text-xs"
         >
           <span className="truncate">{chip.name}</span>
           <button

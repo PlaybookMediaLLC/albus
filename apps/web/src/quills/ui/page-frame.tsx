@@ -82,6 +82,8 @@ export function PageFrame({
         <h1
           ref={heading}
           tabIndex={-1}
+          // A post or entry title is a customer's or teammate's text: it keeps its own direction.
+          dir={displayTitle ? "auto" : undefined}
           className={cn(
             "portal-page-title font-medium leading-tight tracking-tight outline-none",
             hub ? "text-3xl md:text-4xl" : "text-2xl md:text-3xl",

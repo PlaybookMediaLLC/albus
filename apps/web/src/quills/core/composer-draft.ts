@@ -37,3 +37,10 @@ export function saveDraft(key: string | undefined, draft: ComposerDraft) {
     // A draft is a convenience; the form still works without storage.
   }
 }
+
+/** Saves the title and details of a form's values; other values stay off the device. */
+export const rememberDraft = (
+  key: string | undefined,
+  values: { title?: string; content?: string },
+) =>
+  saveDraft(key, { title: values.title ?? "", content: values.content ?? "" });

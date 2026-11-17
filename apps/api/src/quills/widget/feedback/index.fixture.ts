@@ -20,6 +20,7 @@ export const setQuillsWidgetCommentReaction =
   all.setQuillsWidgetCommentReaction!;
 export const listQuillsWidgetChangelog = all.listQuillsWidgetChangelog!;
 export const getQuillsWidgetChangelogEntry = all.getQuillsWidgetChangelogEntry!;
+export { improveQuillsWidgetPostDraft } from "../../portal/feedback/ai.fixture";
 
 export const createQuillsWidgetAnonymousSession = fixture({
   seed: async (env) => {

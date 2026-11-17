@@ -55,7 +55,7 @@ export function RoadmapCard({ post, workspaceId, ...props }: RoadmapCardProps) {
           </span>
         ) : null}
         {post.eta ? (
-          <time className="ml-auto" dateTime={post.eta}>
+          <time className="ms-auto" dateTime={post.eta}>
             {new Intl.DateTimeFormat(i18n.language, {
               timeZone: "UTC",
               month: "short",
