@@ -34,7 +34,7 @@ const priority = z.enum(TASK_PRIORITIES);
 export const deliveryInput = z.object({
   projectId: z.string().min(1).max(200).openapi({
     description:
-      "The Kaneo project that receives the board's tasks. It does not change who sees the board.",
+      "The project that receives the board's tasks. It does not change who sees the board.",
   }),
   columnId: z.string().min(1).max(200).nullable().openapi({
     description:
@@ -81,7 +81,7 @@ export const taskFailureMessages: Record<TaskFailure, string> = {
   archived: "The project is archived",
   column_missing: "The column does not exist in the project",
   plan: "The workspace plan does not include task creation",
-  failed: "Kaneo did not create the task",
+  failed: "The task could not be created",
 };
 
 const clip = (text: string, length: number) =>

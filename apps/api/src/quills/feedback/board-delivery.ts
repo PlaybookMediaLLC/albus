@@ -20,7 +20,7 @@ import { findBoard, loadProjects } from "./visibility";
 
 const params = z.object({ boardId: flexibleToTypeIdSchema("board") });
 const errors = {
-  403: "No Kaneo task:create in the project",
+  403: "No task:create permission in the project",
   404: "Board, project or status not found",
   409: "The project is archived, the column does not exist, or the plan does not include tasks",
 } as const;
@@ -37,7 +37,7 @@ const setDelivery = defineQuillsRoute({
   operationId: "setQuillsBoardDelivery",
   summary: "Set a board's delivery project and task rule",
   description:
-    "The caller needs Quills manage_settings and Kaneo task:create in the project, which must be a live project of this workspace. It does not change who sees the board. With a trigger status, a teammate who moves a request of the board to that status gets a task created as them.",
+    "The caller needs Quills manage_settings and task:create in the project, which must be a live project of this workspace. It does not change who sees the board. With a trigger status, a teammate who moves a request of the board to that status gets a task created as them.",
   action: "manage_settings",
   native: { task: ["create"] },
   params,

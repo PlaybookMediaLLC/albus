@@ -153625,7 +153625,7 @@
           "Quills"
         ],
         "summary": "Set a board's delivery project and task rule",
-        "description": "The caller needs Quills manage_settings and Kaneo task:create in the project, which must be a live project of this workspace. It does not change who sees the board. With a trigger status, a teammate who moves a request of the board to that status gets a task created as them.",
+        "description": "The caller needs Quills manage_settings and task:create in the project, which must be a live project of this workspace. It does not change who sees the board. With a trigger status, a teammate who moves a request of the board to that status gets a task created as them.",
         "parameters": [
           {
             "schema": {
@@ -153656,7 +153656,7 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 200,
-                    "description": "The Kaneo project that receives the board's tasks. It does not change who sees the board."
+                    "description": "The project that receives the board's tasks. It does not change who sees the board."
                   },
                   "columnId": {
                     "type": [
@@ -153751,7 +153751,7 @@
             }
           },
           "403": {
-            "description": "No Kaneo task:create in the project",
+            "description": "No task:create permission in the project",
             "content": {
               "application/json": {
                 "schema": {
@@ -153872,8 +153872,8 @@
         "tags": [
           "Quills"
         ],
-        "summary": "Create a Kaneo task from a post and link it",
-        "description": "Creates the task as the caller through Kaneo's task controller, then links it to the post. The caller needs Quills update, Kaneo task:create and access to the project. The task gets the post title, a description with the post text, a link back and the demand counts (no customer names), the post's target date, the post owner as assignee when Kaneo allows it, and the board's delivery priority (default medium).",
+        "summary": "Create a task from a post and link it",
+        "description": "Creates the task as the caller through the task controller, then links it to the post. The caller needs Quills update, task:create and access to the project. The task gets the post title, a description with the post text, a link back and the demand counts (no customer names), the post's target date, the post owner as assignee when the project allows it, and the board's delivery priority (default medium).",
         "parameters": [
           {
             "schema": {
@@ -153952,7 +153952,7 @@
             }
           },
           "400": {
-            "description": "Kaneo refused the task fields",
+            "description": "The task fields were refused",
             "content": {
               "application/json": {
                 "schema": {
@@ -154011,7 +154011,7 @@
         "tags": [
           "Quills"
         ],
-        "summary": "List the Kaneo tasks linked to a post",
+        "summary": "List the tasks linked to a post",
         "description": "The linked tasks in projects that the caller can open, oldest link first, at most 100. `hidden` counts the linked tasks in projects that the caller cannot open; their fields are left out.",
         "parameters": [
           {
@@ -154054,7 +154054,7 @@
                               "string",
                               "null"
                             ],
-                            "description": "Kaneo's ticket ID, such as APP-12."
+                            "description": "The task's ticket ID, such as APP-12."
                           },
                           "title": {
                             "type": "string"

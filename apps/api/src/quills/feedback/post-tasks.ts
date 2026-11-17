@@ -26,9 +26,9 @@ const createTask = defineQuillsRoute({
   method: "post",
   path: "/posts/{postId}/tasks",
   operationId: "createQuillsPostTask",
-  summary: "Create a Kaneo task from a post and link it",
+  summary: "Create a task from a post and link it",
   description:
-    "Creates the task as the caller through Kaneo's task controller, then links it to the post. The caller needs Quills update, Kaneo task:create and access to the project. The task gets the post title, a description with the post text, a link back and the demand counts (no customer names), the post's target date, the post owner as assignee when Kaneo allows it, and the board's delivery priority (default medium).",
+    "Creates the task as the caller through the task controller, then links it to the post. The caller needs Quills update, task:create and access to the project. The task gets the post title, a description with the post text, a link back and the demand counts (no customer names), the post's target date, the post owner as assignee when the project allows it, and the board's delivery priority (default medium).",
   action: "update",
   native: { task: ["create"] },
   params,
@@ -45,7 +45,7 @@ const createTask = defineQuillsRoute({
   response: z.object({ taskId: z.string(), projectId: z.string() }),
   responseDescription: "The created and linked task",
   errors: {
-    400: "Kaneo refused the task fields",
+    400: "The task fields were refused",
     404: "Post or project not found",
     409: "The project is archived, the column does not exist, or the plan does not include it",
   },
@@ -103,7 +103,7 @@ const task = z.object({
   key: z
     .string()
     .nullable()
-    .openapi({ description: "Kaneo's ticket ID, such as APP-12." }),
+    .openapi({ description: "The task's ticket ID, such as APP-12." }),
   title: z.string(),
   projectId: z.string(),
   columnName: z.string().nullable(),
@@ -117,7 +117,7 @@ const listTasks = defineQuillsRoute({
   method: "get",
   path: "/posts/{postId}/tasks",
   operationId: "listQuillsPostTasks",
-  summary: "List the Kaneo tasks linked to a post",
+  summary: "List the tasks linked to a post",
   description:
     "The linked tasks in projects that the caller can open, oldest link first, at most 100. `hidden` counts the linked tasks in projects that the caller cannot open; their fields are left out.",
   action: "read",
