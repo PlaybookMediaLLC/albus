@@ -23,7 +23,6 @@ describe("StatusPage", () => {
         const api = mockApi();
         api.reply(getPublicStatusPageFixture.ok());
         api.reply(listPublicStatusHistoryFixture.ok());
-        return { accessGranted: false };
       },
       assert: async (view) => {
         await view.findByText("All systems operational");
@@ -31,15 +30,11 @@ describe("StatusPage", () => {
     },
   });
   describe("behavior", () => {
-    it("shows public status when private portal access is denied", async () => {
+    it("asks a signed-out visitor to sign in on a private portal and loads nothing", async () => {
       const api = mockApi();
-      api.reply(getPublicStatusPageFixture.ok());
-      api.reply(listPublicStatusHistoryFixture.ok());
       const view = renderPage(StatusPage, meta, { accessGranted: false });
-      expect(
-        await view.findByText("All systems operational"),
-      ).toBeInTheDocument();
-      expect(api.calls("getQuillsPublicStatusPage")).toHaveLength(1);
+      expect(await view.findByRole("link", { name: /sign in/i })).toBeVisible();
+      expect(api.calls()).toHaveLength(0);
     });
   });
 });

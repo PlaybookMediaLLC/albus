@@ -10,6 +10,7 @@ import {
 import { useTranslation } from "react-i18next";
 import type { z } from "zod";
 import type { PortalProblem } from "../core/types";
+import { validationMessage } from "../core/validation-message";
 import { isFramed } from "./confirm-action";
 import { Button, Fieldset, cn } from "./upstream";
 import { StateView } from "./state-view";
@@ -54,7 +55,9 @@ export function PortalForm<T extends FieldValues>(props: PortalFormProps<T>) {
       values: props.values,
       resetOptions: { keepDirtyValues: true },
     }),
-    resolver: zodResolver(props.schema) as Resolver<T>,
+    resolver: zodResolver(props.schema, {
+      error: (issue) => validationMessage(t, issue),
+    }) as Resolver<T>,
   });
   const [problem, setProblem] = useState<PortalProblem | null>(null);
   // After a field problem or a conflict (the stored data changed), the user can submit
@@ -79,11 +82,13 @@ export function PortalForm<T extends FieldValues>(props: PortalFormProps<T>) {
         const general: string[] = [];
         for (const issue of result.issues) {
           if (holds(values, issue.path))
-            form.setError(issue.path as never, { message: issue.message });
-          else general.push(issue.message || t("core.problem.invalid"));
+            form.setError(issue.path as never, {
+              message: issue.message || validationMessage(t, issue),
+            });
+          else general.push(issue.message || t("core.validation.request"));
         }
         if (general.length)
-          form.setError("root", { message: general.join(" ") });
+          form.setError("root", { message: [...new Set(general)].join(" ") });
       } else {
         setProblem(result ?? null);
         if (!result && props.resetOnSuccess) form.reset();

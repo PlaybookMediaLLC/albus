@@ -6,7 +6,7 @@ import { getMyWeeklyDigestPreferenceQuery } from "@/quills/api/portal/get-my-wee
 const searchSchema = z.object({});
 export const Route = createFileRoute("/portal/$workspaceId/my-feedback")({
   validateSearch: searchSchema,
-  beforeLoad: async ({ context, params, search }) => {
+  beforeLoad: ({ context, params, search }) => {
     void search;
     if (
       !(
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/portal/$workspaceId/my-feedback")({
       )
     )
       return;
-    await Promise.all([
+    void Promise.all([
       context.queryClient.prefetchInfiniteQuery(
         listPortalMyFeedbackInfiniteQuery(
           {

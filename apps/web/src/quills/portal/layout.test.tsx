@@ -39,4 +39,42 @@ describe("PortalLayout", () => {
     expect(await view.findByRole("link", { name: "Roadmap" })).toBeVisible();
     expect(view.getByRole("link", { name: "Updates" })).toBeVisible();
   });
+
+  it.each([
+    ["unsubscribe", true],
+    ["csat", true],
+    ["roadmap", false],
+  ])(
+    "opens the mail-linked %s page while the portal is off: %s",
+    async (page, opens) => {
+      const api = mockApi();
+      api.reply({ message: "Portal not found" }, 404);
+      api.reply({ message: "Portal not found" }, 404);
+      const root = createRootRoute();
+      const portal = createRoute({
+        getParentRoute: () => root,
+        path: "/portal/$workspaceId",
+        component: PortalRoute,
+      });
+      const child = createRoute({
+        getParentRoute: () => portal,
+        path: `/${page}`,
+        component: () => <p>Child page</p>,
+      });
+      const router = createRouter({
+        routeTree: root.addChildren([portal.addChildren([child])]),
+        history: createMemoryHistory({
+          initialEntries: [`/portal/workspace_test_1/${page}`],
+        }),
+      });
+      const view = renderComponent(<RouterProvider router={router} />);
+      if (opens) expect(await view.findByText("Child page")).toBeVisible();
+      else {
+        expect(await view.findByRole("alert")).toHaveTextContent(
+          /could not be found/i,
+        );
+        expect(view.queryByText("Child page")).toBeNull();
+      }
+    },
+  );
 });

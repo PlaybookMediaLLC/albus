@@ -3,7 +3,7 @@ export const meta = {
   id: "help-center-locale",
   feature: "help-center",
   route: "/portal/$workspaceId/hc/$locale",
-  audience: "public",
+  audience: "portal",
   mailLinked: true,
   token: "none",
   operations: ["getQuillsPublicHelpCenter", "searchQuillsPublicHelpCenter"],

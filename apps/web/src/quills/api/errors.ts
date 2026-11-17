@@ -27,10 +27,14 @@ export async function toPortalProblem(
   ) {
     return {
       kind: "invalid",
+      // The API's issue text is zod's English: keep its code and bounds, and the form translates them.
       issues: error.issues?.map((issue) => ({
         // The API puts the request part first ("body.title"). A form field is "title".
         path: issue.path.replace(/^(?:body|query|params)\./, ""),
-        message: issue.message,
+        ...(typeof issue.code === "string" && { code: issue.code }),
+        ...(typeof issue.origin === "string" && { origin: issue.origin }),
+        ...(typeof issue.minimum === "number" && { minimum: issue.minimum }),
+        ...(typeof issue.maximum === "number" && { maximum: issue.maximum }),
       })),
     };
   }

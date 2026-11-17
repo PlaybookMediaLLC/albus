@@ -134,7 +134,9 @@ export function renderPage(
     .replace(/\$([A-Za-z]+)/g, (_, name: string) => {
       routeParams[name] ??= `${name}_test_1`;
       return routeParams[name];
-    });
+    })
+    // A splat route ends in a bare "$"; the router names its value `_splat`.
+    .replace(/\/\$$/, () => `/${(routeParams._splat ??= "splat_test_1")}`);
   const rootRoute = createRootRoute();
   const router = createRouter({
     routeTree: rootRoute,

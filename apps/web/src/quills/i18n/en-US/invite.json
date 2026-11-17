@@ -3,5 +3,6 @@
 	"alreadyAccepted": "Invitation already accepted",
 	"done": "Invitation accepted",
 	"signInHelp": "Sign in or create an account with the invited email address to continue.",
-	"title": "Accept portal invitation"
+	"title": "Accept portal invitation",
+	"wrongAccount": "This invitation was sent to another email address, or that address is not verified yet. Sign in with the address that got the invitation."
 }

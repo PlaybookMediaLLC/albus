@@ -63,6 +63,13 @@ export function PortalRoute() {
     nav.tabs.feedback &&
     ["", "boards", "posts", "roadmap", "changelog"].includes(section);
 
+  // Mail links must open while the portal is off: these pages need only the token in the link.
+  if (
+    config.error?.kind === "notFound" &&
+    ["unsubscribe", "csat"].includes(section)
+  )
+    return <Outlet />;
+
   return (
     <StateView
       loading={config.isLoading}

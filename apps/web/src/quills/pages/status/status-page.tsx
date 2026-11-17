@@ -17,11 +17,13 @@ export interface StatusPageProps {
 
 export function StatusPage(props: StatusPageProps) {
   const portal = usePortalRuntime();
+  // As on the feedback pages: no request until the private-portal gate admits the caller.
+  const workspace =
+    !portal.accessLoading && portal.access?.granted === true
+      ? props.workspaceId
+      : "";
   const { viewer } = portal;
-  const page = useGetPublicStatusPage(
-    { param: { workspace: props.workspaceId } },
-    viewer,
-  );
+  const page = useGetPublicStatusPage({ param: { workspace } }, viewer);
   const componentIds = [
     ...(page.data?.groups.flatMap((group) => group.components) ?? []),
     ...(page.data?.ungroupedComponents ?? []),
@@ -30,7 +32,7 @@ export function StatusPage(props: StatusPageProps) {
     .map((component) => component.id);
   const uptime = useGetPublicStatusUptime(
     {
-      param: { workspace: props.workspaceId },
+      param: { workspace },
       query: { componentIds: componentIds.join(","), windowDays: "90" },
     },
     viewer,

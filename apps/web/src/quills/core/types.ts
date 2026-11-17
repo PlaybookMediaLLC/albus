@@ -26,7 +26,18 @@ export type PortalProblemKind =
 export interface PortalProblem {
   kind: PortalProblemKind;
   retryAt?: number;
-  issues?: Array<{ path: string; message: string }>;
+  /**
+   * A field issue carries its own text only when the client wrote it; the API's text is English,
+   * so an API issue keeps zod's code and bounds and the form translates from them.
+   */
+  issues?: Array<{
+    path: string;
+    message?: string;
+    code?: string;
+    origin?: string;
+    minimum?: number;
+    maximum?: number;
+  }>;
 }
 
 export interface PageMeta {

@@ -1,11 +1,10 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createMemoryHistory, createRouter } from "@tanstack/react-router";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 import { evaluateMyPortalAccessFixture } from "../api/portal/evaluate-my-portal-access.fixture";
 import { getPublicPortalConfigFixture } from "../api/portal/get-public-portal-config.fixture";
 import { listPortalBoardsFixture } from "../api/feedback/list-portal-boards.fixture";
 import { listPortalPostsFixture } from "../api/feedback/list-portal-posts.fixture";
-import { getPublicStatusIncidentFixture } from "../api/status/get-public-status-incident.fixture";
 import { mockApi } from "../test/mock-api";
 import { getPortalPostFixture } from "../api/feedback/get-portal-post.fixture";
 import { listPortalPostCommentsFixture } from "../api/feedback/list-portal-post-comments.fixture";
@@ -45,10 +44,13 @@ describe("portal route prefetch", () => {
       },
       { kind: "anonymous" },
     );
-    expect(queryClient.getQueryData(options.queryKey)).toEqual({
-      pages: [comments],
-      pageParams: [0],
-    });
+    // The route starts the fetch and does not wait for it.
+    await vi.waitFor(() =>
+      expect(queryClient.getQueryData(options.queryKey)).toEqual({
+        pages: [comments],
+        pageParams: [0],
+      }),
+    );
   });
   it("prefetches the home queries after portal access succeeds", async () => {
     const api = mockApi();
@@ -61,6 +63,18 @@ describe("portal route prefetch", () => {
     await router.load();
 
     expect(api.calls("listQuillsPortalBoards")).toHaveLength(1);
+    expect(api.calls("listQuillsPortalPosts")).toHaveLength(1);
+  });
+  it("shows the page while its data is still on the way", async () => {
+    const api = mockApi();
+    api.reply(getPublicPortalConfigFixture.ok());
+    api.reply(evaluateMyPortalAccessFixture.ok({ granted: true }));
+    // These requests never answer. A route that waits for them never finishes loading, and the
+    // app's pending screen is blank on portal paths, so the visitor would see a blank page.
+    for (let request = 0; request < 3; request++) api.defer(() => undefined);
+    const { router } = createPortalRouter("/portal/workspace_test_1/");
+    await router.load();
+    expect(router.state.status).toBe("idle");
     expect(api.calls("listQuillsPortalPosts")).toHaveLength(1);
   });
 
@@ -76,18 +90,17 @@ describe("portal route prefetch", () => {
     expect(api.calls("listQuillsPortalPosts")).toHaveLength(0);
   });
 
-  it("prefetches public status data without private portal access", async () => {
+  it("does not prefetch status data without private portal access", async () => {
     const api = mockApi();
     api.reply(getPublicPortalConfigFixture.ok());
     api.reply(evaluateMyPortalAccessFixture.ok({ granted: false }));
-    api.reply(getPublicStatusIncidentFixture.ok());
     const { router } = createPortalRouter(
       "/portal/workspace_test_1/status/incidents/incident_test_1",
     );
 
     await router.load();
 
-    expect(api.calls("getQuillsPublicStatusIncident")).toHaveLength(1);
+    expect(api.calls("getQuillsPublicStatusIncident")).toHaveLength(0);
   });
 
   it("never prefetches a token mutation or sends the token to the API", async () => {

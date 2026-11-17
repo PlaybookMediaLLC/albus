@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { takeStashedToken } from "../../core/token-stash";
 import { useRecordCsatViaToken } from "../../hooks/support/use-record-csat-via-token";
 import { useValidateCsatEmailToken } from "../../hooks/support/use-validate-csat-email-token";
-import { usePortalRuntime } from "../../portal/runtime";
+import { usePortalViewer } from "../../core/use-portal-viewer";
 import { ConfirmAction } from "../../ui/confirm-action";
 import { PageFrame } from "../../ui/page-frame";
 import { ResultCard } from "../../ui/result-card";
@@ -19,7 +19,8 @@ export interface CsatPageProps {
 
 export function CsatPage(props: CsatPageProps) {
   const { t } = useTranslation("quills");
-  const { viewer } = usePortalRuntime();
+  // The portal runtime is missing while the portal is off (portal/layout.tsx).
+  const viewer = usePortalViewer();
   const tokenScope = `${props.workspaceId}:${meta.id}`;
   const [token] = useState(() => takeStashedToken(tokenScope));
   const initialRating =
