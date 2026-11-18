@@ -92,12 +92,22 @@ export const responseText = (res: Sent) =>
   typeof res.body === "string" ? res.body : JSON.stringify(res.body);
 
 /**
- * The response checks of an authorized request. Only a raw route skips `strict-response`: it must
- * answer its declared content type with a text body (`raw-response`). Every other route must answer
+ * The response checks of an authorized request. A raw route skips `strict-response`: it must
+ * answer its declared content type with a text body (`raw-response`). A redirect route answers an
+ * empty 302 with Location (`redirect-response`). Every other route must answer
  * JSON that matches a closed copy of its schema, with no forbidden key names. The callers run the
  * leak checks on both.
  */
 export function responseIssues(d: AnyQuillsRoute, res: Sent): Finding[] {
+  if (d.location)
+    return res.location && res.body === null
+      ? []
+      : [
+          {
+            check: "redirect-response",
+            detail: "expected an empty 302 with Location",
+          },
+        ];
   const type = res.type?.split(";")[0]?.trim();
   if (d.raw)
     return type === d.raw && typeof res.body === "string"

@@ -151,7 +151,9 @@ describe.skipIf(!url)("Quills customer feedback", () => {
     // The status page has its own switch, not the portal's; content/public/public.test.ts covers it.
     // A CSAT link in a support mail must work too: an email-only workspace may keep its portal off.
     // support/customer/customer.test.ts covers both routes with the portal off.
+    // An uploaded avatar also shows in the widget and to teammates, so its image ignores the portal.
     const alwaysOn = new Set([
+      "getQuillsAvatarImage",
       "previewQuillsUnsubscribeToken",
       "createQuillsUnsubscribe",
       "processQuillsUnsubscribeToken",

@@ -77,10 +77,9 @@ export async function retryStorageCleanup(): Promise<{ degraded: boolean }> {
       }
       try {
         // A feedback-app key lives in its own bucket when QUILLS_STORAGE_BUCKET is set.
-        await deleteS3Object(
-          item.objectKey,
-          isQuillsObjectKey(item.objectKey) ? quillsStorageConfig() : undefined,
-        );
+        await (isQuillsObjectKey(item.objectKey)
+          ? deleteS3Object(item.objectKey, quillsStorageConfig())
+          : deleteS3Object(item.objectKey));
         await tx
           .delete(storageCleanupTable)
           .where(eq(storageCleanupTable.objectKey, item.objectKey));
