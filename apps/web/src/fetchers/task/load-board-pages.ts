@@ -11,6 +11,9 @@ export type BoardPage<T extends ProjectWithTasks> = {
   };
 };
 
+// Pages in flight at once: hides round-trip latency without flooding the API.
+const BOARD_PAGE_CONCURRENCY = 4;
+
 /** Publish immutable snapshots as bounded pages arrive. */
 export async function loadBoardPages<T extends ProjectWithTasks>(
   load: (page: number, relatedPage?: number) => Promise<BoardPage<T>>,
@@ -114,12 +117,36 @@ export async function loadBoardPages<T extends ProjectWithTasks>(
     }
   };
   await loadRelated(1, first);
-  for (let page = 2; page <= first.pagination.totalPages; page++) {
-    signal?.throwIfAborted();
+  // Overlap the remaining page requests but merge them in page order, so cards
+  // keep the server's order and progress reports stay in sequence.
+  const loadPage = async (page: number) => {
     const next = await load(page);
-    merge(next);
-    reportProgress();
-    await loadRelated(page, next);
+    const related = [next];
+    const total = next.pagination.relatedTotalPages ?? 1;
+    for (let relatedPage = 2; relatedPage <= total; relatedPage++) {
+      signal?.throwIfAborted();
+      related.push(await load(page, relatedPage));
+    }
+    return related;
+  };
+  const pending: Promise<BoardPage<T>[]>[] = [];
+  let nextPage = 2;
+  const startNext = () => {
+    if (nextPage > first.pagination.totalPages || signal?.aborted) return;
+    const request = loadPage(nextPage++);
+    // A later page can fail while an earlier one is awaited; it is rethrown when reached.
+    request.catch(() => undefined);
+    pending.push(request);
+  };
+  for (let slot = 0; slot < BOARD_PAGE_CONCURRENCY; slot++) startNext();
+  for (let index = 0; index < pending.length; index++) {
+    const responses = await pending[index];
+    signal?.throwIfAborted();
+    startNext();
+    for (const response of responses) {
+      merge(response);
+      reportProgress();
+    }
   }
   result.columns.sort(
     (left, right) => (left.position ?? 0) - (right.position ?? 0),

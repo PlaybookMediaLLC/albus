@@ -51,7 +51,7 @@ function RouteComponent() {
   const { projectId, workspaceId } = Route.useParams();
   const { taskId } = Route.useSearch();
   const navigate = useNavigate();
-  const { data: project } = useGetTasks(projectId);
+  const { data: project } = useGetTasks(projectId, { refetchOnMount: false });
   const weekStartsOn = useUserPreferencesStore((state) => state.weekStartsOn);
   const view = useProjectTaskView({
     project,

@@ -84,7 +84,7 @@ describe("complete board loading through bounded pages", () => {
     ]);
     expect(snapshots[0].columns[0].tasks).toHaveLength(1);
   });
-  it("loads sequentially and merges every column, planned and archived task with its complete fields", async () => {
+  it("bounds concurrent page requests and merges every column, planned and archived task with its complete fields", async () => {
     let active = 0;
     let peak = 0;
     const load = vi.fn(async (number: number) => {
@@ -92,11 +92,17 @@ describe("complete board loading through bounded pages", () => {
       peak = Math.max(peak, active);
       await Promise.resolve();
       active--;
-      return page(number);
+      return page(number, 9);
     });
     const result = await loadBoardPages(load);
-    expect(load.mock.calls).toEqual([[1], [2], [3]]);
-    expect(peak).toBe(1);
+    expect(load.mock.calls).toEqual(
+      Array.from({ length: 9 }, (_, index) => [index + 1]),
+    );
+    expect(peak).toBe(4);
+    expect(result.columns[0].tasks).toHaveLength(9);
+    result.columns[0].tasks.splice(3);
+    result.plannedTasks.splice(3);
+    result.archivedTasks.splice(3);
     expect(result.columns[0].tasks.map((task) => task.id)).toEqual([
       "1",
       "2",
@@ -112,6 +118,24 @@ describe("complete board loading through bounded pages", () => {
       description: "3 searchable description",
       labels: [{ id: "label-3" }],
     });
+  });
+  it("merges pages in page order when later pages answer first", async () => {
+    const resolvers = new Map<number, () => void>();
+    const load = vi.fn(async (number: number) => {
+      if (number > 1)
+        await new Promise<void>((resolve) => resolvers.set(number, resolve));
+      return page(number, 4);
+    });
+    const loading = loadBoardPages(load);
+    await vi.waitFor(() => expect(resolvers.size).toBe(3));
+    for (const number of [4, 3, 2]) resolvers.get(number)?.();
+    const result = await loading;
+    expect(result.columns[0].tasks.map((task) => task.id)).toEqual([
+      "1",
+      "2",
+      "3",
+      "4",
+    ]);
   });
   it("collects all related pages without dropping or duplicating labels, links or late columns", async () => {
     const load = vi.fn(async (number: number, relatedPage = 1) => {
@@ -183,13 +207,13 @@ describe("complete board loading through bounded pages", () => {
       .mockResolvedValueOnce(page(1))
       .mockRejectedValueOnce(new Error("permission revoked"));
     await expect(loadBoardPages(load)).rejects.toThrow("permission revoked");
-    expect(load).toHaveBeenCalledTimes(2);
+    expect(load).toHaveBeenCalledTimes(3);
   });
-  it("honors cancellation and stops scheduling pages after the active request", async () => {
+  it("honors cancellation and stops scheduling pages after the active requests", async () => {
     const controller = new AbortController();
     const load = vi.fn(async (number: number) => {
       if (number === 2) controller.abort();
-      return page(number);
+      return page(number, 20);
     });
     await expect(loadBoardPages(load, controller.signal)).rejects.toThrow();
     expect(load).toHaveBeenCalledTimes(2);

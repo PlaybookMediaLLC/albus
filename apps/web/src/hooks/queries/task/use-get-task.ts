@@ -6,8 +6,8 @@ function useGetTask(taskId: string, refreshWhileVisible = false) {
     queryKey: ["task", taskId],
     queryFn: () => getTask(taskId),
     enabled: Boolean(taskId),
-    refetchOnMount: "always",
-    staleTime: 0,
+    // Matches the hover prefetch; mutations and socket events invalidate it.
+    staleTime: 15_000,
     refetchInterval: refreshWhileVisible ? 30_000 : false,
     refetchOnWindowFocus: refreshWhileVisible ? "always" : false,
   });

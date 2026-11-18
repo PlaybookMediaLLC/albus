@@ -46,7 +46,11 @@ function RouteComponent() {
   const { projectId, workspaceId } = Route.useParams();
   const { taskId } = Route.useSearch();
   const navigate = useNavigate();
-  const { data: project, isLoading, isError } = useGetTasks(projectId);
+  const {
+    data: project,
+    isLoading,
+    isError,
+  } = useGetTasks(projectId, { refetchOnMount: false });
   const {
     data: relationData,
     isLoading: relationsLoading,

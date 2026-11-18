@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/tooltip";
 import useGetProject from "@/hooks/queries/project/use-get-project";
 import useGetTask from "@/hooks/queries/task/use-get-task";
-import { useProjectWebSocket } from "@/hooks/use-project-websocket";
 import { getProjectUnavailableReason } from "@/lib/project-unavailable-reason";
 import ProjectUnavailable from "./project-unavailable";
 
@@ -42,8 +41,6 @@ export default function TaskLayout({
   });
   const { data: task } = useGetTask(taskId);
   const unavailableReason = getProjectUnavailableReason(projectError);
-
-  useProjectWebSocket(unavailableReason ? "" : projectId);
 
   const taskLabel =
     project?.slug && task?.number != null

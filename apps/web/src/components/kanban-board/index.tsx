@@ -79,13 +79,15 @@ function KanbanBoard({
       reorderTasks(request),
     onMutate: (variables) => ({ previousBoard: variables.previousBoard }),
     onSuccess: (_result, variables) => {
+      // The server echoes the optimistic positions, so a same-column reorder needs
+      // no refetch; status changes can update relations and other cards.
       if (variables.tasks.some((task) => task.status !== undefined)) {
         invalidateMyWork(queryClient);
         void queryClient.invalidateQueries({ queryKey: ["projects"] });
+        void queryClient.invalidateQueries({
+          queryKey: ["tasks", variables.projectId],
+        });
       }
-      void queryClient.invalidateQueries({
-        queryKey: ["tasks", variables.projectId],
-      });
       for (const task of variables.tasks)
         void queryClient.invalidateQueries({ queryKey: ["task", task.id] });
     },

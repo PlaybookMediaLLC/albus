@@ -169,9 +169,10 @@ it("restarts a public board when concurrent membership or ordering changes its r
     },
   );
   const result = await getPublicProject({ id: "project" });
+  // Page 3 is already in flight when page 2 reveals the new revision.
   expect(
     publicRequest.mock.calls.map(([request]) => request.query.page),
-  ).toEqual(["1", "2", "1", "2", "3"]);
+  ).toEqual(["1", "2", "3", "1", "2", "3"]);
   expect(result.columns[0].tasks.map((task) => task.id)).toEqual([
     "task-1",
     "task-2",
@@ -219,7 +220,7 @@ it("bounds public board restarts under continuous changes without committing an 
   await expect(getPublicProject({ id: "project" })).rejects.toThrow();
   expect(
     publicRequest.mock.calls.map(([request]) => request.query.page),
-  ).toEqual(["1", "2", "1", "2", "1", "2"]);
+  ).toEqual(["1", "2", "3", "1", "2", "3", "1", "2", "3"]);
 });
 it("honors cancellation before restarting a changed public board", async () => {
   const controller = new AbortController();

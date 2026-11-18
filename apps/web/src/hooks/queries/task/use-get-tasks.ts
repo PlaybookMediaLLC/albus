@@ -11,7 +11,6 @@ export function useGetTasks(
   const query = useQuery({
     ...tasksQueryOptions(queryClient, projectId),
     refetchOnMount,
-    refetchOnWindowFocus: true,
     enabled: !!projectId,
   });
   return {

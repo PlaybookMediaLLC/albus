@@ -48,7 +48,7 @@ function RouteComponent() {
     isError: backlogError,
     isFetching: backlogFetching,
     refetch: retryBacklog,
-  } = useGetTasks(projectId);
+  } = useGetTasks(projectId, { refetchOnMount: false });
   const { project: storedProject, setProject } = useProjectStore();
   const project: ProjectWithTasks | undefined =
     storedProject?.id === projectId ? storedProject : data;
