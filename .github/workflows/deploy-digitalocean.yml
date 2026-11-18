@@ -74,8 +74,22 @@ jobs:
           DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
           DEPLOY_ENV: ${{ secrets.KANEO_DEPLOY_ENV }}
           KANEO_IMAGE: ghcr.io/playbookmediallc/kaneo@${{ steps.build.outputs.digest }}
+          # Quills AI: the key is its own environment secret; the rest are environment variables.
+          # They take precedence over the same keys in KANEO_DEPLOY_ENV (node --env-file).
+          QUILLS_AI_API_KEY: ${{ secrets.QUILLS_AI_API_KEY }}
+          QUILLS_AI_BASE_URL: ${{ vars.QUILLS_AI_BASE_URL }}
+          QUILLS_AI_MODEL: ${{ vars.QUILLS_AI_MODEL }}
+          QUILLS_AI_MODEL_FAST: ${{ vars.QUILLS_AI_MODEL_FAST }}
+          QUILLS_AI_MODEL_DEEP: ${{ vars.QUILLS_AI_MODEL_DEEP }}
+          QUILLS_AI_EMBEDDING_MODEL: ${{ vars.QUILLS_AI_EMBEDDING_MODEL }}
+          QUILLS_AI_PRICES: ${{ vars.QUILLS_AI_PRICES }}
         run: |
           umask 077
+          # Without a key, AI stays off: a provider URL alone would make every AI call fail.
+          if [ -z "$QUILLS_AI_API_KEY" ]; then
+            unset QUILLS_AI_API_KEY QUILLS_AI_BASE_URL QUILLS_AI_MODEL QUILLS_AI_MODEL_FAST \
+              QUILLS_AI_MODEL_DEEP QUILLS_AI_EMBEDDING_MODEL QUILLS_AI_PRICES
+          fi
           env_file="$RUNNER_TEMP/kaneo-deploy.env"
           trap 'rm -f "$env_file"' EXIT
           printf '%s' "$DEPLOY_ENV" > "$env_file"
