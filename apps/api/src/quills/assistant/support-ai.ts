@@ -13,6 +13,7 @@ import { ticketSummaries } from "../../database/quills/schema/ticket-summary";
 import { tickets } from "../../database/quills/schema/tickets";
 import { ticketTypes } from "../../database/quills/schema/ticket-types";
 import { defineQuillsRoute, type Database } from "../framework/define-route";
+import { findConversation } from "../support/conversation-model";
 import { requireItem } from "./copilot";
 import { chatJson, requireAi, toHttp, untrusted } from "./provider";
 import { createRun, logUsage, runSchema, runView } from "./runs";
@@ -154,6 +155,32 @@ const translate = defineQuillsRoute({
       actor.principalId,
       "translate_message",
       { messageId: message.id, language: body.language },
+    );
+    return runView(id, run);
+  },
+});
+
+const replySuggestion = defineQuillsRoute({
+  method: "post",
+  path: "/conversations/{conversationId}/reply-suggestion",
+  operationId: "suggestQuillsConversationReply",
+  summary: "Draft the next reply to the customer with AI",
+  description:
+    "Returns a pending run; a worker stores a draft reply as its `text`, with the sources it used as `citations`. Nothing is sent: a teammate edits and sends it. Private notes are not used. 409 when AI is not configured.",
+  action: "read",
+  params: conversationParams,
+  load: aiLoad,
+  response: runSchema,
+  responseDescription: "The pending run",
+  errors: { 404: "Conversation not found", 409: "AI is not configured" },
+  event: runEvent,
+  handler: async ({ db, actor, params }) => {
+    const conversation = await findConversation(db, params.conversationId);
+    const { id, run } = await createRun(
+      db,
+      actor.principalId,
+      "reply_suggestion",
+      { conversationId: conversation.id },
     );
     return runView(id, run);
   },
@@ -301,6 +328,7 @@ export default apiRouter<BaseVariables & { workspaceId: string }>()
   .openapi(...ticketSummary)
   .openapi(...getTicketSummary)
   .openapi(...translate)
+  .openapi(...replySuggestion)
   .openapi(...draftDescription)
   .openapi(...detectionPreview)
   .openapi(...fieldSuggestions);

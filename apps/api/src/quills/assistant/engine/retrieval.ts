@@ -1,3 +1,4 @@
+// Route-module helper: framework/boundaries.test.ts checks its imports like a module that uses ../framework/define-route.
 import {
   and,
   desc,
@@ -11,7 +12,7 @@ import {
   sql,
   type AnyColumn,
 } from "drizzle-orm";
-import type { Database } from "../../../database/quills/client";
+import type { Database } from "../../framework/define-route";
 import {
   assistantDocuments,
   assistantSnippets,
@@ -21,6 +22,7 @@ import {
   helpCenterArticles,
   helpCenterCategories,
 } from "../../../database/quills/schema/kb";
+import { exactDistance, vectorParam } from "./distance";
 
 // Knowledge the assistant reads. The audience is the reader's ceiling: a teammate (copilot) sees
 // published articles and public or team snippets; a widget visitor sees only published articles
@@ -98,13 +100,56 @@ export async function searchArticles(
   }));
 }
 
-/** Snippets within the audience, then documents and ready web pages when `documents` is on. */
+/** The question's vector and the model that made it, for search by meaning. */
+export type Near = { values: number[]; model: string };
+/**
+ * Below this cosine similarity a row is not near enough to the question. ponytail: one floor for
+ * every model; the live eval (ai-eval/) measures it, so tune it there.
+ */
+const NEAR_SIMILARITY = 0.4;
+/** Rows whose vector (from the same model) is near the question, nearest first. */
+const nearTo = (
+  near: Near | null | undefined,
+  column: { embedding: unknown; embeddingModel: AnyColumn },
+) => {
+  if (!near) return null;
+  const distance = exactDistance(column.embedding, vectorParam(near.values));
+  return {
+    match: and(
+      eq(column.embeddingModel, near.model),
+      sql`${distance} <= ${1 - NEAR_SIMILARITY}`,
+    ),
+    order: sql`${distance} asc nulls last`,
+  };
+};
+
+/**
+ * What a customer may be told, by the customer agent's knowledge settings: published public
+ * articles when `helpCenter` is on, then public snippets, and documents and web pages when
+ * `documents` is on.
+ */
+export const publicSources = async (
+  db: Database,
+  knowledge: { helpCenter: boolean; documents: boolean },
+  query: string,
+  near?: Near | null,
+): Promise<Source[]> => [
+  ...(knowledge.helpCenter ? await searchArticles(db, query, "public") : []),
+  ...(await searchKnowledge(db, query, "public", knowledge.documents, near)),
+];
+
+/**
+ * Snippets within the audience, then documents and ready web pages when `documents` is on. A row
+ * matches by its words, or, with `near`, by its meaning (an embedding near the question's).
+ */
 export async function searchKnowledge(
   db: Database,
   query: string,
   audience: Audience,
   documents: boolean,
+  near?: Near | null,
 ): Promise<Source[]> {
+  const snippetNear = nearTo(near, assistantSnippets);
   const snippets = await db
     .select({
       id: assistantSnippets.id,
@@ -119,10 +164,16 @@ export async function searchKnowledge(
           assistantSnippets.audience,
           audience === "public" ? ["public"] : ["public", "team"],
         ),
-        anyWord(query, assistantSnippets.title, assistantSnippets.content),
+        or(
+          anyWord(query, assistantSnippets.title, assistantSnippets.content),
+          snippetNear?.match,
+        ),
       ),
     )
-    .orderBy(desc(assistantSnippets.updatedAt))
+    .orderBy(
+      ...(snippetNear ? [snippetNear.order] : []),
+      desc(assistantSnippets.updatedAt),
+    )
     .limit(LIMIT);
   const found: Source[] = snippets.map((row) => ({
     type: "snippet",
@@ -131,6 +182,7 @@ export async function searchKnowledge(
     excerpt: row.content,
   }));
   if (!documents) return found;
+  const documentNear = nearTo(near, assistantDocuments);
   const files = await db
     .select({
       id: assistantDocuments.id,
@@ -141,10 +193,16 @@ export async function searchKnowledge(
     .where(
       and(
         isNull(assistantDocuments.deletedAt),
-        anyWord(query, assistantDocuments.title, assistantDocuments.content),
+        or(
+          anyWord(query, assistantDocuments.title, assistantDocuments.content),
+          documentNear?.match,
+        ),
       ),
     )
-    .orderBy(desc(assistantDocuments.createdAt))
+    .orderBy(
+      ...(documentNear ? [documentNear.order] : []),
+      desc(assistantDocuments.createdAt),
+    )
     .limit(LIMIT);
   const pages = await db
     .select({
