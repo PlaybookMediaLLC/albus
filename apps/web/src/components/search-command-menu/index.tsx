@@ -25,6 +25,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import useGlobalSearch from "@/hooks/queries/search/use-global-search";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import useActiveWorkspace from "@/hooks/queries/workspace/use-active-workspace";
 
 type SearchResultItem = {
@@ -59,9 +60,11 @@ function SearchCommandMenu({ open, setOpen }: SearchCommandMenuProps) {
   const navigate = useNavigate();
 
   const searchEnabled = query.trim().length >= 3;
+  // One request after typing pauses, not one per keystroke.
+  const debouncedQuery = useDebouncedValue(query.trim(), 250);
 
   const { data: searchResults } = useGlobalSearch({
-    q: query,
+    q: debouncedQuery.length >= 3 ? debouncedQuery : "",
     type: "all",
     workspaceId: workspace?.id,
     limit: 20,
