@@ -67,6 +67,9 @@ test("public onboarding and provider credentials survive deployment on a custom 
     CUSTOM_OAUTH_DISCOVERY_URL:
       "https://example.authkit.app/.well-known/openid-configuration",
     CUSTOM_OAUTH_NAME: "WorkOS",
+    QUILLS_AI_BASE_URL: "https://openrouter.ai/api/v1",
+    QUILLS_AI_API_KEY: "private-ai-key",
+    QUILLS_AI_MODEL: "example/cheap-model",
     UNRELATED_SECRET: "must-not-be-deployed",
   };
   const config = configuration(configured);
@@ -90,6 +93,9 @@ test("public onboarding and provider credentials survive deployment on a custom 
     "CUSTOM_OAUTH_CLIENT_SECRET",
     "CUSTOM_OAUTH_DISCOVERY_URL",
     "CUSTOM_OAUTH_NAME",
+    "QUILLS_AI_BASE_URL",
+    "QUILLS_AI_API_KEY",
+    "QUILLS_AI_MODEL",
   ]) {
     assert.equal(config.runtime[key], configured[key], key);
   }
