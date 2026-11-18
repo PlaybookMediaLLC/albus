@@ -103,3 +103,6 @@ Retake them with `pnpm dev:demo`. Phone and portal shots are not in this set yet
 ![members](702-team-light-members-polished.jpg)
 ![insights](703-team-light-insights-polished.jpg)
 ![surveys](704-team-light-surveys-polished.jpg)
+![requests compact](705-team-light-requests-compact.jpg)
+![conversations compact](706-team-light-conversations-compact.jpg)
+![roadmap compact](707-team-light-roadmap-compact.jpg)

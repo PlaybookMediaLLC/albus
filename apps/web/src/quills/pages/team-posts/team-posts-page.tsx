@@ -146,6 +146,13 @@ export function TeamPostsPage({
           <GroupedList
             label={t("team-posts.list")}
             groups={groups}
+            renderIcon={(group) =>
+              group.id === "none" ? null : (
+                <PostStatusIcon
+                  {...statusIcon({ statusId: group.id }, context.statuses)}
+                />
+              )
+            }
             getKey={(post) => post.id}
             renderItem={(post) =>
               deleted ? (

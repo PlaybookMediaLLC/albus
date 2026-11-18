@@ -55,7 +55,7 @@ export function ListPane(props: ListPaneProps) {
         }
       />
       {props.search ? (
-        <div className="px-3 pb-2">
+        <div className="px-3 py-2">
           <SearchField {...props.search} />
         </div>
       ) : null}

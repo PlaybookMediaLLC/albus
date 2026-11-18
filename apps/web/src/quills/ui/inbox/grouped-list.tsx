@@ -6,6 +6,8 @@ export interface GroupedListProps<Item> {
   groups: readonly ListGroup<Item>[];
   getKey: (item: Item) => string;
   renderItem: (item: Item) => ReactNode;
+  /** An icon before a group's label, such as the status icon of a status group. */
+  renderIcon?: (group: ListGroup<Item>) => ReactNode;
 }
 
 /** Inbox rows in groups, each under a header with its count. Empty groups are left out. */
@@ -14,6 +16,7 @@ export function GroupedList<Item>({
   groups,
   getKey,
   renderItem,
+  renderIcon,
 }: GroupedListProps<Item>) {
   const id = useId();
   return (
@@ -32,6 +35,7 @@ export function GroupedList<Item>({
               className="sticky top-0 z-10 bg-background pt-2 pb-1"
             >
               <span className="flex items-center gap-2 rounded-md bg-foreground/3 px-3 py-1.5 text-xs font-medium text-foreground">
+                {renderIcon?.(group)}
                 {group.label}{" "}
                 <span className="tabular-nums text-faint-foreground">
                   {group.items.length}

@@ -33,7 +33,7 @@ export function RoadmapToolbar(props: RoadmapToolbarProps) {
         onChange={(next) => props.onView(next as RoadmapView)}
         tabs={props.tabs}
       />
-      <div className="ms-auto mb-2 flex shrink-0 items-center gap-1.5">
+      <div className="ms-auto mt-2 mb-2 flex shrink-0 items-center gap-1.5">
         {props.board ? (
           <Button
             variant="outline"

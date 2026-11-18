@@ -39,8 +39,8 @@ export function TeamSidebar({
   };
   return (
     <div className="flex h-full min-h-0 w-full flex-col gap-2 px-2.5 pt-2 pb-3">
-      <div className="flex h-14 shrink-0 items-center gap-1 ps-2">
-        <p className="min-w-0 flex-1 truncate text-base font-semibold">
+      <div className="flex h-11 shrink-0 items-center gap-1 ps-2">
+        <p className="min-w-0 flex-1 truncate text-sm font-semibold">
           {t(current.labelKey)}
         </p>
         {team.permissions.create ? (

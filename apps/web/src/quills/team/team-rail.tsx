@@ -87,7 +87,7 @@ export function TeamRail({
   const app = mode === "app";
   return (
     <div className="flex h-full w-13 shrink-0 flex-col items-center gap-2 pt-2 pb-3">
-      <div className="flex h-14 items-center">
+      <div className="flex h-11 items-center">
         <WorkspaceSwitcher workspaceId={workspaceId} {...workspace} />
       </div>
       <nav

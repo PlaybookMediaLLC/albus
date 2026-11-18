@@ -17,7 +17,7 @@ export function StatusTabs({ label, tabs, value, onChange }: StatusTabsProps) {
     <Tabs value={value} onValueChange={(next) => onChange(String(next))}>
       <TabsList
         aria-label={label}
-        className="mx-4 mb-2 max-w-full justify-start gap-1.5 overflow-x-auto bg-transparent p-0 text-muted-foreground *:data-[slot=tab-indicator]:hidden"
+        className="mx-4 mt-2 mb-2 max-w-full justify-start gap-1.5 overflow-x-auto bg-transparent p-0 text-muted-foreground *:data-[slot=tab-indicator]:hidden"
       >
         {tabs.map((tab) => (
           <TabsTab

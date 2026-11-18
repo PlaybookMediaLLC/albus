@@ -38,10 +38,10 @@ export function ListHeader({
   } as const;
   const icon = <ListFilter aria-hidden="true" />;
   return (
-    <div className="flex min-h-14 flex-wrap items-center gap-2 px-4 py-2.5">
+    <div className="flex min-h-11 shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-1.5">
       <Heading
         tabIndex={-1}
-        className="min-w-0 flex-1 truncate text-base font-semibold outline-none"
+        className="min-w-0 flex-1 truncate text-sm font-medium outline-none"
       >
         {title}
       </Heading>
