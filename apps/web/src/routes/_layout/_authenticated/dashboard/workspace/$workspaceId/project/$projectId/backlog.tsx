@@ -16,7 +16,8 @@ import { useProjectTaskView } from "@/components/project/toolbar/use-project-tas
 import { ConfirmDialog } from "@/components/settings/confirm-dialog";
 import CreateTaskModal from "@/components/shared/modals/create-task-modal";
 import TaskDetailsSheet from "@/components/task/task-details-sheet";
-import { useUpdateTask } from "@/hooks/mutations/task/use-update-task";
+import { useQueryClient } from "@tanstack/react-query";
+import { useBulkOperations } from "@/hooks/mutations/task/use-bulk-operations";
 import { useGetTasks } from "@/hooks/queries/task/use-get-tasks";
 import { useBoardSort } from "@/hooks/use-board-sort";
 import { sortTasks } from "@/lib/sort-tasks";
@@ -55,7 +56,8 @@ function RouteComponent() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isMoveAllOpen, setIsMoveAllOpen] = useState(false);
   const [moveAllCount, setMoveAllCount] = useState(0);
-  const { mutate: updateTask } = useUpdateTask();
+  const queryClient = useQueryClient();
+  const { bulkMoveToBoard } = useBulkOperations();
   const { sort, setSort } = useBoardSort(projectId, "backlog");
   const view = useProjectTaskView({
     project,
@@ -108,13 +110,16 @@ function RouteComponent() {
     if (!project) return;
 
     const plannedTasks = project.plannedTasks || [];
+    if (plannedTasks.length === 0) return;
 
-    for (const task of plannedTasks) {
-      updateTask({
-        ...task,
-        status: "to-do",
-      });
-    }
+    // One atomic request for every planned task, not one per task.
+    void bulkMoveToBoard({
+      taskIds: plannedTasks.map((task) => task.id),
+      status: "to-do",
+    }).catch(() => {
+      toast.error(t("tasks:bulk.moveToBoardError"));
+      void queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+    });
 
     const updatedProject = produce(project, (draft) => {
       // "to-do" is a column slug, so it can only be matched against slug.
