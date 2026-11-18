@@ -114142,6 +114142,12 @@
                               "null"
                             ]
                           },
+                          "visitorAvatarUrl": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
                           "visitorEmail": {
                             "type": [
                               "string",
@@ -114268,6 +114274,7 @@
                           "updatedAt",
                           "visitorPrincipalId",
                           "visitorName",
+                          "visitorAvatarUrl",
                           "visitorEmail",
                           "isTest",
                           "assignedAgentPrincipalId",
@@ -114467,6 +114474,12 @@
                             "null"
                           ]
                         },
+                        "visitorAvatarUrl": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "visitorEmail": {
                           "type": [
                             "string",
@@ -114593,6 +114606,7 @@
                         "updatedAt",
                         "visitorPrincipalId",
                         "visitorName",
+                        "visitorAvatarUrl",
                         "visitorEmail",
                         "isTest",
                         "assignedAgentPrincipalId",
@@ -114966,6 +114980,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -115188,6 +115208,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -116167,6 +116188,12 @@
                             "null"
                           ]
                         },
+                        "visitorAvatarUrl": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "visitorEmail": {
                           "type": [
                             "string",
@@ -116293,6 +116320,7 @@
                         "updatedAt",
                         "visitorPrincipalId",
                         "visitorName",
+                        "visitorAvatarUrl",
                         "visitorEmail",
                         "isTest",
                         "assignedAgentPrincipalId",
@@ -118055,6 +118083,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -118280,6 +118314,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -118474,6 +118509,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -118699,6 +118740,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -118900,6 +118942,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -119125,6 +119173,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -119297,6 +119346,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -119522,6 +119577,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -119694,6 +119750,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -119919,6 +119981,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -120091,6 +120154,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -120316,6 +120385,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -120511,6 +120581,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -120736,6 +120812,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -120938,6 +121015,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -121163,6 +121246,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -121355,6 +121439,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -121580,6 +121670,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -121771,6 +121862,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -121996,6 +122093,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -122185,6 +122283,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -122410,6 +122514,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -122581,6 +122686,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -122806,6 +122917,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -127913,6 +128025,12 @@
                                   "null"
                                 ]
                               },
+                              "visitorAvatarUrl": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
                               "visitorEmail": {
                                 "type": [
                                   "string",
@@ -128039,6 +128157,7 @@
                               "updatedAt",
                               "visitorPrincipalId",
                               "visitorName",
+                              "visitorAvatarUrl",
                               "visitorEmail",
                               "isTest",
                               "assignedAgentPrincipalId",

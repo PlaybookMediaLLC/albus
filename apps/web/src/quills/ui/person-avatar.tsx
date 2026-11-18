@@ -31,6 +31,9 @@ export function PersonAvatar({
       className={cn(
         "size-5 bg-muted text-xs text-muted-foreground",
         colored && cn("font-medium", avatarTone(name)),
+        // A photo gets a hairline edge, so a light picture does not melt into the panel.
+        avatarUrl &&
+          "relative after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:ring-1 after:ring-foreground/10 after:ring-inset",
         className,
       )}
     >

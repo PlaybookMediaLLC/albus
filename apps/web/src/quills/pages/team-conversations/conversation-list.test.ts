@@ -161,6 +161,7 @@ describe("conversation list", () => {
       rowData(
         conversation({
           visitorEmail: "grace@example.test",
+          visitorAvatarUrl: "/api/user/avatar/grace",
           lastMessagePreview: "Export fails",
           assignedAgentPrincipalId: "principal_1",
           unreadCount: 2,
@@ -170,7 +171,10 @@ describe("conversation list", () => {
         { unknown: "Unknown", resolved: "Resolved", spam: "Spam" },
       ),
     ).toMatchObject({
-      person: { name: "grace@example.test" },
+      person: {
+        name: "grace@example.test",
+        avatarUrl: "/api/user/avatar/grace",
+      },
       preview: "Export fails",
       badge: null,
       assignee: { name: "Ada" },

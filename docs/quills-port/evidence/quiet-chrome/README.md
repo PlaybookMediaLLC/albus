@@ -110,3 +110,10 @@ Retake them with `pnpm dev:demo`. Phone and portal shots are not in this set yet
 ![roadmap starred dark](709-team-dark-roadmap-starred.jpg)
 ![breadcrumb light](708-team-dark-breadcrumb-favorites-menu.jpg)
 ![roadmap starred light](709-team-light-roadmap-starred.jpg)
+
+## Profile pictures
+
+![conversations](710-team-light-conversations-pictures.jpg)
+![conversation](711-team-light-conversation-pictures.jpg)
+![roadmap](712-team-light-roadmap-pictures.jpg)
+![requests](713-team-light-requests-pictures.jpg)

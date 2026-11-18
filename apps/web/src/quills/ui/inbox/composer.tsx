@@ -47,7 +47,8 @@ export function Composer(props: ComposerProps) {
   return (
     <div
       className={cn(
-        "rounded-2xl border border-border bg-background p-2 shadow-xs focus-within:ring-2 focus-within:ring-ring",
+        // A lifted card: a soft deep shadow, and a quiet border that darkens while typing.
+        "rounded-xl border border-border bg-card p-2 shadow-[0_1px_2px_--theme(--color-black/4%),0_8px_24px_--theme(--color-black/4%)] transition-[border-color,box-shadow] duration-150 focus-within:border-foreground/20 focus-within:ring-2 focus-within:ring-ring/30 dark:shadow-[0_1px_2px_--theme(--color-black/40%),0_8px_24px_--theme(--color-black/30%)] motion-reduce:transition-none",
         current?.private && "border-warning/40 bg-warning/5",
       )}
     >

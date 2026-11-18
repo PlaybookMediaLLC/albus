@@ -90,6 +90,8 @@ export const conversationItem = z.object({
   updatedAt: nullableResponseTimestamp,
   visitorPrincipalId: z.string(),
   visitorName: z.string().nullable(),
+  /** The visitor's profile picture, as posts show their author's. */
+  visitorAvatarUrl: z.string().nullable(),
   visitorEmail: z.string().nullable(),
   isTest: z.boolean(),
   assignedAgentPrincipalId: z.string().nullable(),
@@ -148,6 +150,7 @@ const columns = {
   visitorName: sql<
     string | null
   >`coalesce(${user.name}, ${principal.displayName})`,
+  visitorAvatarUrl: principal.avatarUrl,
   visitorEmail: conversations.visitorEmail,
   contactEmail: principal.contactEmail,
   accountEmail: user.email,
