@@ -383,6 +383,9 @@ examples (`@quills/ai/learning`, read by `engine/learning-store.ts`; design: iss
   board may read reasoning written with it. The prompt tells the model not to quote examples.
 - **Usage:** `ai_usage_log.metadata` holds `examples` (used) and `exampleCandidates` (rows that the
   store returned before the threshold) for `merge_check` and `tag_backfill`. No text is logged.
+- **Offline replay:** `scripts/ai-learning-eval/replay.ts duplicates|tags` replays labelled items
+  (no production data) in time order against a development provider and compares the shipped
+  requests with and without examples (`engine/prompts.ts`). It is never in CI or the image.
 - **Build:** the API loads `@quills/ai` from its `dist`. `pnpm --filter @kaneo/api typecheck`,
   `test` and `build` build it first; run `pnpm --filter @quills/ai build` before `test:quills`.
 

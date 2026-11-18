@@ -1,0 +1,60 @@
+{"first": "Export posts to CSV", "second": "Download feedback as a spreadsheet", "duplicate": true, "decidedAt": "2026-01-05T10:00:00Z"}
+{"first": "Dark mode for the widget", "second": "Dark mode for the admin dashboard", "duplicate": false, "decidedAt": "2026-01-10T10:00:00Z"}
+{"first": "Slack notifications for new posts", "second": "Post new feedback to a Slack channel", "duplicate": true, "decidedAt": "2026-01-15T10:00:00Z"}
+{"first": "SSO with Okta", "second": "Sign in with Google", "duplicate": false, "decidedAt": "2026-01-17T10:00:00Z"}
+{"first": "Bulk edit post statuses", "second": "Change the status of many posts at once", "duplicate": true, "decidedAt": "2026-01-22T10:00:00Z"}
+{"first": "Show vote counts on the public roadmap", "second": "Hide vote counts on the public roadmap", "duplicate": false, "decidedAt": "2026-01-27T10:00:00Z"}
+{"first": "Jira integration", "second": "Linear integration", "duplicate": false, "decidedAt": "2026-01-29T10:00:00Z"}
+{"first": "Merge duplicate posts", "second": "Combine two posts that ask for the same thing", "duplicate": true, "decidedAt": "2026-02-03T10:00:00Z"}
+{"first": "Email digest of new feedback every week", "second": "Daily email summary of new posts", "duplicate": false, "decidedAt": "2026-02-08T10:00:00Z"}
+{"first": "API endpoint to create posts", "second": "Create feedback through the REST API", "duplicate": true, "decidedAt": "2026-02-10T10:00:00Z"}
+{"first": "Custom domain for the portal", "second": "Custom domain for the help center", "duplicate": false, "decidedAt": "2026-02-15T10:00:00Z"}
+{"first": "Let customers attach screenshots", "second": "Image uploads in feedback posts", "duplicate": true, "decidedAt": "2026-02-20T10:00:00Z"}
+{"first": "Filter posts by customer plan", "second": "Filter posts by tag", "duplicate": false, "decidedAt": "2026-02-22T10:00:00Z"}
+{"first": "Mobile app for iOS", "second": "Mobile app for Android", "duplicate": false, "decidedAt": "2026-02-27T10:00:00Z"}
+{"first": "Two-factor authentication for teammates", "second": "Require 2FA for all admins", "duplicate": true, "decidedAt": "2026-03-04T10:00:00Z"}
+{"first": "Translate the widget into German", "second": "German language for the widget", "duplicate": true, "decidedAt": "2026-03-06T10:00:00Z"}
+{"first": "Pin a post to the top of a board", "second": "Sort posts by newest first", "duplicate": false, "decidedAt": "2026-03-11T10:00:00Z"}
+{"first": "Webhook when a post changes status", "second": "Send a webhook on status change", "duplicate": true, "decidedAt": "2026-03-16T10:00:00Z"}
+{"first": "Show the changelog inside the app", "second": "Embed release notes in our product", "duplicate": true, "decidedAt": "2026-03-18T10:00:00Z"}
+{"first": "Private boards for internal ideas", "second": "Boards only teammates can see", "duplicate": true, "decidedAt": "2026-03-23T10:00:00Z"}
+{"first": "Weighted voting by revenue", "second": "Show MRR next to each voter", "duplicate": false, "decidedAt": "2026-03-28T10:00:00Z"}
+{"first": "Import posts from Canny", "second": "Import posts from UserVoice", "duplicate": false, "decidedAt": "2026-03-30T10:00:00Z"}
+{"first": "Search inside comments", "second": "Full-text search across post comments", "duplicate": true, "decidedAt": "2026-04-04T10:00:00Z"}
+{"first": "Keyboard shortcuts in the inbox", "second": "Keyboard shortcuts on the roadmap", "duplicate": false, "decidedAt": "2026-04-09T10:00:00Z"}
+{"first": "Anonymous voting on the portal", "second": "Let visitors vote without an account", "duplicate": true, "decidedAt": "2026-04-11T10:00:00Z"}
+{"first": "Zapier integration", "second": "Make (Integromat) integration", "duplicate": false, "decidedAt": "2026-04-16T10:00:00Z"}
+{"first": "Rich text in post descriptions", "second": "Markdown formatting for posts", "duplicate": true, "decidedAt": "2026-04-21T10:00:00Z"}
+{"first": "Assign a post to a teammate", "second": "Set an owner for each post", "duplicate": true, "decidedAt": "2026-04-23T10:00:00Z"}
+{"first": "Reply to customers by email from the inbox", "second": "Email replies to tickets", "duplicate": true, "decidedAt": "2026-04-28T10:00:00Z"}
+{"first": "Show response time targets on tickets", "second": "SLA timers for tickets", "duplicate": true, "decidedAt": "2026-05-03T10:00:00Z"}
+{"first": "Archive old posts automatically", "second": "Delete spam posts automatically", "duplicate": false, "decidedAt": "2026-05-05T10:00:00Z"}
+{"first": "CSV import of customers", "second": "Bulk upload customer list", "duplicate": true, "decidedAt": "2026-05-10T10:00:00Z"}
+{"first": "Dark mode for the widget", "second": "Theme colors for the widget", "duplicate": false, "decidedAt": "2026-05-15T10:00:00Z"}
+{"first": "Roadmap view by quarter", "second": "Timeline roadmap grouped by month", "duplicate": false, "decidedAt": "2026-05-17T10:00:00Z"}
+{"first": "Notify voters when a post ships", "second": "Email voters when their request is done", "duplicate": true, "decidedAt": "2026-05-22T10:00:00Z"}
+{"first": "Audit log of admin actions", "second": "History of who changed settings", "duplicate": true, "decidedAt": "2026-05-27T10:00:00Z"}
+{"first": "HubSpot sync for companies", "second": "Salesforce sync for accounts", "duplicate": false, "decidedAt": "2026-05-29T10:00:00Z"}
+{"first": "Limit the widget to logged-in users", "second": "Require sign-in before posting feedback", "duplicate": true, "decidedAt": "2026-06-03T10:00:00Z"}
+{"first": "Custom fields on posts", "second": "Custom fields on tickets", "duplicate": false, "decidedAt": "2026-06-08T10:00:00Z"}
+{"first": "Show related help articles while typing", "second": "Suggest articles before a customer posts", "duplicate": true, "decidedAt": "2026-06-10T10:00:00Z"}
+{"first": "GitHub issues sync", "second": "Create a GitHub issue from a post", "duplicate": false, "decidedAt": "2026-06-15T10:00:00Z"}
+{"first": "Rate limit the public API", "second": "API keys with scopes", "duplicate": false, "decidedAt": "2026-06-20T10:00:00Z"}
+{"first": "Pagination in the posts list", "second": "Infinite scroll on the board", "duplicate": false, "decidedAt": "2026-06-22T10:00:00Z"}
+{"first": "Teams with separate inboxes", "second": "Route tickets to the billing team", "duplicate": false, "decidedAt": "2026-06-27T10:00:00Z"}
+{"first": "Embed the roadmap on our website", "second": "Public roadmap iframe", "duplicate": true, "decidedAt": "2026-07-02T10:00:00Z"}
+{"first": "Export the roadmap as an image", "second": "Print the roadmap", "duplicate": false, "decidedAt": "2026-07-04T10:00:00Z"}
+{"first": "Mention teammates in internal notes", "second": "@-mentions in comments", "duplicate": true, "decidedAt": "2026-07-09T10:00:00Z"}
+{"first": "Customer satisfaction survey after a ticket closes", "second": "CSAT rating at the end of a conversation", "duplicate": true, "decidedAt": "2026-07-14T10:00:00Z"}
+{"first": "Recurring tasks", "second": "Task templates", "duplicate": false, "decidedAt": "2026-07-16T10:00:00Z"}
+{"first": "Show which customers asked for a feature", "second": "List of requesters on each post", "duplicate": true, "decidedAt": "2026-07-21T10:00:00Z"}
+{"first": "Time tracking on tasks", "second": "Estimates in story points", "duplicate": false, "decidedAt": "2026-07-26T10:00:00Z"}
+{"first": "Snooze a conversation until tomorrow", "second": "Remind me about this ticket later", "duplicate": true, "decidedAt": "2026-07-28T10:00:00Z"}
+{"first": "Custom CSS for the portal", "second": "Upload our logo to the portal", "duplicate": false, "decidedAt": "2026-08-02T10:00:00Z"}
+{"first": "Group posts into themes automatically", "second": "AI clustering of feedback", "duplicate": true, "decidedAt": "2026-08-07T10:00:00Z"}
+{"first": "Read receipts in the messenger", "second": "Typing indicator in the messenger", "duplicate": false, "decidedAt": "2026-08-09T10:00:00Z"}
+{"first": "Offline mode for the mobile app", "second": "Push notifications on mobile", "duplicate": false, "decidedAt": "2026-08-14T10:00:00Z"}
+{"first": "Stripe revenue on customer profiles", "second": "Show plan and MRR for each customer", "duplicate": true, "decidedAt": "2026-08-19T10:00:00Z"}
+{"first": "Delete my account and data", "second": "GDPR data export", "duplicate": false, "decidedAt": "2026-08-21T10:00:00Z"}
+{"first": "Change the widget launcher icon", "second": "Move the widget to the left side", "duplicate": false, "decidedAt": "2026-08-26T10:00:00Z"}
+{"first": "Vote on behalf of a customer", "second": "Add a vote for a customer from a call", "duplicate": true, "decidedAt": "2026-08-31T10:00:00Z"}
