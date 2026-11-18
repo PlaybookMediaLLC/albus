@@ -64,7 +64,8 @@
     "valibot": "^1.5.0",
     "zod": "^4.6.7",
     "@kaneo/ids": "workspace:*",
-    "@kaneo/branding": "workspace:*"
+    "@kaneo/branding": "workspace:*",
+    "@quills/ai": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

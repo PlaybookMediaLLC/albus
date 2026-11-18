@@ -23,6 +23,7 @@ COPY packages/permissions/package.json ./packages/permissions/
 COPY packages/importers/package.json ./packages/importers/
 COPY packages/mcp/package.json ./packages/mcp/
 COPY packages/widget/package.json ./packages/widget/
+COPY packages/quills-ai/package.json ./packages/quills-ai/
 COPY apps/api/package.json ./apps/api/
 
 # Install dependencies
@@ -38,6 +39,7 @@ COPY packages/permissions ./packages/permissions
 COPY packages/importers ./packages/importers
 COPY packages/mcp ./packages/mcp
 COPY packages/widget ./packages/widget
+COPY packages/quills-ai ./packages/quills-ai
 COPY i18n ./i18n
 COPY apps/api ./apps/api
 
@@ -56,6 +58,10 @@ RUN pnpm run build
 # Build the widget page and browser SDK that the API serves (Quills)
 WORKDIR /app/packages/widget
 RUN pnpm exec tsup
+
+# Build the Quills AI building blocks that the API loads at runtime
+WORKDIR /app/packages/quills-ai
+RUN pnpm run build
 
 # Fix TypeScript config and build API
 WORKDIR /app/apps/api
@@ -84,6 +90,7 @@ COPY packages/logger/package.json ./packages/logger/
 COPY packages/permissions/package.json ./packages/permissions/
 COPY packages/importers/package.json ./packages/importers/
 COPY packages/mcp/package.json ./packages/mcp/
+COPY packages/quills-ai/package.json ./packages/quills-ai/
 COPY apps/api/package.json ./apps/api/
 
 RUN sed -i 's/"prepare": "husky"/"prepare": ""/g' package.json && \
@@ -115,9 +122,10 @@ COPY --from=builder --chown=appuser:appuser /app/packages/permissions ./packages
 COPY --from=builder --chown=appuser:appuser /app/packages/importers/dist ./packages/importers/dist
 COPY --from=builder --chown=appuser:appuser /app/packages/mcp/dist ./packages/mcp/dist
 COPY --from=builder --chown=appuser:appuser /app/packages/widget/dist ./packages/widget/dist
+COPY --from=builder --chown=appuser:appuser /app/packages/quills-ai/dist ./packages/quills-ai/dist
 
 # Fail the build early if the runtime dependency layout is broken on the target architecture
-RUN cd /app/apps/api && node -e "const fs=require('fs');for(const m of ['bcryptjs','hono','pg','drizzle-orm','better-auth','ioredis','valibot','octokit','@modelcontextprotocol/sdk']){fs.accessSync('node_modules/'+m+'/package.json')}for(const m of ['email','permissions','importers']){fs.accessSync('node_modules/@kaneo/'+m+'/dist/index.js')}" && \
+RUN cd /app/apps/api && node -e "const fs=require('fs');for(const m of ['bcryptjs','hono','pg','drizzle-orm','better-auth','ioredis','valibot','octokit','@modelcontextprotocol/sdk']){fs.accessSync('node_modules/'+m+'/package.json')}for(const m of ['email','permissions','importers']){fs.accessSync('node_modules/@kaneo/'+m+'/dist/index.js')}fs.accessSync('node_modules/@quills/ai/dist/learning/index.js')" && \
   node --input-type=module -e "import { registerTools } from '@kaneo/mcp/tools'; if (typeof registerTools !== 'function') process.exit(1)"
 
 # Switch to non-root user
