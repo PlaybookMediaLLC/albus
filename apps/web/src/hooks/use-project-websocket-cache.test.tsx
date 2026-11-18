@@ -7,6 +7,7 @@ import {
   it,
   vi,
 } from "vite-plus/test";
+import { waitForProjectSocket } from "@/lib/project-socket-gate";
 import { useProjectWebSocket } from "./use-project-websocket";
 
 const mocks = vi.hoisted(() => ({
@@ -248,6 +249,22 @@ it("reconciles the initial handshake after active pagination completes", async (
   );
   expect(keys.filter((key) => key?.[0] === "tasks")).toEqual([["tasks", "p"]]);
   expect(keys).toContainEqual(["task-relations", "project", "p"]);
+});
+it("skips the connect reconcile when the board load waited for the socket", async () => {
+  mocks.client.getQueryState.mockReturnValue({ fetchStatus: "fetching" });
+  renderHook(() => useProjectWebSocket("p"));
+  const waited = waitForProjectSocket("p");
+  await Promise.resolve();
+  Socket.current.onopen?.();
+  await waited;
+  mocks.client.getQueryState.mockReturnValue({ fetchStatus: "idle" });
+  mocks.subscribe.mock.calls[0][0]({
+    query: { queryKey: ["tasks", "p"], state: { fetchStatus: "idle" } },
+  });
+  await Promise.resolve();
+  expect(mocks.client.invalidateQueries).not.toHaveBeenCalledWith({
+    queryKey: ["tasks", "p"],
+  });
 });
 it("preserves distinct task effects across pagination and a disconnect before replay", async () => {
   vi.useFakeTimers();

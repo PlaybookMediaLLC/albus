@@ -1,6 +1,7 @@
 import { type QueryClient, queryOptions } from "@tanstack/react-query";
 import getTasks from "@/fetchers/task/get-tasks";
 import { markBoardCacheChanged } from "@/lib/board-cache-version";
+import { waitForProjectSocket } from "@/lib/project-socket-gate";
 import { setBoardProgress } from "./board-progress";
 import { shareBoardTasks } from "./share-board-tasks";
 
@@ -49,6 +50,7 @@ export function tasksQueryOptions(queryClient: QueryClient, projectId: string) {
             }
           });
       try {
+        if (!hasCachedBoard) await waitForProjectSocket(projectId, signal);
         return await getTasks(projectId, signal, (board) => {
           if (!hasCachedBoard) setBoardProgress(projectId, board);
         });

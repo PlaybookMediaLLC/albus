@@ -15,6 +15,11 @@ import getLabelsByTask from "@/fetchers/label/get-labels-by-task";
 import getExternalLinks from "@/fetchers/external-link/get-external-links";
 import type { ResumePreview } from "@/fetchers/integration-sync/types";
 import { patchBoardTask } from "@/lib/patch-board-task";
+import {
+  projectSocketConnecting,
+  projectSocketOpened,
+  projectSocketStopped,
+} from "@/lib/project-socket-gate";
 import { isPerTaskRelationQuery } from "@/lib/relation-query-keys";
 import { invalidateTaskRelations } from "@/lib/invalidate-task-relations";
 import type { ProjectWithTasks } from "@/types/project";
@@ -170,10 +175,13 @@ export function useProjectWebSocket(projectId: string) {
       const url = getWsUrl(projectId);
       const ws = new WebSocket(url);
       activeSocket = ws;
+      projectSocketConnecting(projectId);
 
       ws.onopen = () => {
         if (disposed || activeSocket !== ws) return;
-        needsReconcile = true;
+        // A board load that waited for this socket reads everything after the
+        // subscription; otherwise a read may predate it and is reconciled.
+        if (!projectSocketOpened(projectId)) needsReconcile = true;
         flushPending();
         if (healthyTimeout !== null) clearTimeout(healthyTimeout);
         healthyTimeout = setTimeout(() => {
@@ -574,6 +582,7 @@ export function useProjectWebSocket(projectId: string) {
           healthyTimeout = null;
         }
         activeSocket = null;
+        projectSocketStopped(projectId);
 
         // The provider ended this socket's session. Reconnect if another tab signed in again.
         if (event?.code === 4001) {
@@ -710,6 +719,7 @@ export function useProjectWebSocket(projectId: string) {
     });
 
     return () => {
+      projectSocketStopped(projectId);
       unsubscribe();
       if (healthyTimeout !== null) clearTimeout(healthyTimeout);
       pendingMessages.clear();
