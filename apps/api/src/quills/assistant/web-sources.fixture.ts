@@ -11,6 +11,11 @@ export const setQuillsWebSourceEnabled = on(
   (a) => ({ params: { webSourceId: a.webSourceId }, body: { enabled: false } }),
   (b) => ({ webSourceId: b.webSourceId }),
 );
+export const refreshQuillsWebSource = on(
+  ["webSource"],
+  (a) => ({ params: { webSourceId: a.webSourceId } }),
+  (b) => ({ webSourceId: b.webSourceId }),
+);
 export const deleteQuillsWebSource = on(
   ["webSource"],
   (a) => ({ params: { webSourceId: a.webSourceId } }),

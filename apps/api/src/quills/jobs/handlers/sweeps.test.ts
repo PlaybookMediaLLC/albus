@@ -3,6 +3,7 @@ import { generateId } from "@kaneo/ids";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
+import { assistantWebSources } from "../../../database/quills/schema/assistant-web-sources";
 import { auditLog } from "../../../database/quills/schema/audit-log";
 import { changelogEntries } from "../../../database/quills/schema/changelog";
 import { conversations } from "../../../database/quills/schema/conversation";
@@ -459,5 +460,52 @@ describe.skipIf(!url)("Quills sweeps", () => {
         )
       ).length,
     ).toBe(0);
+  });
+
+  it("fetches a web source again after a week, and a failing one once a day", async () => {
+    await h.drain(h.a);
+    const days = (n: number) => new Date(Date.now() - n * 86_400_000);
+    const [stale, fresh, touched, off] = await h.system(h.a, (db) =>
+      db
+        .insert(assistantWebSources)
+        .values(
+          [
+            { fetchedAt: days(8), updatedAt: days(2) },
+            { fetchedAt: days(1), updatedAt: days(2) },
+            // Tried within the last day (a failed refresh): waits.
+            { fetchedAt: days(8), updatedAt: days(0) },
+            // Turned off: never fetched again.
+            { fetchedAt: days(8), updatedAt: days(2), enabled: false },
+          ].map((times, index) => ({
+            url: `https://docs.example.test/${crypto.randomUUID()}/${index}`,
+            title: "Docs",
+            content: "Old text",
+            createdAt: days(9),
+            ...times,
+          })),
+        )
+        .returning({ id: assistantWebSources.id }),
+    );
+    const refreshes = () =>
+      h.system(h.a, (db) =>
+        db
+          .select({ id: events.entityId })
+          .from(events)
+          .where(
+            and(
+              eq(events.type, "assistant_web_source.updated"),
+              inArray(events.entityId, [
+                stale!.id,
+                fresh!.id,
+                touched!.id,
+                off!.id,
+              ]),
+            ),
+          ),
+      );
+    expect(await runnable()).toContain(h.a);
+    await runQuillsSweeps(h.a);
+    await runQuillsSweeps(h.a);
+    expect(await refreshes()).toEqual([{ id: stale!.id }]);
   });
 });
