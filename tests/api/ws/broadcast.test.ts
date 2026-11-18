@@ -28,6 +28,10 @@ const projectUpdateHandler = vi
     ([eventName]: [string]) => eventName === "project.updated",
   )?.[1];
 
+const relationRefreshHandler = vi
+  .mocked(subscribeToEvent)
+  .mock.calls.find(([eventName]) => eventName === "task-relation.refresh")![1];
+
 const taskTitleHandler = vi
   .mocked(subscribeToEvent)
   .mock.calls.find(([eventName]) => eventName === "task.title_changed")![1];
@@ -233,6 +237,38 @@ describe("broadcastToProject", () => {
     });
     expect(send.mock.calls[0][0]).not.toContain("Current");
     expect(send.mock.calls[0][0]).not.toContain("First");
+    removeConnection("proj-1", conn);
+  });
+
+  it("marks a status-change relation refresh so clients keep their board", async () => {
+    const ws = makeFakeWs();
+    const conn = addConnection("proj-1", ws, "user-1", "init-1", "workspace");
+    await relationRefreshHandler({ projectId: "proj-1", userId: "user-2" });
+    const send = (ws as { send: ReturnType<typeof vi.fn> }).send;
+    await vi.waitFor(() => expect(send).toHaveBeenCalledOnce(), {
+      timeout: 300,
+    });
+    expect(JSON.parse(send.mock.calls[0][0])).toMatchObject({
+      type: "TASK_RELATION_UPDATED",
+      statusOnly: true,
+    });
+    removeConnection("proj-1", conn);
+  });
+
+  it("drops the status-only mark when a parent-board refresh shares its batch", async () => {
+    const ws = makeFakeWs();
+    const conn = addConnection("proj-1", ws, "user-1", "init-1", "workspace");
+    broadcastToProject("proj-1", {
+      type: "TASK_RELATION_UPDATED",
+      projectId: "proj-1",
+      taskId: "",
+    });
+    await relationRefreshHandler({ projectId: "proj-1", userId: "user-2" });
+    const send = (ws as { send: ReturnType<typeof vi.fn> }).send;
+    await vi.waitFor(() => expect(send).toHaveBeenCalledOnce(), {
+      timeout: 300,
+    });
+    expect(JSON.parse(send.mock.calls[0][0])).not.toHaveProperty("statusOnly");
     removeConnection("proj-1", conn);
   });
 

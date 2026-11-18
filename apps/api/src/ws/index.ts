@@ -913,6 +913,10 @@ export function broadcastToProject(
       ...message,
       ...(previous?.message.linksChanged ? { linksChanged: true } : {}),
       ...(previous?.message.taskTitleChanged ? { taskTitleChanged: true } : {}),
+      // A merged refresh is status-only only if every merged message was.
+      ...(previous && !previous.message.statusOnly
+        ? { statusOnly: undefined }
+        : {}),
     },
     excludeInitiatorId,
   });
@@ -1053,6 +1057,7 @@ subscribeToEvent<{
       taskId: "",
       sourceTaskId: undefined,
       targetTaskId: undefined,
+      statusOnly: true,
     },
     initiatorId,
   );

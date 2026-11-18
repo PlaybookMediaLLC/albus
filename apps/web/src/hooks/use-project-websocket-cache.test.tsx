@@ -204,6 +204,23 @@ describe("board realtime races", () => {
     });
   });
 
+  it("keeps the board on a status-change relation refresh", () => {
+    renderHook(() => useProjectWebSocket("p"));
+    Socket.current.message("TASK_RELATION_UPDATED", {
+      taskId: "",
+      statusOnly: true,
+    });
+    expect(mocks.client.invalidateQueries).not.toHaveBeenCalledWith({
+      queryKey: ["tasks", "p"],
+    });
+  });
+  it("refreshes the board on a parent-board relation refresh", () => {
+    renderHook(() => useProjectWebSocket("p"));
+    Socket.current.message("TASK_RELATION_UPDATED", { taskId: "" });
+    expect(mocks.client.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["tasks", "p"],
+    });
+  });
   it("refreshes a project-wide task update with no task id", () => {
     renderHook(() => useProjectWebSocket("p"));
     Socket.current.message("TASK_UPDATED", { taskId: "" });

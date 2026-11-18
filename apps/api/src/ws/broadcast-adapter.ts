@@ -7,6 +7,8 @@ export type ProjectBroadcastMessage = {
   targetTaskId?: string;
   linksChanged?: boolean;
   taskTitleChanged?: boolean;
+  // A status-change relation refresh: per-task events already update the board.
+  statusOnly?: boolean;
 };
 
 export type BroadcastMessage = {

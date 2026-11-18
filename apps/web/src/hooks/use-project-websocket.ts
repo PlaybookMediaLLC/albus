@@ -416,6 +416,13 @@ export function useProjectWebSocket(projectId: string) {
             message.type === "PROJECT_UPDATED"
           ) {
             if (
+              message.type === "TASK_RELATION_UPDATED" &&
+              message.statusOnly
+            ) {
+              // The status change reaches this board as a per-task event,
+              // which also patches parent subtask counts; the per-task
+              // relation queries are refreshed below.
+            } else if (
               message.type === "PROJECT_UPDATED" ||
               message.type === "TASK_RELATION_UPDATED"
             ) {
