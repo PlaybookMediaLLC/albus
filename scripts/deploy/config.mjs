@@ -97,6 +97,8 @@ export function configuration(env) {
             value &&
             (key.startsWith("SMTP_") ||
               key.startsWith("CUSTOM_OAUTH_") ||
+              // The Quills AI provider (assistant/ai/config.ts): URL, key, models and prices.
+              key.startsWith("QUILLS_AI_") ||
               [
                 "CUSTOM_AUTH_PKCE",
                 "GITHUB_OAUTH_CLIENT_ID",
