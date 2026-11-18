@@ -158,6 +158,11 @@ export type QuillsRouteDeclaration<
    */
   browserPage?: (input: { workspace: string; query: Output<Q> }) => string;
   /**
+   * Public GET with a `{ url, maxAgeSeconds }` response: a request that accepts an image (an <img>)
+   * gets a 302 to `url`, cached privately for `maxAgeSeconds`; other clients get the JSON answer.
+   */
+  imageRedirect?: true;
+  /**
    * Teammate, app, signed, portal and widget: a read in its own scoped transaction, before `call`. It
    * must not write, except an AI budget reservation (assistant/budget.ts), which must commit before
    * the call. The handler then runs in a new scoped transaction with the call's result as `called`.
@@ -486,6 +491,20 @@ const continueInWebResponse = {
   },
 };
 
+const imageRedirectResponse = {
+  description: "The image, for a request that accepts one",
+  headers: {
+    Location: {
+      description: "A short-lived URL of the image",
+      schema: { type: "string", format: "uri" },
+    },
+  },
+};
+
+/** An <img> asks for an image; fetch and API clients ask for JSON. */
+const acceptsImage = (headers: Headers) =>
+  /\bimage\//.test(headers.get("accept") ?? "");
+
 const continueInWeb = (c: Context<any, string, any>, location: string) => {
   const response = c.redirect(location, 303);
   response.headers.set("cache-control", "no-store");
@@ -603,6 +622,17 @@ export function buildQuillsRoute<
   if (d.redirect && (audience !== "signed" || d.raw !== undefined))
     throw new Error(
       `${d.operationId}: a browser redirect is for a JSON signed route`,
+    );
+  if (
+    d.imageRedirect &&
+    (audience !== "public" ||
+      d.method !== "get" ||
+      d.raw !== undefined ||
+      !(d.response instanceof z.ZodObject) ||
+      !("url" in d.response.shape && "maxAgeSeconds" in d.response.shape))
+  )
+    throw new Error(
+      `${d.operationId}: an image redirect is for a public GET with a { url, maxAgeSeconds } response`,
     );
   if (d.browserPage && (audience !== "public" || d.method !== "get"))
     throw new Error(`${d.operationId}: a browser page is for a public GET`);
@@ -887,6 +917,7 @@ export function buildQuillsRoute<
       responses: {
         200: ok,
         ...(d.browserPage && { 303: continueInWebResponse }),
+        ...(d.imageRedirect && { 302: imageRedirectResponse }),
         ...(signIn && {
           401: errorResponse(
             audience === "portal"
@@ -1030,6 +1061,14 @@ export function buildQuillsRoute<
         return c.body(result as string, 200, {
           "content-type": `${d.raw}; charset=utf-8`,
         });
+      if (d.imageRedirect && acceptsImage(c.req.raw.headers)) {
+        const image = result as { url: string; maxAgeSeconds: number };
+        return c.body(null, 302, {
+          location: image.url,
+          "cache-control": `private, max-age=${image.maxAgeSeconds}`,
+          "referrer-policy": "no-referrer",
+        });
+      }
       return c.json(result, 200);
     }) as unknown as RouteHandler<typeof route, RouteEnv<A>>;
     return [route, handler] as const;

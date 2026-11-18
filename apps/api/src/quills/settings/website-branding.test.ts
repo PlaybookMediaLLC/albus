@@ -33,6 +33,9 @@ import {
   readHead,
 } from "./website-fetch";
 
+// Feedback-app keys are deleted and verified with the feedback app's bucket settings.
+const quillsBucket = expect.objectContaining({ bucket: expect.any(String) });
+
 // Website branding against a local stub server: the guard, the offer flow and the storage lifecycle.
 // No request leaves this machine. DNS answers come from the table below, and every request that
 // passes the guard goes to the stub, which records it. A guard failure would show as a recorded request.
@@ -478,7 +481,7 @@ describe.skipIf(!url)("website branding routes", () => {
     // The files row let the key go, but logo_key holds it: the worker keeps the object.
     await expireLease(key);
     await drain(key);
-    expect(deleteS3Object).not.toHaveBeenCalledWith(key);
+    expect(deleteS3Object).not.toHaveBeenCalledWith(key, quillsBucket);
     expect(await events("branding.offer_accepted")).toBe(1);
 
     const undone = await call("POST", "/undo");
@@ -490,7 +493,7 @@ describe.skipIf(!url)("website branding routes", () => {
     });
     expect(await queued(key)).toBe(true);
     await drain(key);
-    expect(deleteS3Object).toHaveBeenCalledWith(key);
+    expect(deleteS3Object).toHaveBeenCalledWith(key, quillsBucket);
     expect((await call("POST", "/undo")).status).toBe(409);
     expect(await events("branding.auto_undone")).toBe(1);
   });
@@ -572,10 +575,10 @@ describe.skipIf(!url)("website branding routes", () => {
     expect(await queued(first)).toBe(true);
     // The live verification lease protects the object; after it ends, the worker deletes it.
     await retryStorageCleanup();
-    expect(deleteS3Object).not.toHaveBeenCalledWith(first);
+    expect(deleteS3Object).not.toHaveBeenCalledWith(first, quillsBucket);
     await expireLease(first);
     await drain(first);
-    expect(deleteS3Object).toHaveBeenCalledWith(first);
+    expect(deleteS3Object).toHaveBeenCalledWith(first, quillsBucket);
 
     const before = await events("branding.offer_declined");
     const declined = await call("POST", "/decline");

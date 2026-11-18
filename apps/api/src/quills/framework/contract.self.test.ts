@@ -1333,6 +1333,29 @@ describe("raw, textBody and prepare declaration rules", () => {
       buildQuillsRoute({ ...route, audience: "portal" as const }),
     ).toThrow(/browser page/);
   });
+  it("takes an image redirect only on a public GET with a URL response", () => {
+    const route = {
+      ...base,
+      audience: "public" as const,
+      imageRedirect: true as const,
+      response: z.object({ url: z.string(), maxAgeSeconds: z.number() }),
+      handler: async () => ({
+        url: "https://media.example.test/a",
+        maxAgeSeconds: 60,
+      }),
+    };
+    expect(() => buildQuillsRoute(route)).not.toThrow();
+    expect(() =>
+      buildQuillsRoute({ ...route, audience: "portal" as const }),
+    ).toThrow(/image redirect/);
+    expect(() =>
+      buildQuillsRoute({
+        ...route,
+        response: z.object({ ok: z.boolean() }),
+        handler: async () => ({ ok: true }),
+      }),
+    ).toThrow(/image redirect/);
+  });
   it("lets an HTML page run only the scripts that its route declares", () => {
     const policy = (scripts?: string[]) =>
       htmlHeaders(scripts)["content-security-policy"];

@@ -16,11 +16,12 @@ import {
   uploadRequest,
   uploadResponse,
   verifyUpload,
+  customerAvatarUrl,
 } from "../framework/files";
 import { httpUrl, requirePortal } from "../portal/feedback/viewer";
 import { requirePortalAccess } from "../portal/gate";
 import { readConfig } from "../settings/widget";
-import { customerAvatarUrl } from "./customer-avatar";
+
 import {
   fileBody,
   fileEvent,

@@ -30,7 +30,9 @@ import { z } from "../../openapi";
 import {
   avatarContentTypes,
   MAX_CUSTOMER_AVATAR_BYTES,
-} from "../files/customer-avatar";
+} from "./customer-avatar";
+
+export { customerAvatarUrl } from "./customer-avatar";
 
 // Managed Quills uploads on Kaneo's storage: server-derived keys, presigned PUT, then a
 // verification lease that protects the object until the scoped transaction commits its reference.
@@ -289,6 +291,17 @@ export async function imageUrl(key: string) {
       ResponseContentDisposition: "inline",
     }),
     { expiresIn: config.presignTtlSeconds },
+  );
+}
+
+/** `imageUrl` with how long a browser may keep a redirect to it: a minute less than the URL lasts. */
+export async function signedImage(key: string) {
+  const url = await imageUrl(key);
+  return (
+    url && {
+      url,
+      maxAgeSeconds: Math.max(0, storage().presignTtlSeconds - 60),
+    }
   );
 }
 
