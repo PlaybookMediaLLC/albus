@@ -135,7 +135,7 @@ const getAction = defineQuillsRoute({
 
 const changeSchema = z.object({
   type: webhookEvent,
-  entityType: z.literal("conversation"),
+  entityType: z.enum(["conversation", "conversation_message"]),
   entityId: z.string(),
   payload: z.array(z.object({ key: z.string(), value: z.string() })),
 });

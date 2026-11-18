@@ -747,7 +747,7 @@ const listTools = defineQuillsRoute({
         name: z.string(),
         kind: z.enum(["read", "write"]),
         description: z.string(),
-        requires: z.enum(["read", "update"]),
+        requires: z.enum(["read", "create", "update"]),
       }),
     ),
   }),

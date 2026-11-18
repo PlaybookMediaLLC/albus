@@ -465,36 +465,46 @@ const setValue = defineQuillsRoute({
       params.conversationId,
       true,
     );
-    const [definition] = await db
-      .select(fields)
-      .from(definitions)
-      .where(eq(definitions.key, params.key));
-    if (!definition) throw notFound("Attribute");
-    if (definition.archivedAt)
-      throw conflict(`Attribute '${params.key}' is archived`);
-    const value = normalize(definition, body.value);
-    // One statement merges the key, so a parallel write to another key is kept.
-    const patch =
-      value === null
-        ? sql`${conversations.customAttributes} - ${params.key}::text`
-        : sql`${conversations.customAttributes} || ${JSON.stringify({
-            [params.key]: {
-              v: value,
-              src: "teammate",
-              at: new Date().toISOString(),
-            },
-          })}::jsonb`;
-    const [row] = await db
-      .update(conversations)
-      .set({ customAttributes: patch, updatedAt: new Date() })
-      .where(eq(conversations.id, conversation.id))
-      .returning({ customAttributes: conversations.customAttributes });
     return {
       conversationId: conversation.id,
-      attributes: attributeEntries(row!.customAttributes),
+      attributes: attributeEntries(
+        await writeAttributeValue(db, conversation.id, params.key, body.value),
+      ),
     };
   },
 });
+
+/**
+ * Sets or clears (null, '' or []) one attribute value as a teammate value, checked against the live
+ * definition: 404 for an unknown key, 409 for an archived one. Returns the stored attributes.
+ */
+export async function writeAttributeValue(
+  db: Database,
+  conversationId: string,
+  key: string,
+  input: unknown,
+) {
+  const [definition] = await db
+    .select(fields)
+    .from(definitions)
+    .where(eq(definitions.key, key));
+  if (!definition) throw notFound("Attribute");
+  if (definition.archivedAt) throw conflict(`Attribute '${key}' is archived`);
+  const value = normalize(definition, input);
+  // One statement merges the key, so a parallel write to another key is kept.
+  const patch =
+    value === null
+      ? sql`${conversations.customAttributes} - ${key}::text`
+      : sql`${conversations.customAttributes} || ${JSON.stringify({
+          [key]: { v: value, src: "teammate", at: new Date().toISOString() },
+        })}::jsonb`;
+  const [row] = await db
+    .update(conversations)
+    .set({ customAttributes: patch, updatedAt: new Date() })
+    .where(eq(conversations.id, conversationId as never))
+    .returning({ customAttributes: conversations.customAttributes });
+  return row!.customAttributes;
+}
 
 export default apiRouter<BaseVariables & { workspaceId: string }>()
   .openapi(...listAttributes)
