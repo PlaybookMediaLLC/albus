@@ -96,3 +96,10 @@ Retake them with `pnpm dev:demo`. Phone and portal shots are not in this set yet
 ![board filter](604-roadmap-light-board-filter.jpg)
 ![filtered by board](605-roadmap-light-filtered.jpg)
 ![roadmap on a phone](606-roadmap-phone.jpg)
+
+## App-wide polish
+
+![triage](701-team-light-triage-polished.jpg)
+![members](702-team-light-members-polished.jpg)
+![insights](703-team-light-insights-polished.jpg)
+![surveys](704-team-light-surveys-polished.jpg)

@@ -69,7 +69,9 @@ export function TriageFilters({
       defaultValues={value}
       submitKey="team-triage.applyFilters"
       submitVariant="secondary"
-      className="max-w-none border-b border-border px-4 py-3"
+      className="max-w-none gap-3 border-b border-border px-4 pt-2 pb-3"
+      // A footer row keeps Apply its own width instead of a full-width bar.
+      footer={() => null}
       onSubmit={async (values) => onApply(values)}
     >
       {(form) => (

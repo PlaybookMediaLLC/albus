@@ -84,7 +84,7 @@ export function TriageTable(props: TriageTableProps) {
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-border">
+        <tbody>
           {props.posts.flatMap((post) => {
             const mode =
               props.editing?.postId === post.id ? props.editing.mode : null;
@@ -101,7 +101,10 @@ export function TriageTable(props: TriageTableProps) {
             const riceText =
               rice === null ? t("team-triage.unset") : number.format(rice);
             const row = (
-              <tr key={post.id}>
+              <tr
+                key={post.id}
+                className="transition-colors duration-150 hover:bg-accent"
+              >
                 <th
                   scope="row"
                   className="py-2 ps-4 pe-3 text-left font-medium"

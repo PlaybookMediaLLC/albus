@@ -25,7 +25,7 @@ export function MemberRow({ member, href, onOpen }: MemberRowProps) {
     <a
       {...link}
       href={href}
-      className="flex items-center gap-3 ps-4 outline-none hover:bg-accent focus-visible:bg-foreground/6"
+      className="mx-2 flex items-center gap-3 rounded-lg px-2 outline-none transition-colors duration-150 hover:bg-accent focus-visible:bg-foreground/6"
     >
       <PersonAvatar
         name={member.name}
@@ -33,8 +33,7 @@ export function MemberRow({ member, href, onOpen }: MemberRowProps) {
         colored
         className="size-8 text-xs"
       />
-      {/* The divider starts at the text, not under the avatar. */}
-      <span className="flex min-h-13 min-w-0 flex-1 items-center gap-3 border-b border-border pe-4">
+      <span className="flex min-h-12 min-w-0 flex-1 items-center gap-3">
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium">
             {member.name}

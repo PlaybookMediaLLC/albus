@@ -66,7 +66,7 @@ export function RoadmapCardBody({
   const show = useContext(CardDisplayContext);
   const board = show.board ? props.board : null;
   const chip = (key: string, value: number, icon: ReactNode) => (
-    <span className="inline-flex h-6 shrink-0 items-center gap-1 rounded-full border border-border px-2 text-xs text-muted-foreground tabular-nums">
+    <span className="inline-flex h-5.5 shrink-0 items-center gap-1 rounded-full border border-border px-1.5 text-xs text-muted-foreground tabular-nums [&>svg]:text-faint-foreground">
       {icon}
       <span aria-hidden="true">{value}</span>
       <span className="sr-only">{t(key, { count: value })}</span>
@@ -79,7 +79,7 @@ export function RoadmapCardBody({
   return (
     <>
       {board || show.author ? (
-        <div className="mb-1.5 flex h-5 items-center gap-2 text-xs text-muted-foreground">
+        <div className="mb-1 flex h-5 items-center gap-2 text-xs text-muted-foreground">
           {board ? (
             <span className="flex min-w-0 items-center gap-1.5">
               <BoardDot boardId={post.boardId} />
@@ -96,7 +96,7 @@ export function RoadmapCardBody({
           ) : null}
         </div>
       ) : null}
-      <h3 className="flex items-start gap-2 text-sm font-medium leading-snug">
+      <h3 className="flex items-start gap-2 text-sm font-medium leading-5 text-pretty">
         <span className="flex h-5 shrink-0 items-center">
           <PostStatusIcon
             color={status?.color}
@@ -119,21 +119,21 @@ export function RoadmapCardBody({
         </span>
       </h3>
       {show.counts ? (
-        <div className="mt-2.5 flex flex-wrap gap-1.5">
+        <div className="mt-2 flex flex-wrap gap-1">
           {chip(
             "inbox.votes",
             post.voteCount,
-            <ArrowUp aria-hidden="true" className="size-3.5" />,
+            <ArrowUp aria-hidden="true" className="size-3" />,
           )}
           {chip(
             "inbox.comments",
             post.commentCount,
-            <MessageCircle aria-hidden="true" className="size-3.5" />,
+            <MessageCircle aria-hidden="true" className="size-3" />,
           )}
         </div>
       ) : null}
       {show.created ? (
-        <p className="mt-2.5 text-xs text-faint-foreground">
+        <p className="mt-2 text-xs text-faint-foreground">
           {t("team-roadmap.created", { date: created })}
         </p>
       ) : null}
@@ -143,7 +143,7 @@ export function RoadmapCardBody({
             render={
               <IconButton
                 label={t("team-roadmap.move", { title })}
-                className="absolute end-1.5 bottom-1.5 z-10 opacity-0 focus-visible:opacity-100 group-hover:opacity-100 data-popup-open:opacity-100 pointer-coarse:opacity-100"
+                className="absolute end-1 bottom-1 z-10 text-muted-foreground opacity-0 focus-visible:opacity-100 group-hover:opacity-100 data-popup-open:opacity-100 pointer-coarse:opacity-100"
               />
             }
           >

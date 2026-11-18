@@ -122,14 +122,13 @@ export function RoadmapColumn({ status, ...props }: RoadmapColumnProps) {
       ref={drag.setNodeRef}
       aria-labelledby={id}
       className={cn(
-        "group/column flex w-[min(24rem,calc(100vw-3rem))] shrink-0 flex-col rounded-xl ring-ring/40 transition-shadow",
-        props.dropTarget && "ring-2",
+        "group/column flex w-[min(24rem,calc(100vw-3rem))] shrink-0 flex-col",
         // The lifted column follows the pointer; its place shows as a dashed outline.
         drag.isDragging &&
           "outline-2 outline-dashed outline-ring/40 *:invisible",
       )}
     >
-      <div className="flex h-11 shrink-0 items-center gap-2 ps-2.5 pe-1">
+      <div className="flex h-11 shrink-0 items-center gap-2 ps-2.5 pe-1 [&_button]:text-muted-foreground [&_button:hover]:text-foreground">
         {icon}
         {name}
         {total}
@@ -161,7 +160,13 @@ export function RoadmapColumn({ status, ...props }: RoadmapColumnProps) {
           ) : null}
         </span>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-xl bg-foreground/3 p-1.5">
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto overscroll-contain rounded-xl bg-foreground/3 p-1.5 ring-ring/30 transition-[background-color,box-shadow] duration-150 motion-reduce:transition-none",
+          // A dragged card over the column tints the lane where it lands.
+          props.dropTarget && "bg-foreground/6 ring-1",
+        )}
+      >
         <Cards
           workspaceId={props.workspaceId}
           statusId={status.id}
