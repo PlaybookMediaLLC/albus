@@ -110,6 +110,20 @@ export async function workspacePermissionChecker(
   };
 }
 
+// Membership roles already read by the access middleware in this request.
+const knownMemberRoles = new WeakMap<Context, Map<string, string | null>>();
+
+export function rememberMemberRole(
+  c: Context,
+  workspaceId: string,
+  role: string | null | undefined,
+) {
+  if (role === undefined) return;
+  const roles = knownMemberRoles.get(c) ?? new Map<string, string | null>();
+  roles.set(workspaceId, role);
+  knownMemberRoles.set(c, roles);
+}
+
 async function memberRoles(
   c: Context,
   workspaceId: string,
@@ -117,16 +131,19 @@ async function memberRoles(
   const userId = c.get("userId");
   if (!userId) return { roles: [], stored: [] };
 
-  const [member] = await db
-    .select({ role: schema.workspaceUserTable.role })
-    .from(schema.workspaceUserTable)
-    .where(
-      and(
-        eq(schema.workspaceUserTable.workspaceId, workspaceId),
-        eq(schema.workspaceUserTable.userId, userId),
-      ),
-    )
-    .limit(1);
+  const known = knownMemberRoles.get(c);
+  const [member] = known?.has(workspaceId)
+    ? [{ role: known.get(workspaceId) ?? null }]
+    : await db
+        .select({ role: schema.workspaceUserTable.role })
+        .from(schema.workspaceUserTable)
+        .where(
+          and(
+            eq(schema.workspaceUserTable.workspaceId, workspaceId),
+            eq(schema.workspaceUserTable.userId, userId),
+          ),
+        )
+        .limit(1);
 
   // Prefer the DB row when present so admin-edited defaults
   // (viewer/member/admin) take effect immediately. Falls back to the

@@ -3,6 +3,8 @@ import type { Context, Next } from "hono";
 import { HTTPException } from "hono/http-exception";
 import db, { schema } from "../database";
 import { assertProjectAccess } from "../project-access/assert-project-access";
+import { contextUserRole } from "./is-instance-admin";
+import { rememberMemberRole } from "./require-workspace-permission";
 import { validateWorkspaceAccess } from "./validate-workspace-access";
 
 type LookupResource =
@@ -154,9 +156,12 @@ export function workspaceAccessMiddleware(
     const apiKey = c.get("apiKey");
     const apiKeyId = apiKey?.id;
 
-    await validateWorkspaceAccess(userId, workspaceId, apiKeyId, {
-      notFoundMessage,
-    });
+    const { memberRole } =
+      (await validateWorkspaceAccess(userId, workspaceId, apiKeyId, {
+        notFoundMessage,
+        userRole: contextUserRole(c),
+      })) ?? {};
+    rememberMemberRole(c, workspaceId, memberRole);
     await assertProjectAccess(userId, projectIds);
 
     c.set("workspaceId", workspaceId);

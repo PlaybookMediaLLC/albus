@@ -6,10 +6,17 @@ import { hasInstanceAdminRole } from "./instance-admin-role";
 
 export { hasInstanceAdminRole };
 
-export async function isInstanceAdmin(c: Context): Promise<boolean> {
+// The session user is loaded per request, so its role is current. Undefined
+// means no session user (API keys), and the role must be read.
+export function contextUserRole(c: Context): string | null | undefined {
   const user = c.get("user") as { role?: string | null } | null | undefined;
-  if (user?.role) {
-    return hasInstanceAdminRole(user.role);
+  return user && "role" in user ? (user.role ?? null) : undefined;
+}
+
+export async function isInstanceAdmin(c: Context): Promise<boolean> {
+  const role = contextUserRole(c);
+  if (role !== undefined) {
+    return hasInstanceAdminRole(role);
   }
 
   const userId = c.get("userId");

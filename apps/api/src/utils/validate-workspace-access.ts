@@ -6,6 +6,8 @@ import { hasInstanceAdminRole } from "./instance-admin-role";
 
 type ValidateWorkspaceAccessOptions = {
   notFoundMessage?: string;
+  // The caller's instance role when already known; skips reading the user.
+  userRole?: string | null;
 };
 
 export async function validateWorkspaceAccess(
@@ -13,7 +15,7 @@ export async function validateWorkspaceAccess(
   workspaceId: string,
   apiKeyId?: string,
   options: ValidateWorkspaceAccessOptions = {},
-): Promise<void> {
+): Promise<{ memberRole?: string | null }> {
   if (apiKeyId) {
     const apiKey = await db
       .select()
@@ -42,32 +44,41 @@ export async function validateWorkspaceAccess(
       message: options.notFoundMessage ?? "Workspace not found",
     });
 
-  const [user] = await db
-    .select({ role: schema.userTable.role })
-    .from(schema.userTable)
-    .where(eq(schema.userTable.id, userId))
-    .limit(1);
+  const userRole =
+    options.userRole !== undefined
+      ? options.userRole
+      : (
+          await db
+            .select({ role: schema.userTable.role })
+            .from(schema.userTable)
+            .where(eq(schema.userTable.id, userId))
+            .limit(1)
+        )[0]?.role;
 
-  const [workspace] = hasInstanceAdminRole(user?.role)
-    ? await db
-        .select({ archivedAt: schema.workspaceTable.archivedAt })
-        .from(schema.workspaceTable)
-        .where(eq(schema.workspaceTable.id, workspaceId))
-        .limit(1)
-    : await db
-        .select({ archivedAt: schema.workspaceTable.archivedAt })
-        .from(schema.workspaceUserTable)
-        .innerJoin(
-          schema.workspaceTable,
-          eq(schema.workspaceTable.id, schema.workspaceUserTable.workspaceId),
-        )
-        .where(
-          and(
-            eq(schema.workspaceUserTable.userId, userId),
-            eq(schema.workspaceUserTable.workspaceId, workspaceId),
-          ),
-        )
-        .limit(1);
+  const [workspace]: { archivedAt: Date | null; memberRole?: string | null }[] =
+    hasInstanceAdminRole(userRole)
+      ? await db
+          .select({ archivedAt: schema.workspaceTable.archivedAt })
+          .from(schema.workspaceTable)
+          .where(eq(schema.workspaceTable.id, workspaceId))
+          .limit(1)
+      : await db
+          .select({
+            archivedAt: schema.workspaceTable.archivedAt,
+            memberRole: schema.workspaceUserTable.role,
+          })
+          .from(schema.workspaceUserTable)
+          .innerJoin(
+            schema.workspaceTable,
+            eq(schema.workspaceTable.id, schema.workspaceUserTable.workspaceId),
+          )
+          .where(
+            and(
+              eq(schema.workspaceUserTable.userId, userId),
+              eq(schema.workspaceUserTable.workspaceId, workspaceId),
+            ),
+          )
+          .limit(1);
 
   if (!workspace) {
     throw notFound();
@@ -77,4 +88,5 @@ export async function validateWorkspaceAccess(
   if (workspace.archivedAt) {
     throw workspaceArchivedError();
   }
+  return { memberRole: workspace.memberRole };
 }

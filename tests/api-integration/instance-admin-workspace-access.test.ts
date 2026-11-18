@@ -31,7 +31,7 @@ describe("API integration: instance admin workspace access", () => {
 
     await expect(
       validateWorkspaceAccess(admin.id, owner.workspace.id),
-    ).resolves.toBeUndefined();
+    ).resolves.toEqual({ memberRole: undefined });
   });
 
   it("still rejects a plain user who is not a member", async () => {

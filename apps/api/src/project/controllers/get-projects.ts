@@ -70,7 +70,7 @@ async function getProjects(
   userId: string,
   includeArchived = false,
 ) {
-  const projects = await db.query.projectTable.findMany({
+  const projectsQuery = db.query.projectTable.findMany({
     where: and(
       eq(projectTable.workspaceId, workspaceId),
       includeArchived ? undefined : isNull(projectTable.archivedAt),
@@ -85,11 +85,10 @@ async function getProjects(
     ],
   });
 
-  const statisticsByProject = await getProjectStatistics(
-    workspaceId,
-    userId,
-    includeArchived,
-  );
+  const [projects, statisticsByProject] = await Promise.all([
+    projectsQuery,
+    getProjectStatistics(workspaceId, userId, includeArchived),
+  ]);
 
   return projects.map((project) => ({
     ...project,

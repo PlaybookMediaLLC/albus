@@ -721,7 +721,12 @@ export const taskTable = pgTable(
       .notNull(),
   },
   (table) => [
-    index("task_projectId_idx").on(table.projectId),
+    // Serves project lookups and the board's position order without a sort.
+    index("task_project_position_idx").on(
+      table.projectId,
+      table.position,
+      table.id,
+    ),
     index("task_project_scheduled_id_idx")
       .on(table.projectId, table.id)
       .where(
@@ -1004,7 +1009,10 @@ export const notificationTable = pgTable(
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  (table) => [index("notification_userId_idx").on(table.userId)],
+  // Serves the newest-first notification list for a user without a sort.
+  (table) => [
+    index("notification_user_created_idx").on(table.userId, table.createdAt),
+  ],
 );
 
 export const userNotificationPreferenceTable = pgTable(
