@@ -147,7 +147,7 @@ describe("TeamKnowledgePage", () => {
         title: "Refund policy",
         content: "Refunds take five days and include shipping.",
       });
-      expect(view.getByText("Nothing is here yet.")).toBeInTheDocument();
+      expect(view.getByText("No suggestions here")).toBeInTheDocument();
     });
 
     it("saves an edited draft", async () => {

@@ -1,4 +1,6 @@
 import { useTranslation } from "react-i18next";
+import { EmptyState } from "../../../ui/empty-state";
+import { RequestsArt } from "../../../ui/illustrations/requests-art";
 import type { TriagePost } from "../../../api/team/triage-post.type";
 import type { PortalProblem } from "../../../core/types";
 import { Button } from "../../../ui/upstream";
@@ -44,9 +46,11 @@ export function TriageTable(props: TriageTableProps) {
   });
   if (!props.posts.length)
     return (
-      <p className="px-4 py-6 text-sm text-muted-foreground">
-        {t("team-triage.none")}
-      </p>
+      <EmptyState
+        art={<RequestsArt />}
+        title={t("empty.triage.title")}
+        description={t("empty.triage.body")}
+      />
     );
   return (
     <div className="overflow-x-auto">

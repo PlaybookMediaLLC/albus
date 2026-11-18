@@ -12,6 +12,8 @@ import { teamHref } from "../../team/team-href";
 import { TeamStateView } from "../../team/team-state-view";
 import { GroupedList } from "../../ui/inbox/grouped-list";
 import { useListNavigation } from "../../ui/inbox/use-list-navigation";
+import { EmptyState } from "../../ui/empty-state";
+import { HelpArt } from "../../ui/illustrations/help-art";
 import { PageFrame } from "../../ui/page-frame";
 import { knowledgeGroups } from "./knowledge-groups";
 import type {
@@ -176,6 +178,13 @@ export function TeamKnowledgePage({ workspaceId }: TeamKnowledgePageProps) {
             loading={list.isLoading}
             problem={list.error ?? null}
             empty={!items.length}
+            emptyState={
+              <EmptyState
+                art={<HelpArt />}
+                title={t("empty.knowledge.title")}
+                description={t("empty.knowledge.body")}
+              />
+            }
             onRetry={() => void list.refetch()}
           >
             <GroupedList
