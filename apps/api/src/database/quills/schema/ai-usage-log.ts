@@ -3,6 +3,7 @@ import { primaryKey } from "drizzle-orm/pg-core";
 import {
   varchar,
   integer,
+  numeric,
   text,
   timestamp,
   jsonb,
@@ -30,6 +31,8 @@ export const aiUsageLog = quillsSchema
       inputTokens: integer("input_tokens").notNull().default(0),
       outputTokens: integer("output_tokens"),
       totalTokens: integer("total_tokens").notNull().default(0),
+      // US dollars from QUILLS_AI_PRICES (assistant/ai/pricing.ts); null without a price.
+      costUsd: numeric("cost_usd", { precision: 12, scale: 6 }),
 
       durationMs: integer("duration_ms").notNull(),
       retryCount: integer("retry_count").notNull().default(0),
