@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Ticket } from "lucide-react";
+import { TicketsArt } from "../../ui/illustrations/tickets-art";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useGetTicket } from "../../hooks/team/use-get-ticket";
@@ -160,7 +160,7 @@ export function TeamTicketsPage({
           </>
         ) : (
           <EmptySelection
-            icon={Ticket}
+            art={<TicketsArt />}
             title={t("team-tickets.noSelection.title")}
             text={t("team-tickets.noSelection.text")}
           />

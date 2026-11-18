@@ -14,6 +14,8 @@ import {
   MenuRadioGroup,
   MenuRadioItem,
 } from "../../ui/upstream";
+import { EmptyState } from "../../ui/empty-state";
+import { InsightsArt } from "../../ui/illustrations/insights-art";
 import { MeterList } from "./parts/meter-list";
 import { WeeklyTrend } from "./parts/weekly-trend";
 
@@ -74,7 +76,14 @@ export function TeamInsightsPage({ workspaceId }: TeamInsightsPageProps) {
           problem={insights.error ?? null}
           onRetry={() => void insights.refetch()}
         >
-          {data ? (
+          {/* Every tag, mood and top post comes from a post or vote that the weeks count. */}
+          {data && !data.weeks.some((week) => week.posts || week.votes) ? (
+            <EmptyState
+              art={<InsightsArt />}
+              title={t("empty.insights.title")}
+              description={t("empty.insights.body")}
+            />
+          ) : data ? (
             <div className="max-w-4xl space-y-8">
               <p className={muted}>
                 {t("insights.period", {

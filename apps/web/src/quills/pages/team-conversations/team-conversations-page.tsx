@@ -1,5 +1,4 @@
 import { useNavigate } from "@tanstack/react-router";
-import { MessagesSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchPatch } from "../../core/use-search-patch";
@@ -151,7 +150,7 @@ export function TeamConversationsPage(props: TeamConversationsPageProps) {
           />
         ) : (
           <EmptySelection
-            icon={MessagesSquare}
+            art={<ConversationsArt />}
             title={t("team-conversations.empty.title")}
             text={t("team-conversations.empty.text")}
           />

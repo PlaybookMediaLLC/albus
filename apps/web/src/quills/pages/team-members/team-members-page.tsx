@@ -1,4 +1,3 @@
-import { Users } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useListUsers } from "../../hooks/team/use-list-users";
@@ -7,7 +6,10 @@ import { TeamStateView } from "../../team/team-state-view";
 import { ListHeader } from "../../ui/inbox/list-header";
 import { SearchField } from "../../ui/inbox/search-field";
 import { PageFrame } from "../../ui/page-frame";
-import { SettingsEmpty, useDebouncedValue } from "../../ui/upstream";
+import { EmptyState } from "../../ui/empty-state";
+import { MembersArt } from "../../ui/illustrations/members-art";
+import { SearchArt } from "../../ui/illustrations/search-art";
+import { useDebouncedValue } from "../../ui/upstream";
 import { membersInput } from "./members-input";
 import { MemberItems } from "./parts/member-items";
 import { MoreMembers } from "./parts/more-members";
@@ -41,14 +43,14 @@ export function TeamMembersPage({ workspaceId }: TeamMembersPageProps) {
           />
         }
       />
-      <div className="min-h-0 flex-1 overflow-y-auto pb-6 [&>[role=alert]]:m-4 [&>[role=status]]:px-4">
+      <div className="min-h-0 flex-1 overflow-y-auto [&>[role=alert]]:m-4 [&>[role=status]]:px-4">
         <TeamStateView
           loading={first.isLoading}
           problem={first.error}
           onRetry={() => void first.refetch()}
         >
           {first.data?.items.length ? (
-            <ul aria-label={t("team-members.title")}>
+            <ul aria-label={t("team-members.title")} className="pb-6">
               <MemberItems workspaceId={workspaceId} items={first.data.items} />
               {first.data.nextOffset === null ? null : (
                 <MoreMembers
@@ -60,17 +62,15 @@ export function TeamMembersPage({ workspaceId }: TeamMembersPageProps) {
               )}
             </ul>
           ) : (
-            <div className="p-4">
-              <SettingsEmpty
-                icon={<Users className="size-4" />}
-                title={
-                  search
-                    ? t("team-members.noMatch", { query: search })
-                    : t("team-members.empty")
-                }
-                description={search ? undefined : t("team-members.emptyText")}
-              />
-            </div>
+            <EmptyState
+              art={search ? <SearchArt /> : <MembersArt />}
+              title={
+                search
+                  ? t("team-members.noMatch", { query: search })
+                  : t("team-members.empty")
+              }
+              description={search ? undefined : t("team-members.emptyText")}
+            />
           )}
         </TeamStateView>
       </div>

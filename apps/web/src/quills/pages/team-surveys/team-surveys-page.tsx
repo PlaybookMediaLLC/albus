@@ -8,6 +8,8 @@ import { useListSurveys } from "../../hooks/team/use-list-surveys";
 import { useTeamRuntime } from "../../team/runtime";
 import { teamHref } from "../../team/team-href";
 import { TeamStateView } from "../../team/team-state-view";
+import { EmptyState } from "../../ui/empty-state";
+import { SurveysArt } from "../../ui/illustrations/surveys-art";
 import { GroupedList } from "../../ui/inbox/grouped-list";
 import { ListHeader } from "../../ui/inbox/list-header";
 import { RequestRow } from "../../ui/inbox/request-row";
@@ -127,9 +129,19 @@ export function TeamSurveysPage({ workspaceId }: TeamSurveysPageProps) {
               )}
             />
           ) : (
-            <p role="status" className="py-6 text-sm text-muted-foreground">
-              {t("surveys.none")}
-            </p>
+            <EmptyState
+              art={<SurveysArt />}
+              title={t("empty.surveys.title")}
+              description={t("empty.surveys.body")}
+              actions={
+                team.permissions.create ? (
+                  <Button size="sm" onClick={() => setCreating(true)}>
+                    <Plus aria-hidden="true" />
+                    {t("surveys.create.title")}
+                  </Button>
+                ) : null
+              }
+            />
           )}
         </TeamStateView>
       </div>

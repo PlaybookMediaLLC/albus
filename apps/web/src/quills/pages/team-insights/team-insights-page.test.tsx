@@ -75,9 +75,17 @@ describe("TeamInsightsPage", () => {
     it("asks for the last 30 days, then for the chosen range", async () => {
       const api = mockApi();
       api.reply(getFeedbackInsightsFixture.ok());
-      api.reply(getFeedbackInsightsFixture.ok());
+      api.reply(
+        getFeedbackInsightsFixture.ok({
+          weeks: [{ week: "2026-11-09", posts: 1, votes: 0 }],
+        }),
+      );
       const view = renderPage(TeamInsightsPage, meta);
-      await view.findByText("No new post has a tag in this range.");
+      // No post or vote in the range: the empty state, not empty sections.
+      await view.findByText("No feedback in this range");
+      expect(
+        view.queryByText("No new post has a tag in this range."),
+      ).toBeNull();
       press("Filters");
       expect(
         await view.findByRole("menuitemradio", { name: "Last 30 days" }),

@@ -18,6 +18,7 @@ import type {
   KnowledgeAudience,
   KnowledgeDraftValues,
 } from "./parts/knowledge-draft";
+import { KnowledgeEmpty } from "./parts/knowledge-empty";
 import { KnowledgeList, type KnowledgeFilter } from "./parts/knowledge-list";
 import { KnowledgeRow } from "./parts/knowledge-row";
 import { KnowledgeView } from "./parts/knowledge-view";
@@ -74,11 +75,7 @@ export function TeamKnowledgePage({ workspaceId }: TeamKnowledgePageProps) {
     onOpen: (id) => select(id),
     enabled: !open,
   });
-  const busy =
-    answer.isPending ||
-    update.isPending ||
-    approve.isPending ||
-    dismiss.isPending;
+  const busy = [answer, update, approve, dismiss].some((m) => m.isPending);
   const param = { workspaceId, suggestionId: openId ?? "" };
   /** Runs a change; `leave` opens the next suggestion because the decided one leaves this list. */
   const run = (work: () => Promise<unknown>, done: string, leave: boolean) => {
@@ -176,6 +173,7 @@ export function TeamKnowledgePage({ workspaceId }: TeamKnowledgePageProps) {
             loading={list.isLoading}
             problem={list.error ?? null}
             empty={!items.length}
+            emptyState={<KnowledgeEmpty />}
             onRetry={() => void list.refetch()}
           >
             <GroupedList

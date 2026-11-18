@@ -29,9 +29,17 @@
 		"body": "Articles in this category will show up here.",
 		"title": "No articles yet"
 	},
+	"insights": {
+		"body": "Topics, sentiment and trends show up here once customers post and vote. Try a longer range.",
+		"title": "No feedback in this range"
+	},
 	"integrations": {
 		"body": "No integration is available on this instance yet.",
 		"title": "No integrations"
+	},
+	"knowledge": {
+		"body": "When the AI cannot answer a customer, or teammates answer the same question, a suggested article waits here.",
+		"title": "No suggestions here"
 	},
 	"myFeedback": {
 		"body": "Ideas you share, vote for or follow show up here, with where they stand.",
@@ -64,8 +72,16 @@
 		"body": "Planned work will show up here.",
 		"title": "Nothing on the roadmap yet"
 	},
+	"surveys": {
+		"body": "Ask customers one question in the widget or portal. Their answers collect here.",
+		"title": "No surveys yet"
+	},
 	"tickets": {
 		"body": "Turn a conversation into a ticket to track it to a fix. Open tickets wait here.",
 		"title": "No tickets here"
+	},
+	"triage": {
+		"body": "Requests from your portal, the widget and your team line up here to rank by votes, revenue and score.",
+		"title": "No requests to rank"
 	}
 }
