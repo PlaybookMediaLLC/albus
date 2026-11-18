@@ -25,7 +25,6 @@
 		"title": "New survey",
 		"type": "Type"
 	},
-	"none": "No surveys yet.",
 	"properties": {
 		"responses": "Responses",
 		"status": "Status",

@@ -104,7 +104,7 @@ describe("TriageTable", () => {
     const view = renderComponent(
       <TriageTable {...props({ canScore: false, posts: [] })} />,
     );
-    expect(view.getByText("No requests yet.")).toBeVisible();
+    expect(view.getByText("No requests to rank")).toBeVisible();
     expect(view.queryByRole("button")).not.toBeInTheDocument();
   });
 });

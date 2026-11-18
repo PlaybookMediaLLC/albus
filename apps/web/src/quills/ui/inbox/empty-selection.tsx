@@ -1,29 +1,32 @@
-import { Inbox, type LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import { ShowListButton } from "./show-list-button";
 
 export interface EmptySelectionProps {
-  /** The illustration icon. */
-  icon?: LucideIcon;
+  /** The drawing, such as `<ConversationsArt />`. */
+  art?: ReactNode;
   /** Such as "No conversation selected". */
   title: string;
   /** Such as "Open a thread to read and reply." */
   text?: string;
 }
 
-/** The main pane while no item is open. */
-export function EmptySelection({
-  icon: Icon = Inbox,
-  title,
-  text,
-}: EmptySelectionProps) {
+/**
+ * The main pane while no item is open, laid out as EmptyState. It labels the pane with a heading
+ * instead of a status, so it does not compete with the list's own empty state.
+ */
+export function EmptySelection({ art, title, text }: EmptySelectionProps) {
   return (
-    <div className="relative flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
+    <div className="relative flex flex-1 items-center justify-center px-4 py-12">
       <ShowListButton className="absolute start-3 top-3 hidden md:inline-flex" />
-      <span className="mb-2 flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-        <Icon aria-hidden="true" className="size-6" />
-      </span>
-      <h2 className="font-medium">{title}</h2>
-      {text ? <p className="text-sm text-muted-foreground">{text}</p> : null}
+      <div className="group flex w-full max-w-sm flex-col items-start gap-4 text-start">
+        {art}
+        <div className="grid gap-1.5">
+          <h2 className="text-base font-semibold text-foreground">{title}</h2>
+          {text ? (
+            <p className="text-sm text-pretty text-muted-foreground">{text}</p>
+          ) : null}
+        </div>
+      </div>
     </div>
   );
 }

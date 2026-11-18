@@ -107,8 +107,9 @@ describe("TeamSurveysPage", () => {
       api.reply(createSurveyFixture.ok());
       api.reply(listSurveysFixture.ok({ surveys: [survey] }));
       const view = renderPage(TeamSurveysPage, meta);
-      expect(await view.findByText("No surveys yet.")).toBeInTheDocument();
-      press("New survey");
+      expect(await view.findByText("No surveys yet")).toBeInTheDocument();
+      // The empty state repeats the header's button.
+      fireEvent.click(view.getAllByRole("button", { name: "New survey" })[1]!);
       await view.findByLabelText("Question");
       fill("Question", "How likely?");
       press("Create draft");
@@ -135,7 +136,7 @@ describe("TeamSurveysPage", () => {
       const view = renderPage(TeamSurveysPage, meta, {
         permissions: { create: false },
       });
-      expect(await view.findByText("No surveys yet.")).toBeInTheDocument();
+      expect(await view.findByText("No surveys yet")).toBeInTheDocument();
       expect(
         view.queryByRole("button", { name: "New survey" }),
       ).not.toBeInTheDocument();
