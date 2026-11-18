@@ -12,14 +12,13 @@ import { teamHref } from "../../team/team-href";
 import { TeamStateView } from "../../team/team-state-view";
 import { GroupedList } from "../../ui/inbox/grouped-list";
 import { useListNavigation } from "../../ui/inbox/use-list-navigation";
-import { EmptyState } from "../../ui/empty-state";
-import { HelpArt } from "../../ui/illustrations/help-art";
 import { PageFrame } from "../../ui/page-frame";
 import { knowledgeGroups } from "./knowledge-groups";
 import type {
   KnowledgeAudience,
   KnowledgeDraftValues,
 } from "./parts/knowledge-draft";
+import { KnowledgeEmpty } from "./parts/knowledge-empty";
 import { KnowledgeList, type KnowledgeFilter } from "./parts/knowledge-list";
 import { KnowledgeRow } from "./parts/knowledge-row";
 import { KnowledgeView } from "./parts/knowledge-view";
@@ -76,11 +75,7 @@ export function TeamKnowledgePage({ workspaceId }: TeamKnowledgePageProps) {
     onOpen: (id) => select(id),
     enabled: !open,
   });
-  const busy =
-    answer.isPending ||
-    update.isPending ||
-    approve.isPending ||
-    dismiss.isPending;
+  const busy = [answer, update, approve, dismiss].some((m) => m.isPending);
   const param = { workspaceId, suggestionId: openId ?? "" };
   /** Runs a change; `leave` opens the next suggestion because the decided one leaves this list. */
   const run = (work: () => Promise<unknown>, done: string, leave: boolean) => {
@@ -178,13 +173,7 @@ export function TeamKnowledgePage({ workspaceId }: TeamKnowledgePageProps) {
             loading={list.isLoading}
             problem={list.error ?? null}
             empty={!items.length}
-            emptyState={
-              <EmptyState
-                art={<HelpArt />}
-                title={t("empty.knowledge.title")}
-                description={t("empty.knowledge.body")}
-              />
-            }
+            emptyState={<KnowledgeEmpty />}
             onRetry={() => void list.refetch()}
           >
             <GroupedList

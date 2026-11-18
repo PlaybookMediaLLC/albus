@@ -56,6 +56,9 @@ import { SearchArt } from "../ui/illustrations/search-art";
 import { RoadmapArt } from "../ui/illustrations/roadmap-art";
 import { ChangelogArt } from "../ui/illustrations/changelog-art";
 import { ConversationsArt } from "../ui/illustrations/conversations-art";
+import { InsightsArt } from "../ui/illustrations/insights-art";
+import { MembersArt } from "../ui/illustrations/members-art";
+import { SurveysArt } from "../ui/illustrations/surveys-art";
 import { TicketsArt } from "../ui/illustrations/tickets-art";
 import { DuplicatesArt } from "../ui/illustrations/duplicates-art";
 import { AutopilotArt } from "../ui/illustrations/autopilot-art";
@@ -212,6 +215,9 @@ export function KitGallery() {
               <HelpArt />
               <IntegrationsArt />
               <StartArt />
+              <MembersArt />
+              <InsightsArt />
+              <SurveysArt />
             </div>
             {problems.map((kind) => (
               <StateView
