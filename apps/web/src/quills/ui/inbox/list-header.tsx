@@ -1,7 +1,9 @@
-import { ListFilter } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { ChevronRight, ListFilter, Star } from "lucide-react";
+import { type ReactNode, useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, Menu, MenuPopup, MenuTrigger } from "../upstream";
+import { TeamHeaderContext } from "../../team/header-context";
+import { cn, Menu, MenuPopup, MenuTrigger } from "../upstream";
+import { IconButton } from "./icon-button";
 import { useKeyShortcuts } from "./use-key-shortcuts";
 
 export interface ListHeaderProps {
@@ -29,31 +31,65 @@ export function ListHeader({
   const openFilters = filters ? () => setOpen(true) : onFilters;
   useKeyShortcuts({ f: openFilters });
   const Heading = headingLevel === 1 ? "h1" : "h2";
+  // A page title in the team shell gets the section breadcrumb and the star.
+  const shell = useContext(TeamHeaderContext);
+  const header = headingLevel === 1 ? shell : null;
+  // A bordered square, as the toolbar buttons of the list views.
   const button = {
-    variant: "ghost",
-    size: "icon-sm",
-    "aria-label": t("inbox.filters"),
+    variant: "outline",
+    label: t("inbox.filters"),
     "aria-keyshortcuts": "F",
   } as const;
   const icon = <ListFilter aria-hidden="true" />;
   return (
-    <div className="flex min-h-14 flex-wrap items-center gap-2 px-4 py-2.5">
-      <Heading
-        tabIndex={-1}
-        className="min-w-0 flex-1 truncate text-base font-semibold outline-none"
-      >
-        {title}
-      </Heading>
+    <div className="flex min-h-11 shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-1.5">
+      <div className="flex min-w-0 flex-1 items-center gap-1.5">
+        {header && header.section !== title ? (
+          <>
+            <span className="shrink-0 text-sm text-muted-foreground">
+              {header.section}
+            </span>
+            <ChevronRight
+              aria-hidden="true"
+              className="size-3.5 shrink-0 text-faint-foreground"
+            />
+          </>
+        ) : null}
+        <Heading
+          tabIndex={-1}
+          className="min-w-0 truncate text-sm font-medium outline-none"
+        >
+          {title}
+        </Heading>
+        {header ? (
+          <IconButton
+            label={t(header.favorite ? "team.unfavorite" : "team.favorite")}
+            aria-pressed={header.favorite}
+            className="size-6 text-faint-foreground hover:text-foreground sm:size-6"
+            onClick={() => header.onFavorite(title)}
+          >
+            <Star
+              aria-hidden="true"
+              className={cn(
+                "size-3.5!",
+                header.favorite && "fill-current text-warning",
+              )}
+            />
+          </IconButton>
+        ) : null}
+      </div>
       <div className="flex min-w-0 flex-wrap items-center gap-1.5">
         {filters ? (
           <Menu open={open} onOpenChange={setOpen}>
-            <MenuTrigger render={<Button {...button} />}>{icon}</MenuTrigger>
+            <MenuTrigger render={<IconButton {...button} />}>
+              {icon}
+            </MenuTrigger>
             <MenuPopup align="end">{filters}</MenuPopup>
           </Menu>
         ) : onFilters ? (
-          <Button {...button} onClick={onFilters}>
+          <IconButton {...button} onClick={onFilters}>
             {icon}
-          </Button>
+          </IconButton>
         ) : null}
         {actions}
       </div>

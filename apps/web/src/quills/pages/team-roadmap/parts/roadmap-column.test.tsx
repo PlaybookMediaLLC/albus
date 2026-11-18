@@ -5,7 +5,7 @@ import {
   createRouter,
   RouterContextProvider,
 } from "@tanstack/react-router";
-import { waitFor, within } from "@testing-library/react";
+import { fireEvent, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vite-plus/test";
 import { listPostsFixture } from "../../../api/team/list-posts.fixture";
 import { TeamRuntimeProvider } from "../../../team/runtime";
@@ -46,11 +46,12 @@ const render = (props: Partial<RoadmapColumnProps> = {}) =>
   );
 
 describe("RoadmapColumn", () => {
-  it("has a header with the handle, the name, the count and New request", async () => {
+  it("has a header with the handle, the name, the count, the menu and New request", async () => {
     const api = mockApi();
     api.reply(listPostsFixture.ok());
     const onCreate = vi.fn();
-    const view = render({ onCreate });
+    const onToggle = vi.fn();
+    const view = render({ onCreate, onToggle });
     const column = view.getByRole("region", { name: "Planned" });
     expect(within(column).getByText("4")).toBeVisible();
     expect(
@@ -58,18 +59,20 @@ describe("RoadmapColumn", () => {
     ).toBeVisible();
     await waitFor(() => expect(api.calls("listQuillsPosts")).toHaveLength(1));
     press("New request in Planned");
-    press("New request");
-    expect(onCreate).toHaveBeenCalledTimes(2);
+    expect(onCreate).toHaveBeenCalledOnce();
+    press("Options for Planned");
+    fireEvent.click(await view.findByRole("menuitem", { name: "Hide column" }));
+    expect(onToggle).toHaveBeenCalledOnce();
   });
 
-  it("collapses to a strip with the name and the count, and loads nothing", () => {
+  it("hides to a row with the name and the count, and loads nothing", () => {
     const api = mockApi();
     const onToggle = vi.fn();
     const view = render({ collapsed: true, onToggle, reorderable: false });
     const column = view.getByRole("region", { name: "Planned" });
     expect(within(column).getByText("4")).toBeVisible();
     expect(view.queryByRole("button", { name: /column$/ })).toBeNull();
-    press("Expand Planned");
+    press("Show Planned");
     expect(onToggle).toHaveBeenCalled();
     expect(api.calls()).toHaveLength(0);
   });

@@ -10,6 +10,8 @@ import type { Viewer } from "../../../core/types";
 import { useListPortalRoadmapPosts } from "../../../hooks/feedback/use-list-portal-roadmap-posts";
 import { StateView } from "../../../ui/state-view";
 import { RoadmapColumn } from "./roadmap-column";
+import { EmptyState } from "../../../ui/empty-state";
+import { RoadmapArt } from "../../../ui/illustrations/roadmap-art";
 export interface RoadmapBoardProps {
   workspaceId: string;
   viewer: Viewer;
@@ -64,6 +66,13 @@ export function RoadmapBoard(props: RoadmapBoardProps) {
       loading={roadmap.type === "date" && dates.isLoading}
       problem={roadmap.type === "date" ? dates.error : null}
       empty={roadmap.type === "column" && columns.length === 0}
+      emptyState={
+        <EmptyState
+          art={<RoadmapArt />}
+          title={t("empty.roadmapEmpty.title")}
+          description={t("empty.roadmapEmpty.body")}
+        />
+      }
       onRetry={() => {
         void dates.refetch();
       }}

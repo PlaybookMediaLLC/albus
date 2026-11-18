@@ -8,6 +8,8 @@ import { PageFrame } from "../../ui/page-frame";
 import { PortalGate } from "../../ui/portal-gate";
 import { StateView } from "../../ui/state-view";
 import { meta } from "./meta";
+import { EmptyState } from "../../ui/empty-state";
+import { HelpArt } from "../../ui/illustrations/help-art";
 
 export interface HelpCenterCategoryPageProps {
   workspaceId: string;
@@ -123,9 +125,14 @@ export function HelpCenterCategoryPage(props: HelpCenterCategoryPageProps) {
           <StateView
             loading={category.isLoading}
             empty={
-              data
-                ? data.articles.length === 0 && data.subcategories.length === 0
-                : false
+              data?.articles.length === 0 && data.subcategories.length === 0
+            }
+            emptyState={
+              <EmptyState
+                art={<HelpArt />}
+                title={t("empty.help.title")}
+                description={t("empty.help.body")}
+              />
             }
             problem={category.error ?? null}
             onRetry={() => {

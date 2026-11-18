@@ -32,11 +32,8 @@ export interface ConversationHeaderProps {
   onNext: () => void;
 }
 
-/**
- * The conversation header (design section 2): the customer on the left; the assignee pill,
- * the Resolve button and the kebab menu on the right. A spam conversation reopens through
- * the spam restore, so that it comes back to the inbox lists.
- */
+/** The conversation header (design section 2): the customer, the assignee pill, Resolve and the
+ * kebab menu. A spam conversation reopens through the spam restore, back into the inbox lists. */
 export function ConversationHeader({
   workspaceId,
   conversation,
@@ -175,7 +172,12 @@ export function ConversationHeader({
         }
       >
         {conversation ? (
-          <PersonAvatar colored name={name} className="size-8 text-xs" />
+          <PersonAvatar
+            colored
+            name={name}
+            avatarUrl={conversation.visitorAvatarUrl}
+            className="size-8 text-xs"
+          />
         ) : null}
         <div className="min-w-0">
           <h1 tabIndex={-1} className="truncate font-semibold outline-none">

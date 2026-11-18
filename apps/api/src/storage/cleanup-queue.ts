@@ -9,7 +9,7 @@ import {
   projectTable,
   storageCleanupTable,
 } from "../database/schema";
-import { deleteS3Object } from "./s3";
+import { deleteS3Object, isQuillsObjectKey, quillsStorageConfig } from "./s3";
 
 export async function queueStorageCleanup(
   tx: Pick<typeof db, "insert">,
@@ -76,7 +76,11 @@ export async function retryStorageCleanup(): Promise<{ degraded: boolean }> {
         return;
       }
       try {
-        await deleteS3Object(item.objectKey);
+        // A feedback-app key lives in its own bucket when QUILLS_STORAGE_BUCKET is set.
+        await deleteS3Object(
+          item.objectKey,
+          isQuillsObjectKey(item.objectKey) ? quillsStorageConfig() : undefined,
+        );
         await tx
           .delete(storageCleanupTable)
           .where(eq(storageCleanupTable.objectKey, item.objectKey));

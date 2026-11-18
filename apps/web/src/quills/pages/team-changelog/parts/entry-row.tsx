@@ -52,7 +52,7 @@ export function EntryRow({ entry, href, onOpen }: EntryRowProps) {
     <a
       {...link}
       href={href}
-      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring"
+      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm outline-none transition-colors duration-150 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
     >
       <Icon
         aria-label={status}

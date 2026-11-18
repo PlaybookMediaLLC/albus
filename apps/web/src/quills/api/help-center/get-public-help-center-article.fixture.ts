@@ -12,7 +12,7 @@ export const getPublicHelpCenterArticleFixture = {
         path: "/hc/en/articles/1-getting-started",
         publishedAt: "2026-01-01T00:00:00.000Z",
         updatedAt: "2026-01-01T00:00:00.000Z",
-        author: { name: "Example author" },
+        author: { name: "Example author", avatarUrl: null },
         category: {
           id: "kb-category_test_1",
           urlId: 1,

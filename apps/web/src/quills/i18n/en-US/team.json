@@ -6,6 +6,8 @@
 		"text": "Show new activity while this tab is in the background.",
 		"title": "Browser notifications"
 	},
+	"favorite": "Add to favorites",
+	"favorites": "Favorites",
 	"home": {
 		"announce_one": "{{count}} shipped idea is not in the changelog",
 		"announce_other": "{{count}} shipped ideas are not in the changelog",
@@ -17,6 +19,17 @@
 		"posts_other": "{{count}} posts",
 		"review_one": "{{count}} new idea to review",
 		"review_other": "{{count}} new ideas to review",
+		"start": {
+			"branding": "Brand your portal",
+			"brandingText": "Add your logo and colours, so customers know the portal is yours.",
+			"hide": "Hide getting started",
+			"team": "Invite your team",
+			"teamText": "Teammates can triage requests and reply to customers with you.",
+			"text": "Three steps to start collecting feedback.",
+			"title": "Get started",
+			"widget": "Add the widget",
+			"widgetText": "Let customers send ideas and messages from inside your product."
+		},
 		"views": "Views",
 		"votes_one": "{{count}} vote",
 		"votes_other": "{{count}} votes"
@@ -65,5 +78,6 @@
 	},
 	"support": "Support",
 	"switcher": "Workspaces",
-	"title": "Feedback"
+	"title": "Feedback",
+	"unfavorite": "Remove from favorites"
 }

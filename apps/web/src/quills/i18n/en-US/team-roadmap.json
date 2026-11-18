@@ -1,19 +1,40 @@
 {
+	"allBoards": "All boards",
 	"cancelled": "You cancelled the move of {{name}}.",
-	"collapse": "Collapse {{name}}",
+	"clearBoard": "Clear the {{name}} filter",
+	"collapse": "Hide column",
+	"columnEmpty": "No requests",
+	"created": "Created {{date}}",
+	"display": {
+		"author": "Author",
+		"board": "Board",
+		"counts": "Votes and comments",
+		"created": "Created date",
+		"label": "Display options",
+		"properties": "Card details"
+	},
 	"dropped": "You dropped {{name}} on {{column}}.",
-	"expand": "Expand {{name}}",
+	"expand": "Show {{name}}",
+	"filterBoard": "Board",
+	"hidden": "Hidden columns",
 	"instructions": "Press Space to pick up a card or a column. Use the arrow keys to move it. Press Space again to drop it. Press Escape to cancel.",
 	"move": "Move {{title}}",
 	"moveFailed": "The request did not move. Try again.",
 	"moveTo": "Move to",
 	"newIn": "New request in {{name}}",
 	"notHere": "{{name}} cannot move to {{column}}.",
+	"options": "Options for {{name}}",
 	"over": "{{name}} is over {{column}}.",
 	"picked": "You picked up {{name}}.",
 	"public": "Public roadmap",
 	"reorder": "Move the {{name}} column",
 	"reorderFailed": "The columns did not move. Try again.",
 	"showMore": "Show more",
-	"title": "Roadmap"
+	"title": "Roadmap",
+	"views": {
+		"active": "Active",
+		"all": "All",
+		"done": "Done",
+		"label": "Columns to show"
+	}
 }

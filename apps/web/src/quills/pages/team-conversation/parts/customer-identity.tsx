@@ -13,6 +13,7 @@ export interface CustomerIdentityProps {
   principalId: string;
   /** The conversation's copy of the customer, shown when no profile loads. */
   name: string | null;
+  avatarUrl?: string | null;
   email: string | null;
 }
 
@@ -51,7 +52,7 @@ export function CustomerIdentity(props: CustomerIdentityProps) {
         <PersonAvatar
           colored
           name={name}
-          avatarUrl={profile?.image}
+          avatarUrl={profile?.image ?? props.avatarUrl}
           className="size-10 shrink-0 text-sm"
         />
         <div className="min-w-0 flex-1">

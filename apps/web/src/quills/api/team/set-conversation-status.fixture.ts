@@ -15,6 +15,7 @@ export const setConversationStatusFixture = {
         updatedAt: null,
         visitorPrincipalId: "visitor_principal_id_test_1",
         visitorName: null,
+        visitorAvatarUrl: null,
         visitorEmail: null,
         isTest: false,
         assignedAgentPrincipalId: null,

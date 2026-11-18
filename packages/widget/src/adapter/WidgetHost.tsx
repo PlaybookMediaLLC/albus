@@ -1,3 +1,4 @@
+import { removeAvatar, squareAvatar, uploadAvatar } from "./avatar.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { WidgetView } from "../ui/WidgetView.js";
 import { ApiError, createApi } from "./api.js";
@@ -320,6 +321,12 @@ export function WidgetHost({
               visitor.expire(visitor.session);
             throw error;
           }),
+      })}
+      {...(visitor.identified && {
+        onChangeAvatar: (file: File | null) =>
+          file
+            ? squareAvatar(file).then((square) => uploadAvatar(api, square))
+            : removeAvatar(api),
       })}
       {...survey}
       {...activity}

@@ -83,6 +83,7 @@ function WidgetViewBody({
   onClose,
   closable = true,
   onOpenPortal,
+  onChangeAvatar,
   onSendMessage,
   onSubmitFeedback,
   onDraftFeedback,
@@ -516,6 +517,7 @@ function WidgetViewBody({
             replyTime={replyTime}
             greeting={greeting}
             openPortal={onOpenPortal}
+            changeAvatar={onChangeAvatar}
             survey={
               survey &&
               onAnswerSurvey && (

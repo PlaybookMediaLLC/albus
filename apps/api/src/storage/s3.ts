@@ -92,12 +92,8 @@ type AssetObject = {
   lastModified: Date | undefined;
 };
 
-let clientCache:
-  | {
-      cacheKey: string;
-      client: S3Client;
-    }
-  | undefined;
+// One client per bucket configuration: Kaneo's bucket and a dedicated Quills bucket can both be live.
+const clientCache = new Map<string, S3Client>();
 
 function env(name: string) {
   return process.env[name]?.trim() || "";
@@ -155,17 +151,23 @@ function storageSecret(name: string) {
   }
 }
 
-function getStorageConfig(): StorageConfig {
-  const endpoint = env("S3_ENDPOINT");
-  const bucket = env("S3_BUCKET");
+/**
+ * The bucket settings of a scope: `S3` is Kaneo's bucket; `QUILLS_STORAGE` is the optional
+ * dedicated bucket of the feedback app (for example a Cloudflare R2 bucket). Both read the
+ * same variable names after their prefix; the Quills scope defaults the region to `auto` (R2).
+ */
+function getStorageConfig(scope: StorageScope = "S3"): StorageConfig {
+  const name = (suffix: string) => `${scope}_${suffix}`;
+  const endpoint = env(name("ENDPOINT"));
+  const bucket = env(name("BUCKET"));
   if (!endpoint || !bucket) {
     throw new Error(
-      "S3 uploads are not configured. Set S3_ENDPOINT and S3_BUCKET (and either both S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY, or neither to use the default AWS credential provider chain / IAM role).",
+      `S3 uploads are not configured. Set ${name("ENDPOINT")} and ${name("BUCKET")} (and either both ${name("ACCESS_KEY_ID")} and ${name("SECRET_ACCESS_KEY")}, or neither to use the default AWS credential provider chain / IAM role).`,
     );
   }
 
-  const accessKeyId = storageSecret("S3_ACCESS_KEY_ID");
-  const secretAccessKey = storageSecret("S3_SECRET_ACCESS_KEY");
+  const accessKeyId = storageSecret(name("ACCESS_KEY_ID"));
+  const secretAccessKey = storageSecret(name("SECRET_ACCESS_KEY"));
 
   // Validate the access key pair early so misconfiguration surfaces here rather
   // than as an opaque signing error later.
@@ -173,22 +175,48 @@ function getStorageConfig(): StorageConfig {
 
   return {
     endpoint,
-    region: env("S3_REGION") || "us-east-1",
+    region: env(name("REGION")) || (scope === "S3" ? "us-east-1" : "auto"),
     bucket,
     accessKeyId,
     secretAccessKey,
-    publicBaseUrl: env("S3_PUBLIC_BASE_URL") || undefined,
-    keyPrefix: env("S3_KEY_PREFIX"),
-    forcePathStyle: parseBoolean(process.env.S3_FORCE_PATH_STYLE, true),
+    publicBaseUrl: env(name("PUBLIC_BASE_URL")) || undefined,
+    keyPrefix: env(name("KEY_PREFIX")),
+    forcePathStyle: parseBoolean(process.env[name("FORCE_PATH_STYLE")], true),
     maxImageUploadBytes: parsePositiveInt(
-      process.env.S3_MAX_IMAGE_UPLOAD_BYTES,
-      DEFAULT_MAX_IMAGE_UPLOAD_BYTES,
+      process.env[name("MAX_IMAGE_UPLOAD_BYTES")],
+      parsePositiveInt(
+        process.env.S3_MAX_IMAGE_UPLOAD_BYTES,
+        DEFAULT_MAX_IMAGE_UPLOAD_BYTES,
+      ),
     ),
     presignTtlSeconds: parsePositiveInt(
-      process.env.S3_PRESIGN_TTL_SECONDS,
-      DEFAULT_PRESIGN_TTL_SECONDS,
+      process.env[name("PRESIGN_TTL_SECONDS")],
+      parsePositiveInt(
+        process.env.S3_PRESIGN_TTL_SECONDS,
+        DEFAULT_PRESIGN_TTL_SECONDS,
+      ),
     ),
   };
+}
+
+type StorageScope = "S3" | "QUILLS_STORAGE";
+
+/** Whether the feedback app has its own bucket (QUILLS_STORAGE_BUCKET), apart from Kaneo's. */
+export function isQuillsStorageDedicated() {
+  return Boolean(env("QUILLS_STORAGE_BUCKET"));
+}
+
+/** The feedback app's bucket: the dedicated QUILLS_STORAGE_* bucket when set, else Kaneo's. */
+export function quillsStorageConfig() {
+  return getStorageConfig(isQuillsStorageDedicated() ? "QUILLS_STORAGE" : "S3");
+}
+
+/**
+ * A key that the feedback app wrote: `[prefix/]workspace/<id>/quills/...`. The cleanup queue
+ * deletes these from the feedback app's bucket.
+ */
+export function isQuillsObjectKey(key: string) {
+  return /(?:^|\/)workspace\/[^/]+\/quills\//.test(key);
 }
 
 function getMaxImageUploadBytes() {
@@ -207,9 +235,8 @@ function getClient(config: StorageConfig) {
     forcePathStyle: config.forcePathStyle,
   });
 
-  if (clientCache?.cacheKey === cacheKey) {
-    return clientCache.client;
-  }
+  const cached = clientCache.get(cacheKey);
+  if (cached) return cached;
 
   const clientConfig: S3ClientConfig = {
     endpoint: config.endpoint,
@@ -234,7 +261,7 @@ function getClient(config: StorageConfig) {
   }
 
   const client = new S3Client(clientConfig);
-  clientCache = { cacheKey, client };
+  clientCache.set(cacheKey, client);
   return client;
 }
 
@@ -440,8 +467,8 @@ export class InvalidUploadedAssetError extends Error {}
 export async function verifyTaskAssetUpload(
   key: string,
   expected: { size: number; contentType: string },
+  config: StorageConfig = getStorageConfig(),
 ) {
-  const config = getStorageConfig();
   const client = getClient(config);
   const abortSignal = AbortSignal.timeout(10_000);
   let object: HeadObjectCommandOutput;
@@ -610,8 +637,10 @@ export async function copyTaskAssetObject({
   return key;
 }
 
-export async function deleteS3Object(key: string): Promise<void> {
-  const config = getStorageConfig();
+export async function deleteS3Object(
+  key: string,
+  config: StorageConfig = getStorageConfig(),
+): Promise<void> {
   const client = getClient(config);
   await client.send(
     new DeleteObjectCommand({
@@ -623,7 +652,10 @@ export async function deleteS3Object(key: string): Promise<void> {
 
 /** Operator-only archive imports verify every referenced object before committing. */
 export async function verifyPrivateObjectExists(key: string) {
-  const config = getStorageConfig();
+  // A feedback-app key lives in the feedback app's bucket (QUILLS_STORAGE_* when set).
+  const config = isQuillsObjectKey(key)
+    ? quillsStorageConfig()
+    : getStorageConfig();
   await headUploadedObject(
     getClient(config),
     config.bucket,

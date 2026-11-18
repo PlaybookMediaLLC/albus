@@ -89,6 +89,26 @@ Name | Description | Default |
 | `S3_KEY_PREFIX` | Optional prefix prepended to all S3 object keys. Useful for sharing a single bucket across multiple environments (e.g. `staging/`, `prod/kaneo/`). Trailing slashes are trimmed automatically. |  |
 | `S3_PRESIGN_TTL_SECONDS` | How long presigned upload URLs remain valid. | `300` |
 
+### Feedback app storage
+
+Feedback app uploads (customer pictures, attachments, logos) can live in their own bucket, such as a
+Cloudflare R2 bucket. Leave `QUILLS_STORAGE_BUCKET` unset to keep them in the `S3_*` bucket. Every
+key starts with `workspace/{workspaceId}/quills/`, so workspaces never share an object.
+
+| Variable | Description | Default |
+|---|---|---|
+| `QUILLS_STORAGE_BUCKET` | Turns on the dedicated bucket. |  |
+| `QUILLS_STORAGE_ENDPOINT` | The bucket's S3 API endpoint. For R2: `https://<account>.r2.cloudflarestorage.com`. |  |
+| `QUILLS_STORAGE_ACCESS_KEY_ID`, `QUILLS_STORAGE_SECRET_ACCESS_KEY` | An API token scoped to this bucket only. |  |
+| `QUILLS_STORAGE_REGION` | The signing region. | `auto` |
+| `QUILLS_STORAGE_FORCE_PATH_STYLE` | Path-style URLs. | `true` |
+| `QUILLS_STORAGE_KEY_PREFIX` | A prefix for every key, to share the bucket between environments. |  |
+| `QUILLS_STORAGE_PUBLIC_BASE_URL` | A public domain on the bucket (an R2 custom domain). With it, customer pictures load from the CDN; without it, through a short redirect to a signed link. |  |
+| `QUILLS_STORAGE_MAX_IMAGE_UPLOAD_BYTES` | Upload limit. Customer pictures are always limited to 1 MB. | `S3_MAX_IMAGE_UPLOAD_BYTES` |
+| `QUILLS_STORAGE_PRESIGN_TTL_SECONDS` | How long signed links last. | `S3_PRESIGN_TTL_SECONDS` |
+
+The bucket needs a CORS rule that allows `PUT` from the web and widget origins, like the `S3_*` bucket.
+
 ### Access Control
 
 Browser WebSocket connections require an exact origin matching `KANEO_CLIENT_URL`,

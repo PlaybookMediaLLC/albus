@@ -24,6 +24,8 @@ import { ConversationRows } from "./conversation-rows";
 import { listTitle } from "./list-filters";
 import { NewMessage } from "./parts/new-message";
 import { SaveViewDialog } from "./save-view-dialog";
+import { EmptyState } from "../../ui/empty-state";
+import { ConversationsArt } from "../../ui/illustrations/conversations-art";
 
 export interface TeamConversationsPageProps {
   workspaceId: string;
@@ -109,6 +111,13 @@ export function TeamConversationsPage(props: TeamConversationsPageProps) {
               loading={waiting || list.isLoading}
               problem={list.error ?? views.error ?? null}
               empty={!items.length}
+              emptyState={
+                <EmptyState
+                  art={<ConversationsArt />}
+                  title={t("empty.conversations.title")}
+                  description={t("empty.conversations.body")}
+                />
+              }
               onRetry={() => {
                 void views.refetch();
                 void list.refetch();

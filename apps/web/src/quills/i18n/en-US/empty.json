@@ -1,0 +1,71 @@
+{
+	"autopilot": {
+		"body": "Autopilot reads conversations and tickets for feature requests. Each signal it finds waits here to become a post or a vote.",
+		"title": "No signals here"
+	},
+	"changelog": {
+		"body": "Tell customers what you shipped. People who asked for it hear about it, and the update stays on your portal.",
+		"title": "No updates yet"
+	},
+	"conversations": {
+		"body": "Messages from the chat widget and email arrive in this queue. Your replies go back to the customer.",
+		"title": "No conversations here"
+	},
+	"duplicates": {
+		"body": "When two requests ask for the same thing, the pair waits here. Merge them to keep the votes together.",
+		"title": "No duplicate pairs here"
+	},
+	"engagement": {
+		"body": "Views and reactions show up here once customers read your updates.",
+		"title": "No engagement yet"
+	},
+	"filtered": {
+		"body": "Nothing matches this search and these filters.",
+		"clear": "Clear filters",
+		"hint": "Change the filters",
+		"title": "No matches"
+	},
+	"help": {
+		"body": "Articles in this category will show up here.",
+		"title": "No articles yet"
+	},
+	"integrations": {
+		"body": "No integration is available on this instance yet.",
+		"title": "No integrations"
+	},
+	"myFeedback": {
+		"body": "Ideas you share, vote for or follow show up here, with where they stand.",
+		"title": "No feedback yet"
+	},
+	"portalChangelog": {
+		"body": "Product updates will show up here.",
+		"title": "No updates yet"
+	},
+	"portalConversations": {
+		"body": "Start a conversation and the team will reply here.",
+		"title": "No conversations yet"
+	},
+	"portalTickets": {
+		"body": "Tickets you open with the team show up here.",
+		"title": "No tickets yet"
+	},
+	"posts": {
+		"title": "No posts here"
+	},
+	"requests": {
+		"body": "Requests from your portal, the widget and your team land here, grouped by status.",
+		"title": "No requests yet"
+	},
+	"roadmap": {
+		"body": "Add statuses to your boards, and their requests line up in lanes here.",
+		"title": "No roadmap yet"
+	},
+	"roadmapEmpty": {
+		"body": "Planned work will show up here.",
+		"title": "Nothing on the roadmap yet"
+	},
+	"tickets": {
+		"body": "Turn a conversation into a ticket to track it to a fix. Open tickets wait here.",
+		"title": "No tickets here"
+	}
+}

@@ -25,6 +25,8 @@ import {
   type TicketScope,
   type TicketStatus,
 } from "../ticket-scope";
+import { EmptyState } from "../../../ui/empty-state";
+import { TicketsArt } from "../../../ui/illustrations/tickets-art";
 
 export interface TicketListPaneProps {
   scope: TicketScope;
@@ -108,6 +110,13 @@ export function TicketListPane(props: TicketListPaneProps) {
       loading={list.isLoading}
       problem={list.error ?? null}
       empty={!props.groups.some((group) => group.items.length)}
+      emptyState={
+        <EmptyState
+          art={<TicketsArt />}
+          title={t("empty.tickets.title")}
+          description={t("empty.tickets.body")}
+        />
+      }
       onRetry={() => void list.refetch()}
     >
       <GroupedList

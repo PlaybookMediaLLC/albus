@@ -11,9 +11,9 @@ export interface SidebarItemProps {
 }
 
 const row =
-  "flex h-8 w-full items-center gap-2.5 rounded-md px-2 text-start text-sm text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-background aria-[current=page]:font-medium aria-[current=page]:text-foreground aria-[current=page]:shadow-xs aria-[current=page]:inset-ring aria-[current=page]:inset-ring-border [&>svg]:size-4 [&>svg]:shrink-0 [&>.lucide]:text-muted-foreground aria-[current=page]:[&>.lucide]:text-foreground";
+  "flex h-7.5 w-full items-center gap-2 rounded-md px-2 text-start text-sm text-sidebar-foreground outline-none transition-colors duration-150 hover:bg-sidebar-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-foreground/6 aria-[current=page]:font-medium aria-[current=page]:text-foreground [&>svg]:size-4 [&>svg]:shrink-0 [&>.lucide]:text-muted-foreground aria-[current=page]:[&>.lucide]:text-foreground";
 
-/** One sidebar view: icon, label and a right-aligned count. The current view is a white pill. */
+/** One sidebar view: icon, label and a right-aligned count. The current view has a flat grey fill. */
 export function SidebarItem({ item, onNavigate }: SidebarItemProps) {
   const { t } = useTranslation("quills");
   const Icon = item.icon;
@@ -33,7 +33,7 @@ export function SidebarItem({ item, onNavigate }: SidebarItemProps) {
             "min-w-5 rounded-full px-1.5 text-center text-xs leading-5 tabular-nums",
             item.attention && item.count > 0
               ? "bg-warning/15 font-semibold text-warning-foreground"
-              : "text-muted-foreground",
+              : "text-faint-foreground",
           )}
         >
           {item.count}

@@ -37,6 +37,7 @@ export function ConversationProperties({
         workspaceId={workspaceId}
         principalId={conversation.visitorPrincipalId}
         name={conversation.visitorName}
+        avatarUrl={conversation.visitorAvatarUrl}
         email={conversation.visitorEmail}
       />
       {emailSecurity ? <EmailSecuritySection {...emailSecurity} /> : null}

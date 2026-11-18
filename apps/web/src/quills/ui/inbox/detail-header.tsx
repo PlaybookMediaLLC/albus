@@ -36,7 +36,7 @@ export function DetailHeader({
     { key: "J", label: t("inbox.next"), icon: ChevronDown, run: onNext },
   ];
   return (
-    <div className="flex min-h-14 shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-2 max-sm:px-2">
+    <div className="flex min-h-11 shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-1.5 max-sm:px-2">
       <ShowListButton className="hidden md:inline-flex" />
       {onBack ? (
         <Button

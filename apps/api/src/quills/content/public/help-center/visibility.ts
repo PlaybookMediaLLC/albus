@@ -300,7 +300,9 @@ export const articleSummary = z
     path: z.string(),
     publishedAt: responseTimestamp,
     updatedAt: responseTimestamp,
-    author: z.object({ name: z.string() }).nullable(),
+    author: z
+      .object({ name: z.string(), avatarUrl: z.string().nullable() })
+      .nullable(),
     category: z.object({
       id: z.string(),
       urlId: z.number(),
@@ -346,6 +348,7 @@ export async function visibleArticles(
       translatedContent: options.content ? t.content : sql<string>`''`,
       translatedAt: t.updatedAt,
       authorName: principal.displayName,
+      authorAvatarUrl: principal.avatarUrl,
       categoryId: c.id,
       categoryUrlId: c.urlId,
       categorySlug: c.slug,
@@ -386,7 +389,9 @@ export async function visibleArticles(
     path: articlePath(viewer.locale, row.urlId, row.slug),
     publishedAt: row.publishedAt!,
     updatedAt: localized ? row.translatedAt! : row.updatedAt,
-    author: row.authorName ? { name: row.authorName } : null,
+    author: row.authorName
+      ? { name: row.authorName, avatarUrl: row.authorAvatarUrl }
+      : null,
     category: {
       id: row.categoryId as string,
       urlId: row.categoryUrlId,

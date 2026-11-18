@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Megaphone, PenLine } from "lucide-react";
+import { PenLine } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCreateChangelogEntry } from "../../hooks/team/use-create-changelog-entry";
@@ -16,12 +16,13 @@ import {
   Button,
   MenuRadioGroup,
   MenuRadioItem,
-  SettingsEmpty,
   toast,
 } from "../../ui/upstream";
 import { DraftSheet } from "./parts/draft-sheet";
 import { EngagementList } from "./parts/engagement-list";
 import { EntryRow } from "./parts/entry-row";
+import { EmptyState } from "../../ui/empty-state";
+import { ChangelogArt } from "../../ui/illustrations/changelog-art";
 
 export interface TeamChangelogPageProps {
   workspaceId: string;
@@ -157,10 +158,11 @@ export function TeamChangelogPage({ workspaceId }: TeamChangelogPageProps) {
                 ))}
               </ul>
             ) : (
-              <SettingsEmpty
-                icon={<Megaphone className="size-4" />}
-                title={t("team-changelog.empty")}
-                action={newEntry}
+              <EmptyState
+                art={<ChangelogArt />}
+                title={t("empty.changelog.title")}
+                description={t("empty.changelog.body")}
+                actions={newEntry}
               />
             )}
             {entries.hasNextPage ? (

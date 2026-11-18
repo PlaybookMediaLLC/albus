@@ -1,12 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUp, Ellipsis, MessageCircle } from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { plainText } from "../../../core/plain-text";
+import { statusProgress } from "../../../core/status-progress";
 import { teamHref } from "../../../team/team-href";
+import { BoardDot } from "../../../ui/inbox/board-dot";
 import { IconButton } from "../../../ui/inbox/icon-button";
+import { PostStatusIcon } from "../../../ui/inbox/post-status-icon";
+import { PersonAvatar } from "../../../ui/person-avatar";
 import {
-  cn,
   Menu,
   MenuGroup,
   MenuGroupLabel,
@@ -17,6 +20,7 @@ import {
   MenuSeparator,
   MenuTrigger,
 } from "../../../ui/upstream";
+import { CardDisplayContext } from "../card-display";
 import type { RoadmapPost } from "../roadmap-moves";
 
 export interface RoadmapCardBodyProps {
@@ -26,7 +30,12 @@ export interface RoadmapCardBodyProps {
   statusId: string;
   /** The board name. */
   board: string | null;
-  statuses: readonly { id: string; name: string }[];
+  statuses: readonly {
+    id: string;
+    name: string;
+    category: string;
+    color?: string | null;
+  }[];
   /** The drag activator: Space on the title link starts a keyboard drag. */
   activatorRef?: (element: HTMLElement | null) => void;
   /** The copy that follows the pointer during a drag: no link and no menu. */
@@ -40,8 +49,8 @@ export interface RoadmapCardBodyProps {
 }
 
 /**
- * The content of a roadmap card: the title link, the excerpt, the board, the counts and the
- * Move to menu. RoadmapCard memoizes it, so a drag over the board does not render it again.
+ * The content of a roadmap card: the board and the author, the status and the title link, the
+ * vote and comment chips, the creation month and the Move to menu. RoadmapCard memoizes it, so a drag over the board does not render it again.
  */
 export function RoadmapCardBody({
   workspaceId,
@@ -51,72 +60,90 @@ export function RoadmapCardBody({
   onTask,
   ...props
 }: RoadmapCardBodyProps) {
-  const { t } = useTranslation("quills");
+  const { t, i18n } = useTranslation("quills");
   const title = plainText(post.title);
-  const excerpt = plainText(post.content);
-  const count = (key: string, value: number, icon: ReactNode) => (
-    <span className="inline-flex shrink-0 items-center gap-1">
+  const status = props.statuses.find((item) => item.id === statusId);
+  const show = useContext(CardDisplayContext);
+  const board = show.board ? props.board : null;
+  const chip = (key: string, value: number, icon: ReactNode) => (
+    <span className="inline-flex h-5.5 shrink-0 items-center gap-1 rounded-full border border-border px-1.5 text-xs text-muted-foreground tabular-nums [&>svg]:text-faint-foreground">
       {icon}
       <span aria-hidden="true">{value}</span>
       <span className="sr-only">{t(key, { count: value })}</span>
     </span>
   );
+  const created = new Date(post.createdAt).toLocaleDateString(i18n.language, {
+    month: "short",
+    year: "numeric",
+  });
   return (
     <>
-      <h3
-        className={cn(
-          "line-clamp-2 text-sm font-semibold leading-snug",
-          onMove && !props.preview && "pe-6",
-        )}
-      >
-        {props.preview ? (
-          title
-        ) : (
-          <Link
-            ref={props.activatorRef}
-            to={teamHref(workspaceId, `/posts/${post.id}`)}
-            aria-describedby={props.describedBy}
-            className="outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-ring"
-          >
-            {title}
-          </Link>
-        )}
-      </h3>
-      {excerpt ? (
-        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-          {excerpt}
-        </p>
-      ) : null}
-      <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
-        {props.board ? (
-          <span className="flex min-w-0 items-center gap-1.5">
-            <span
-              aria-hidden="true"
-              className="size-1.5 shrink-0 rounded-full bg-current"
+      {board || show.author ? (
+        <div className="mb-1 flex h-5 items-center gap-2 text-xs text-muted-foreground">
+          {board ? (
+            <span className="flex min-w-0 items-center gap-1.5">
+              <BoardDot boardId={post.boardId} />
+              <span className="truncate">{board}</span>
+            </span>
+          ) : null}
+          {show.author ? (
+            <PersonAvatar
+              colored
+              name={post.authorName ?? null}
+              avatarUrl={post.authorAvatarUrl}
+              className="ms-auto"
             />
-            <span className="truncate">{props.board}</span>
-          </span>
-        ) : null}
-        <span className="ms-auto flex items-center gap-3">
-          {count(
-            "inbox.votes",
-            post.voteCount,
-            <ArrowUp aria-hidden="true" className="size-3.5" />,
-          )}
-          {count(
-            "inbox.comments",
-            post.commentCount,
-            <MessageCircle aria-hidden="true" className="size-3.5" />,
+          ) : null}
+        </div>
+      ) : null}
+      <h3 className="flex items-start gap-2 text-sm font-medium leading-5 text-pretty">
+        <span className="flex h-5 shrink-0 items-center">
+          <PostStatusIcon
+            color={status?.color}
+            progress={statusProgress(props.statuses, statusId)}
+          />
+        </span>
+        <span className="line-clamp-2 min-w-0">
+          {props.preview ? (
+            title
+          ) : (
+            <Link
+              ref={props.activatorRef}
+              to={teamHref(workspaceId, `/posts/${post.id}`)}
+              aria-describedby={props.describedBy}
+              className="outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-ring"
+            >
+              {title}
+            </Link>
           )}
         </span>
-      </div>
+      </h3>
+      {show.counts ? (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {chip(
+            "inbox.votes",
+            post.voteCount,
+            <ArrowUp aria-hidden="true" className="size-3" />,
+          )}
+          {chip(
+            "inbox.comments",
+            post.commentCount,
+            <MessageCircle aria-hidden="true" className="size-3" />,
+          )}
+        </div>
+      ) : null}
+      {show.created ? (
+        <p className="mt-2 text-xs text-faint-foreground">
+          {t("team-roadmap.created", { date: created })}
+        </p>
+      ) : null}
       {onMove && !props.preview ? (
         <Menu>
           <MenuTrigger
             render={
               <IconButton
                 label={t("team-roadmap.move", { title })}
-                className="absolute end-1.5 top-1.5 z-10 opacity-0 focus-visible:opacity-100 group-hover:opacity-100 data-popup-open:opacity-100 pointer-coarse:opacity-100"
+                className="absolute end-1 bottom-1 z-10 text-muted-foreground opacity-0 focus-visible:opacity-100 group-hover:opacity-100 data-popup-open:opacity-100 pointer-coarse:opacity-100"
               />
             }
           >

@@ -36,7 +36,7 @@ export function ConversationRow(props: ConversationRowProps) {
     <a
       href={props.href}
       {...link}
-      className="relative flex min-w-0 gap-3 rounded-lg px-3 py-2.5 text-sm outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring aria-[current]:bg-muted"
+      className="relative flex min-w-0 gap-3 rounded-lg px-3 py-2.5 text-sm outline-none transition-colors duration-150 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring aria-[current]:bg-foreground/6"
     >
       <PersonAvatar
         colored
@@ -60,7 +60,7 @@ export function ConversationRow(props: ConversationRowProps) {
           <time
             dateTime={props.time}
             title={shortDate(props.time, i18n.language)}
-            className="shrink-0 text-xs text-muted-foreground"
+            className="shrink-0 text-xs text-faint-foreground"
           >
             {compactTime(props.time, i18n.language)}
           </time>

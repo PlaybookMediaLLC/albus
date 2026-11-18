@@ -148,7 +148,10 @@ export function rowData(
     : undefined;
   const spam = item.endReason === "spam";
   return {
-    person: { name: item.visitorName ?? item.visitorEmail ?? labels.unknown },
+    person: {
+      name: item.visitorName ?? item.visitorEmail ?? labels.unknown,
+      avatarUrl: item.visitorAvatarUrl,
+    },
     title: item.subject,
     preview: plainText(item.lastMessagePreview),
     time: item.lastMessageAt,

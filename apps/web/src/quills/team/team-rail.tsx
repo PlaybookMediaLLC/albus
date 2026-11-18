@@ -35,7 +35,7 @@ export interface TeamRailProps extends Pick<
 
 // The inset ring of the current item leaves the focus ring visible. Use with size="icon-lg".
 const item =
-  "relative rounded-lg text-muted-foreground hover:bg-sidebar-accent hover:text-foreground aria-[current=page]:bg-background aria-[current=page]:text-foreground aria-[current=page]:shadow-xs aria-[current=page]:inset-ring aria-[current=page]:inset-ring-border";
+  "relative rounded-lg text-muted-foreground hover:bg-sidebar-accent hover:text-foreground aria-[current=page]:bg-foreground/6 aria-[current=page]:text-foreground";
 
 /**
  * The thin column at the far left of the teammate app: the workspace, the Conversations,
@@ -87,7 +87,7 @@ export function TeamRail({
   const app = mode === "app";
   return (
     <div className="flex h-full w-13 shrink-0 flex-col items-center gap-2 pt-2 pb-3">
-      <div className="flex h-14 items-center">
+      <div className="flex h-11 items-center">
         <WorkspaceSwitcher workspaceId={workspaceId} {...workspace} />
       </div>
       <nav

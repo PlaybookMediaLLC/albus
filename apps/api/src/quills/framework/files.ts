@@ -17,17 +17,20 @@ import {
 import { describeStorageError } from "../../storage/describe-storage-error";
 import {
   applyKeyPrefix,
-  assertStorageConfigured,
   getFileExtension,
   InvalidUploadedAssetError,
   isImageContentType,
-  isStorageConfigured,
+  quillsStorageConfig,
   resolveS3Credentials,
   sanitizePathSegment,
   validateTaskAssetUploadInput,
   verifyTaskAssetUpload,
 } from "../../storage/s3";
 import { z } from "../../openapi";
+import {
+  avatarContentTypes,
+  MAX_CUSTOMER_AVATAR_BYTES,
+} from "../files/customer-avatar";
 
 // Managed Quills uploads on Kaneo's storage: server-derived keys, presigned PUT, then a
 // verification lease that protects the object until the scoped transaction commits its reference.
@@ -106,12 +109,20 @@ export const uploadedObject = z.object({
   size,
 });
 
-export const isQuillsStorageConfigured = () => isStorageConfigured();
+export const isQuillsStorageConfigured = () => {
+  try {
+    quillsStorageConfig();
+    return true;
+  } catch {
+    return false;
+  }
+};
 
-type StorageConfig = ReturnType<typeof assertStorageConfigured>;
+type StorageConfig = ReturnType<typeof quillsStorageConfig>;
+/** The feedback app's bucket: QUILLS_STORAGE_* (for example R2) when set, else Kaneo's. */
 function storage() {
   try {
-    return assertStorageConfigured();
+    return quillsStorageConfig();
   } catch {
     throw new HTTPException(503, { message: "File storage is not configured" });
   }
@@ -165,6 +176,14 @@ function namespace(
 }
 
 function checkUpload(purpose: Purpose, type: string, bytes: number) {
+  // An avatar is shown on every surface and served from the bucket: common types, small files.
+  if (
+    purpose === "customer_avatar" &&
+    (!avatarContentTypes.has(type) || bytes > MAX_CUSTOMER_AVATAR_BYTES)
+  )
+    throw new HTTPException(400, {
+      message: "Upload a PNG, JPEG, WebP or GIF picture of at most 1 MB.",
+    });
   if (
     purpose === "customer_file"
       ? !isImageContentType(type) && !customerFileTypes.has(type)
@@ -260,7 +279,7 @@ export async function createDownload(file: {
  * object keeps the image type that its verified upload stored. Null when storage is not configured.
  */
 export async function imageUrl(key: string) {
-  if (!isStorageConfigured()) return null;
+  if (!isQuillsStorageConfigured()) return null;
   const config = storage();
   return getSignedUrl(
     client(config),
@@ -404,7 +423,7 @@ export async function verifyUpload(
     );
   });
   try {
-    const stored = await verifyTaskAssetUpload(input.key, input).catch(
+    const stored = await verifyTaskAssetUpload(input.key, input, config).catch(
       (error) => {
         throw new HTTPException(
           error instanceof InvalidUploadedAssetError ? 400 : 503,

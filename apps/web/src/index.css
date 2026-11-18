@@ -65,6 +65,81 @@ input:-webkit-autofill:active {
   }
 }
 
+@keyframes art-rise {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
+@keyframes art-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes art-drift {
+  from {
+    rotate: -6deg;
+  }
+  to {
+    rotate: 6deg;
+  }
+}
+
+/* An empty-state drawing: each top-level layer rises in with a stagger, strokes marked with
+   pathLength="1" draw in, and the layers part when the nearest `group` is hovered. Reduced
+   motion shows the final frame. */
+@utility art {
+  & > g {
+    animation: art-rise 320ms var(--ease-out) backwards;
+    transition: translate 240ms var(--ease-out);
+  }
+  & > g:nth-child(2) {
+    animation-delay: 50ms;
+  }
+  & > g:nth-child(3) {
+    animation-delay: 100ms;
+  }
+  & > g:nth-child(4) {
+    animation-delay: 150ms;
+  }
+  & [pathLength] {
+    stroke-dasharray: 1;
+    animation: art-draw 500ms var(--ease-out) 100ms backwards;
+  }
+  .group:hover & > g:nth-child(2) {
+    translate: 0 -1px;
+  }
+  .group:hover & > g:nth-child(3) {
+    translate: 0 -2px;
+  }
+  .group:hover & > g:nth-child(4) {
+    translate: 0 -3px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    & > g,
+    & [pathLength] {
+      animation: none;
+      transition: none;
+    }
+    .group:hover & > g {
+      translate: none;
+    }
+  }
+}
+
+/* The hero orbit's slow sway. Browsers pause it in hidden tabs. */
+@utility art-drift {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: art-drift 12s ease-in-out infinite alternate;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
 @utility touch-hitbox {
   @media (pointer: coarse) {
     &::after {
@@ -201,6 +276,12 @@ input:-webkit-autofill:active {
   --color-background: var(--background);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
+  /* The meta text tier: set by the feedback app shell; elsewhere the element's own muted text. */
+  --color-faint-foreground: var(--faint-foreground, var(--muted-foreground));
+  /* The two plane tones of a drawing, mixed at the element from its text colour and surface, so
+     portal themes apply (docs/quills-port/linear-polish-plan.md). */
+  --color-art-top: color-mix(in srgb, currentColor 5%, var(--background));
+  --color-art-side: color-mix(in srgb, currentColor 14%, var(--background));
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -437,6 +518,71 @@ input:-webkit-autofill:active {
   --avatar-foreground-done: #707070;
   --avatar-unassigned: #262626;
   --avatar-unassigned-foreground: #8a8a8a;
+}
+
+/* The feedback app: a soft grey frame around an almost white panel, three text tiers and quiet
+   fills (docs/quills-port/linear-polish-plan.md). The team shell sets the attribute, so Kaneo
+   boards and the portal keep their tokens. Unlayered, like :root, so it wins. */
+html[data-quills-shell] {
+  --sidebar: #f4f4f5;
+  --background: #fcfcfc;
+  --border: --alpha(var(--color-black) / 7%);
+  --foreground: #1c1c1e;
+  --muted-foreground: #5e5e66;
+  --faint-foreground: #72727a;
+  --sidebar-foreground: #5e5e66;
+  --accent: --alpha(var(--color-black) / 3.5%);
+  --sidebar-accent: --alpha(var(--color-black) / 3.5%);
+}
+
+html.dark[data-quills-shell] {
+  --sidebar: #0f0f10;
+  --background: #161617;
+  --border: --alpha(var(--color-white) / 6%);
+  --foreground: #ededef;
+  --muted-foreground: #a0a0a8;
+  --faint-foreground: #808088;
+  --sidebar-foreground: #a0a0a8;
+  --accent: --alpha(var(--color-white) / 3.5%);
+  --sidebar-accent: --alpha(var(--color-white) / 3.5%);
+}
+
+/* Pop-ups in the feedback app (menus, selects, popovers render in portals under body, so the
+   html attribute still scopes them): rounded 6px rows, quiet group labels and a soft, deep
+   shadow. Kaneo's own pages keep the shared look. */
+html[data-quills-shell] :is([data-slot="menu-popup"], [data-slot="select-popup"]) {
+  border-radius: 10px;
+  box-shadow:
+    0 1px 2px --alpha(var(--color-black) / 4%),
+    0 8px 24px -4px --alpha(var(--color-black) / 12%);
+}
+
+html.dark[data-quills-shell] :is([data-slot="menu-popup"], [data-slot="select-popup"]) {
+  box-shadow:
+    0 1px 2px --alpha(var(--color-black) / 40%),
+    0 12px 32px -6px --alpha(var(--color-black) / 60%);
+}
+
+html[data-quills-shell]
+  :is(
+    [data-slot="menu-item"],
+    [data-slot="menu-checkbox-item"],
+    [data-slot="menu-radio-item"],
+    [data-slot="select-item"]
+  ) {
+  min-height: 1.875rem;
+  border-radius: 6px;
+  transition: background-color 80ms ease-out;
+}
+
+html[data-quills-shell] [data-slot="menu-label"] {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--faint-foreground);
+}
+
+html[data-quills-shell] [data-slot="menu-separator"] {
+  margin-inline: 0;
 }
 
 @layer base {

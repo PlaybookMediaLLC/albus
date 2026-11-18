@@ -6,6 +6,8 @@ import { TeamStateView } from "../../team/team-state-view";
 import { PageFrame } from "../../ui/page-frame";
 import { SettingsCard, SettingsPage } from "../../ui/upstream";
 import { IntegrationRow } from "./parts/integration-row";
+import { EmptyState } from "../../ui/empty-state";
+import { IntegrationsArt } from "../../ui/illustrations/integrations-art";
 
 export interface SettingsIntegrationsPageProps {
   workspaceId: string;
@@ -41,6 +43,13 @@ export function SettingsIntegrationsPage({
           loading={catalog.isPending || connections.isPending}
           problem={catalog.error ?? connections.error}
           empty={!providers.length}
+          emptyState={
+            <EmptyState
+              art={<IntegrationsArt />}
+              title={t("empty.integrations.title")}
+              description={t("empty.integrations.body")}
+            />
+          }
         >
           <SettingsCard>
             {providers.map((provider) => (

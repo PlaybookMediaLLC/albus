@@ -171,6 +171,7 @@ export function TeamConversationPage(props: TeamConversationPageProps) {
                 conversationId={conversationId}
                 messages={messages.data.items}
                 customerName={customer}
+                customerAvatarUrl={data.visitorAvatarUrl}
                 people={people}
               />
             ) : null}

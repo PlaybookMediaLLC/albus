@@ -273,6 +273,13 @@ const nl: Catalog = {
     "Als je e-mailadres een account op het portaal heeft, is er een inloglink onderweg. Kijk in je e-mail.",
   "The portal could not be opened. Try again later.":
     "Het portaal kon niet worden geopend. Probeer het later opnieuw.",
+  "Your picture": "Je foto",
+  "Shown next to your feedback and messages.":
+    "Wordt getoond naast je feedback en berichten.",
+  "Change picture": "Foto wijzigen",
+  Remove: "Verwijderen",
+  "Picture updated": "Foto bijgewerkt",
+  "Could not save the picture.": "De foto kon niet worden opgeslagen.",
 };
 
 export default nl;

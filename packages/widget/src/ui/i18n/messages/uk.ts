@@ -279,6 +279,13 @@ const uk: Catalog = {
     "Якщо ваша адреса має обліковий запис на порталі, посилання для входу вже в дорозі. Перевірте пошту.",
   "The portal could not be opened. Try again later.":
     "Не вдалося відкрити портал. Спробуйте пізніше.",
+  "Your picture": "Ваше фото",
+  "Shown next to your feedback and messages.":
+    "Показується поруч із вашими відгуками та повідомленнями.",
+  "Change picture": "Змінити фото",
+  Remove: "Видалити",
+  "Picture updated": "Фото оновлено",
+  "Could not save the picture.": "Не вдалося зберегти фото.",
 };
 
 export default uk;
