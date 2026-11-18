@@ -296,6 +296,12 @@ export async function imageUrl(key: string) {
  * A new key for a file that the server writes, in this workspace's export namespace. Store the key
  * on its row before `putObject`, so the storage trigger queues cleanup when the row lets it go.
  */
+/** A signed image URL and how long a client may keep it: until a minute before it expires. */
+export async function imageRedirect(key: string) {
+  const url = await imageUrl(key);
+  return url && { url, maxAge: Math.max(0, storage().presignTtlSeconds - 60) };
+}
+
 export const exportKey = (workspaceId: string, extension: string) =>
   `${namespace(storage(), workspaceId, "export")}${createId()}.${extension}`;
 

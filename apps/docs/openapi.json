@@ -37977,7 +37977,7 @@
       "get": {
         "operationId": "getQuillsAvatarImage",
         "tags": [
-          "Quills portal"
+          "Quills"
         ],
         "summary": "Open a person's uploaded avatar",
         "description": "Public: the principal ID is unguessable and the URL carries a version that changes with the picture. Redirects to a short-lived signed URL of the feedback app's bucket; the redirect is cached until shortly before it expires.",
@@ -37987,9 +37987,11 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 200
+              "maxLength": 200,
+              "description": "Workspace ID or slug"
             },
             "required": true,
+            "description": "Workspace ID or slug",
             "name": "workspace",
             "in": "path"
           },
@@ -38013,10 +38015,25 @@
         ],
         "responses": {
           "302": {
-            "description": "Redirect to the avatar image"
+            "description": "Redirect to the avatar image",
+            "headers": {
+              "Location": {
+                "description": "The target URL",
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              },
+              "Cache-Control": {
+                "description": "Private, until shortly before the target expires",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "404": {
-            "description": "No uploaded avatar",
+            "description": "No uploaded avatar; Workspace not found or archived",
             "content": {
               "application/json": {
                 "schema": {

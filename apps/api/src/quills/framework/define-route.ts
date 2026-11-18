@@ -158,6 +158,11 @@ export type QuillsRouteDeclaration<
    */
   browserPage?: (input: { workspace: string; query: Output<Q> }) => string;
   /**
+   * Public GET: a 302 to the URL returned for the handler's result, after the transaction (signing
+   * may resolve provider credentials), privately cached for `maxAge` seconds. The result is never sent.
+   */
+  location?: (result: z.output<R>) => Promise<{ url: string; maxAge: number }>;
+  /**
    * Teammate, app, signed, portal and widget: a read in its own scoped transaction, before `call`. It
    * must not write, except an AI budget reservation (assistant/budget.ts), which must commit before
    * the call. The handler then runs in a new scoped transaction with the call's result as `called`.
@@ -606,6 +611,8 @@ export function buildQuillsRoute<
     );
   if (d.browserPage && (audience !== "public" || d.method !== "get"))
     throw new Error(`${d.operationId}: a browser page is for a public GET`);
+  if (d.location && (audience !== "public" || d.method !== "get" || d.raw))
+    throw new Error(`${d.operationId}: a redirect is for a public JSON GET`);
   if (audience === "signed" || audience === "internal") {
     if (
       d.native ||
@@ -885,7 +892,24 @@ export function buildQuillsRoute<
         },
       },
       responses: {
-        200: ok,
+        ...(d.location
+          ? {
+              302: {
+                description: d.responseDescription,
+                headers: {
+                  Location: {
+                    description: "The target URL",
+                    schema: { type: "string", format: "uri" },
+                  },
+                  "Cache-Control": {
+                    description:
+                      "Private, until shortly before the target expires",
+                    schema: { type: "string" },
+                  },
+                },
+              },
+            }
+          : { 200: ok }),
         ...(d.browserPage && { 303: continueInWebResponse }),
         ...(signIn && {
           401: errorResponse(
@@ -1026,6 +1050,13 @@ export function buildQuillsRoute<
           return result;
         },
       ).catch(unavailable);
+      if (d.location) {
+        const target = await d.location(result);
+        return c.body(null, 302, {
+          Location: target.url,
+          "Cache-Control": `private, max-age=${target.maxAge}`,
+        });
+      }
       if (d.raw)
         return c.body(result as string, 200, {
           "content-type": `${d.raw}; charset=utf-8`,

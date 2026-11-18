@@ -670,7 +670,7 @@ async function checkAudienceRoute(
   ).rows[0].t;
   const domain = await fingerprint(env.a, "domain");
   const ok = await call(fresh);
-  if (ok.status !== 200)
+  if (ok.status !== (d.location ? 302 : 200))
     fail("authorized", `got ${ok.status} ${JSON.stringify(ok.body)}`);
   else {
     findings.push(...responseIssues(d, ok));

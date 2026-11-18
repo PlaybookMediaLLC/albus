@@ -3,7 +3,8 @@ import bulkUpdateTasks from "../../apps/api/src/task/controllers/bulk-update-tas
 import { eq } from "drizzle-orm";
 import { beforeEach, expect, it, vi } from "vite-plus/test";
 const m = vi.hoisted(() => ({ deleteS3Object: vi.fn() }));
-vi.mock("../../apps/api/src/storage/s3", () => ({
+vi.mock("../../apps/api/src/storage/s3", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../apps/api/src/storage/s3")>()),
   deleteS3Object: m.deleteS3Object,
 }));
 import db, { getDatabase, schema } from "../../apps/api/src/database";
