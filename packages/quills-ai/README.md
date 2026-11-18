@@ -33,6 +33,42 @@ Import from `@quills/ai/learning` (or the root, which re-exports it).
 | `LEARNING_ERROR_KINDS`, `LearningError` | `invalid_query`, `dimension_mismatch`, `invalid_example`, `scope_mismatch` |
 | `InMemoryExampleStore` | The reference store, for tests |
 
+### Teach
+
+Import from `@quills/ai/teach`. These helpers turn a closed conversation into a knowledge
+suggestion; the API's `engine/teach.ts` does the IO.
+
+| Name | Purpose |
+|---|---|
+| `TranscriptMessage`, `sourceTranscript(messages)` | Keeps customer and teammate replies (no notes, no assistant replies), redacts them, and cuts them to 1,000 characters each and 8,000 in total |
+| `redact(text)` | Replaces emails, links, phone numbers and runs of 6 or more digits |
+| `topicFingerprint(topic)` | 16 hex characters from the sorted, unique words of a topic without stopwords |
+| `routeCandidate(match)` | `discard` for an approved or dismissed match, `attach` for an open one, otherwise `create` |
+| `statusAfterPlanning(count)`, `afterTurn(state)` | The next status after the questions are planned, and after each answer or skip |
+| `SUGGESTION_STATUSES`, `OPEN_STATUSES`, `MAX_QUESTIONS` | The statuses, the open ones, and the limit of 3 questions |
+| `CandidateAnswerSchema`, `QuestionsAnswerSchema`, `DraftAnswerSchema`, `SameAnswerSchema` | The provider answers that the API validates |
+| `extractPrompt`, `questionsPrompt`, `draftPrompt`, `samePrompt`, `embeddingText` | The requests for each step |
+
+### Capabilities
+
+Import `defineCapability` and the types from `@quills/ai/capability`. A capability is one model
+request as data: `id`, `role` (`fast` or `deep`), `step` (the usage row's pipeline step), `schema`,
+an optional `maxOutputTokens`, and `prompt(input, wrap)`, which returns one system and one user
+message. It does no IO; the API runs it with `runCapability` (`apps/api/src/quills/assistant/ai/`).
+
+| Capability | Export | Role |
+|---|---|---|
+| Find a durable fact in a closed conversation | `extractKnowledge` (`./teach`) | fast |
+| Find up to 3 FAQ items a knowledge document answers | `extractDocumentFaqs` (`./teach`) | fast |
+| Ask the teammate up to 3 questions | `askKnowledgeQuestions` (`./teach`) | fast |
+| Judge whether two facts give the same guidance | `judgeSameKnowledge` (`./teach`) | fast |
+| Write the final snippet | `draftKnowledge` (`./teach`) | deep |
+| Judge whether two posts are duplicates | `judgeDuplicate` (`./learning`) | fast |
+| Choose tags for a batch of posts | `chooseTags` (`./learning`) | fast |
+
+`node scripts/quills-ai/new.mjs capability <name>` scaffolds a new one in `src/capabilities/` with
+its test, its eval and the `./capabilities` export.
+
 ## The port contract
 
 Every `ExampleStore` must:

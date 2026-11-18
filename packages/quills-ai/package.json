@@ -14,6 +14,14 @@
     "./learning": {
       "types": "./dist/learning/index.d.ts",
       "default": "./dist/learning/index.js"
+    },
+    "./teach": {
+      "types": "./dist/teach/index.d.ts",
+      "default": "./dist/teach/index.js"
+    },
+    "./capability": {
+      "types": "./dist/capability.d.ts",
+      "default": "./dist/capability.js"
     }
   },
   "scripts": {

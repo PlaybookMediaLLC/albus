@@ -25,6 +25,7 @@ describe("@quills/ai", () => {
   it("exports exactly the public surface", () => {
     expect(Object.keys(root).sort()).toEqual(
       [
+        "DUPLICATE_CONFIDENCE",
         "EXAMPLES_GUIDANCE",
         "ExampleQuerySchema",
         "ExampleSchema",
@@ -37,7 +38,9 @@ describe("@quills/ai", () => {
         "TASK_KINDS",
         "TaskKindSchema",
         "VisibilitySchema",
+        "chooseTags",
         "findExamples",
+        "judgeDuplicate",
         "renderExamples",
         "selectExamples",
       ].sort(),
