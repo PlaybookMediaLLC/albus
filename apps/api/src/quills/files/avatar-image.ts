@@ -17,7 +17,7 @@ const route = createRoute({
   tags: ["Quills portal"],
   summary: "Open a person's uploaded avatar",
   description:
-    "Public, like Kaneo's user avatars: the principal ID is unguessable and the URL carries a version that changes with the picture. Redirects to a short-lived signed URL of the feedback app's bucket; the redirect is cached until shortly before it expires.",
+    "Public: the principal ID is unguessable and the URL carries a version that changes with the picture. Redirects to a short-lived signed URL of the feedback app's bucket; the redirect is cached until shortly before it expires.",
   security: [],
   request: {
     params: z.object({
