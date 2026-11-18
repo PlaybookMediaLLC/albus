@@ -25,7 +25,10 @@ import { assistantPendingActions } from "../../database/quills/schema/assistant-
 import { assistantToolCalls } from "../../database/quills/schema/assistant-tool-calls";
 import { assistantWebSources } from "../../database/quills/schema/assistant-web-sources";
 import { auditLog } from "../../database/quills/schema/audit-log";
-import { conversations } from "../../database/quills/schema/conversation";
+import {
+  conversationMessages,
+  conversations,
+} from "../../database/quills/schema/conversation";
 import { conversationAttributeDefinitions } from "../../database/quills/schema/conversation-attributes";
 import { conversationSummaries } from "../../database/quills/schema/conversation-summary";
 import {
@@ -37,6 +40,7 @@ import { jobQueue } from "../../database/quills/schema/job-queue";
 import { mergeSuggestions } from "../../database/quills/schema/merge-suggestions";
 import { posts } from "../../database/quills/schema/posts";
 import { postSentiment } from "../../database/quills/schema/sentiment";
+import { teams } from "../../database/quills/schema/teams";
 import type { BaseVariables } from "../../openapi";
 import router from "..";
 import { side as feedbackSide } from "../feedback/seed.fixture";
@@ -213,16 +217,33 @@ describe.skipIf(!url)("Quills assistant", () => {
 
   it("offers only write tools whose action the approval route checks", () => {
     // pending-actions.ts approves with quills:update; a tool that needs more could not be approved safely.
-    expect(Object.values(writeTools).map((tool) => tool.action)).toEqual(
-      Object.keys(writeTools).map(() => "update"),
+    const approved = Object.values(writeTools).filter(
+      (tool) => tool.approval === "required",
+    );
+    expect(approved.map((tool) => tool.action)).toEqual(
+      approved.map(() => "update"),
     );
   });
 
   it("runs a viewer's copilot tools with the viewer's permissions: nothing is proposed or changed", async () => {
     const id = await thread();
     toolThenAnswer("set_conversation_priority", { priority: "high" });
+    provider.requests.length = 0;
     const run = await ask(viewer, id);
     expect(run.status).toBe("succeeded");
+    // The viewer's model is offered no write tool: they need update (tools/index.ts).
+    const [first] = provider.requests.filter((request) =>
+      request.path.endsWith("/chat/completions"),
+    );
+    const offered = (first!.body.tools ?? []).map(
+      (tool: { function: { name: string } }) => tool.function.name,
+    );
+    expect(offered).toContain("search_knowledge");
+    expect(
+      offered.some(
+        (name: string) => name.startsWith("set_") || name.startsWith("add_"),
+      ),
+    ).toBe(false);
     expect(run.output.proposedActionIds).toEqual([]);
     expect(await actionsOn(id)).toEqual([]);
     expect(await priorityOf(id)).toBe("none");
@@ -321,6 +342,133 @@ describe.skipIf(!url)("Quills assistant", () => {
         )
       ).status,
     ).toBe(409);
+  });
+
+  it("adds a private note from the copilot at once, with one tool-call record", async () => {
+    const id = await thread();
+    toolThenAnswer("add_private_note", { content: "Customer wants a refund." });
+    const run = await ask(h.mate, id);
+    expect(run.status).toBe("succeeded");
+    expect(run.output.proposedActionIds).toEqual([]);
+    const calls = await h.system(h.a, (db) =>
+      db
+        .select({
+          status: assistantToolCalls.status,
+          summary: assistantToolCalls.resultSummary,
+        })
+        .from(assistantToolCalls)
+        .where(
+          and(
+            eq(assistantToolCalls.conversationId, id as never),
+            eq(assistantToolCalls.toolName, "add_private_note"),
+          ),
+        ),
+    );
+    expect(calls).toEqual([{ status: "succeeded", summary: "Changed" }]);
+    const notes = await h.system(h.a, (db) =>
+      db
+        .select({ isInternal: conversationMessages.isInternal })
+        .from(conversationMessages)
+        .where(
+          and(
+            eq(conversationMessages.conversationId, id as never),
+            eq(conversationMessages.content, "Customer wants a refund."),
+          ),
+        ),
+    );
+    expect(notes).toEqual([{ isInternal: true }]);
+  });
+
+  it("runs an approved team assignment and attribute value through the domain checks", async () => {
+    const id = await thread();
+    const key = `plan_${crypto.randomUUID().slice(0, 8)}`;
+    const created = await call(h.owner, "/conversation-attributes", "POST", {
+      key,
+      label: "Plan",
+      fieldType: "text",
+    });
+    expect(created.status).toBe(200);
+    const [team] = await h.as(h.a, h.owner, (db) =>
+      db
+        .insert(teams)
+        .values({ name: `Billing ${crypto.randomUUID().slice(0, 6)}` })
+        .returning({ id: teams.id }),
+    );
+    const propose = (toolName: string, args: Record<string, unknown>) =>
+      h.as(h.a, h.owner, (db) =>
+        db
+          .insert(assistantPendingActions)
+          .values({
+            conversationId: id as never,
+            toolName,
+            args,
+            summary: toolName,
+            expiresAt: new Date(Date.now() + 60000),
+          })
+          .returning({ id: assistantPendingActions.id }),
+      );
+    const approve = async (actionId: string) =>
+      call(h.mate, `/assistant/pending-actions/${actionId}/approve`, "POST");
+    const [assign] = await propose("assign_conversation_team", {
+      teamId: team!.id,
+    });
+    expect((await approve(assign!.id)).body.change).toMatchObject({
+      type: "conversation.assigned",
+      entityId: id,
+    });
+    const [value] = await propose("set_conversation_attribute", {
+      key,
+      value: "Pro",
+    });
+    expect((await approve(value!.id)).body.change).toMatchObject({
+      type: "conversation.attribute_changed",
+    });
+    // An unknown attribute fails the domain check and stays proposed.
+    const [unknown] = await propose("set_conversation_attribute", {
+      key: "no_such_key",
+      value: "x",
+    });
+    expect((await approve(unknown!.id)).status).toBe(404);
+    const [row] = await h.system(h.a, (db) =>
+      db
+        .select({
+          team: conversations.assignedTeamId,
+          attributes: conversations.customAttributes,
+        })
+        .from(conversations)
+        .where(eq(conversations.id, id as never)),
+    );
+    expect(row!.team).toBe(team!.id);
+    expect((row!.attributes as Record<string, { v: unknown }>)[key]!.v).toBe(
+      "Pro",
+    );
+  });
+
+  it("drafts a reply from the customer's messages and never from private notes", async () => {
+    const id = await thread();
+    await h.as(h.a, h.owner, (db, actor) =>
+      db.insert(conversationMessages).values({
+        conversationId: id as never,
+        principalId: actor.principalId,
+        senderType: "agent",
+        isInternal: true,
+        content: "SECRET-NOTE the customer is on a trial",
+      }),
+    );
+    provider.reply(() => chatReply({ text: "Happy to help!", sourceIds: [] }));
+    const res = await call(
+      h.mate,
+      `/conversations/${id}/reply-suggestion`,
+      "POST",
+    );
+    expect(res.status).toBe(200);
+    await h.drain(h.a);
+    const run = (await call(h.mate, `/assistant/runs/${res.body.id}`)).body;
+    expect(run).toMatchObject({
+      status: "succeeded",
+      output: { text: "Happy to help!" },
+    });
+    expect(JSON.stringify(provider.requests)).not.toContain("SECRET-NOTE");
   });
 
   it("never runs a rejected or expired action", async () => {
@@ -921,12 +1069,17 @@ describe.skipIf(!url)("Quills assistant", () => {
   });
 
   describe("web sources", () => {
-    const page = createServer((_req, res) =>
-      res
-        .writeHead(200, { "content-type": "text/html" })
-        .end(
-          "<html><head><title>Shipping</title></head><body><p>We ship in two days.</p><script>x()</script></body></html>",
-        ),
+    let shipping = "We ship in two days.";
+    let down = false;
+    const page = createServer((req, res) =>
+      down
+        ? res.writeHead(500).end()
+        : res.writeHead(200, { "content-type": "text/html" }).end(
+            req.url === "/docs/"
+              ? '<html><body><p>Docs home</p><a href="/docs/returns">Returns</a><a href="faq">FAQ</a><a href="/blog/news">News</a></body></html>'
+              : // A child page links deeper; a crawl is one level, so it is not followed.
+                `<html><head><title>Shipping</title></head><body><p>${shipping}</p><a href="/docs/deep"></a><script>x()</script></body></html>`,
+          ),
     );
     let pageUrl = "";
     beforeAll(async () => {
@@ -975,6 +1128,82 @@ describe.skipIf(!url)("Quills assistant", () => {
           content: "We ship in two days.",
         });
       } finally {
+        delete process.env.KANEO_ALLOW_PRIVATE_WEBHOOK_DESTINATIONS;
+      }
+    });
+
+    it("crawls the page's links in its folder, and fetches a source again on refresh", async () => {
+      process.env.KANEO_ALLOW_PRIVATE_WEBHOOK_DESTINATIONS = "true";
+      try {
+        const res = await call(h.owner, "/assistant/web-sources", "POST", {
+          url: `${pageUrl}/docs/`,
+          crawl: true,
+        });
+        expect(res.status).toBe(200);
+        await h.drain(h.a);
+        const sources = async () =>
+          (await call(h.owner, "/assistant/web-sources")).body.items as {
+            id: string;
+            url: string;
+            status: string;
+          }[];
+        const children = (await sources()).filter((item) =>
+          item.url.startsWith(`${pageUrl}/docs/`),
+        );
+        expect(children.map((item) => item.url).sort()).toEqual([
+          `${pageUrl}/docs/`,
+          `${pageUrl}/docs/faq`,
+          `${pageUrl}/docs/returns`,
+        ]);
+        expect(children.every((item) => item.status === "ready")).toBe(true);
+        expect(
+          (await sources()).some((item) => item.url.endsWith("/blog/news")),
+        ).toBe(false);
+
+        const faq = children.find((item) => item.url.endsWith("/faq"))!;
+        shipping = "We ship in one day.";
+        expect(
+          (
+            await call(
+              h.owner,
+              `/assistant/web-sources/${faq.id}/refresh`,
+              "POST",
+            )
+          ).status,
+        ).toBe(200);
+        await h.drain(h.a);
+        const [row] = await h.system(h.a, (db) =>
+          db
+            .select({ content: assistantWebSources.content })
+            .from(assistantWebSources)
+            .where(eq(assistantWebSources.id, faq.id as never)),
+        );
+        expect(row!.content).toBe("We ship in one day.");
+        expect(
+          (await sources()).some((item) => item.url.endsWith("/docs/deep")),
+        ).toBe(false);
+
+        // A failed refresh keeps the text and the time of the last successful fetch.
+        const fetchedAt = async () =>
+          (
+            await h.system(h.a, (db) =>
+              db
+                .select({
+                  content: assistantWebSources.content,
+                  fetchedAt: assistantWebSources.fetchedAt,
+                })
+                .from(assistantWebSources)
+                .where(eq(assistantWebSources.id, faq.id as never)),
+            )
+          )[0]!;
+        const before = await fetchedAt();
+        down = true;
+        await call(h.owner, `/assistant/web-sources/${faq.id}/refresh`, "POST");
+        await h.drain(h.a);
+        expect(await fetchedAt()).toEqual(before);
+      } finally {
+        down = false;
+        shipping = "We ship in two days.";
         delete process.env.KANEO_ALLOW_PRIVATE_WEBHOOK_DESTINATIONS;
       }
     });

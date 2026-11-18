@@ -196,15 +196,26 @@ export function inputOf(schema: Record<string, unknown> | undefined) {
 function offer(
   row: ConnectorRow,
   tool: CachedConnectorTool,
+  agent: "copilot" | "agent" = "copilot",
 ): OfferedTool | null {
   if (
     !row.enabled ||
     row.status !== "connected" ||
-    row.assignments?.copilot !== true
+    row.assignments?.[agent] !== true
   )
     return null;
   const { group, policy } = policyOf(row, tool);
   if (policy === "never") return null;
+  // The customer agent answers anonymous visitors with the workspace's credentials and no
+  // teammate to approve. It gets only read tools that an admin set to `always` by name; the
+  // group default (read: always) is not consent to show a tool's data to visitors.
+  if (
+    agent === "agent" &&
+    (group !== "read" ||
+      row.toolPolicies?.tools?.[tool.name] !== "always" ||
+      !Object.hasOwn(row.toolPolicies.tools, tool.name))
+  )
+    return null;
   const input = inputOf(tool.inputSchema);
   if (!input) return null;
   const about = tool.description || tool.title || tool.name;
@@ -225,13 +236,16 @@ function offer(
  * of at most MAX_OFFERED_SIZE characters in all. A repeated name, or a tool that does not fit the
  * size that is left, is skipped.
  */
-export function offeredTools(rows: ConnectorRow[]) {
+export function offeredTools(
+  rows: ConnectorRow[],
+  agent: "copilot" | "agent" = "copilot",
+) {
   const offered = new Map<string, OfferedTool>();
   let size = 0;
   for (const row of rows)
     for (const tool of row.tools) {
       if (offered.size >= MAX_OFFERED) return offered;
-      const one = offer(row, tool);
+      const one = offer(row, tool, agent);
       const cost = one
         ? one.description.length + JSON.stringify(one.parameters).length
         : 0;

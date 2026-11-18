@@ -14,6 +14,7 @@ import {
   type Database,
 } from "../../../database/quills/client";
 import { assistantInvolvements } from "../../../database/quills/schema/assistant";
+import { assistantWebSources } from "../../../database/quills/schema/assistant-web-sources";
 import { changelogEntries } from "../../../database/quills/schema/changelog";
 import {
   conversationMessages,
@@ -257,9 +258,43 @@ async function runMaintenanceWindows(db: Database) {
   }
 }
 
+/**
+ * Fetches web sources again once a week (migration 0043 lists the workspace): an enabled source
+ * whose last successful fetch is 7 days old and that nothing touched for a day. Moving
+ * updated_at keeps a source that keeps failing to one attempt a day.
+ */
+async function refreshStaleWebSources(db: Database) {
+  const due = await db
+    .select({ id: assistantWebSources.id })
+    .from(assistantWebSources)
+    .where(
+      and(
+        eq(assistantWebSources.enabled, true),
+        lte(assistantWebSources.fetchedAt, sql`now() - interval '7 days'`),
+        lte(assistantWebSources.updatedAt, sql`now() - interval '1 day'`),
+      ),
+    )
+    .orderBy(asc(assistantWebSources.fetchedAt))
+    .limit(BATCH)
+    .for("update", { skipLocked: true });
+  for (const source of due) {
+    await db
+      .update(assistantWebSources)
+      .set({ updatedAt: new Date() })
+      .where(eq(assistantWebSources.id, source.id));
+    await recordQuillsChange(db, null, {
+      type: "assistant_web_source.updated",
+      entityType: "assistant_web_source",
+      entityId: source.id,
+      payload: { refresh: "true" },
+    });
+  }
+}
+
 const SWEEPS = [
   wakeSnoozedConversations,
   resolveQuietAgentConversations,
+  refreshStaleWebSources,
   announceScheduledChangelog,
   runMaintenanceWindows,
   // RFC 0003: the weekly digest. quills.runnable_workspaces lists a workspace until its digest

@@ -18,7 +18,8 @@ concurrency:
 
 jobs:
   create-and-assign:
-    if: github.repository == 'PlaybookMediaLLC/kaneo'
+    # The repository id survives renames (the repository is now PlaybookMediaLLC/albus).
+    if: github.repository_id == '1404853407'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

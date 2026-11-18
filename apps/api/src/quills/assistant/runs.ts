@@ -1,5 +1,6 @@
 // Route-module helper: framework/boundaries.test.ts checks its imports like a module that uses ../framework/define-route.
 import { and, eq, gt, sql } from "drizzle-orm";
+import { costOf } from "./ai/pricing";
 import { aiUsageLog } from "../../database/quills/schema/ai-usage-log";
 import { kvStore } from "../../database/quills/schema/kv";
 import type { Database } from "../framework/define-route";
@@ -16,6 +17,7 @@ export const RUN_KINDS = [
   "attribute_preview",
   "ticket_fields",
   "kb_ask",
+  "reply_suggestion",
 ] as const;
 export type RunKind = (typeof RUN_KINDS)[number];
 const RUN_TTL_MS = 24 * 60 * 60 * 1000;
@@ -167,6 +169,7 @@ export async function logUsage(db: Database, entries: UsageEntry[]) {
       inputTokens: entry.usage?.inputTokens ?? 0,
       outputTokens: entry.usage?.outputTokens ?? 0,
       totalTokens: entry.usage?.totalTokens ?? 0,
+      costUsd: costOf(entry.usage),
       durationMs: entry.usage?.durationMs ?? 0,
       status: entry.error ? "error" : "success",
       error: entry.error ?? null,

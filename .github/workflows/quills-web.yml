@@ -9,6 +9,7 @@ on:
       - 'apps/api/src/quills/portal/paths.ts'
       - 'apps/docs/openapi.json'
       - 'scripts/quills-web/**'
+      - 'scripts/quills-ai/**'
       - '.github/workflows/quills-web.yml'
 
 concurrency:
@@ -38,6 +39,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: node --test "scripts/quills-web/**/*.test.mjs"
+      # The Quills AI generator (capabilities, tools and jobs).
+      - run: node --test "scripts/quills-ai/**/*.test.mjs"
       - run: node scripts/quills-web/cli.mjs check
       # CI's quality and unit jobs already type-check and test apps/web on every pull request.
       - name: Compile and test generated output in a clean worktree

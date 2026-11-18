@@ -10,6 +10,7 @@ import postAi from "./post-ai";
 import settings from "./settings";
 import skills from "./skills";
 import snippets from "./snippets";
+import knowledgeSuggestions from "./knowledge-suggestions";
 import suggestions from "./suggestions";
 import supportAi from "./support-ai";
 import webSources from "./web-sources";
@@ -19,6 +20,7 @@ export default apiRouter<BaseVariables & { workspaceId: string }>()
   .route("/", settings)
   .route("/", guidance)
   .route("/", snippets)
+  .route("/", knowledgeSuggestions)
   .route("/", skills)
   .route("/", webSources)
   .route("/", documents)

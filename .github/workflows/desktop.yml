@@ -23,7 +23,8 @@ concurrency:
 
 jobs:
   build:
-    if: ${{ github.repository == 'PlaybookMediaLLC/kaneo' }}
+    # The repository id survives renames (the repository is now PlaybookMediaLLC/albus).
+    if: ${{ github.repository_id == '1404853407' }}
     permissions:
       contents: write
     strategy:

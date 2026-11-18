@@ -5,7 +5,7 @@ Imported from `quackback/packages/db/src` at source commit `42ef2e01b2b48db87f1a
 ## Ownership and identity
 
 Kaneo owns authentication, user accounts, workspaces, membership and workspace
-access. All 156 feature tables live in PostgreSQL schema `quills`.
+access. All 160 feature tables live in PostgreSQL schema `quills`.
 Every table has a text `workspace_id` referencing Kaneo's workspace. Domain IDs
 retain their UUID-backed TypeID representation. Keys, unique constraints and
 feature foreign keys include workspace ownership. Nullable composite foreign
@@ -390,6 +390,8 @@ then roll back. Canonical profiles, workspace metadata and shared rosters are
 reapplied. Runtime jobs, sessions, API keys, outbox history and other ephemeral
 tables listed in `omittedTables` are excluded. The translation cache
 `content_translations` is excluded too: the target translates again on request.
+The Teach-the-AI review state (`ai_knowledge_suggestions`, `ai_knowledge_questions`,
+`ai_knowledge_sources`) is excluded: approved knowledge already transfers as assistant snippets.
 Feedback signals, surveys and their responses, changelog reactions and changelog
 read times transfer, as do the teammate-written changelog versions (`changelog_translations`). Their foreign keys are deferrable, like the older tables'. Restore settlement suppresses
 pending external effects and records an audit entry. Unfinished integration operations
@@ -421,6 +423,9 @@ All entries are workspace-owned, including per-workspace reference catalogues.
 | `post_activity` | `activity.ts` |
 | `agent_skills` | `agent-skills.ts` |
 | `ai_usage_log` | `ai-usage-log.ts` |
+| `ai_knowledge_suggestions` | `knowledge-suggestions.ts` |
+| `ai_knowledge_questions` | `knowledge-suggestions.ts` |
+| `ai_knowledge_sources` | `knowledge-suggestions.ts` |
 | `analytics_daily_stats` | `analytics.ts` |
 | `analytics_top_posts` | `analytics.ts` |
 | `api_keys` | `api-keys.ts` |
@@ -576,13 +581,17 @@ All entries are workspace-owned, including per-workspace reference catalogues.
 
 ## AI provider
 
-The assistant and the AI features call an OpenAI-compatible HTTP API with `fetch`. There is
-no SDK and no other dependency. Set these server variables in the root `.env`:
+The assistant and the AI features call an OpenAI-compatible API through the AI SDK (`ai` and
+`@ai-sdk/openai-compatible`); `src/quills/assistant/ai/README.md` describes the layer. Set these
+server variables in the root `.env`:
 
 | Variable | Use |
 |---|---|
 | `QUILLS_AI_BASE_URL` | API root that serves `/chat/completions` and `/embeddings`, for example `https://api.openai.com/v1` or a local server. Required. |
-| `QUILLS_AI_MODEL` | Chat model name. Required. |
+| `QUILLS_AI_MODEL` | Chat model name. Required. It is the default for both model roles. |
+| `QUILLS_AI_MODEL_FAST` | Chat model for the `fast` role (classify, extract, judge). Optional: without it, `QUILLS_AI_MODEL`. |
+| `QUILLS_AI_MODEL_DEEP` | Chat model for the `deep` role (answers and writing). Optional: without it, `QUILLS_AI_MODEL`. |
+| `QUILLS_AI_PRICES` | JSON prices in US dollars per million tokens, for example `{"google/gemini-2.5-flash-lite": {"input": 0.1, "output": 0.4}}`. Optional: each usage row then gets `cost_usd`; a model without a price gets none. |
 | `QUILLS_AI_API_KEY` | Sent as `Authorization: Bearer`. Leave it empty for a local server that needs no key. |
 | `QUILLS_AI_EMBEDDING_MODEL` | Embedding model. It must return 1536 dimensions (the `vector(1536)` columns). Optional: without it, similar posts, duplicate checks and semantic search stay off. |
 | `QUILLS_AI_MONTHLY_TOKEN_LIMIT` | Tokens that each workspace may use in a UTC calendar month, counted from `ai_usage_log`. Optional: without it there is no limit. Before each provider call, the customer AI routes (post draft, translation) reserve the most the call can cost (its prompt's UTF-8 bytes plus its output limit) under a workspace lock, and return 409 when that would pass the limit; the customer keeps the manual path. So parallel calls cannot pass the limit together. The handler replaces the reservation with the real usage; a failed call's reservation stops counting after 5 minutes. |
@@ -592,5 +601,12 @@ Without `QUILLS_AI_BASE_URL` and `QUILLS_AI_MODEL`, every AI route returns 409
 finishes with no work. Provider calls run outside every database transaction and time out
 after 60 seconds. A failure returns a fixed message; the provider's text and the key never
 reach a response, a log row or a run. Each call writes one `ai_usage_log` row in its
-workspace. The `quills.ai` queue (migration `0017_assistant_queue`) runs the background work;
+workspace. The duplicate check and the tag backfill also send up to 3,000 characters of earlier,
+teammate-decided posts from the same workspace with each call (examples; see `ROUTES.md`). They
+read them live, so a deleted post is never sent. Teach the AI sends up to 8,000 characters of a closed conversation's
+customer and teammate replies, with emails, links and phone numbers removed, once per conversation
+(see `ROUTES.md`). The `quills.ai` queue (migration `0017_assistant_queue`) runs the background work;
 `apps/api/src/quills/assistant/ROUTES.md` lists the routes and the work for each event.
+For development, OpenRouter serves both a chat model and the 1536-dimension
+`openai/text-embedding-3-small` at one base URL. `src/quills/ai-eval/README.md` measures every AI
+feature against a real model and finds the cheapest chat model that passes.

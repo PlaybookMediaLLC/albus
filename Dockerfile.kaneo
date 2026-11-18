@@ -20,6 +20,7 @@ COPY packages/permissions/package.json ./packages/permissions/
 COPY packages/importers/package.json ./packages/importers/
 COPY packages/mcp/package.json ./packages/mcp/
 COPY packages/widget/package.json ./packages/widget/
+COPY packages/quills-ai/package.json ./packages/quills-ai/
 COPY apps/api/package.json ./apps/api/
 
 RUN pnpm install --frozen-lockfile
@@ -33,6 +34,7 @@ COPY packages/permissions ./packages/permissions
 COPY packages/importers ./packages/importers
 COPY packages/mcp ./packages/mcp
 COPY packages/widget ./packages/widget
+COPY packages/quills-ai ./packages/quills-ai
 COPY i18n ./i18n
 COPY apps/api ./apps/api
 
@@ -48,6 +50,10 @@ RUN pnpm run build
 # The widget page and browser SDK that the API serves (Quills)
 WORKDIR /app/packages/widget
 RUN pnpm exec tsup
+
+# The Quills AI building blocks that the API loads at runtime
+WORKDIR /app/packages/quills-ai
+RUN pnpm run build
 
 WORKDIR /app/apps/api
 RUN pnpm run build
@@ -71,6 +77,7 @@ COPY --from=api-builder /app/packages/logger/package.json ./packages/logger/
 COPY --from=api-builder /app/packages/permissions/package.json ./packages/permissions/
 COPY --from=api-builder /app/packages/importers/package.json ./packages/importers/
 COPY --from=api-builder /app/packages/mcp/package.json ./packages/mcp/
+COPY --from=api-builder /app/packages/quills-ai/package.json ./packages/quills-ai/
 
 RUN sed -i 's/"prepare": "husky"/"prepare": ""/g' package.json && \
   corepack enable && \
@@ -86,6 +93,7 @@ COPY --from=api-builder /app/packages/permissions ./packages/permissions
 COPY --from=api-builder /app/packages/importers/dist ./packages/importers/dist
 COPY --from=api-builder /app/packages/mcp/dist ./packages/mcp/dist
 COPY --from=api-builder /app/packages/widget/dist ./packages/widget/dist
+COPY --from=api-builder /app/packages/quills-ai/dist ./packages/quills-ai/dist
 
 FROM --platform=$BUILDPLATFORM node:24.22.2-alpine AS web-builder
 
@@ -137,7 +145,7 @@ WORKDIR /app
 COPY --from=api-runtime --chown=appuser:appuser /app /app
 
 # Fail the build early if the runtime dependency layout is broken on the target architecture
-RUN cd /app/apps/api && node -e "const fs=require('fs');for(const m of ['bcryptjs','hono','pg','drizzle-orm','better-auth','ioredis','valibot','octokit','@modelcontextprotocol/sdk']){fs.accessSync('node_modules/'+m+'/package.json')}for(const m of ['email','permissions','importers']){fs.accessSync('node_modules/@kaneo/'+m+'/dist/index.js')}" && \
+RUN cd /app/apps/api && node -e "const fs=require('fs');for(const m of ['bcryptjs','hono','pg','drizzle-orm','better-auth','ioredis','valibot','octokit','@modelcontextprotocol/sdk']){fs.accessSync('node_modules/'+m+'/package.json')}for(const m of ['email','permissions','importers']){fs.accessSync('node_modules/@kaneo/'+m+'/dist/index.js')}fs.accessSync('node_modules/@quills/ai/dist/learning/index.js')" && \
   node --input-type=module -e "import { registerTools } from '@kaneo/mcp/tools'; if (typeof registerTools !== 'function') process.exit(1)"
 
 COPY --from=web-builder --chown=appuser:appuser /app/apps/web/dist /usr/share/nginx/html

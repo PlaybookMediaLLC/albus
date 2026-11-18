@@ -1,0 +1,40 @@
+{
+  "name": "@quills/ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI building blocks for Quills: examples from teammate decisions for prompts.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./learning": {
+      "types": "./dist/learning/index.d.ts",
+      "default": "./dist/learning/index.js"
+    },
+    "./teach": {
+      "types": "./dist/teach/index.d.ts",
+      "default": "./dist/teach/index.js"
+    },
+    "./capability": {
+      "types": "./dist/capability.d.ts",
+      "default": "./dist/capability.js"
+    }
+  },
+  "scripts": {
+    "test": "vp test run --config vitest.config.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "vite-plus": "catalog:",
+    "typescript": "^7.0.2"
+  }
+}

@@ -2,6 +2,7 @@ import {
   ChartColumn,
   ClipboardList,
   Copy,
+  Lightbulb,
   Inbox,
   LayoutGrid,
   ListChecks,
@@ -85,6 +86,12 @@ export const workspaceViews: readonly TeamView[] = [
     labelKey: "duplicates.nav",
     icon: Copy,
     countKey: "pendingDuplicates",
+  },
+  {
+    id: "knowledge",
+    path: "/knowledge",
+    labelKey: "knowledge.nav",
+    icon: Lightbulb,
   },
   {
     id: "autopilot",

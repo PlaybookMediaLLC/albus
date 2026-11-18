@@ -1,0 +1,60 @@
+{"text": "Invoices do not show our VAT number", "tags": ["Billing"], "decidedAt": "2026-01-05T10:00:00Z"}
+{"text": "Let us pay yearly with a discount", "tags": ["Billing"], "decidedAt": "2026-01-10T10:00:00Z"}
+{"text": "Download all posts as CSV", "tags": ["Export"], "decidedAt": "2026-01-13T10:00:00Z"}
+{"text": "Export the roadmap to PDF", "tags": ["Export", "Reporting"], "decidedAt": "2026-01-18T10:00:00Z"}
+{"text": "Sync posts with Jira", "tags": ["Integrations"], "decidedAt": "2026-01-21T10:00:00Z"}
+{"text": "Send new tickets to Slack", "tags": ["Integrations", "Notifications"], "decidedAt": "2026-01-26T10:00:00Z"}
+{"text": "Email me when someone comments on my post", "tags": ["Notifications"], "decidedAt": "2026-01-29T10:00:00Z"}
+{"text": "Push notifications on the phone app", "tags": ["Mobile", "Notifications"], "decidedAt": "2026-02-03T10:00:00Z"}
+{"text": "The iOS app crashes when I open a board", "tags": ["Mobile"], "decidedAt": "2026-02-06T10:00:00Z"}
+{"text": "The board takes 10 seconds to load", "tags": ["Performance"], "decidedAt": "2026-02-11T10:00:00Z"}
+{"text": "Search is slow with many posts", "tags": ["Performance", "Search"], "decidedAt": "2026-02-14T10:00:00Z"}
+{"text": "Only admins should delete posts", "tags": ["Permissions"], "decidedAt": "2026-02-19T10:00:00Z"}
+{"text": "Viewers should not see internal notes", "tags": ["Permissions"], "decidedAt": "2026-02-22T10:00:00Z"}
+{"text": "Search inside comments", "tags": ["Search"], "decidedAt": "2026-02-27T10:00:00Z"}
+{"text": "Filter search results by board", "tags": ["Search"], "decidedAt": "2026-03-02T10:00:00Z"}
+{"text": "Weekly report of new feedback", "tags": ["Reporting"], "decidedAt": "2026-03-07T10:00:00Z"}
+{"text": "Chart of votes over time", "tags": ["Reporting"], "decidedAt": "2026-03-10T10:00:00Z"}
+{"text": "The vote button is too small on mobile", "tags": ["UI", "Mobile"], "decidedAt": "2026-03-15T10:00:00Z"}
+{"text": "Dark mode for the dashboard", "tags": ["UI"], "decidedAt": "2026-03-18T10:00:00Z"}
+{"text": "Create posts through the API", "tags": ["API"], "decidedAt": "2026-03-23T10:00:00Z"}
+{"text": "API rate limits are too low", "tags": ["API", "Performance"], "decidedAt": "2026-03-26T10:00:00Z"}
+{"text": "Webhook when a post is merged", "tags": ["API", "Integrations"], "decidedAt": "2026-03-31T10:00:00Z"}
+{"text": "Show a checklist for new workspaces", "tags": ["Onboarding"], "decidedAt": "2026-04-03T10:00:00Z"}
+{"text": "Invite the whole team during sign-up", "tags": ["Onboarding", "Permissions"], "decidedAt": "2026-04-08T10:00:00Z"}
+{"text": "Refund a charge from the billing page", "tags": ["Billing"], "decidedAt": "2026-04-11T10:00:00Z"}
+{"text": "Change the card on file", "tags": ["Billing"], "decidedAt": "2026-04-16T10:00:00Z"}
+{"text": "Export customers with their votes", "tags": ["Export"], "decidedAt": "2026-04-19T10:00:00Z"}
+{"text": "Connect HubSpot companies", "tags": ["Integrations"], "decidedAt": "2026-04-24T10:00:00Z"}
+{"text": "Digest email every Monday", "tags": ["Notifications", "Reporting"], "decidedAt": "2026-04-27T10:00:00Z"}
+{"text": "Android app for the inbox", "tags": ["Mobile"], "decidedAt": "2026-05-02T10:00:00Z"}
+{"text": "The widget slows down our website", "tags": ["Performance"], "decidedAt": "2026-05-05T10:00:00Z"}
+{"text": "Custom roles with chosen permissions", "tags": ["Permissions"], "decidedAt": "2026-05-10T10:00:00Z"}
+{"text": "Search by customer email", "tags": ["Search"], "decidedAt": "2026-05-13T10:00:00Z"}
+{"text": "Dashboard of response times", "tags": ["Reporting"], "decidedAt": "2026-05-18T10:00:00Z"}
+{"text": "Compact view for the board", "tags": ["UI"], "decidedAt": "2026-05-21T10:00:00Z"}
+{"text": "API key per teammate", "tags": ["API", "Permissions"], "decidedAt": "2026-05-26T10:00:00Z"}
+{"text": "Guided tour of the inbox", "tags": ["Onboarding"], "decidedAt": "2026-05-29T10:00:00Z"}
+{"text": "Sample data in a new workspace", "tags": ["Onboarding"], "decidedAt": "2026-06-03T10:00:00Z"}
+{"text": "Taxes are calculated wrong for Canada", "tags": ["Billing"], "decidedAt": "2026-06-06T10:00:00Z"}
+{"text": "Export tickets for an audit", "tags": ["Export", "Reporting"], "decidedAt": "2026-06-11T10:00:00Z"}
+{"text": "Zapier trigger for new posts", "tags": ["Integrations", "API"], "decidedAt": "2026-06-14T10:00:00Z"}
+{"text": "Mute notifications for a board", "tags": ["Notifications"], "decidedAt": "2026-06-19T10:00:00Z"}
+{"text": "Tablet layout for the roadmap", "tags": ["Mobile", "UI"], "decidedAt": "2026-06-22T10:00:00Z"}
+{"text": "Large workspaces time out when loading tags", "tags": ["Performance"], "decidedAt": "2026-06-27T10:00:00Z"}
+{"text": "Guests can see private boards by URL", "tags": ["Permissions"], "decidedAt": "2026-06-30T10:00:00Z"}
+{"text": "Typo-tolerant search", "tags": ["Search"], "decidedAt": "2026-07-05T10:00:00Z"}
+{"text": "Export charts as images", "tags": ["Reporting", "Export"], "decidedAt": "2026-07-08T10:00:00Z"}
+{"text": "Bigger font option", "tags": ["UI"], "decidedAt": "2026-07-13T10:00:00Z"}
+{"text": "GraphQL API", "tags": ["API"], "decidedAt": "2026-07-16T10:00:00Z"}
+{"text": "Import from Canny during onboarding", "tags": ["Onboarding", "Integrations"], "decidedAt": "2026-07-21T10:00:00Z"}
+{"text": "Pay with a bank transfer", "tags": ["Billing"], "decidedAt": "2026-07-24T10:00:00Z"}
+{"text": "Scheduled CSV export to S3", "tags": ["Export", "Integrations"], "decidedAt": "2026-07-29T10:00:00Z"}
+{"text": "SMS alert for urgent tickets", "tags": ["Notifications"], "decidedAt": "2026-08-01T10:00:00Z"}
+{"text": "Offline drafts in the mobile app", "tags": ["Mobile"], "decidedAt": "2026-08-06T10:00:00Z"}
+{"text": "Pages render slowly on old laptops", "tags": ["Performance", "UI"], "decidedAt": "2026-08-09T10:00:00Z"}
+{"text": "Read-only access for investors", "tags": ["Permissions"], "decidedAt": "2026-08-14T10:00:00Z"}
+{"text": "Saved searches", "tags": ["Search"], "decidedAt": "2026-08-17T10:00:00Z"}
+{"text": "Monthly report for leadership", "tags": ["Reporting"], "decidedAt": "2026-08-22T10:00:00Z"}
+{"text": "Drag and drop posts between columns", "tags": ["UI"], "decidedAt": "2026-08-25T10:00:00Z"}
+{"text": "Explain the first steps in an email", "tags": ["Onboarding", "Notifications"], "decidedAt": "2026-08-30T10:00:00Z"}
