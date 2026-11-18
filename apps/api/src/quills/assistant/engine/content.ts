@@ -12,7 +12,10 @@ import {
 } from "drizzle-orm";
 import { z } from "zod";
 import {
+  chooseTags,
+  DUPLICATE_CONFIDENCE,
   findExamples,
+  judgeDuplicate,
   renderExamples,
   selectExamples,
   TASKS,
@@ -22,6 +25,10 @@ import {
   withQuillsSystemWorkspace,
   type Database,
 } from "../../../database/quills/client";
+import {
+  assistantDocuments,
+  assistantSnippets,
+} from "../../../database/quills/schema/assistant";
 import { boards, postTags } from "../../../database/quills/schema/boards";
 import { conversations } from "../../../database/quills/schema/conversation";
 import { conversationSummaries } from "../../../database/quills/schema/conversation-summary";
@@ -43,13 +50,7 @@ import { readConfig as readHelpCenterConfig } from "../../content/help-center/sh
 import { aiConfig, chatJson, embed, untrusted, type Usage } from "../provider";
 import { exactDistance, storedPostVector, vectorParam } from "./distance";
 import { createLearningStore } from "./learning-store";
-import {
-  DUPLICATE_CONFIDENCE,
-  duplicateMessages,
-  duplicateVerdict as verdict,
-  tagAnswer,
-  tagMessages,
-} from "./prompts";
+import { runCapability } from "../ai/run";
 import { logUsage, type UsageEntry } from "../runs";
 import {
   failedUsage,
@@ -105,13 +106,16 @@ async function embedRows<T extends { id: string; text: string }>(
 
 const postText = (post: { title: string; content: string }) =>
   `${post.title}\n${post.content}`.slice(0, 8000);
-const embeddingSet = (values: number[]) => ({
+export const embeddingSet = (values: number[]) => ({
   embedding: vectorParam(values) as never,
   embeddingModel: aiConfig()!.embeddingModel,
   embeddingUpdatedAt: new Date(),
 });
 
-/** assistant.embeddings_requested: embeds up to 32 posts and 32 articles without an embedding. */
+/**
+ * assistant.embeddings_requested: embeds up to 32 posts, articles, snippets and documents each
+ * without an embedding. Snippets and documents created later are embedded by embed-knowledge.ts.
+ */
 export const backfillEmbeddings: Work = async (workspaceId) => {
   if (!embeddingsOn()) return nothing;
   // ponytail: one call per kind per request; send more requests for more rows.
@@ -136,6 +140,29 @@ export const backfillEmbeddings: Work = async (workspaceId) => {
         ),
       )
       .limit(BATCH),
+    snippets: await db
+      .select({
+        id: assistantSnippets.id,
+        title: assistantSnippets.title,
+        content: assistantSnippets.content,
+      })
+      .from(assistantSnippets)
+      .where(isNull(assistantSnippets.embedding))
+      .limit(BATCH),
+    documents: await db
+      .select({
+        id: assistantDocuments.id,
+        title: assistantDocuments.title,
+        content: assistantDocuments.content,
+      })
+      .from(assistantDocuments)
+      .where(
+        and(
+          isNull(assistantDocuments.embedding),
+          isNull(assistantDocuments.deletedAt),
+        ),
+      )
+      .limit(BATCH),
   }));
   const usage: UsageEntry[] = [];
   const left = budget();
@@ -146,6 +173,18 @@ export const backfillEmbeddings: Work = async (workspaceId) => {
     articles: await embedRows(
       text(pending.articles),
       "article_embedding",
+      usage,
+      left,
+    ),
+    snippets: await embedRows(
+      text(pending.snippets),
+      "snippet_embedding",
+      usage,
+      left,
+    ),
+    documents: await embedRows(
+      text(pending.documents),
+      "document_embedding",
       usage,
       left,
     ),
@@ -165,6 +204,26 @@ export const backfillEmbeddings: Work = async (workspaceId) => {
           and(
             eq(helpCenterArticles.id, row.id as never),
             isNull(helpCenterArticles.embedding),
+          ),
+        );
+    for (const row of done.snippets)
+      await db
+        .update(assistantSnippets)
+        .set(embeddingSet(row.values))
+        .where(
+          and(
+            eq(assistantSnippets.id, row.id as never),
+            isNull(assistantSnippets.embedding),
+          ),
+        );
+    for (const row of done.documents)
+      await db
+        .update(assistantDocuments)
+        .set(embeddingSet(row.values))
+        .where(
+          and(
+            eq(assistantDocuments.id, row.id as never),
+            isNull(assistantDocuments.embedding),
           ),
         );
   };
@@ -268,17 +327,23 @@ export const checkDuplicates: Work = async (workspaceId, event) => {
   const examplesBlock = renderExamples("duplicate", examples, untrusted);
   const found: {
     other: (typeof candidates)[number];
-    verdict: z.infer<typeof verdict>;
+    verdict: z.output<typeof judgeDuplicate.schema>;
     model: string;
   }[] = [];
   for (const other of candidates) {
     if (!left()) break;
-    const answer = await chatJson(
-      verdict,
-      duplicateMessages(postText(post), postText(other), examplesBlock),
-    );
+    const answer = await runCapability(judgeDuplicate, {
+      first: postText(post),
+      second: postText(other),
+      examples: examplesBlock,
+    });
     usage.push({
-      ...usageEntry("merge_check", "chat_completion", answer.usage, post.id),
+      ...usageEntry(
+        judgeDuplicate.step,
+        "chat_completion",
+        answer.usage,
+        post.id,
+      ),
       metadata: { examples: examples.length, exampleCandidates },
     });
     if (
@@ -582,19 +647,15 @@ export const backfillTags: Work = async (workspaceId, event) => {
     const batch = context.posts.slice(i, i + 10);
     const candidates = context.examples.get(i) ?? [];
     const picked = selectExamples(candidates, TASKS.tags);
-    const answer = await chatJson(
-      tagAnswer,
-      tagMessages(
-        context.tags,
-        batch
-          .map((post) => `${post.id}: ${postText(post).slice(0, 1000)}`)
-          .join("\n\n"),
-        renderExamples("tags", picked, untrusted),
-      ),
-      1500,
-    );
+    const answer = await runCapability(chooseTags, {
+      tags: context.tags,
+      posts: batch
+        .map((post) => `${post.id}: ${postText(post).slice(0, 1000)}`)
+        .join("\n\n"),
+      examples: renderExamples("tags", picked, untrusted),
+    });
     usage.push({
-      ...usageEntry("tag_backfill", "chat_completion", answer.usage),
+      ...usageEntry(chooseTags.step, "chat_completion", answer.usage),
       metadata: {
         examples: picked.length,
         exampleCandidates: candidates.length,

@@ -8,28 +8,24 @@
 //
 // It reads labelled items written for this purpose, sorts them by decision time, and asks the model
 // twice for item i: with today's request, and with examples that @quills/ai chooses from items
-// 1..i-1, as the jobs do. It uses the shipped request builders (engine/prompts.ts), the shipped
+// 1..i-1, as the jobs do. It uses the shipped capabilities (@quills/ai/learning), the shipped
 // selection and the real provider client, so the numbers measure the code that ships.
 import { readFileSync } from "node:fs";
 import {
+  chooseTags,
+  DUPLICATE_CONFIDENCE,
   findExamples,
   InMemoryExampleStore,
+  judgeDuplicate,
   type MemoryRow,
   PAIR_SIDE_CHARS,
   renderExamples,
   selectExamples,
   TASKS,
 } from "@quills/ai/learning";
-import {
-  DUPLICATE_CONFIDENCE,
-  duplicateMessages,
-  duplicateVerdict,
-  tagAnswer,
-  tagMessages,
-} from "../../src/quills/assistant/engine/prompts";
+import { runCapability } from "../../src/quills/assistant/ai/run";
 import {
   aiConfig,
-  chatJson,
   embed,
   EMBEDDING_DIMENSIONS,
   untrusted,
@@ -115,10 +111,11 @@ async function duplicates(model: string) {
       ["base", null],
       ["examples", block],
     ] as const) {
-      const { value } = await chatJson(
-        duplicateVerdict,
-        duplicateMessages(item.first, item.second, examples),
-      );
+      const { value } = await runCapability(judgeDuplicate, {
+        first: item.first,
+        second: item.second,
+        examples,
+      });
       const said = value.duplicate && value.confidence >= DUPLICATE_CONFIDENCE;
       const tally = counts[run];
       if (said && item.duplicate) tally.tp++;
@@ -191,11 +188,11 @@ async function tags(model: string) {
       ["base", null],
       ["examples", block],
     ] as const) {
-      const { value } = await chatJson(
-        tagAnswer,
-        tagMessages(list, `p${i}: ${item.text}`, examples),
-        1500,
-      );
+      const { value } = await runCapability(chooseTags, {
+        tags: list,
+        posts: `p${i}: ${item.text}`,
+        examples,
+      });
       const chosen = new Set(
         (value.posts.find((entry) => entry.postId === `p${i}`)?.tagIds ?? [])
           .map((id) => idOf.get(id))
