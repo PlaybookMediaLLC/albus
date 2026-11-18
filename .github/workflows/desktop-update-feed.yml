@@ -14,7 +14,8 @@ permissions: {}
 
 jobs:
   feed:
-    if: ${{ github.repository == 'PlaybookMediaLLC/kaneo' && startsWith(github.event.release.tag_name, 'desktop-v') }}
+    # The repository id survives renames (the repository is now PlaybookMediaLLC/albus).
+    if: ${{ github.repository_id == '1404853407' && startsWith(github.event.release.tag_name, 'desktop-v') }}
     runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions:

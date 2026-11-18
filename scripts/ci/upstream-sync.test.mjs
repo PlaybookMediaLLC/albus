@@ -74,7 +74,7 @@ test("nightly sync is scoped, pinned, serialized and cannot push or execute upst
   assert.equal(
     workflow.jobs.sync.if,
     // eslint-disable-next-line no-template-curly-in-string -- GitHub evaluates this literal expression.
-    "${{ github.repository == 'PlaybookMediaLLC/kaneo' }}",
+    "${{ github.repository_id == '1404853407' }}",
   );
   assert.equal(workflow.concurrency["cancel-in-progress"], false);
   assert.equal(workflow.jobs.sync.steps.length, 1);

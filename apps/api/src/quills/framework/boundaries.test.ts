@@ -3,7 +3,8 @@ import { posix } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 
-// Static import rules for src/quills/**. Tests and fixtures are test support and are not scanned.
+// Static import rules for src/quills/**. Tests, fixtures and the live AI eval (ai-eval/, dev only,
+// never imported by the app) are test support and are not scanned.
 const sources = (dir: string) => {
   const root = fileURLToPath(new URL(dir, import.meta.url));
   return readdirSync(root, { recursive: true, encoding: "utf8" })
@@ -14,7 +15,9 @@ const sources = (dir: string) => {
     }));
 };
 const quills = sources("..").filter(
-  (file) => !/\.(test|fixture)\.ts$/.test(file.path),
+  (file) =>
+    !/\.(test|fixture)\.ts$/.test(file.path) &&
+    !file.path.startsWith("ai-eval/"),
 );
 const feature = quills.filter((file) => !file.path.startsWith("framework/"));
 // A router that only composes route modules follows the same import rules.
@@ -26,14 +29,27 @@ const routeModules = feature.filter(
 const routePaths = new Set(
   routeModules.map((file) => file.path.replace(/(\/index)?\.ts$/, "")),
 );
-/** Route modules import packages, the helper, platform reads, Quills schema and other route modules only. */
+/**
+ * Route modules import packages, the helper, platform reads, Quills schema and other route modules
+ * only. @quills/ai has no IO (its purity test checks the imports), so its subpaths are allowed.
+ * provider.ts reaches the AI SDK only through assistant/ai/.
+ */
 const allowedImport = (file: string, specifier: string) => {
   if (
-    /^(drizzle-orm|hono\/http-exception|@kaneo\/(ids|ids\/zod|branding))$/.test(
+    /^(drizzle-orm|hono\/http-exception|@kaneo\/(ids|ids\/zod|branding)|@quills\/ai\/(learning|teach|capability|capabilities))$/.test(
       specifier,
     )
   )
     return true;
+  // The AI SDK is the provider client, like drizzle-orm for the database. Only the AI layer may
+  // import it, so every call keeps its error mapping, middleware and usage row (assistant/ai/README.md).
+  if (
+    file.startsWith("assistant/ai/") &&
+    /^(ai|@ai-sdk\/openai-compatible)$/.test(specifier)
+  )
+    return true;
+  // The PDF parser reads bytes it is given and does no IO; only the PDF helper imports it.
+  if (file === "assistant/pdf-text.ts" && specifier === "unpdf") return true;
   // "./directory/index" and "./directory" name the same module.
   const target = posix
     .join(posix.dirname(file), specifier)
@@ -112,6 +128,17 @@ const matching = (files: typeof quills, rule: RegExp) =>
     .sort();
 
 describe("Quills module boundaries", () => {
+  it("imports the AI SDK only in the AI layer (assistant/ai/README.md)", () => {
+    expect(
+      quills
+        .filter((file) =>
+          /(?:from |import\()"(ai|@ai-sdk\/[^"]+)"/.test(file.source),
+        )
+        .map((file) => file.path)
+        .filter((path) => !path.startsWith("assistant/ai/")),
+    ).toEqual([]);
+  });
+
   it("declares every route through defineQuillsRoute", () => {
     expect(routeModules.length).toBeGreaterThan(0);
     expect(matching(feature, /\bcreateRoute\b/)).toEqual([]);

@@ -13,6 +13,7 @@ const onTicket = on(
 );
 
 export const requestQuillsConversationSummary = onConversation;
+export const suggestQuillsConversationReply = onConversation;
 export const requestQuillsTicketSummary = onTicket;
 export const getQuillsTicketSummary = onTicket;
 export const suggestQuillsTicketFieldValues = onTicket;

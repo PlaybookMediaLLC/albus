@@ -76,6 +76,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/assistant/web-sources",
   },
   {
+    operationId: "answerQuillsKnowledgeSuggestion",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/assistant/knowledge-suggestions/{suggestionId}/answer",
+  },
+  {
     operationId: "applyQuillsMacro",
     method: "POST",
     path: "/api/quills/{workspaceId}/macros/{macroId}/apply",
@@ -89,6 +94,11 @@ export const quillsOperationRoutes = [
     operationId: "approveQuillsComment",
     method: "POST",
     path: "/api/quills/{workspaceId}/moderation/comments/{commentId}/approve",
+  },
+  {
+    operationId: "approveQuillsKnowledgeSuggestion",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/assistant/knowledge-suggestions/{suggestionId}/approve",
   },
   {
     operationId: "approveQuillsPost",
@@ -901,6 +911,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/conversations/{conversationId}/translation/dismiss",
   },
   {
+    operationId: "dismissQuillsKnowledgeSuggestion",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/assistant/knowledge-suggestions/{suggestionId}/dismiss",
+  },
+  {
     operationId: "dismissQuillsSuggestion",
     method: "POST",
     path: "/api/quills/{workspaceId}/suggestions/{suggestionId}/dismiss",
@@ -1244,6 +1259,11 @@ export const quillsOperationRoutes = [
     operationId: "getQuillsIntegration",
     method: "GET",
     path: "/api/quills/{workspaceId}/integrations/{integrationId}",
+  },
+  {
+    operationId: "getQuillsKnowledgeSuggestion",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/assistant/knowledge-suggestions/{suggestionId}",
   },
   {
     operationId: "getQuillsLinkedConversationsForPost",
@@ -2091,6 +2111,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/jobs",
   },
   {
+    operationId: "listQuillsKnowledgeSuggestions",
+    method: "GET",
+    path: "/api/quills/{workspaceId}/assistant/knowledge-suggestions",
+  },
+  {
     operationId: "listQuillsLinks",
     method: "GET",
     path: "/api/quills/{workspaceId}/links",
@@ -2739,6 +2764,11 @@ export const quillsOperationRoutes = [
     operationId: "refreshQuillsConnector",
     method: "POST",
     path: "/api/quills/{workspaceId}/assistant/connectors/{connectorId}/refresh",
+  },
+  {
+    operationId: "refreshQuillsWebSource",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/assistant/web-sources/{webSourceId}/refresh",
   },
   {
     operationId: "registerQuillsPushDevice",
@@ -3671,6 +3701,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/apps/suggest",
   },
   {
+    operationId: "suggestQuillsConversationReply",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/conversations/{conversationId}/reply-suggestion",
+  },
+  {
     operationId: "suggestQuillsTicketFieldValues",
     method: "POST",
     path: "/api/quills/{workspaceId}/tickets/{ticketId}/field-suggestions",
@@ -3941,6 +3976,11 @@ export const quillsOperationRoutes = [
     path: "/api/quills/{workspaceId}/integrations/{integrationId}",
   },
   {
+    operationId: "updateQuillsKnowledgeSuggestion",
+    method: "PATCH",
+    path: "/api/quills/{workspaceId}/assistant/knowledge-suggestions/{suggestionId}",
+  },
+  {
     operationId: "updateQuillsMacro",
     method: "PATCH",
     path: "/api/quills/{workspaceId}/macros/{macroId}",
@@ -4104,6 +4144,11 @@ export const quillsOperationRoutes = [
     operationId: "uploadQuillsAssistantDocument",
     method: "POST",
     path: "/api/quills/{workspaceId}/assistant/documents",
+  },
+  {
+    operationId: "uploadQuillsAssistantPdfDocument",
+    method: "POST",
+    path: "/api/quills/{workspaceId}/assistant/documents/pdf",
   },
   {
     operationId: "validateQuillsCsatEmailToken",

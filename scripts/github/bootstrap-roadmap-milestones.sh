@@ -3,7 +3,7 @@
 # Run in GitHub Actions with issues:write and GH_TOKEN, or locally with gh auth login.
 set -euo pipefail
 
-: "${GH_REPO:=PlaybookMediaLLC/kaneo}"
+: "${GH_REPO:=PlaybookMediaLLC/albus}"
 if ! command -v gh >/dev/null 2>&1; then
   echo "GitHub CLI (gh) is required." >&2
   exit 1

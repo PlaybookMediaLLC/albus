@@ -84,9 +84,14 @@ const extraction = (requests: object[]) =>
       : chatReply({ requests }),
   );
 const darkMode = { message: 2, excerpt: ASK, title: "Dark mode" };
+// The teach review (assistant/engine/teach.ts) shares the event, so count only this job's prompt.
 const chats = () =>
-  provider.requests.filter((request) =>
-    request.path.endsWith("/chat/completions"),
+  provider.requests.filter(
+    (request) =>
+      request.path.endsWith("/chat/completions") &&
+      String(request.body?.messages?.[0]?.content ?? "").includes(
+        "Find the concrete feature requests",
+      ),
   );
 
 /**

@@ -28487,7 +28487,8 @@
                         "translate_message",
                         "attribute_preview",
                         "ticket_fields",
-                        "kb_ask"
+                        "kb_ask",
+                        "reply_suggestion"
                       ]
                     },
                     "status": {
@@ -28723,7 +28724,8 @@
                         "translate_message",
                         "attribute_preview",
                         "ticket_fields",
-                        "kb_ask"
+                        "kb_ask",
+                        "reply_suggestion"
                       ]
                     },
                     "status": {
@@ -79583,6 +79585,13 @@
                         "assistant.embeddings_requested",
                         "merge_suggestion.dismissed",
                         "merge_suggestion.restored",
+                        "knowledge_suggestion.created",
+                        "knowledge_suggestion.attached",
+                        "knowledge_suggestion.answered",
+                        "knowledge_suggestion.drafted",
+                        "knowledge_suggestion.updated",
+                        "knowledge_suggestion.approved",
+                        "knowledge_suggestion.dismissed",
                         "post.merge_check_requested",
                         "post.sentiment_requested",
                         "post.tags_backfill_requested",
@@ -80161,6 +80170,13 @@
                         "assistant.embeddings_requested",
                         "merge_suggestion.dismissed",
                         "merge_suggestion.restored",
+                        "knowledge_suggestion.created",
+                        "knowledge_suggestion.attached",
+                        "knowledge_suggestion.answered",
+                        "knowledge_suggestion.drafted",
+                        "knowledge_suggestion.updated",
+                        "knowledge_suggestion.approved",
+                        "knowledge_suggestion.dismissed",
                         "post.merge_check_requested",
                         "post.sentiment_requested",
                         "post.tags_backfill_requested",
@@ -142963,9 +142979,13 @@
                                 "enum": [
                                   "search_help_center",
                                   "search_knowledge",
+                                  "search_conversations",
                                   "set_conversation_status",
                                   "set_conversation_priority",
-                                  "add_conversation_tag"
+                                  "add_conversation_tag",
+                                  "assign_conversation_team",
+                                  "set_conversation_attribute",
+                                  "add_private_note"
                                 ]
                               },
                               "mode": {
@@ -142981,7 +143001,7 @@
                               "mode"
                             ]
                           },
-                          "maxItems": 5
+                          "maxItems": 9
                         }
                       },
                       "required": [
@@ -143047,9 +143067,13 @@
                                 "enum": [
                                   "search_help_center",
                                   "search_knowledge",
+                                  "search_conversations",
                                   "set_conversation_status",
                                   "set_conversation_priority",
-                                  "add_conversation_tag"
+                                  "add_conversation_tag",
+                                  "assign_conversation_team",
+                                  "set_conversation_attribute",
+                                  "add_private_note"
                                 ]
                               },
                               "mode": {
@@ -143065,7 +143089,7 @@
                               "mode"
                             ]
                           },
-                          "maxItems": 5
+                          "maxItems": 9
                         }
                       },
                       "required": [
@@ -143221,9 +143245,13 @@
                           "enum": [
                             "search_help_center",
                             "search_knowledge",
+                            "search_conversations",
                             "set_conversation_status",
                             "set_conversation_priority",
-                            "add_conversation_tag"
+                            "add_conversation_tag",
+                            "assign_conversation_team",
+                            "set_conversation_attribute",
+                            "add_private_note"
                           ]
                         },
                         "mode": {
@@ -143239,7 +143267,7 @@
                         "mode"
                       ]
                     },
-                    "maxItems": 5
+                    "maxItems": 9
                   },
                   "copilotQa": {
                     "type": "boolean"
@@ -143293,9 +143321,13 @@
                           "enum": [
                             "search_help_center",
                             "search_knowledge",
+                            "search_conversations",
                             "set_conversation_status",
                             "set_conversation_priority",
-                            "add_conversation_tag"
+                            "add_conversation_tag",
+                            "assign_conversation_team",
+                            "set_conversation_attribute",
+                            "add_private_note"
                           ]
                         },
                         "mode": {
@@ -143311,7 +143343,7 @@
                         "mode"
                       ]
                     },
-                    "maxItems": 5
+                    "maxItems": 9
                   }
                 },
                 "required": [
@@ -143426,9 +143458,13 @@
                                 "enum": [
                                   "search_help_center",
                                   "search_knowledge",
+                                  "search_conversations",
                                   "set_conversation_status",
                                   "set_conversation_priority",
-                                  "add_conversation_tag"
+                                  "add_conversation_tag",
+                                  "assign_conversation_team",
+                                  "set_conversation_attribute",
+                                  "add_private_note"
                                 ]
                               },
                               "mode": {
@@ -143444,7 +143480,7 @@
                               "mode"
                             ]
                           },
-                          "maxItems": 5
+                          "maxItems": 9
                         }
                       },
                       "required": [
@@ -143510,9 +143546,13 @@
                                 "enum": [
                                   "search_help_center",
                                   "search_knowledge",
+                                  "search_conversations",
                                   "set_conversation_status",
                                   "set_conversation_priority",
-                                  "add_conversation_tag"
+                                  "add_conversation_tag",
+                                  "assign_conversation_team",
+                                  "set_conversation_attribute",
+                                  "add_private_note"
                                 ]
                               },
                               "mode": {
@@ -143528,7 +143568,7 @@
                               "mode"
                             ]
                           },
-                          "maxItems": 5
+                          "maxItems": 9
                         }
                       },
                       "required": [
@@ -144851,6 +144891,1161 @@
         }
       }
     },
+    "/quills/{workspaceId}/assistant/knowledge-suggestions": {
+      "get": {
+        "operationId": "listQuillsKnowledgeSuggestions",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "List the knowledge suggestions",
+        "description": "Open suggestions (waiting for answers, drafting, or with a draft ready) by default: gaps of the customer agent first, then by evidence, then newest. At most 200.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "approved",
+                "dismissed"
+              ],
+              "default": "open"
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The suggestions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "awaiting_answer",
+                              "drafting",
+                              "draft_ready",
+                              "approved",
+                              "dismissed"
+                            ]
+                          },
+                          "gap": {
+                            "type": "boolean",
+                            "description": "The customer agent could not answer this; such suggestions rank first."
+                          },
+                          "topic": {
+                            "type": "string"
+                          },
+                          "candidateTitle": {
+                            "type": "string"
+                          },
+                          "candidateContent": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "description": "The draft title, once the questions are done."
+                          },
+                          "content": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "description": "The draft content, once the questions are done."
+                          },
+                          "evidenceCount": {
+                            "type": "integer",
+                            "description": "Closed conversations that support it."
+                          },
+                          "questionCount": {
+                            "type": "integer"
+                          },
+                          "stepIndex": {
+                            "type": "integer",
+                            "description": "Questions answered or skipped so far."
+                          },
+                          "approvedSnippetId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "status",
+                          "gap",
+                          "topic",
+                          "candidateTitle",
+                          "candidateContent",
+                          "title",
+                          "content",
+                          "evidenceCount",
+                          "questionCount",
+                          "stepIndex",
+                          "approvedSnippetId",
+                          "createdAt",
+                          "updatedAt"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
+    "/quills/{workspaceId}/assistant/knowledge-suggestions/{suggestionId}": {
+      "get": {
+        "operationId": "getQuillsKnowledgeSuggestion",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Get a knowledge suggestion with its questions",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "suggestionId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The suggestion and its questions in order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "awaiting_answer",
+                        "drafting",
+                        "draft_ready",
+                        "approved",
+                        "dismissed"
+                      ]
+                    },
+                    "gap": {
+                      "type": "boolean",
+                      "description": "The customer agent could not answer this; such suggestions rank first."
+                    },
+                    "topic": {
+                      "type": "string"
+                    },
+                    "candidateTitle": {
+                      "type": "string"
+                    },
+                    "candidateContent": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The draft title, once the questions are done."
+                    },
+                    "content": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The draft content, once the questions are done."
+                    },
+                    "evidenceCount": {
+                      "type": "integer",
+                      "description": "Closed conversations that support it."
+                    },
+                    "questionCount": {
+                      "type": "integer"
+                    },
+                    "stepIndex": {
+                      "type": "integer",
+                      "description": "Questions answered or skipped so far."
+                    },
+                    "approvedSnippetId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "questions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "position": {
+                            "type": "integer"
+                          },
+                          "question": {
+                            "type": "string"
+                          },
+                          "suggestedAnswers": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "answer": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "skipped": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "position",
+                          "question",
+                          "suggestedAnswers",
+                          "answer",
+                          "skipped"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status",
+                    "gap",
+                    "topic",
+                    "candidateTitle",
+                    "candidateContent",
+                    "title",
+                    "content",
+                    "evidenceCount",
+                    "questionCount",
+                    "stepIndex",
+                    "approvedSnippetId",
+                    "createdAt",
+                    "updatedAt",
+                    "questions"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Suggestion not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateQuillsKnowledgeSuggestion",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Edit the draft of a knowledge suggestion",
+        "description": "Only a suggestion with a draft ready can be edited.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "suggestionId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "content": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The edited suggestion",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "awaiting_answer",
+                        "drafting",
+                        "draft_ready",
+                        "approved",
+                        "dismissed"
+                      ]
+                    },
+                    "gap": {
+                      "type": "boolean",
+                      "description": "The customer agent could not answer this; such suggestions rank first."
+                    },
+                    "topic": {
+                      "type": "string"
+                    },
+                    "candidateTitle": {
+                      "type": "string"
+                    },
+                    "candidateContent": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The draft title, once the questions are done."
+                    },
+                    "content": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The draft content, once the questions are done."
+                    },
+                    "evidenceCount": {
+                      "type": "integer",
+                      "description": "Closed conversations that support it."
+                    },
+                    "questionCount": {
+                      "type": "integer"
+                    },
+                    "stepIndex": {
+                      "type": "integer",
+                      "description": "Questions answered or skipped so far."
+                    },
+                    "approvedSnippetId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status",
+                    "gap",
+                    "topic",
+                    "candidateTitle",
+                    "candidateContent",
+                    "title",
+                    "content",
+                    "evidenceCount",
+                    "questionCount",
+                    "stepIndex",
+                    "approvedSnippetId",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Suggestion not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The suggestion is not in that step",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
+    "/quills/{workspaceId}/assistant/knowledge-suggestions/{suggestionId}/answer": {
+      "post": {
+        "operationId": "answerQuillsKnowledgeSuggestion",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Answer or skip the next question of a knowledge suggestion",
+        "description": "Answers or skips the question at `stepIndex`, which must be the suggestion's current step (409 otherwise, for example when another teammate answered it first). After the last question the suggestion moves to `drafting` and the AI writes the draft.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "suggestionId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "stepIndex": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "The position of the question this answer is for."
+                  },
+                  "answer": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  },
+                  "skip": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "stepIndex"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The suggestion after the answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "awaiting_answer",
+                        "drafting",
+                        "draft_ready",
+                        "approved",
+                        "dismissed"
+                      ]
+                    },
+                    "gap": {
+                      "type": "boolean",
+                      "description": "The customer agent could not answer this; such suggestions rank first."
+                    },
+                    "topic": {
+                      "type": "string"
+                    },
+                    "candidateTitle": {
+                      "type": "string"
+                    },
+                    "candidateContent": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The draft title, once the questions are done."
+                    },
+                    "content": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The draft content, once the questions are done."
+                    },
+                    "evidenceCount": {
+                      "type": "integer",
+                      "description": "Closed conversations that support it."
+                    },
+                    "questionCount": {
+                      "type": "integer"
+                    },
+                    "stepIndex": {
+                      "type": "integer",
+                      "description": "Questions answered or skipped so far."
+                    },
+                    "approvedSnippetId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "questions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "position": {
+                            "type": "integer"
+                          },
+                          "question": {
+                            "type": "string"
+                          },
+                          "suggestedAnswers": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "answer": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "skipped": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "position",
+                          "question",
+                          "suggestedAnswers",
+                          "answer",
+                          "skipped"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status",
+                    "gap",
+                    "topic",
+                    "candidateTitle",
+                    "candidateContent",
+                    "title",
+                    "content",
+                    "evidenceCount",
+                    "questionCount",
+                    "stepIndex",
+                    "approvedSnippetId",
+                    "createdAt",
+                    "updatedAt",
+                    "questions"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Suggestion not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The suggestion is not in that step",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
+    "/quills/{workspaceId}/assistant/knowledge-suggestions/{suggestionId}/approve": {
+      "post": {
+        "operationId": "approveQuillsKnowledgeSuggestion",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Approve a knowledge suggestion into an assistant snippet",
+        "description": "Creates an assistant snippet from the draft (or the given title and content), with the chosen audience, and marks the suggestion approved. A workspace has at most 500 snippets.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "suggestionId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "audience": {
+                    "type": "string",
+                    "enum": [
+                      "public",
+                      "team",
+                      "internal"
+                    ],
+                    "description": "`team` keeps the snippet for teammates and the copilot; `public` lets the customer agent use it."
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "content": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000
+                  }
+                },
+                "required": [
+                  "audience"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The approved suggestion, with the new snippet's ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "awaiting_answer",
+                        "drafting",
+                        "draft_ready",
+                        "approved",
+                        "dismissed"
+                      ]
+                    },
+                    "gap": {
+                      "type": "boolean",
+                      "description": "The customer agent could not answer this; such suggestions rank first."
+                    },
+                    "topic": {
+                      "type": "string"
+                    },
+                    "candidateTitle": {
+                      "type": "string"
+                    },
+                    "candidateContent": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The draft title, once the questions are done."
+                    },
+                    "content": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The draft content, once the questions are done."
+                    },
+                    "evidenceCount": {
+                      "type": "integer",
+                      "description": "Closed conversations that support it."
+                    },
+                    "questionCount": {
+                      "type": "integer"
+                    },
+                    "stepIndex": {
+                      "type": "integer",
+                      "description": "Questions answered or skipped so far."
+                    },
+                    "approvedSnippetId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status",
+                    "gap",
+                    "topic",
+                    "candidateTitle",
+                    "candidateContent",
+                    "title",
+                    "content",
+                    "evidenceCount",
+                    "questionCount",
+                    "stepIndex",
+                    "approvedSnippetId",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Suggestion not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The suggestion is not in that step, or the workspace has 500 snippets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
+    "/quills/{workspaceId}/assistant/knowledge-suggestions/{suggestionId}/dismiss": {
+      "post": {
+        "operationId": "dismissQuillsKnowledgeSuggestion",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Dismiss a knowledge suggestion",
+        "description": "The AI never suggests a dismissed topic again.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "suggestionId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The dismissed suggestion",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "awaiting_answer",
+                        "drafting",
+                        "draft_ready",
+                        "approved",
+                        "dismissed"
+                      ]
+                    },
+                    "gap": {
+                      "type": "boolean",
+                      "description": "The customer agent could not answer this; such suggestions rank first."
+                    },
+                    "topic": {
+                      "type": "string"
+                    },
+                    "candidateTitle": {
+                      "type": "string"
+                    },
+                    "candidateContent": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The draft title, once the questions are done."
+                    },
+                    "content": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The draft content, once the questions are done."
+                    },
+                    "evidenceCount": {
+                      "type": "integer",
+                      "description": "Closed conversations that support it."
+                    },
+                    "questionCount": {
+                      "type": "integer"
+                    },
+                    "stepIndex": {
+                      "type": "integer",
+                      "description": "Questions answered or skipped so far."
+                    },
+                    "approvedSnippetId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status",
+                    "gap",
+                    "topic",
+                    "candidateTitle",
+                    "candidateContent",
+                    "title",
+                    "content",
+                    "evidenceCount",
+                    "questionCount",
+                    "stepIndex",
+                    "approvedSnippetId",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Suggestion not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The suggestion is not in that step",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
     "/quills/{workspaceId}/assistant/skills": {
       "get": {
         "operationId": "listQuillsSkills",
@@ -145533,6 +146728,11 @@
                     "type": "string",
                     "maxLength": 2000,
                     "format": "uri"
+                  },
+                  "crawl": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Also add the page's links under its own folder as sources (one level, at most 20, within the workspace limit)"
                   }
                 },
                 "required": [
@@ -145846,6 +147046,124 @@
         }
       }
     },
+    "/quills/{workspaceId}/assistant/web-sources/{webSourceId}/refresh": {
+      "post": {
+        "operationId": "refreshQuillsWebSource",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Fetch an assistant web source again",
+        "description": "A worker fetches the page again after commit. A failed fetch keeps the text from the last successful one.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "webSourceId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The source",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "ready",
+                        "failed"
+                      ]
+                    },
+                    "characters": {
+                      "type": "number"
+                    },
+                    "fetchedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "url",
+                    "title",
+                    "enabled",
+                    "status",
+                    "characters",
+                    "fetchedAt",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Web source not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
     "/quills/{workspaceId}/assistant/documents": {
       "get": {
         "operationId": "listQuillsAssistantDocuments",
@@ -146062,6 +147380,165 @@
           },
           "409": {
             "description": "A workspace has at most 200 documents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
+    "/quills/{workspaceId}/assistant/documents/pdf": {
+      "post": {
+        "operationId": "uploadQuillsAssistantPdfDocument",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Add a knowledge document from a PDF",
+        "description": "Upload the PDF with POST /files/uploads (purpose `file`, at most 10 MB) and send the uploaded object here. The PDF's text layer (at most 100,000 characters) becomes the document; the PDF itself is not kept. A scanned PDF without a text layer is refused.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024
+                  },
+                  "contentType": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "pattern": "^[a-z0-9][a-z0-9!#$&^_.+-]*\\/[a-z0-9][a-z0-9!#$&^_.+-]*$"
+                  },
+                  "size": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1073741824
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "fileName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255
+                  }
+                },
+                "required": [
+                  "key",
+                  "contentType",
+                  "size",
+                  "title",
+                  "fileName"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The new document",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "fileName": {
+                      "type": "string"
+                    },
+                    "mimeType": {
+                      "type": "string"
+                    },
+                    "characters": {
+                      "type": "number"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "fileName",
+                    "mimeType",
+                    "characters",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a readable PDF, or it has no text",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Upload not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A workspace has at most 200 documents, or the upload is already in use",
             "content": {
               "application/json": {
                 "schema": {
@@ -147495,6 +148972,7 @@
                             "type": "string",
                             "enum": [
                               "read",
+                              "create",
                               "update"
                             ]
                           }
@@ -148049,7 +149527,8 @@
                         "translate_message",
                         "attribute_preview",
                         "ticket_fields",
-                        "kb_ask"
+                        "kb_ask",
+                        "reply_suggestion"
                       ]
                     },
                     "status": {
@@ -148275,7 +149754,8 @@
                         "translate_message",
                         "attribute_preview",
                         "ticket_fields",
-                        "kb_ask"
+                        "kb_ask",
+                        "reply_suggestion"
                       ]
                     },
                     "status": {
@@ -149469,6 +150949,13 @@
                             "assistant.embeddings_requested",
                             "merge_suggestion.dismissed",
                             "merge_suggestion.restored",
+                            "knowledge_suggestion.created",
+                            "knowledge_suggestion.attached",
+                            "knowledge_suggestion.answered",
+                            "knowledge_suggestion.drafted",
+                            "knowledge_suggestion.updated",
+                            "knowledge_suggestion.approved",
+                            "knowledge_suggestion.dismissed",
                             "post.merge_check_requested",
                             "post.sentiment_requested",
                             "post.tags_backfill_requested",
@@ -149526,7 +151013,8 @@
                         "entityType": {
                           "type": "string",
                           "enum": [
-                            "conversation"
+                            "conversation",
+                            "conversation_message"
                           ]
                         },
                         "entityId": {
@@ -151652,7 +153140,8 @@
                         "translate_message",
                         "attribute_preview",
                         "ticket_fields",
-                        "kb_ask"
+                        "kb_ask",
+                        "reply_suggestion"
                       ]
                     },
                     "status": {
@@ -151807,6 +153296,232 @@
           },
           "404": {
             "description": "Conversation or message not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "AI is not configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiKeyRateLimited"
+          }
+        }
+      }
+    },
+    "/quills/{workspaceId}/conversations/{conversationId}/reply-suggestion": {
+      "post": {
+        "operationId": "suggestQuillsConversationReply",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Draft the next reply to the customer with AI",
+        "description": "Returns a pending run; a worker stores a draft reply as its `text`, with the sources it used as `citations`. Nothing is sent: a teammate edits and sends it. Private notes are not used. 409 when AI is not configured.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "conversationId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The pending run",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "copilot",
+                        "translate_message",
+                        "attribute_preview",
+                        "ticket_fields",
+                        "kb_ask",
+                        "reply_suggestion"
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "succeeded",
+                        "failed"
+                      ]
+                    },
+                    "output": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "text": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "citations": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "article",
+                                  "snippet",
+                                  "document",
+                                  "webpage",
+                                  "post"
+                                ]
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "id",
+                              "title"
+                            ]
+                          }
+                        },
+                        "proposedActionIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "values": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "boolean"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "reason": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "value",
+                              "reason"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "text",
+                        "citations",
+                        "proposedActionIds",
+                        "values"
+                      ]
+                    },
+                    "error": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "status",
+                    "output",
+                    "error",
+                    "createdAt",
+                    "finishedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -152004,7 +153719,8 @@
                         "translate_message",
                         "attribute_preview",
                         "ticket_fields",
-                        "kb_ask"
+                        "kb_ask",
+                        "reply_suggestion"
                       ]
                     },
                     "status": {
@@ -152229,7 +153945,8 @@
                         "translate_message",
                         "attribute_preview",
                         "ticket_fields",
-                        "kb_ask"
+                        "kb_ask",
+                        "reply_suggestion"
                       ]
                     },
                     "status": {

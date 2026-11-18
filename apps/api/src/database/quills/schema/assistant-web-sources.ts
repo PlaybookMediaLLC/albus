@@ -45,6 +45,11 @@ export const assistantWebSources = quillsSchema
         table.url,
       ),
       index("assistant_web_sources_enabled_idx").on(table.enabled),
+      // The weekly re-sync line of quills.runnable_workspaces (migration 0043) runs on every
+      // scheduler pass across workspaces.
+      index("assistant_web_sources_resync_idx")
+        .on(table.fetchedAt)
+        .where(sql`${table.enabled}`),
       primaryKey({ columns: [table.workspaceId, table.id] }),
       foreignKey({
         columns: [table.workspaceId, table.createdById],

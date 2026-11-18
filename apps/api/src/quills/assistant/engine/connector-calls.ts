@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { and, asc, eq, sql } from "drizzle-orm";
 import { withQuillsSystemWorkspace } from "../../../database/quills/client";
 import { assistantPendingActions } from "../../../database/quills/schema/assistant-pending-actions";
@@ -27,6 +28,10 @@ import { nothing, requesterActions, type Work, type Write } from "./shared";
 // only as a bounded tool result inside <tool_result>; a failure is fixed text. ROUTES.md,
 // "Connector tools".
 
+/** A short, stable key for a tool call's name and arguments (idempotency and repeat counts). */
+export const digest = (value: unknown) =>
+  createHash("sha256").update(JSON.stringify(value)).digest("hex").slice(0, 16);
+
 const MAX_CALLS = 5;
 const BUDGET_MS = 30_000;
 const STEP_MS = 10_000;
@@ -43,23 +48,28 @@ const toModel: Record<Failure | "tool_error" | "unavailable", string> = {
   unavailable: "Failed: the connector was turned off or removed.",
 };
 
-/** A connector that offers tools to the copilot: enabled, connected and assigned to it. */
-const live = and(
-  eq(connectors.enabled, true),
-  eq(connectors.status, "connected"),
-  sql`${connectors.assignments} @> '{"copilot": true}'::jsonb`,
-);
+/** A connector that offers tools to an agent: enabled, connected and assigned to that agent. */
+const live = (agent: "copilot" | "agent") =>
+  and(
+    eq(connectors.enabled, true),
+    eq(connectors.status, "connected"),
+    sql`${connectors.assignments} @> ${JSON.stringify({ [agent]: true })}::jsonb`,
+  );
 
-/** The connector tools offered to one copilot run, read in the job's workspace. */
-export const loadConnectorTools = (workspaceId: string) =>
+/** The connector tools offered to one run of an agent, read in the job's workspace. */
+export const loadConnectorTools = (
+  workspaceId: string,
+  agent: "copilot" | "agent" = "copilot",
+) =>
   withQuillsSystemWorkspace(workspaceId, async (db) =>
     offeredTools(
       await db
         .select(offerColumns)
         .from(connectors)
-        .where(live)
+        .where(live(agent))
         .orderBy(asc(connectors.name))
         .limit(100),
+      agent,
     ),
   );
 
@@ -100,6 +110,8 @@ type Claim = {
   principalId: string;
   conversationId: string | null;
   pendingActionId?: string;
+  /** The agent that calls; the connector must still be assigned to it. The copilot by default. */
+  agent?: "copilot" | "agent";
 };
 type Outcome = { duplicate: string } | { ok: boolean; content: string };
 
@@ -145,7 +157,12 @@ export async function callConnector(
       })
       .from(connectors)
       // A connector turned off during the run gets no more calls.
-      .where(and(eq(connectors.id, tool.connectorId as never), live));
+      .where(
+        and(
+          eq(connectors.id, tool.connectorId as never),
+          live(claim.agent ?? "copilot"),
+        ),
+      );
     return { id: row.id, stored };
   });
   if (!claimed.id) return { duplicate: claimed.prior ?? "started" };

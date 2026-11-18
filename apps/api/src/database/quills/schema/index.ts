@@ -63,6 +63,7 @@ export * from "./assistant-guidance";
 export * from "./assistant-pending-actions";
 export * from "./assistant-tool-calls";
 export * from "./assistant-events";
+export * from "./knowledge-suggestions";
 export * from "./connectors";
 export * from "./agent-skills";
 export * from "./assistant-web-sources";

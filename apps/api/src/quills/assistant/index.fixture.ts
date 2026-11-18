@@ -12,6 +12,7 @@ export * from "./post-ai.fixture";
 export * from "./settings.fixture";
 export * from "./skills.fixture";
 export * from "./snippets.fixture";
+export * from "./knowledge-suggestions.fixture";
 export * from "./suggestions.fixture";
 export * from "./support-ai.fixture";
 export * from "./web-sources.fixture";

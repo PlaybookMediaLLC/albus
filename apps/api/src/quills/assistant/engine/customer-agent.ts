@@ -13,17 +13,37 @@ import {
 import type { ConversationMessageCitation } from "../../../database/quills/types";
 import { recordQuillsChange } from "../../events";
 import { preview, systemNotice } from "../../support/conversation-model";
-import { aiConfig, chatJson, untrusted } from "../provider";
-import { logUsage } from "../runs";
+import { runToolLoop, type LoopTool } from "../ai/agent";
+import { repairJson } from "../ai/repair";
+import { checkArgs } from "../connector-tools";
+import { AiError, aiConfig, embed, untrusted } from "../provider";
+import { logUsage, type UsageEntry } from "../runs";
 import { readConfig } from "../settings";
-import { formatSources, searchArticles, searchKnowledge } from "./retrieval";
-import { nothing, type Work } from "./shared";
+import {
+  callConnector,
+  connectorBudget,
+  digest,
+  loadConnectorTools,
+} from "./connector-calls";
+import {
+  formatSources,
+  publicSources,
+  type Near,
+  type Source,
+} from "./retrieval";
+import { guidanceLines, loadGuidance } from "./agent-guidance";
+import { failedUsage, nothing, type Work } from "./shared";
 
 // The customer agent (gap G-31): while a teammate turns it on, it answers a widget or portal
 // conversation from the help center and documents. It hands off to the team with a private note
 // when it cannot help or the customer asks for a person, and it can propose one feedback request
 // per conversation, which the customer confirms. A conversation that a teammate owns, or that the
 // agent already handed off or resolved, is left to the team.
+//
+// It runs on the AI SDK tool loop (ai/agent.ts). Its knowledge is searched by words and by meaning
+// (retrieval.ts) before the first call, and it can search again with other words, or call a read
+// tool of a connector assigned to it whose policy is "always" (no teammate is there to approve).
+// The guidance rules and skills that a teammate assigned to it shape its answer.
 
 const answer = z.object({
   reply: z.string().max(3000),
@@ -37,6 +57,39 @@ const answer = z.object({
   sourceIds: z.array(z.string()).max(10),
 });
 const TRANSCRIPT = 12;
+const MAX_STEPS = 3;
+const query = z.object({ query: z.string().trim().min(1).max(200) });
+
+/** A search embedding waits at most this long; search by words does not need it. */
+const EMBED_MS = 8_000;
+
+/**
+ * The text's vector for search by meaning, or null without embeddings or when the call fails.
+ * After one failure the turn searches by words only, so a slow provider costs one wait.
+ */
+async function vectorOf(
+  text: string,
+  usage: UsageEntry[],
+  state: { failed: boolean },
+): Promise<Near | null> {
+  const model = aiConfig()?.embeddingModel;
+  if (!model || state.failed) return null;
+  try {
+    const result = await embed([text], EMBED_MS);
+    usage.push({
+      step: "customer_agent_search",
+      callType: "embedding",
+      usage: result.usage,
+    });
+    return { values: result.vectors[0]!, model };
+  } catch (error) {
+    // Search by words still works; the answer is worth more than the better search.
+    if (!(error instanceof AiError)) throw error;
+    state.failed = true;
+    usage.push(failedUsage("customer_agent_search", "embedding", error));
+    return null;
+  }
+}
 
 /** conversation.created and message.created: answers the customer's newest message. */
 export const answerCustomer: Work = async (workspaceId, event) => {
@@ -100,64 +153,156 @@ export const answerCustomer: Work = async (workspaceId, event) => {
         .orderBy(desc(conversationMessages.createdAt))
         .limit(TRANSCRIPT)
     ).reverse();
-    const sources = [
-      ...(config.agent.knowledge.helpCenter
-        ? await searchArticles(db, message.content, "public")
-        : []),
-      ...(await searchKnowledge(
-        db,
-        message.content,
-        "public",
-        config.agent.knowledge.documents,
-      )),
-    ];
+    const guidance = await loadGuidance(db, "agent");
     return {
       config,
       conversation,
       involvement,
       question: message.content,
       transcript,
-      sources,
+      guidance,
       // At most one proposed request per conversation.
       cardOffered: transcript.some((row) => row.metadata?.feedbackCard),
     };
   });
   if (!read) return nothing;
-  const { config, conversation, involvement, question, transcript, sources } =
-    read;
+  const { config, conversation, involvement, question, transcript } = read;
   const voice = config.agent.voice;
-  const reply = await chatJson(answer, [
+  const knowledge = config.agent.knowledge;
+  const usage: UsageEntry[] = [];
+  const search = (text: string, near: Near | null) =>
+    withQuillsSystemWorkspace(workspaceId, (db) =>
+      publicSources(db, knowledge, text, near),
+    );
+  const embedding = { failed: false };
+  const sources = await search(
+    question,
+    await vectorOf(question, usage, embedding),
+  );
+  const seen = new Map<string, Source>(
+    sources.map((source) => [source.id, source]),
+  );
+  // Fixed before the first call: read tools an admin turned on by name for the agent
+  // (connector-tools.ts `offer`). A customer cannot approve, and no teammate is here.
+  const connectorTools = [
+    ...(await loadConnectorTools(workspaceId, "agent")).values(),
+  ];
+  const budget = connectorBudget();
+  const repeats = new Map<string, number>();
+  const tools: LoopTool[] = [
     {
-      role: "system",
-      content: [
-        `You are ${config.identity.name}, the support assistant in a product's help widget. Tone: ${voice.tone}. Length: ${voice.responseLength}.`,
-        config.agent.productDescription &&
-          `The product: ${config.agent.productDescription}`,
-        voice.additionalInstructions,
-        "Answer only from the sources. When they do not answer the question, or the customer asks for a person, is frustrated, repeats themselves or asks for something you cannot do, set handoff to the reason and keep reply to one short sentence that a teammate will follow up.",
-        read.cardOffered
-          ? "Set feedback to null."
-          : "When the customer asks for a new feature or reports a product problem, set feedback to a short request title and body in their words; otherwise null.",
-        'Answer with one JSON object: {"reply": string, "handoff": reason or null, "feedback": {"title": string, "body": string} or null, "sourceIds": string[]}.',
-      ]
-        .filter(Boolean)
-        .join("\n"),
+      name: "search_knowledge",
+      description:
+        "Search the help center and the team's answers again, for example with other words. Returns titles and excerpts with their IDs.",
+      parameters: z.toJSONSchema(query),
+      run: async (args) => {
+        const parsed = query.safeParse(args);
+        if (!parsed.success) return "Failed: the arguments are not valid.";
+        const found = await search(
+          parsed.data.query,
+          await vectorOf(parsed.data.query, usage, embedding),
+        );
+        for (const source of found) seen.set(source.id, source);
+        // Crawled pages are third-party text: inside the data fence, as in the first prompt.
+        return untrusted("sources", formatSources(found));
+      },
     },
-    { role: "system", content: untrusted("sources", formatSources(sources)) },
-    {
-      role: "user",
-      content: untrusted(
-        "conversation",
-        transcript
-          .map(
-            (row) =>
-              `${row.senderType === "visitor" ? "Customer" : "Team"}: ${row.content}`,
-          )
+    ...connectorTools.map((tool): LoopTool => ({
+      name: tool.name,
+      description: tool.description,
+      parameters: tool.parameters,
+      run: async (args) => {
+        const checked = checkArgs(tool, args);
+        if (!checked)
+          return "Failed: the arguments do not fit the tool's input schema.";
+        const same = digest([tool.name, checked]);
+        repeats.set(same, (repeats.get(same) ?? 0) + 1);
+        const outcome = await budget((timeoutMs) =>
+          callConnector(
+            workspaceId,
+            tool,
+            checked,
+            {
+              key: `agent:${messageId}:${same}:${repeats.get(same)}`,
+              principalId: conversation.visitorPrincipalId as string,
+              conversationId: conversation.id,
+              agent: "agent",
+            },
+            timeoutMs,
+          ),
+        );
+        if (!outcome)
+          return "Denied: this conversation reached its limit of tool calls.";
+        return "duplicate" in outcome
+          ? "Skipped: this call already ran in an earlier attempt."
+          : outcome.content;
+      },
+    })),
+  ];
+  // A failed turn still logs what it used, so a retry counts toward the monthly limit.
+  const failed = async (error: unknown): Promise<never> => {
+    await withQuillsSystemWorkspace(workspaceId, (db) =>
+      logUsage(db, [
+        ...usage,
+        failedUsage("customer_agent", "chat_completion", error),
+      ]),
+    );
+    throw error;
+  };
+  const text = await runToolLoop({
+    json: true,
+    tools,
+    maxSteps: MAX_STEPS,
+    maxCallsPerStep: 3,
+    maxOutputTokens: 1024,
+    timeoutMs: 150_000,
+    stepTimeoutMs: 50_000,
+    onStep: (step) =>
+      usage.push({
+        step: "customer_agent",
+        callType: "chat_completion",
+        usage: step,
+      }),
+    onDenied: () => undefined,
+    messages: [
+      {
+        role: "system",
+        content: [
+          `You are ${config.identity.name}, the support assistant in a product's help widget. Tone: ${voice.tone}. Length: ${voice.responseLength}.`,
+          config.agent.productDescription &&
+            `The product: ${config.agent.productDescription}`,
+          voice.additionalInstructions,
+          "Answer only from the sources. When they do not answer the question, use search_knowledge with other words once before you give up. When the sources still do not answer it, or the customer asks for a person, is frustrated, repeats themselves or asks for something you cannot do, set handoff to the reason and keep reply to one short sentence that a teammate will follow up.",
+          read.cardOffered
+            ? "Set feedback to null."
+            : "When the customer asks for a new feature or reports a product problem, set feedback to a short request title and body in their words; otherwise null.",
+          'Answer with one JSON object: {"reply": string, "handoff": reason or null, "feedback": {"title": string, "body": string} or null, "sourceIds": string[]}.',
+          ...guidanceLines(read.guidance),
+        ]
+          .filter(Boolean)
           .join("\n"),
-      ),
-    },
-  ]);
-  const citations: ConversationMessageCitation[] = sources
+      },
+      { role: "system", content: untrusted("sources", formatSources(sources)) },
+      {
+        role: "user",
+        content: untrusted(
+          "conversation",
+          transcript
+            .map(
+              (row) =>
+                `${row.senderType === "visitor" ? "Customer" : "Team"}: ${row.content}`,
+            )
+            .join("\n"),
+        ),
+      },
+    ],
+  }).catch(failed);
+  // The answer is JSON; one repair (a fence, text around it), then it must fit the schema.
+  const repaired = text && repairJson(text);
+  const parsed = answer.safeParse(repaired && JSON.parse(repaired));
+  if (!parsed.success) return failed(new AiError("bad_response"));
+  const reply = { value: parsed.data };
+  const citations: ConversationMessageCitation[] = [...seen.values()]
     .filter((source) => reply.value.sourceIds.includes(source.id))
     .map((source) => ({
       type: source.type,
@@ -170,13 +315,7 @@ export const answerCustomer: Work = async (workspaceId, event) => {
       ? { ...reply.value.feedback, status: "proposed" as const }
       : undefined;
   return async (db) => {
-    await logUsage(db, [
-      {
-        step: "customer_agent",
-        callType: "chat_completion",
-        usage: reply.usage,
-      },
-    ]);
+    await logUsage(db, usage);
     // A teammate may have taken or closed the conversation while the model answered.
     const [current] = await db
       .select({

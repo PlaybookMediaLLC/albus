@@ -14,7 +14,9 @@ import { defineQuillsRoute } from "../framework/define-route";
 // fetches the page through Kaneo's public-destination guard after commit
 // (assistant_web_source.added) and stores its text.
 
-const MAX_SOURCES = 100;
+/** The web sources of one workspace, at most; a crawl (engine/web-source.ts) keeps to it too. */
+export const MAX_SOURCES = 100;
+
 const params = z.object({
   webSourceId: flexibleToTypeIdSchema("assistant_web_source"),
 });
@@ -91,14 +93,21 @@ const addSource = defineQuillsRoute({
   description:
     "Returns the source as pending. A worker fetches the page after commit; a page that resolves to a private address, needs sign-in or is not text fails.",
   action: "manage_settings",
-  body: z.object({ url: pageUrl }),
+  body: z.object({
+    url: pageUrl,
+    crawl: z.boolean().default(false).openapi({
+      description:
+        "Also add the page's links under its own folder as sources (one level, at most 20, within the workspace limit)",
+    }),
+  }),
   response: sourceSchema,
   responseDescription: "The new source",
   errors: { 409: "This URL is already a source, or the limit is reached" },
-  event: (_input, source) => ({
+  event: ({ body }, source) => ({
     type: "assistant_web_source.added",
     entityType: "assistant_web_source",
     entityId: source.id,
+    payload: { crawl: String(body.crawl) },
   }),
   handler: async ({ db, actor, body }) => {
     if ((await db.$count(assistantWebSources)) >= MAX_SOURCES)
@@ -154,6 +163,34 @@ const setEnabled = defineQuillsRoute({
   },
 });
 
+const refreshSource = defineQuillsRoute({
+  method: "post",
+  path: "/assistant/web-sources/{webSourceId}/refresh",
+  operationId: "refreshQuillsWebSource",
+  summary: "Fetch an assistant web source again",
+  description:
+    "A worker fetches the page again after commit. A failed fetch keeps the text from the last successful one.",
+  action: "manage_settings",
+  params,
+  response: sourceSchema,
+  responseDescription: "The source",
+  errors: { 404: "Web source not found" },
+  event: ({ params }) => ({
+    type: "assistant_web_source.updated",
+    entityType: "assistant_web_source",
+    entityId: params.webSourceId,
+    payload: { refresh: "true" },
+  }),
+  handler: async ({ db, params }) => {
+    const [row] = await db
+      .select(columns)
+      .from(assistantWebSources)
+      .where(eq(assistantWebSources.id, params.webSourceId));
+    if (!row) throw notFound();
+    return row;
+  },
+});
+
 const deleteSource = defineQuillsRoute({
   method: "delete",
   path: "/assistant/web-sources/{webSourceId}",
@@ -183,4 +220,5 @@ export default apiRouter<BaseVariables & { workspaceId: string }>()
   .openapi(...listSources)
   .openapi(...addSource)
   .openapi(...setEnabled)
+  .openapi(...refreshSource)
   .openapi(...deleteSource);

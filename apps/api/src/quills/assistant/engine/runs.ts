@@ -1,4 +1,5 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { defineCapability } from "@quills/ai/capability";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { conversationMessages } from "../../../database/quills/schema/conversation";
 import { conversationAttributeDefinitions } from "../../../database/quills/schema/conversation-attributes";
@@ -8,9 +9,10 @@ import { withQuillsSystemWorkspace } from "../../../database/quills/client";
 import { settings } from "../../../database/quills/schema/auth";
 import { readConfig } from "../settings";
 import { chatJson, untrusted } from "../provider";
+import { runCapability } from "../ai/run";
 import { readRun, type Run, type RunOutput, type UsageEntry } from "../runs";
 import { answerCopilot } from "./copilot";
-import { formatSources, searchArticles, searchKnowledge } from "./retrieval";
+import { formatSources, publicSources } from "./retrieval";
 import {
   completeRun,
   failedUsage,
@@ -231,13 +233,7 @@ async function askKnowledgeBase(
       .select({ config: settings.assistantConfig })
       .from(settings)
       .limit(1);
-    const { knowledge } = readConfig(row!.config).agent;
-    return [
-      ...(knowledge.helpCenter
-        ? await searchArticles(db, question, "public")
-        : []),
-      ...(await searchKnowledge(db, question, "public", knowledge.documents)),
-    ];
+    return publicSources(db, readConfig(row!.config).agent.knowledge, question);
   });
   if (!sources.length)
     return {
@@ -272,6 +268,73 @@ async function askKnowledgeBase(
   } satisfies Answer;
 }
 
+/** A reply a teammate can edit and send: from the transcript and the public knowledge only. */
+const suggestReply = defineCapability({
+  id: "support.reply_suggestion",
+  role: "deep",
+  step: "reply_suggestion",
+  schema: z.object({
+    text: z.string().min(1).max(4000),
+    sourceIds: z.array(z.string()).max(10),
+  }),
+  prompt: (input: { transcript: string; sources: string }, wrap) => ({
+    system:
+      'Draft the team\'s next reply to the customer in this conversation, in the customer\'s language. Use only facts from the sources and the conversation; do not promise anything the sources do not say. Keep it short and friendly. A teammate edits and sends it. Answer with one JSON object: {"text": string, "sourceIds": string[]} listing the source IDs you used.',
+    user: `${wrap("conversation", input.transcript)}\n${wrap("sources", input.sources)}`,
+  }),
+});
+
+async function draftReply(workspaceId: string, input: Record<string, unknown>) {
+  const conversationId = String(input.conversationId);
+  const read = await withQuillsSystemWorkspace(workspaceId, async (db) => {
+    // Notes are left out: the draft goes to the customer.
+    const text = await transcript(db, { conversationId }, false, 20);
+    if (!text) return null;
+    const [row] = await db
+      .select({ config: settings.assistantConfig })
+      .from(settings)
+      .limit(1);
+    // The customer's newest message picks the sources, as in the customer agent.
+    const [newest] = await db
+      .select({ content: conversationMessages.content })
+      .from(conversationMessages)
+      .where(
+        and(
+          eq(conversationMessages.conversationId, conversationId as never),
+          eq(conversationMessages.senderType, "visitor"),
+          isNull(conversationMessages.deletedAt),
+        ),
+      )
+      .orderBy(desc(conversationMessages.createdAt))
+      .limit(1);
+    const question = (newest?.content ?? "").slice(0, 1000);
+    return {
+      transcript: text,
+      sources: question
+        ? await publicSources(
+            db,
+            readConfig(row!.config).agent.knowledge,
+            question,
+          )
+        : [],
+    };
+  });
+  if (!read) return "The conversation has no messages";
+  const { value, entry } = await runCapability(suggestReply, {
+    transcript: read.transcript,
+    sources: formatSources(read.sources),
+  });
+  return {
+    output: output({
+      text: value.text,
+      citations: read.sources
+        .filter((source) => value.sourceIds.includes(source.id))
+        .map(({ type, id, title }) => ({ type, id, title })),
+    }),
+    usage: [entry],
+  } satisfies Answer;
+}
+
 const handlers = {
   translate_message: {
     needs: "read",
@@ -289,6 +352,11 @@ const handlers = {
     step: "ticket_fields",
   },
   kb_ask: { needs: null, run: askKnowledgeBase, step: "kb_ask" },
+  reply_suggestion: {
+    needs: "read",
+    run: draftReply,
+    step: "reply_suggestion",
+  },
 } as const;
 
 /** assistant_run.requested: answers the run and stores the outcome. A finished run is left as it is. */

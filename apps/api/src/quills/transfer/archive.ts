@@ -28,6 +28,11 @@ export const OMITTED_TABLES = [
   // A cache of machine translations (RFC 0003, D10). The target translates again on request,
   // and the bounded archive keeps its room for source data.
   "content_translations",
+  // Teach the AI (issue #275): derived review state that a workspace rebuilds as conversations close.
+  // Approved knowledge is already an assistant snippet, which transfers.
+  "ai_knowledge_suggestions",
+  "ai_knowledge_questions",
+  "ai_knowledge_sources",
 ] as const;
 export const portableTables = Object.values(schema)
   .filter((value) => is(value, PgTable))

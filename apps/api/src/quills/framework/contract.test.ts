@@ -1,6 +1,7 @@
 import { Readable } from "node:stream";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vite-plus/test";
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { samplePdf } from "../assistant/pdf.fixture";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as kaneo from "../../database/schema";
@@ -71,7 +72,14 @@ vi.spyOn(S3Client.prototype, "send").mockImplementation((async (
 ) => {
   if (!(command instanceof GetObjectCommand))
     throw new Error("Unexpected storage call");
-  return { Body: Readable.from([Buffer.from("image")]) };
+  // A PDF upload (assistant documents) must parse.
+  return {
+    Body: Readable.from([
+      command.input.Key?.endsWith(".pdf")
+        ? Buffer.from(samplePdf("Refunds take 5 business days."))
+        : Buffer.from("image"),
+    ]),
+  };
 }) as never);
 // Portal routes read the Kaneo session; the contract signs in the x-test-user account instead.
 vi.mock("../../utils/get-user-session", () => ({
