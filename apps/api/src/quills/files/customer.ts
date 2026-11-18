@@ -20,6 +20,7 @@ import {
 import { httpUrl, requirePortal } from "../portal/feedback/viewer";
 import { requirePortalAccess } from "../portal/gate";
 import { readConfig } from "../settings/widget";
+import { customerAvatarUrl } from "./customer-avatar";
 import {
   fileBody,
   fileEvent,
@@ -169,12 +170,12 @@ const widgetUpload = defineQuillsRoute({
   method: "post",
   path: "/widget/uploads",
   operationId: "createQuillsWidgetUpload",
-  summary: "Request an upload URL for a widget attachment",
+  summary: "Request an upload URL for a widget attachment or avatar",
   description:
-    "Returns a presigned PUT for a key in the visitor's own namespace. Register it with POST /widget/files, then attach it to a feedback post. Needs the feedback, messenger or tickets tab and a visitor that the host app identified.",
+    "Returns a presigned PUT for a key in the visitor's own namespace. Register an attachment with POST /widget/files, then attach it to a feedback post; set an avatar with PUT /widget/avatar. Needs the feedback, messenger or tickets tab and a visitor that the host app identified.",
   action: "create",
   rateLimit: perMinute,
-  body: uploadRequest(attachments),
+  body: uploadRequest([...attachments, "customer_avatar"]),
   response: uploadResponse,
   responseDescription: "Presigned upload",
   errors: {
@@ -237,6 +238,30 @@ const avatarEvent = (_input: unknown, result: z.output<typeof avatarResult>) =>
     entityId: result.principalId!,
   };
 
+/**
+ * Puts an uploaded avatar on the customer's principal: the key, and the stable URL that every
+ * list showing people reads (posts, comments, conversations, voters), so teammates see it too.
+ */
+async function showAvatar(
+  db: Database,
+  workspaceId: string,
+  customerId: NonNullable<QuillsCaller["customerId"]>,
+  key: string,
+) {
+  const rows = await db
+    .select({ id: principal.id })
+    .from(principal)
+    .where(eq(principal.userId, customerId));
+  for (const row of rows)
+    await db
+      .update(principal)
+      .set({
+        avatarKey: key,
+        avatarUrl: customerAvatarUrl(workspaceId, row.id, key),
+      })
+      .where(eq(principal.id, row.id));
+}
+
 const saveAvatar = defineQuillsRoute({
   audience: "portal",
   method: "put",
@@ -257,25 +282,11 @@ const saveAvatar = defineQuillsRoute({
     return owner(caller);
   },
   // Signing may resolve provider credentials, so the URL is signed here too, outside the transaction.
-  call: async (customerId, { body, workspaceId }) => {
-    const upload = await verifyUpload(workspaceId, ["customer_avatar"], body, {
-      customer: customerId,
-    });
-    return { upload, avatarUrl: await imageUrl(upload.key) };
-  },
-  handler: async ({ db, caller, called }) => {
+  call: (customerId, { body, workspaceId }) =>
+    verifyAvatar(customerId, workspaceId, body),
+  handler: async ({ db, caller, called, workspaceId }) => {
     await requirePortal(db);
-    await holdVerifiedUpload(db, called.upload);
-    const changed = await db
-      .update(customer)
-      .set({ imageKey: called.upload.key })
-      .where(eq(customer.id, owner(caller)))
-      .returning({ id: customer.id });
-    return {
-      changed: changed.length > 0,
-      principalId: caller.principalId,
-      avatarUrl: called.avatarUrl,
-    };
+    return storeAvatar(db, caller, workspaceId, called);
   },
 });
 
@@ -294,26 +305,116 @@ const deleteAvatar = defineQuillsRoute({
   event: avatarEvent,
   handler: async ({ db, caller }) => {
     await requirePortal(db);
-    // A removed customer keeps its profile row but has no principal: nothing of it is changed here.
-    if (!caller.customerId || !caller.principalId)
-      return { changed: false, principalId: null, avatarUrl: null };
-    const changed = await db
-      .update(customer)
-      .set({ imageKey: null })
-      .where(
-        and(eq(customer.id, caller.customerId), isNotNull(customer.imageKey)),
-      )
-      .returning({ id: customer.id });
-    const [row] = await db
-      .select({ image: customer.image })
-      .from(customer)
-      .where(eq(customer.id, caller.customerId));
-    return {
-      changed: changed.length > 0,
-      principalId: caller.principalId,
-      // The sign-in provider's image, which the profile shows next.
-      avatarUrl: httpUrl(row?.image ?? null),
-    };
+    return clearAvatar(db, caller);
+  },
+});
+
+/** Verifies an uploaded avatar, outside any transaction, and signs its URL for the response. */
+async function verifyAvatar(
+  customerId: NonNullable<QuillsCaller["customerId"]>,
+  workspaceId: string,
+  body: z.output<typeof uploadedObject>,
+) {
+  const upload = await verifyUpload(workspaceId, ["customer_avatar"], body, {
+    customer: customerId,
+  });
+  return { upload, avatarUrl: await imageUrl(upload.key) };
+}
+
+/** Puts a verified avatar on the customer and their principal. The previous upload is cleaned up. */
+async function storeAvatar(
+  db: Database,
+  caller: QuillsCaller,
+  workspaceId: string,
+  called: Awaited<ReturnType<typeof verifyAvatar>>,
+) {
+  await holdVerifiedUpload(db, called.upload);
+  const customerId = owner(caller);
+  const changed = await db
+    .update(customer)
+    .set({ imageKey: called.upload.key })
+    .where(eq(customer.id, customerId))
+    .returning({ id: customer.id });
+  await showAvatar(db, workspaceId, customerId, called.upload.key);
+  return {
+    changed: changed.length > 0,
+    principalId: caller.principalId,
+    avatarUrl: called.avatarUrl,
+  };
+}
+
+/** Removes the uploaded avatar; teammates see the sign-in provider's picture again, or initials. */
+async function clearAvatar(db: Database, caller: QuillsCaller) {
+  // A removed customer keeps its profile row but has no principal: nothing of it is changed here.
+  if (!caller.customerId || !caller.principalId)
+    return { changed: false, principalId: null, avatarUrl: null };
+  const changed = await db
+    .update(customer)
+    .set({ imageKey: null })
+    .where(
+      and(eq(customer.id, caller.customerId), isNotNull(customer.imageKey)),
+    )
+    .returning({ id: customer.id });
+  const [row] = await db
+    .select({ image: customer.image })
+    .from(customer)
+    .where(eq(customer.id, caller.customerId));
+  const provider = httpUrl(row?.image ?? null);
+  await db
+    .update(principal)
+    .set({ avatarKey: null, avatarUrl: provider })
+    .where(eq(principal.userId, caller.customerId));
+  return {
+    changed: changed.length > 0,
+    principalId: caller.principalId,
+    avatarUrl: provider,
+  };
+}
+
+const saveWidgetAvatar = defineQuillsRoute({
+  audience: "widget",
+  method: "put",
+  path: "/widget/avatar",
+  operationId: "saveQuillsWidgetAvatar",
+  summary: "Set the identified visitor's avatar to an uploaded image",
+  description:
+    "Verifies an image that the visitor uploaded with POST /widget/uploads (purpose customer_avatar). Needs a visitor that the host app identified; the previous uploaded avatar is queued for cleanup.",
+  action: "update",
+  rateLimit: { limit: 10, windowSeconds: 600 },
+  body: uploadedObject,
+  response: avatarResult,
+  responseDescription: "The visitor's avatar",
+  errors: {
+    403: "Anonymous visitor",
+    404: "Upload not found, or the widget is off",
+  },
+  event: avatarEvent,
+  prepare: ({ db, caller }) => widgetUploader(db, caller),
+  call: (customerId, { body, workspaceId }) =>
+    verifyAvatar(customerId, workspaceId, body),
+  handler: async ({ db, caller, called, workspaceId }) => {
+    await widgetUploader(db, caller);
+    return storeAvatar(db, caller, workspaceId, called);
+  },
+});
+
+const deleteWidgetAvatar = defineQuillsRoute({
+  audience: "widget",
+  method: "delete",
+  path: "/widget/avatar",
+  operationId: "deleteQuillsWidgetAvatar",
+  summary: "Remove the identified visitor's uploaded avatar",
+  description:
+    "The uploaded image is queued for cleanup. A picture that the host app sent stays.",
+  action: "update",
+  rateLimit: { limit: 10, windowSeconds: 600 },
+  response: avatarResult,
+  responseDescription: "The visitor's avatar",
+  errors: { 403: "Anonymous visitor", 404: "The widget is off" },
+  event: avatarEvent,
+  handler: async ({ db, caller }) => {
+    await widgetUploader(db, caller);
+    return clearAvatar(db, caller);
   },
 });
 
@@ -324,4 +425,6 @@ export default apiRouter()
   .openapi(...widgetUpload)
   .openapi(...widgetFile)
   .openapi(...saveAvatar)
-  .openapi(...deleteAvatar);
+  .openapi(...deleteAvatar)
+  .openapi(...saveWidgetAvatar)
+  .openapi(...deleteWidgetAvatar);

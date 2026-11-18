@@ -281,6 +281,13 @@ const pl: Catalog = {
     "Jeśli Twój adres e-mail ma konto w portalu, link do logowania jest w drodze. Sprawdź pocztę.",
   "The portal could not be opened. Try again later.":
     "Nie udało się otworzyć portalu. Spróbuj ponownie później.",
+  "Your picture": "Twoje zdjęcie",
+  "Shown next to your feedback and messages.":
+    "Widoczne obok Twoich opinii i wiadomości.",
+  "Change picture": "Zmień zdjęcie",
+  Remove: "Usuń",
+  "Picture updated": "Zdjęcie zaktualizowane",
+  "Could not save the picture.": "Nie udało się zapisać zdjęcia.",
 };
 
 export default pl;

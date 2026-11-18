@@ -1,3 +1,4 @@
+import { AvatarSetting } from "./AvatarSetting.js";
 import type { ReactNode } from "react";
 import { Avatar } from "./Avatar.js";
 import { Icon } from "./Icon.js";
@@ -32,6 +33,7 @@ export function HomeView({
   greeting,
   survey,
   openPortal,
+  changeAvatar,
 }: {
   latest?: UpdateEntry;
   navigate: (tab: WidgetTab) => void;
@@ -49,6 +51,8 @@ export function HomeView({
   survey?: ReactNode;
   /** Mails a portal sign-in link; only for a visitor that the host app identified. */
   openPortal?: WidgetViewProps["onOpenPortal"];
+  /** Changes the identified visitor's picture. */
+  changeAvatar?: WidgetViewProps["onChangeAvatar"];
 }) {
   const t = useT();
   const recent = has("messages")
@@ -148,6 +152,7 @@ export function HomeView({
         </button>
       )}
       {openPortal && <PortalLink send={openPortal} />}
+      {changeAvatar && <AvatarSetting change={changeAvatar} />}
       {latest && has("updates") && (
         <section className="qb-latest">
           <div className="qb-section-label">

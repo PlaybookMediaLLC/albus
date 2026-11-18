@@ -3,6 +3,14 @@
 	"comments": "Commented on {{count}} posts",
 	"email": "Account email: {{email}}",
 	"name": "Display name",
+	"picture": {
+		"failed": "The picture could not be saved. Try another image.",
+		"remove": "Remove",
+		"replace": "Replace picture",
+		"text": "Shown next to your posts, comments and messages.",
+		"title": "Profile picture",
+		"upload": "Upload picture"
+	},
 	"posts": "Submitted {{count}} posts",
 	"submit": "Save profile",
 	"teamMember": "Team member",

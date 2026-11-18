@@ -251,6 +251,12 @@ const th: Catalog = {
     "หากอีเมลของคุณมีบัญชีในพอร์ทัล ลิงก์ลงชื่อเข้าใช้กำลังส่งไป ตรวจสอบอีเมลของคุณ",
   "The portal could not be opened. Try again later.":
     "เปิดพอร์ทัลไม่ได้ ลองอีกครั้งภายหลัง",
+  "Your picture": "รูปของคุณ",
+  "Shown next to your feedback and messages.": "แสดงข้างความคิดเห็นและข้อความของคุณ",
+  "Change picture": "เปลี่ยนรูป",
+  Remove: "ลบ",
+  "Picture updated": "อัปเดตรูปแล้ว",
+  "Could not save the picture.": "ไม่สามารถบันทึกรูปได้",
 };
 
 export default th;

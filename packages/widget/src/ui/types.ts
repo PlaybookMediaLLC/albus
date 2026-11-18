@@ -223,6 +223,11 @@ export interface WidgetViewProps {
    * with an account gets it. Omit to hide the action.
    */
   onOpenPortal?: () => Promise<"opened" | "sent" | "if_account">;
+  /**
+   * Saves (a file) or removes (null) the identified visitor's picture and resolves its new URL.
+   * Omit to hide Home's picture row.
+   */
+  onChangeAvatar?: (file: File | null) => Promise<string | null>;
   teamMember?: WidgetPerson;
   /** The host resizes its container or sends the existing quackback:expand message. */
   onExpandedChange?: (expanded: boolean) => void;

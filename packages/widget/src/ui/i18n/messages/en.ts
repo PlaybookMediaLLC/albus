@@ -266,6 +266,13 @@ export const en = {
     "If your email has an account on the portal, a sign-in link is on its way. Check your email.",
   "The portal could not be opened. Try again later.":
     "The portal could not be opened. Try again later.",
+  "Your picture": "Your picture",
+  "Shown next to your feedback and messages.":
+    "Shown next to your feedback and messages.",
+  "Change picture": "Change picture",
+  Remove: "Remove",
+  "Picture updated": "Picture updated",
+  "Could not save the picture.": "Could not save the picture.",
 } as const;
 
 export type MessageKey = keyof typeof en;

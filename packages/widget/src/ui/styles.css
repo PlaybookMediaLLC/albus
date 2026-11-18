@@ -551,3 +551,9 @@
    way of reading flip with it, and the detail view slides in from the other side. */
 .qb-widget[dir="rtl"] { --qb-dir-x: -1; }
 .qb-widget[dir="rtl"] :is(.qb-icon-back, .qb-icon-chevron, .qb-icon-arrow, .qb-icon-external) { transform: scaleX(-1); }
+
+/* Home's picture row for an identified visitor. */
+.qb-widget .qb-avatar-setting { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--qb-line); border-radius: 12px; }
+.qb-avatar-setting > span:not(.qb-avatar) { display: grid; flex: 1; min-width: 0; gap: 2px; font-size: 13px; }
+.qb-avatar-setting small { font-size: 12px; color: var(--qb-muted); }
+.qb-avatar-setting .qb-text-button { padding: 4px 0; }

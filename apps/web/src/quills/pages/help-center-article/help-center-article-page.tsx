@@ -128,6 +128,7 @@ export function HelpCenterArticlePage(props: HelpCenterArticlePageProps) {
                     <>
                       <PersonAvatar
                         name={data.article.author.name}
+                        avatarUrl={data.article.author.avatarUrl}
                         colored
                         className="size-7"
                       />

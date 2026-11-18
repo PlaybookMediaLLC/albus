@@ -250,6 +250,12 @@ const zh_CN: Catalog = {
     "如果你的邮箱在门户上有账号，登录链接正在发送中。请查看邮箱。",
   "The portal could not be opened. Try again later.":
     "无法打开门户。请稍后重试。",
+  "Your picture": "你的头像",
+  "Shown next to your feedback and messages.": "显示在你的反馈和消息旁边。",
+  "Change picture": "更换头像",
+  Remove: "移除",
+  "Picture updated": "头像已更新",
+  "Could not save the picture.": "无法保存头像。",
 };
 
 export default zh_CN;
