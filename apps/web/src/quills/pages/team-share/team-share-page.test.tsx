@@ -4,6 +4,7 @@ import { getPortalSettingsFixture } from "../../api/team/get-portal-settings.fix
 import { listCustomDomainsFixture } from "../../api/team/list-custom-domains.fixture";
 import { listSettingsFixture } from "../../api/team/list-settings.fixture";
 import { mintWidgetInstallCodeFixture } from "../../api/team/mint-widget-install-code.fixture";
+import { updatePortalSettingsFixture } from "../../api/team/update-portal-settings.fixture";
 import { describePageContract } from "../../test/contracts";
 import { mockApi } from "../../test/mock-api";
 import { renderPage } from "../../test/render";
@@ -32,6 +33,7 @@ const settings = listSettingsFixture.ok({
   },
 });
 const portal = getPortalSettingsFixture.ok({
+  enabled: true,
   nav: [
     {
       id: "roadmap",
@@ -113,6 +115,23 @@ describe("TeamSharePage", () => {
         ).toHaveTextContent("ABCD-1234");
       },
     },
+  });
+
+  it("says the board is off and turns it on", async () => {
+    const api = mockApi();
+    api.reply(settings);
+    api.reply({ ...portal, enabled: false });
+    api.reply(domains);
+    const view = renderPage(TeamSharePage, meta);
+    expect(await view.findByText("The Acme board is off")).toBeInTheDocument();
+    api.reply(updatePortalSettingsFixture.ok({ enabled: true }));
+    api.reply(portal);
+    fireEvent.click(view.getByRole("button", { name: "Turn on" }));
+    expect(await view.findByText("The Acme board is live")).toBeInTheDocument();
+    expect(view.queryByRole("button", { name: "Turn on" })).toBeNull();
+    expect(await api.calls("updateQuillsPortalSettings")[0]!.json()).toEqual({
+      enabled: true,
+    });
   });
 
   it("uses the portal path and skips the managed reads without manage_settings", async () => {

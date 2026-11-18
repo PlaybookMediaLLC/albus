@@ -105,9 +105,7 @@ describe("TeamChangelogPage", () => {
     fireEvent.click(
       await view.findByRole("menuitemradio", { name: "Published" }),
     );
-    expect(
-      await view.findByText("No changelog entries yet"),
-    ).toBeInTheDocument();
+    expect(await view.findByText("No updates yet")).toBeInTheDocument();
     const url = new URL(api.calls("listQuillsChangelog")[1]!.url);
     expect(url.searchParams.get("status")).toBe("published");
   });

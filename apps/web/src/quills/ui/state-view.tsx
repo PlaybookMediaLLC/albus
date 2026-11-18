@@ -10,7 +10,6 @@ import {
   EmptyHeader,
   EmptyMedia,
   Skeleton,
-  Spinner,
 } from "./upstream";
 
 const problemKeys: Record<PortalProblemKind, string> = {
@@ -33,6 +32,8 @@ export interface StateViewProps {
   /** The empty state: an icon and a line (the generic line by default). */
   emptyIcon?: ReactNode;
   emptyDescription?: string;
+  /** A full empty state, such as an EmptyState with a drawing. It replaces the icon and line. */
+  emptyState?: ReactNode;
   /** Placeholder rows for the first load of a list, so the rows do not jump in. */
   rows?: number;
 }
@@ -45,6 +46,7 @@ export function StateView({
   onRetry,
   emptyIcon,
   emptyDescription,
+  emptyState,
   rows,
 }: StateViewProps) {
   const { t } = useTranslation("quills");
@@ -65,15 +67,14 @@ export function StateView({
         ))}
       </div>
     );
-  // The spinner shows only after 250 ms (Kaneo's delayed-reveal), so a fast answer does not flash.
+  // The placeholder shows only after 250 ms (Kaneo's delayed-reveal), so a fast answer does not flash.
   if (loading)
     return (
-      <div
-        className="delayed-reveal flex items-center gap-3 py-8"
-        role="status"
-      >
-        <Spinner />
-        <p>{t("core.loading")}</p>
+      <div className="delayed-reveal grid gap-3 py-2" role="status">
+        <span className="sr-only">{t("core.loading")}</span>
+        <Skeleton className="h-5 w-1/3" />
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-32 rounded-xl" />
       </div>
     );
   if (problem)
@@ -92,6 +93,7 @@ export function StateView({
         ) : null}
       </Alert>
     );
+  if (empty && emptyState) return emptyState;
   if (empty)
     return (
       <Empty role="status">

@@ -26,6 +26,24 @@ export function parseJson(value: string | null): Record<string, unknown> {
   }
 }
 
+/**
+ * Whether the portal is on. Portals are on unless a teammate turned theirs off
+ * (`portalConfig.enabled: false`); a malformed config keeps the portal closed.
+ */
+export function portalOn(portalConfig: string | null): boolean {
+  try {
+    const parsed: unknown = JSON.parse(portalConfig || "{}");
+    return (
+      !!parsed &&
+      typeof parsed === "object" &&
+      !Array.isArray(parsed) &&
+      (parsed as Record<string, unknown>).enabled !== false
+    );
+  } catch {
+    return false;
+  }
+}
+
 export const record = (value: unknown): Record<string, unknown> =>
   value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)

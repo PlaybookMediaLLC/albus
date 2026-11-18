@@ -16,6 +16,8 @@ import {
   type FeedbackFilterValue,
 } from "./parts/feedback-filter";
 import { MyFeedbackRow } from "./parts/my-feedback-row";
+import { EmptyState } from "../../ui/empty-state";
+import { RequestsArt } from "../../ui/illustrations/requests-art";
 
 export interface MyFeedbackPageProps {
   workspaceId: string;
@@ -104,7 +106,11 @@ export function MyFeedbackPage(props: MyFeedbackPageProps) {
                 ))}
               </Card>
             ) : (
-              <StateView empty>{null}</StateView>
+              <EmptyState
+                art={<RequestsArt />}
+                title={t("empty.myFeedback.title")}
+                description={t("empty.myFeedback.body")}
+              />
             )}
             {list.hasNextPage ? (
               <Button

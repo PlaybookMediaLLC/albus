@@ -1,13 +1,3 @@
-import {
-  AlarmClock,
-  CircleCheck,
-  Flag,
-  type LucideIcon,
-  RotateCcw,
-  Star,
-  Ticket,
-  UserRound,
-} from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -23,6 +13,7 @@ import { PageContext } from "../../../ui/page-context";
 import { cn } from "../../../ui/upstream";
 import type { Teammate } from "../../team-conversations/conversation-list";
 import { AttachmentLink } from "./attachment-link";
+import { eventIcons } from "../event-icons";
 
 type Message = ListConversationMessagesResponse["items"][number];
 
@@ -32,21 +23,10 @@ export interface MessageListProps {
   /** Newest first, as the API returns them. */
   messages: readonly Message[];
   customerName: string;
+  customerAvatarUrl?: string | null;
   /** The teammates, for the avatars of team replies. */
   people: readonly Teammate[];
 }
-
-const eventIcons: Record<string, LucideIcon> = {
-  chat_ended: CircleCheck,
-  chat_reopened: RotateCcw,
-  assigned: UserRound,
-  snoozed: AlarmClock,
-  priority_changed: Flag,
-  ticket_created: Ticket,
-  ticket_linked: Ticket,
-  ticket_status_changed: Ticket,
-  csat_submitted: Star,
-};
 
 // Resolve and reopen notices name the teammate who acted: "You resolved this conversation".
 const actorKeys: Record<string, { you: string; named: string }> = {
@@ -62,11 +42,8 @@ const actorKeys: Record<string, { you: string; named: string }> = {
 
 const day = (iso: string) => new Date(iso).toDateString();
 
-/**
- * The thread (design section 2): day separators, customer messages on the left, team replies
- * and notes on the right, events as centered lines, and the customer's typing. The newest
- * message scrolls into view.
- */
+/** The thread (design section 2): day separators, customer messages left, team replies and notes
+ * right, events as centered lines and the customer's typing. The newest message scrolls in. */
 export function MessageList(props: MessageListProps) {
   const { t } = useTranslation("quills");
   const team = useTeamRuntime();
@@ -142,7 +119,10 @@ export function MessageList(props: MessageListProps) {
                 }
                 author={
                   message.senderType === "visitor"
-                    ? { name: props.customerName }
+                    ? {
+                        name: props.customerName,
+                        avatarUrl: props.customerAvatarUrl,
+                      }
                     : {
                         name:
                           message.authorName ??

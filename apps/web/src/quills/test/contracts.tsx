@@ -304,7 +304,9 @@ async function assertPageState(
   }
   if (state === "empty") {
     await waitFor(() =>
-      expect(view.getByRole("status")).toHaveTextContent(/nothing|empty/i),
+      expect(view.getByRole("status")).toHaveTextContent(
+        /nothing|empty|^no\b/i,
+      ),
     );
     return;
   }

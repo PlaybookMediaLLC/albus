@@ -64,7 +64,7 @@ import type { DeliveryEvent, Subscribers } from "../fanout";
 import { wants } from "../preferences";
 import { loadMailAttachments, messageFiles } from "./mail-attachments";
 import { portalPaths } from "../../portal/paths";
-import { parseJson } from "../../settings/area";
+import { portalOn } from "../../settings/area";
 import { requireSurface } from "../../support/customer/model";
 
 // Support delivery: the customer's copy of a teammate reply on an email conversation, mention and
@@ -100,7 +100,7 @@ export async function customerConversationLink(
     .select({ portalConfig: settings.portalConfig })
     .from(settings)
     .limit(1);
-  return parseJson(row?.portalConfig ?? null).enabled === true
+  return portalOn(row?.portalConfig ?? null)
     ? portalPaths.conversation(workspaceId, conversation.id)
     : undefined;
 }

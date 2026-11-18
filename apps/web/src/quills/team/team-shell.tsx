@@ -12,6 +12,8 @@ import {
   SheetTrigger,
 } from "../ui/upstream";
 import { AppBadge } from "./app-badge";
+import { useFavorites } from "./favorites";
+import { TeamHeaderContext } from "./header-context";
 import { useTeamRuntime } from "./runtime";
 import { SettingsSidebar } from "./settings-sidebar";
 import { shellMode } from "./shell-mode";
@@ -41,6 +43,24 @@ export function TeamShell({ children, ...rail }: TeamShellProps) {
   const section = useLocation({
     select: (location) => shellSection(location.pathname),
   });
+  // The starred address keeps the search, so a filtered view stars as itself.
+  const path = useLocation({
+    select: (location) => location.pathname + location.searchStr,
+  });
+  const [favorites, toggleFavorite] = useFavorites(rail.workspaceId);
+  const sectionLabels = {
+    conversations: t("team.sections.conversations"),
+    requests: t("team.sections.requests"),
+    workspace: t("team.sections.workspace"),
+  };
+  const header =
+    mode === "app"
+      ? {
+          section: sectionLabels[section],
+          favorite: favorites.some((item) => item.path === path),
+          onFavorite: (title: string) => toggleFavorite(path, title),
+        }
+      : null;
   // The 95% scale and the icon stroke in index.css match this attribute on html.
   useLayoutEffect(() => {
     document.documentElement.setAttribute("data-quills-shell", "");
@@ -72,6 +92,7 @@ export function TeamShell({ children, ...rail }: TeamShellProps) {
             workspaceId={rail.workspaceId}
             section={section}
             counts={counts.data}
+            favorites={favorites}
             onNavigate={onNavigate}
           />
         )}
@@ -117,7 +138,9 @@ export function TeamShell({ children, ...rail }: TeamShellProps) {
             "md:my-2 md:me-2 md:rounded-xl md:border md:border-border md:shadow-xs",
         )}
       >
-        {children}
+        <TeamHeaderContext.Provider value={header}>
+          {children}
+        </TeamHeaderContext.Provider>
       </main>
     </div>
   );

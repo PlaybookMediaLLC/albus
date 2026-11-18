@@ -250,6 +250,12 @@ const zh_TW: Catalog = {
     "如果你的電子郵件在入口網站有帳號，登入連結正在寄送中。請查看電子郵件。",
   "The portal could not be opened. Try again later.":
     "無法開啟入口網站。請稍後再試。",
+  "Your picture": "你的頭像",
+  "Shown next to your feedback and messages.": "顯示在你的意見回饋和訊息旁邊。",
+  "Change picture": "更換頭像",
+  Remove: "移除",
+  "Picture updated": "頭像已更新",
+  "Could not save the picture.": "無法儲存頭像。",
 };
 
 export default zh_TW;

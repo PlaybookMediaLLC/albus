@@ -47,6 +47,19 @@ export const postSearch = z.object({
 export type PostSearch = z.infer<typeof postSearch>;
 export type PostTab = NonNullable<PostSearch["status"]>;
 
+/** A search, a filter or a tab other than Active narrows the request list. */
+export const isFiltered = ({ q, board, statusId, tags, status }: PostSearch) =>
+  Boolean(q || board || statusId || tags || (status && status !== "active"));
+
+/** The search patch that clears every filter and returns to the Active tab. */
+export const noFilters = {
+  q: undefined,
+  board: undefined,
+  statusId: undefined,
+  tags: undefined,
+  status: undefined,
+} satisfies Partial<PostSearch>;
+
 type Status = ListStatusesResponse["statuses"][number];
 
 const titles = {

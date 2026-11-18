@@ -61,6 +61,8 @@
 	},
 	"feedback": {
 		"description": "Manage the boards and tags of your feedback, and the public roadmap.",
+		"portal": "Public board",
+		"portalText": "Let customers open your board at its link. While it is off, the link shows “not found”.",
 		"roadmap": "Public roadmap",
 		"roadmapText": "Show the roadmap tab and its pages on the portal.",
 		"title": "Feedback"

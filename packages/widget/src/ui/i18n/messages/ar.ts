@@ -274,6 +274,12 @@ const ar: Catalog = {
     "إذا كان لبريدك الإلكتروني حساب على البوابة، فرابط تسجيل الدخول في طريقه إليك. تحقق من بريدك الإلكتروني.",
   "The portal could not be opened. Try again later.":
     "تعذّر فتح البوابة. حاول مرة أخرى لاحقًا.",
+  "Your picture": "صورتك",
+  "Shown next to your feedback and messages.": "تظهر بجانب ملاحظاتك ورسائلك.",
+  "Change picture": "تغيير الصورة",
+  Remove: "إزالة",
+  "Picture updated": "تم تحديث الصورة",
+  "Could not save the picture.": "تعذّر حفظ الصورة.",
 };
 
 export default ar;

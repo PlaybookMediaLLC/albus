@@ -42,10 +42,14 @@ describe("StateView", () => {
     expect(retry).toHaveBeenCalledOnce();
   });
 
-  it("delays the spinner and shows placeholder rows for a list", () => {
-    const spinner = renderComponent(<StateView loading>{null}</StateView>);
-    expect(spinner.container.firstElementChild).toHaveClass("delayed-reveal");
-    spinner.unmount();
+  it("shows a delayed skeleton, not a spinner, and placeholder rows for a list", () => {
+    const page = renderComponent(<StateView loading>{null}</StateView>);
+    const placeholder = page.getByRole("status");
+    expect(placeholder).toHaveClass("delayed-reveal");
+    expect(placeholder.querySelector("[data-slot=skeleton]")).not.toBeNull();
+    expect(placeholder.querySelector(".animate-spin")).toBeNull();
+    expect(placeholder).toHaveTextContent("Loading…");
+    page.unmount();
     const rows = renderComponent(
       <StateView loading rows={3}>
         {null}
@@ -68,5 +72,15 @@ describe("StateView", () => {
     );
     expect(view.getByText("Submit the first one.")).toBeVisible();
     expect(view.container.querySelector("[data-icon=empty]")).not.toBeNull();
+  });
+
+  it("shows a full empty state in place of the line", () => {
+    const view = renderComponent(
+      <StateView empty emptyState={<p>Nothing yet</p>}>
+        {null}
+      </StateView>,
+    );
+    expect(view.getByText("Nothing yet")).toBeVisible();
+    expect(view.queryByText("Nothing is here yet.")).toBeNull();
   });
 });

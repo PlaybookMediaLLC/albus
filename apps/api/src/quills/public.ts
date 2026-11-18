@@ -1,5 +1,6 @@
 import { apiRouter } from "../openapi";
 import { connectorOAuthCallback } from "./assistant/connectors";
+import avatarImage from "./files/avatar-image";
 import customerFiles from "./files/customer";
 import inboundEmail from "./inbound/email";
 import emailEvents from "./inbound/events";
@@ -47,6 +48,7 @@ export default apiRouter()
   .route("/", portalSupport)
   .route("/", widgetSupport)
   .route("/", customerFiles)
+  .route("/", avatarImage)
   .route("/", track)
   .route("/", portalSurveys)
   .route("/", widgetSurveys);

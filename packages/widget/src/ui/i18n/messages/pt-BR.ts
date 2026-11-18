@@ -272,6 +272,13 @@ const pt_BR: Catalog = {
     "Se o seu e-mail tiver uma conta no portal, um link para entrar está a caminho. Verifique seu e-mail.",
   "The portal could not be opened. Try again later.":
     "Não foi possível abrir o portal. Tente novamente mais tarde.",
+  "Your picture": "Sua foto",
+  "Shown next to your feedback and messages.":
+    "Aparece ao lado dos seus comentários e mensagens.",
+  "Change picture": "Alterar foto",
+  Remove: "Remover",
+  "Picture updated": "Foto atualizada",
+  "Could not save the picture.": "Não foi possível salvar a foto.",
 };
 
 export default pt_BR;

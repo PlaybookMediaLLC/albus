@@ -45,8 +45,8 @@ export function RoadmapDragPreview({
 }: RoadmapDragPreviewProps) {
   if (item.type === "card")
     return (
-      <div aria-hidden="true" className={cn("w-76 rounded-lg", lifted)}>
-        <article className="relative rounded-lg border bg-card p-3">
+      <div aria-hidden="true" className={cn("w-93 rounded-lg", lifted)}>
+        <article className="relative rounded-lg border border-border bg-card p-3">
           <RoadmapCardBody
             preview
             workspaceId={props.workspaceId}
@@ -63,11 +63,11 @@ export function RoadmapDragPreview({
     <div
       aria-hidden="true"
       className={cn(
-        "flex h-96 w-80 flex-col gap-2 rounded-xl border bg-card p-2",
+        "flex h-96 w-96 flex-col gap-2 rounded-xl border border-border bg-card p-2",
         lifted,
       )}
     >
-      <div className="flex items-center gap-1.5 p-2 text-sm font-semibold">
+      <div className="flex items-center gap-2 p-2 text-sm font-medium">
         {status ? (
           <PostStatusIcon
             color={status.color}

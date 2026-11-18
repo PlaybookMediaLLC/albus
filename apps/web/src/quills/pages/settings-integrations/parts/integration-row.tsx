@@ -2,6 +2,8 @@ import { Unplug } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { avatarTone } from "../../../core/avatar-tone";
+import { brandMarks } from "../../../ui/brand-marks";
+import { BrandIcon } from "../../../ui/brand-icon";
 import { useDeleteIntegration } from "../../../hooks/team/use-delete-integration";
 import { useTeamRuntime } from "../../../team/runtime";
 import {
@@ -39,11 +41,19 @@ export function IntegrationRow({
   return (
     <SettingsRow
       icon={
-        <span className="text-sm font-semibold">
-          {provider.name.charAt(0).toUpperCase()}
-        </span>
+        brandMarks[provider.id] ? (
+          <BrandIcon id={provider.id} />
+        ) : (
+          <span className="text-sm font-semibold">
+            {provider.name.charAt(0).toUpperCase()}
+          </span>
+        )
       }
-      iconClassName={`border-transparent ${avatarTone(provider.name)}`}
+      iconClassName={
+        brandMarks[provider.id]
+          ? "text-foreground"
+          : `border-transparent ${avatarTone(provider.name)}`
+      }
       title={provider.name}
       description={provider.description}
     >

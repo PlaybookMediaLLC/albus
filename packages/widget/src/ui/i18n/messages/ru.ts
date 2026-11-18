@@ -277,6 +277,13 @@ const ru: Catalog = {
     "Если у вашего адреса есть аккаунт на портале, ссылка для входа уже в пути. Проверьте почту.",
   "The portal could not be opened. Try again later.":
     "Не удалось открыть портал. Попробуйте позже.",
+  "Your picture": "Ваше фото",
+  "Shown next to your feedback and messages.":
+    "Отображается рядом с вашими отзывами и сообщениями.",
+  "Change picture": "Изменить фото",
+  Remove: "Удалить",
+  "Picture updated": "Фото обновлено",
+  "Could not save the picture.": "Не удалось сохранить фото.",
 };
 
 export default ru;

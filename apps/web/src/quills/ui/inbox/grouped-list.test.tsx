@@ -34,4 +34,18 @@ describe("GroupedList", () => {
     expect(view.queryByRole("group", { name: /Low/ })).toBeNull();
     expect(view.getAllByRole("listitem")).toHaveLength(3);
   });
+
+  it("shows the icon of each group before its label", () => {
+    const view = renderComponent(
+      <GroupedList
+        label="Requests"
+        groups={groups}
+        getKey={(item) => item.id}
+        renderItem={(item) => <span>{item.title}</span>}
+        renderIcon={(group) => <svg aria-hidden="true" data-group={group.id} />}
+      />,
+    );
+    const heading = view.getByRole("heading", { name: "High 1" });
+    expect(heading.querySelector("[data-group=high]")).not.toBeNull();
+  });
 });

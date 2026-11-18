@@ -21,4 +21,24 @@ describe("PersonAvatar", () => {
     expect(avatar).toHaveTextContent("AL");
     expect(avatar.className).toMatch(/bg-\w+\/\d+/);
   });
+
+  it("gives a photo a hairline edge and keeps initials without one", () => {
+    const photo = renderComponent(
+      <PersonAvatar
+        name="Ada Lovelace"
+        avatarUrl="/api/user/avatar/ada"
+        colored
+      />,
+    );
+    expect(photo.container.firstElementChild!.className).toContain(
+      "after:ring-1",
+    );
+    photo.unmount();
+    const initials = renderComponent(
+      <PersonAvatar name="Ada Lovelace" colored />,
+    );
+    expect(initials.container.firstElementChild!.className).not.toContain(
+      "after:ring-1",
+    );
+  });
 });

@@ -1,7 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { avatarTone } from "../../../core/avatar-tone";
-import { cn } from "../../../ui/upstream";
+import { BrandIcon } from "../../../ui/brand-icon";
 import { socialLinks } from "../share-links";
 
 export interface SocialLinksProps {
@@ -18,21 +17,25 @@ export function SocialLinks({ workspace, url }: SocialLinksProps) {
   );
   const rows = [
     {
+      id: "x",
       href: links.x,
       name: t("team-share.social.x"),
       text: t("team-share.social.xText"),
     },
     {
+      id: "linkedin",
       href: links.linkedin,
       name: t("team-share.social.linkedin"),
       text: t("team-share.social.linkedinText"),
     },
     {
+      id: "facebook",
       href: links.facebook,
       name: t("team-share.social.facebook"),
       text: t("team-share.social.facebookText"),
     },
     {
+      id: "reddit",
       href: links.reddit,
       name: t("team-share.social.reddit"),
       text: t("team-share.social.redditText"),
@@ -50,12 +53,9 @@ export function SocialLinks({ workspace, url }: SocialLinksProps) {
           >
             <span
               aria-hidden="true"
-              className={cn(
-                "flex size-8 shrink-0 items-center justify-center rounded-lg text-sm font-semibold",
-                avatarTone(row.name),
-              )}
+              className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-foreground"
             >
-              {row.name.charAt(0)}
+              <BrandIcon id={row.id} className="size-4" />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block font-medium">{row.name}</span>

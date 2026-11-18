@@ -1,5 +1,11 @@
 import type { ComponentProps } from "react";
-import { Button, Tooltip, TooltipContent, TooltipTrigger } from "../upstream";
+import {
+  Button,
+  Kbd,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "../upstream";
 
 export interface IconButtonProps extends Omit<
   ComponentProps<typeof Button>,
@@ -12,7 +18,8 @@ export interface IconButtonProps extends Omit<
 }
 
 /**
- * An icon-only button with its name in a coss Tooltip. For a menu or popover trigger,
+ * An icon-only button with its name in a coss Tooltip. The tooltip shows `aria-keyshortcuts`
+ * as keycaps, one for each space-separated key. For a menu or popover trigger,
  * render it from the trigger: `<MenuTrigger render={<IconButton label="More" />}>`.
  */
 export function IconButton({
@@ -21,6 +28,7 @@ export function IconButton({
   children,
   ...props
 }: IconButtonProps) {
+  const keys = props["aria-keyshortcuts"]?.split(" ");
   return (
     <Tooltip>
       <TooltipTrigger
@@ -35,7 +43,16 @@ export function IconButton({
       >
         {children}
       </TooltipTrigger>
-      <TooltipContent side={side}>{label}</TooltipContent>
+      <TooltipContent side={side}>
+        <span className="flex items-center gap-1.5">
+          {label}
+          {keys?.map((key) => (
+            <Kbd key={key} aria-hidden="true" tone="tooltip">
+              {key === "Escape" ? "Esc" : key}
+            </Kbd>
+          ))}
+        </span>
+      </TooltipContent>
     </Tooltip>
   );
 }

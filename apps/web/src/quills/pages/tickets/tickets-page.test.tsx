@@ -96,7 +96,7 @@ describe("TicketsPage", () => {
       const view = renderPage(TicketsPage, meta, {
         viewer: { kind: "user", id: "account_test_1" },
       });
-      expect(await view.findByText("Nothing is here yet.")).toBeInTheDocument();
+      expect(await view.findByText("No tickets yet")).toBeInTheDocument();
       fill("Title", "Cannot sign in");
       press("Create ticket");
       expect(await view.findByText("Ticket created")).toBeInTheDocument();

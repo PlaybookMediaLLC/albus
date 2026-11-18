@@ -12,7 +12,7 @@ import { votedPostIds } from "./identify-claims";
 import { identifyCustomer } from "./identify-customer";
 import { portalSignIn } from "../portal/sign-in-settings";
 import { signInLinkAvailable } from "../framework/sign-in-link";
-import { parseJson } from "../settings/area";
+import { portalOn } from "../settings/area";
 
 // Verified-only identify: the host app's backend signs an HS256 JWT with the widget secret,
 // and only that token can name a customer. There is no unverified email path.
@@ -22,7 +22,7 @@ async function handoff(
   db: Parameters<typeof portalSignIn>[0],
   portalConfig: string | null,
 ) {
-  const open = parseJson(portalConfig).enabled === true;
+  const open = portalOn(portalConfig);
   const portalSignInOn = open && (await portalSignIn(db)).widgetSignIn;
   return {
     canPortalHandoff: portalSignInOn || (open && signInLinkAvailable()),

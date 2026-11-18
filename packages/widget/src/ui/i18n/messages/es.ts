@@ -272,6 +272,13 @@ const es: Catalog = {
     "Si tu correo tiene una cuenta en el portal, te llegará un enlace para iniciar sesión. Revisa tu correo.",
   "The portal could not be opened. Try again later.":
     "No se pudo abrir el portal. Inténtalo de nuevo más tarde.",
+  "Your picture": "Tu foto",
+  "Shown next to your feedback and messages.":
+    "Se muestra junto a tus comentarios y mensajes.",
+  "Change picture": "Cambiar foto",
+  Remove: "Quitar",
+  "Picture updated": "Foto actualizada",
+  "Could not save the picture.": "No se pudo guardar la foto.",
 };
 
 export default es;

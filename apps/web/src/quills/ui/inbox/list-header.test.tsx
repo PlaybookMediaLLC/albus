@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vite-plus/test";
 import { press } from "../../test/actions";
 import { renderComponent } from "../../test/render";
 import { MenuItem, ShortcutListener } from "../upstream";
+import { TeamHeaderContext } from "../../team/header-context";
 import { ListHeader } from "./list-header";
 
 describe("ListHeader", () => {
@@ -55,5 +56,40 @@ describe("ListHeader", () => {
     ).toBeVisible();
     expect(view.queryByRole("button", { name: "Filters" })).toBeNull();
     expect(view.getByRole("button", { name: "New" })).toBeInTheDocument();
+  });
+
+  it("shows the section breadcrumb and stars the page in the team shell", () => {
+    const onFavorite = vi.fn();
+    const view = renderComponent(
+      <TeamHeaderContext.Provider
+        value={{ section: "Workspace", favorite: false, onFavorite }}
+      >
+        <ListHeader title="Roadmap" />
+        <ListHeader title="Beside an item" headingLevel={2} />
+      </TeamHeaderContext.Provider>,
+    );
+    expect(view.getByText("Workspace")).toBeVisible();
+    const star = view.getByRole("button", { name: "Add to favorites" });
+    expect(star).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(star);
+    expect(onFavorite).toHaveBeenCalledWith("Roadmap");
+    // Only the page title gets the star.
+    expect(
+      view.getAllByRole("button", { name: "Add to favorites" }),
+    ).toHaveLength(1);
+  });
+
+  it("names the star by its state and leaves out a breadcrumb equal to the title", () => {
+    const view = renderComponent(
+      <TeamHeaderContext.Provider
+        value={{ section: "Requests", favorite: true, onFavorite: vi.fn() }}
+      >
+        <ListHeader title="Requests" />
+      </TeamHeaderContext.Provider>,
+    );
+    expect(view.getAllByText("Requests")).toHaveLength(1);
+    expect(
+      view.getByRole("button", { name: "Remove from favorites" }),
+    ).toHaveAttribute("aria-pressed", "true");
   });
 });

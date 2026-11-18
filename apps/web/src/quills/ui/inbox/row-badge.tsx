@@ -1,4 +1,4 @@
-import { Badge } from "../upstream";
+import { Badge, cn } from "../upstream";
 import type { InboxBadge } from "./inbox-types";
 
 export interface RowBadgeProps {
@@ -16,7 +16,15 @@ const variants = {
 /** One status badge of an inbox row, in sentence case. */
 export function RowBadge({ badge }: RowBadgeProps) {
   return (
-    <Badge variant={variants[badge.tone ?? "neutral"]} className="font-medium">
+    <Badge
+      variant={variants[badge.tone ?? "neutral"]}
+      className={cn(
+        "font-medium",
+        // A neutral badge is a quiet hairline pill, like the chips of the rows.
+        (badge.tone ?? "neutral") === "neutral" &&
+          "rounded-full border-border text-muted-foreground",
+      )}
+    >
       {badge.label}
     </Badge>
   );

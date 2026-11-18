@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { SettingsRowsSkeleton } from "@/components/settings/settings-rows-skeleton";
 import { useTranslation } from "react-i18next";
 import { CheckoutSuccessCallout } from "@/components/billing/checkout-success-callout";
 import { CurrentPlanCard } from "@/components/billing/current-plan-card";
@@ -6,7 +7,6 @@ import { PlanPicker } from "@/components/billing/plan-picker";
 import PageTitle from "@/components/page-title";
 import { SettingsPage } from "@/components/settings/settings-page";
 import { SettingsSection } from "@/components/settings/settings-section";
-import { Spinner } from "@/components/ui/spinner";
 import { useGetBilling } from "@/hooks/queries/billing/use-get-billing";
 import { useTrackSubscription } from "@/hooks/use-track-subscription";
 import { useWorkspacePermission } from "@/hooks/use-workspace-permission";
@@ -29,8 +29,12 @@ export function BillingSettingsPage({
 
   if (isLoading) {
     return (
-      <div className="flex h-40 items-center justify-center">
-        <Spinner />
+      <div
+        role="status"
+        aria-label={t("common:empty.loading")}
+        className="delayed-reveal"
+      >
+        <SettingsRowsSkeleton rows={3} withDescription />
       </div>
     );
   }

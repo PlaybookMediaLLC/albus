@@ -764,10 +764,17 @@
             "properties": {
               "name": {
                 "type": "string"
+              },
+              "avatarUrl": {
+                "type": [
+                  "string",
+                  "null"
+                ]
               }
             },
             "required": [
-              "name"
+              "name",
+              "avatarUrl"
             ]
           },
           "category": {
@@ -37175,8 +37182,8 @@
         "tags": [
           "Quills"
         ],
-        "summary": "Request an upload URL for a widget attachment",
-        "description": "Returns a presigned PUT for a key in the visitor's own namespace. Register it with POST /widget/files, then attach it to a feedback post. Needs the feedback, messenger or tickets tab and a visitor that the host app identified.",
+        "summary": "Request an upload URL for a widget attachment or avatar",
+        "description": "Returns a presigned PUT for a key in the visitor's own namespace. Register an attachment with POST /widget/files, then attach it to a feedback post; set an avatar with PUT /widget/avatar. Needs the feedback, messenger or tickets tab and a visitor that the host app identified.",
         "security": [],
         "parameters": [
           {
@@ -37202,7 +37209,8 @@
                     "type": "string",
                     "enum": [
                       "customer_file",
-                      "customer_image"
+                      "customer_image",
+                      "customer_avatar"
                     ]
                   },
                   "filename": {
@@ -37717,6 +37725,298 @@
           },
           "429": {
             "description": "Too many attempts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quills-public/{workspace}/widget/avatar": {
+      "put": {
+        "operationId": "saveQuillsWidgetAvatar",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Set the identified visitor's avatar to an uploaded image",
+        "description": "Verifies an image that the visitor uploaded with POST /widget/uploads (purpose customer_avatar). Needs a visitor that the host app identified; the previous uploaded avatar is queued for cleanup.",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Workspace ID or slug"
+            },
+            "required": true,
+            "description": "Workspace ID or slug",
+            "name": "workspace",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024
+                  },
+                  "contentType": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "pattern": "^[a-z0-9][a-z0-9!#$&^_.+-]*\\/[a-z0-9][a-z0-9!#$&^_.+-]*$"
+                  },
+                  "size": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1073741824
+                  }
+                },
+                "required": [
+                  "key",
+                  "contentType",
+                  "size"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The visitor's avatar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "changed": {
+                      "type": "boolean"
+                    },
+                    "principalId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "avatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "changed",
+                    "principalId",
+                    "avatarUrl"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Valid widget session required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Anonymous visitor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Upload not found, or the widget is off; Workspace not found or archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The caller changed during the request; retry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteQuillsWidgetAvatar",
+        "tags": [
+          "Quills"
+        ],
+        "summary": "Remove the identified visitor's uploaded avatar",
+        "description": "The uploaded image is queued for cleanup. A picture that the host app sent stays.",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Workspace ID or slug"
+            },
+            "required": true,
+            "description": "Workspace ID or slug",
+            "name": "workspace",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The visitor's avatar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "changed": {
+                      "type": "boolean"
+                    },
+                    "principalId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "avatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "changed",
+                    "principalId",
+                    "avatarUrl"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Valid widget session required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Anonymous visitor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The widget is off; Workspace not found or archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quills-public/{workspace}/avatars/{principalId}": {
+      "get": {
+        "operationId": "getQuillsAvatarImage",
+        "tags": [
+          "Quills portal"
+        ],
+        "summary": "Open a person's uploaded avatar",
+        "description": "Public, like Kaneo's user avatars: the principal ID is unguessable and the URL carries a version that changes with the picture. Redirects to a short-lived signed URL of the feedback app's bucket; the redirect is cached until shortly before it expires.",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "workspace",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "principalId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "v",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to the avatar image"
+          },
+          "404": {
+            "description": "No uploaded avatar",
             "content": {
               "application/json": {
                 "schema": {
@@ -114142,6 +114442,12 @@
                               "null"
                             ]
                           },
+                          "visitorAvatarUrl": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
                           "visitorEmail": {
                             "type": [
                               "string",
@@ -114268,6 +114574,7 @@
                           "updatedAt",
                           "visitorPrincipalId",
                           "visitorName",
+                          "visitorAvatarUrl",
                           "visitorEmail",
                           "isTest",
                           "assignedAgentPrincipalId",
@@ -114467,6 +114774,12 @@
                             "null"
                           ]
                         },
+                        "visitorAvatarUrl": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "visitorEmail": {
                           "type": [
                             "string",
@@ -114593,6 +114906,7 @@
                         "updatedAt",
                         "visitorPrincipalId",
                         "visitorName",
+                        "visitorAvatarUrl",
                         "visitorEmail",
                         "isTest",
                         "assignedAgentPrincipalId",
@@ -114966,6 +115280,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -115188,6 +115508,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -116167,6 +116488,12 @@
                             "null"
                           ]
                         },
+                        "visitorAvatarUrl": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "visitorEmail": {
                           "type": [
                             "string",
@@ -116293,6 +116620,7 @@
                         "updatedAt",
                         "visitorPrincipalId",
                         "visitorName",
+                        "visitorAvatarUrl",
                         "visitorEmail",
                         "isTest",
                         "assignedAgentPrincipalId",
@@ -118055,6 +118383,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -118280,6 +118614,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -118474,6 +118809,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -118699,6 +119040,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -118900,6 +119242,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -119125,6 +119473,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -119297,6 +119646,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -119522,6 +119877,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -119694,6 +120050,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -119919,6 +120281,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -120091,6 +120454,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -120316,6 +120685,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -120511,6 +120881,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -120736,6 +121112,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -120938,6 +121315,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -121163,6 +121546,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -121355,6 +121739,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -121580,6 +121970,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -121771,6 +122162,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -121996,6 +122393,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -122185,6 +122583,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -122410,6 +122814,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -122581,6 +122986,12 @@
                         "null"
                       ]
                     },
+                    "visitorAvatarUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "visitorEmail": {
                       "type": [
                         "string",
@@ -122806,6 +123217,7 @@
                     "updatedAt",
                     "visitorPrincipalId",
                     "visitorName",
+                    "visitorAvatarUrl",
                     "visitorEmail",
                     "isTest",
                     "assignedAgentPrincipalId",
@@ -127913,6 +128325,12 @@
                                   "null"
                                 ]
                               },
+                              "visitorAvatarUrl": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
                               "visitorEmail": {
                                 "type": [
                                   "string",
@@ -128039,6 +128457,7 @@
                               "updatedAt",
                               "visitorPrincipalId",
                               "visitorName",
+                              "visitorAvatarUrl",
                               "visitorEmail",
                               "isTest",
                               "assignedAgentPrincipalId",

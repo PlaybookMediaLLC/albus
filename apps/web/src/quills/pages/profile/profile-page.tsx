@@ -10,6 +10,8 @@ import { StateView } from "../../ui/state-view";
 import { meta } from "./meta";
 import { ProfileForm } from "./parts/profile-form";
 import { ProfileSummary } from "./parts/profile-summary";
+import { ProfilePicture } from "./parts/profile-picture";
+import { useAvatarUpload } from "../../core/use-avatar-upload";
 
 export interface ProfilePageProps {
   workspaceId: string;
@@ -36,6 +38,7 @@ export function ProfilePage(props: ProfilePageProps) {
     portal.viewer,
   );
   const update = useUpdateCustomerProfile(portal.viewer);
+  const picture = useAvatarUpload(props.workspaceId, portal.viewer);
   const updateProfile = async (values: {
     name: string;
   }): Promise<PortalProblem | void> => {
@@ -91,6 +94,14 @@ export function ProfilePage(props: ProfilePageProps) {
                 <ProfileSummary
                   account={account.data}
                   publicProfile={publicProfile.data}
+                />
+                <ProfilePicture
+                  name={account.data.name}
+                  avatarUrl={account.data.avatarUrl}
+                  busy={picture.busy}
+                  failed={picture.failed}
+                  onUpload={(file) => void picture.upload(file)}
+                  onRemove={() => void picture.remove()}
                 />
                 <ProfileForm
                   initialName={account.data.name}

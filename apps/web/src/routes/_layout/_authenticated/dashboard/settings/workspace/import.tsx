@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SettingsRowsSkeleton } from "@/components/settings/settings-rows-skeleton";
 import { useTranslation } from "react-i18next";
 import { ImportFlow } from "@/components/import/import-flow";
 import { ImportNotAllowed } from "@/components/import/import-not-allowed";
@@ -7,7 +8,6 @@ import {
   isImportSourceId,
 } from "@/components/import/import-source-definitions";
 import PageTitle from "@/components/page-title";
-import { Spinner } from "@/components/ui/spinner";
 import useActiveWorkspace from "@/hooks/queries/workspace/use-active-workspace";
 import { useCanImport } from "@/hooks/use-can-import";
 
@@ -39,8 +39,12 @@ function RouteComponent() {
     <>
       <PageTitle title={t("settings:workspaceImport.pageTitle")} />
       {!workspace || isCheckingPermissions ? (
-        <div className="flex h-40 items-center justify-center">
-          <Spinner />
+        <div
+          role="status"
+          aria-label={t("common:empty.loading")}
+          className="delayed-reveal"
+        >
+          <SettingsRowsSkeleton rows={3} withDescription />
         </div>
       ) : canImport ? (
         <ImportFlow

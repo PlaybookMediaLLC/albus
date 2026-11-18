@@ -24,7 +24,7 @@ export function RequestItem({
     <a
       {...link}
       href={href}
-      className="flex items-center gap-4 rounded-lg px-2 py-3 outline-none hover:bg-muted/60 focus-visible:bg-muted"
+      className="flex items-center gap-4 rounded-lg px-2 py-3 outline-none hover:bg-accent focus-visible:bg-foreground/6"
     >
       <span
         aria-label={t("team-members.votes", { count: post.voteCount })}

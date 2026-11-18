@@ -275,6 +275,13 @@ const de: Catalog = {
     "Wenn Ihre E-Mail-Adresse ein Konto im Portal hat, ist ein Anmeldelink unterwegs. Prüfen Sie Ihre E-Mails.",
   "The portal could not be opened. Try again later.":
     "Das Portal konnte nicht geöffnet werden. Versuchen Sie es später erneut.",
+  "Your picture": "Ihr Bild",
+  "Shown next to your feedback and messages.":
+    "Wird neben Ihrem Feedback und Ihren Nachrichten angezeigt.",
+  "Change picture": "Bild ändern",
+  Remove: "Entfernen",
+  "Picture updated": "Bild aktualisiert",
+  "Could not save the picture.": "Das Bild konnte nicht gespeichert werden.",
 };
 
 export default de;

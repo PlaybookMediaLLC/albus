@@ -69,6 +69,10 @@ export function TicketAssignee({ ticket, people }: TicketAssigneeProps) {
             <PersonAvatar
               colored
               name={assignee.displayName}
+              avatarUrl={
+                people.find((person) => person.id === assignee.principalId)
+                  ?.avatarUrl
+              }
               className="size-5"
             />
           ) : (

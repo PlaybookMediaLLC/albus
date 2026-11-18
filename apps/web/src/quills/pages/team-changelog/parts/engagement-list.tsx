@@ -6,6 +6,8 @@ import { useTeamRuntime } from "../../../team/runtime";
 import { TeamStateView } from "../../../team/team-state-view";
 import { Button } from "../../../ui/upstream";
 import { EngagementRow } from "./engagement-row";
+import { EmptyState } from "../../../ui/empty-state";
+import { ChangelogArt } from "../../../ui/illustrations/changelog-art";
 
 export interface EngagementListProps {
   workspaceId: string;
@@ -29,6 +31,13 @@ export function EngagementList({ workspaceId }: EngagementListProps) {
       loading={list.isLoading}
       problem={list.error}
       empty={!items.length}
+      emptyState={
+        <EmptyState
+          art={<ChangelogArt />}
+          title={t("empty.engagement.title")}
+          description={t("empty.engagement.body")}
+        />
+      }
       onRetry={() => void list.refetch()}
     >
       <ul

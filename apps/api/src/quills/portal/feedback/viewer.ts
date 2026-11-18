@@ -33,7 +33,7 @@ import {
 import type { Database } from "../../framework/define-route";
 import { votingOf } from "../../feedback/board-voting";
 import { notFound, notTest } from "../../feedback/visibility";
-import { bool, parseJson, record, str } from "../../settings/area";
+import { bool, parseJson, portalOn, record, str } from "../../settings/area";
 import { navTabs } from "../nav";
 import { hasSensitive, looksLikeSpam } from "../../feedback/content-checks";
 import { fieldsOf } from "../../feedback/custom-fields";
@@ -47,15 +47,14 @@ const closed = () => new HTTPException(404, { message: "Workspace not found" });
 export const forbidden = (message: string) =>
   new HTTPException(403, { message });
 
-/** Portals are opt-in: every portal and public route calls this first. */
+/** Every portal and public route calls this first: 404 while a teammate has the portal off. */
 export async function requirePortal(db: Database) {
   const [row] = await db
     .select({ portalConfig: settings.portalConfig })
     .from(settings)
     .limit(1);
-  const config = parseJson(row?.portalConfig ?? null);
-  if (config.enabled !== true) throw closed();
-  return config;
+  if (!portalOn(row?.portalConfig ?? null)) throw closed();
+  return parseJson(row?.portalConfig ?? null);
 }
 
 export type Viewer = Awaited<ReturnType<typeof viewerFor>>;
@@ -87,7 +86,7 @@ export async function viewerFor(
         .where(eq(principal.id, me))
     : [];
   if (audience === "portal") {
-    if (config.enabled !== true) throw closed();
+    if (!portalOn(row?.portalConfig ?? null)) throw closed();
     if (!(await evaluatePortalAccess(db, caller)).granted)
       throw forbidden("Portal access required");
   } else {

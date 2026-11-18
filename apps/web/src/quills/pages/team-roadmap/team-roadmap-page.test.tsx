@@ -112,7 +112,7 @@ describe("TeamRoadmapPage", () => {
       "/feedback/workspace_test_1/posts/post_export",
     );
     const article = card.closest("article")!;
-    expect(article).toHaveTextContent("Export to CSV details");
+    expect(article).toHaveTextContent(/Created \w{3} \d{4}/);
     expect(article).toHaveTextContent("Ideas");
     expect(article).toHaveTextContent("3 votes");
     expect(article).toHaveTextContent("0 comments");
@@ -209,7 +209,8 @@ describe("TeamRoadmapPage", () => {
     const api = prepare();
     const view = renderPage(TeamRoadmapPage, meta);
     await view.findByRole("link", { name: "Single sign-on" });
-    press("Collapse Planned");
+    press("Options for Planned");
+    fireEvent.click(await view.findByRole("menuitem", { name: "Hide column" }));
     expect(within(column(view, "Planned")).queryByRole("link")).toBeNull();
     expect(readCollapsed("workspace_test_1")).toEqual(["status_planned"]);
     view.unmount();
@@ -220,7 +221,7 @@ describe("TeamRoadmapPage", () => {
     api.reply(listPostsFixture.ok());
     const again = renderPage(TeamRoadmapPage, meta);
     expect(
-      await again.findByRole("button", { name: "Expand Planned" }),
+      await again.findByRole("button", { name: "Show Planned" }),
     ).toBeVisible();
     await again.findByRole("link", { name: "Export to CSV" });
     expect(within(column(again, "Planned")).getByText("4")).toBeVisible();
@@ -236,5 +237,21 @@ describe("TeamRoadmapPage", () => {
     expect(view.queryByRole("button", { name: /column$/ })).toBeNull();
     expect(view.queryByRole("button", { name: /^New request/ })).toBeNull();
     expect(view.queryByRole("button", { name: /^Move / })).toBeNull();
+  });
+
+  it("shows only the open or the finished columns from the tabs", async () => {
+    prepare();
+    const view = renderPage(TeamRoadmapPage, meta);
+    await view.findByRole("link", { name: "Export to CSV" });
+    expect(view.getByRole("tab", { name: /^All/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    fireEvent.click(view.getByRole("tab", { name: /^Active/ }));
+    expect(view.queryByRole("region", { name: "Complete" })).toBeNull();
+    expect(view.getByRole("region", { name: "Planned" })).toBeVisible();
+    fireEvent.click(view.getByRole("tab", { name: /^Done/ }));
+    expect(view.queryByRole("region", { name: "Planned" })).toBeNull();
+    expect(view.getByRole("region", { name: "Complete" })).toBeVisible();
   });
 });

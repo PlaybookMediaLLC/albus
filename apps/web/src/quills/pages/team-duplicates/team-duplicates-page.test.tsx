@@ -118,7 +118,7 @@ describe("TeamDuplicatesPage", () => {
       expect(
         view.getByRole("heading", { level: 1, name: "Duplicates" }),
       ).toBeInTheDocument();
-      expect(view.getByText("Nothing is here yet.")).toBeInTheDocument();
+      expect(view.getByText("No duplicate pairs here")).toBeInTheDocument();
     });
 
     it("lists the dismissed pairs and restores one", async () => {
@@ -128,7 +128,7 @@ describe("TeamDuplicatesPage", () => {
       api.reply(restoreSuggestionFixture.ok());
       api.reply(listMergeSuggestionsFixture.ok());
       const view = renderPage(TeamDuplicatesPage, meta);
-      await view.findByText("Nothing is here yet.");
+      await view.findByText("No duplicate pairs here");
       press("Filters");
       fireEvent.click(
         await view.findByRole("menuitemradio", { name: "Dismissed" }),

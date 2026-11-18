@@ -270,7 +270,7 @@ describe("TeamPostsPage", () => {
     expect(new URL(api.calls("restoreQuillsPost")[0]!.url).pathname).toBe(
       "/api/quills/workspace_test_1/posts/post_export/restore",
     );
-    expect(await view.findByText("Nothing is here yet.")).toBeVisible();
+    expect(await view.findByText("No matches")).toBeVisible();
   });
 
   it("does not open a deleted request by key", async () => {

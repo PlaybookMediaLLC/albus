@@ -150,6 +150,8 @@ export {
   PopoverTrigger,
 } from "@/components/ui/popover";
 export { getInitials } from "@/lib/get-initials";
+// Kaneo's avatar preparation: a 256 px square crop, re-encoded in the browser before upload.
+export { prepareAvatarImage } from "@/lib/prepare-avatar-image";
 export { default as useGetWorkspaces } from "@/hooks/queries/workspace/use-get-workspaces";
 
 // Teammate settings (lane S): the Kaneo settings frame, the coss parts of the

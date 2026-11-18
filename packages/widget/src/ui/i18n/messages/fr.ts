@@ -273,6 +273,13 @@ const fr: Catalog = {
     "Si votre adresse e-mail a un compte sur le portail, un lien de connexion est en route. Consultez vos e-mails.",
   "The portal could not be opened. Try again later.":
     "Impossible d’ouvrir le portail. Réessayez plus tard.",
+  "Your picture": "Votre photo",
+  "Shown next to your feedback and messages.":
+    "Affichée à côté de vos retours et de vos messages.",
+  "Change picture": "Changer de photo",
+  Remove: "Retirer",
+  "Picture updated": "Photo mise à jour",
+  "Could not save the picture.": "Impossible d’enregistrer la photo.",
 };
 
 export default fr;

@@ -16,6 +16,8 @@ import type { Signal } from "./parts/signal-detail";
 import { SignalGroups } from "./parts/signal-groups";
 import { SignalList } from "./parts/signal-list";
 import { SignalView } from "./parts/signal-view";
+import { EmptyState } from "../../ui/empty-state";
+import { AutopilotArt } from "../../ui/illustrations/autopilot-art";
 
 export interface TeamAutopilotPageProps {
   workspaceId: string;
@@ -154,6 +156,13 @@ export function TeamAutopilotPage({ workspaceId }: TeamAutopilotPageProps) {
             loading={list.isLoading}
             problem={list.error ?? null}
             empty={!items.length}
+            emptyState={
+              <EmptyState
+                art={<AutopilotArt />}
+                title={t("empty.autopilot.title")}
+                description={t("empty.autopilot.body")}
+              />
+            }
             onRetry={() => void list.refetch()}
           >
             <SignalGroups

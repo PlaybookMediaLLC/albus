@@ -30,8 +30,7 @@ import {
   widgetEnabled,
   type QuillsCaller,
 } from "../../../framework/audience";
-import { parseBag } from "../../../feedback/settings-json";
-import { parseJson } from "../../../settings/area";
+import { parseJson, portalOn } from "../../../settings/area";
 import { resolveFlags } from "../../../settings/labs";
 import { normalizeLocale } from "../../../widget/config";
 import {
@@ -168,7 +167,7 @@ export async function openHelpCenter(
   const open =
     resolveFlags(parseJson(row?.featureFlags ?? null)).helpCenter &&
     (surface === "portal"
-      ? parseBag(row?.portalConfig ?? null)?.enabled === true &&
+      ? portalOn(row?.portalConfig ?? null) &&
         (
           await evaluatePortalAccess(
             db,
@@ -301,7 +300,9 @@ export const articleSummary = z
     path: z.string(),
     publishedAt: responseTimestamp,
     updatedAt: responseTimestamp,
-    author: z.object({ name: z.string() }).nullable(),
+    author: z
+      .object({ name: z.string(), avatarUrl: z.string().nullable() })
+      .nullable(),
     category: z.object({
       id: z.string(),
       urlId: z.number(),
@@ -347,6 +348,7 @@ export async function visibleArticles(
       translatedContent: options.content ? t.content : sql<string>`''`,
       translatedAt: t.updatedAt,
       authorName: principal.displayName,
+      authorAvatarUrl: principal.avatarUrl,
       categoryId: c.id,
       categoryUrlId: c.urlId,
       categorySlug: c.slug,
@@ -387,7 +389,9 @@ export async function visibleArticles(
     path: articlePath(viewer.locale, row.urlId, row.slug),
     publishedAt: row.publishedAt!,
     updatedAt: localized ? row.translatedAt! : row.updatedAt,
-    author: row.authorName ? { name: row.authorName } : null,
+    author: row.authorName
+      ? { name: row.authorName, avatarUrl: row.authorAvatarUrl }
+      : null,
     category: {
       id: row.categoryId as string,
       urlId: row.categoryUrlId,

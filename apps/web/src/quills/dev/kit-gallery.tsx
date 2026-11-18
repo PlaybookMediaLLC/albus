@@ -22,6 +22,8 @@ import { ComposerTitle } from "../ui/post/composer-title";
 import { SimilarPosts } from "../ui/post/similar-posts";
 import { StatusIcon } from "../ui/post/status-icon";
 import { ArrowUpIcon } from "../ui/arrow-up-icon";
+import { BrandIcon } from "../ui/brand-icon";
+import { brandMarks } from "../ui/brand-marks";
 import { PersonAvatar } from "../ui/person-avatar";
 import { PageContext } from "../ui/page-context";
 import { ShareActions } from "../ui/share-actions";
@@ -47,6 +49,19 @@ import { PortalShell } from "../ui/portal-shell";
 import { ResultCard } from "../ui/result-card";
 import { WidgetLinkPrompt } from "../ui/widget-link/widget-link-prompt";
 import { StateView } from "../ui/state-view";
+import { EmptyState } from "../ui/empty-state";
+import { HeroOrbit } from "../ui/illustrations/hero-orbit";
+import { RequestsArt } from "../ui/illustrations/requests-art";
+import { SearchArt } from "../ui/illustrations/search-art";
+import { RoadmapArt } from "../ui/illustrations/roadmap-art";
+import { ChangelogArt } from "../ui/illustrations/changelog-art";
+import { ConversationsArt } from "../ui/illustrations/conversations-art";
+import { TicketsArt } from "../ui/illustrations/tickets-art";
+import { DuplicatesArt } from "../ui/illustrations/duplicates-art";
+import { AutopilotArt } from "../ui/illustrations/autopilot-art";
+import { HelpArt } from "../ui/illustrations/help-art";
+import { IntegrationsArt } from "../ui/illustrations/integrations-art";
+import { StartArt } from "../ui/illustrations/start-art";
 import { SurveyCard } from "../ui/survey-card";
 import { CommandPalette } from "../ui/inbox/command-palette";
 import { Composer } from "../ui/inbox/composer";
@@ -177,6 +192,27 @@ export function KitGallery() {
             <h2 id="gallery-states">{t("core.gallery.states")}</h2>
             <StateView loading>{null}</StateView>
             <StateView empty>{null}</StateView>
+            <EmptyState
+              art={<RequestsArt />}
+              title={demo}
+              description={demo}
+              hint={{ keys: ["F"], label: demo }}
+              actions={<Button>{demo}</Button>}
+            />
+            <div className="relative isolate flex flex-wrap gap-4 overflow-hidden rounded-xl border border-border p-4">
+              <HeroOrbit />
+              <RequestsArt />
+              <SearchArt />
+              <RoadmapArt />
+              <ChangelogArt />
+              <ConversationsArt />
+              <TicketsArt />
+              <DuplicatesArt />
+              <AutopilotArt />
+              <HelpArt />
+              <IntegrationsArt />
+              <StartArt />
+            </div>
             {problems.map((kind) => (
               <StateView
                 key={kind}
@@ -552,6 +588,11 @@ export function KitGallery() {
               )}
               <ArrowUpIcon />
               <PersonAvatar name={empty ? null : demo} />
+            </p>
+            <p className="flex flex-wrap gap-2">
+              {Object.keys(brandMarks).map((id) => (
+                <BrandIcon key={id} id={id} className="size-4" />
+              ))}
             </p>
             <ShareActions />
             <ShareActions compact />

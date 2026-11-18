@@ -31,7 +31,10 @@ export function WeeklyTrend({ weeks }: WeeklyTrendProps) {
       </thead>
       <tbody>
         {weeks.map((week) => (
-          <tr key={week.week} className="border-b border-border">
+          <tr
+            key={week.week}
+            className="transition-colors duration-150 hover:bg-accent"
+          >
             <th scope="row" className="px-3 py-2 text-left font-normal">
               <time dateTime={week.week}>
                 {calendarDate(week.week, i18n.language)}
