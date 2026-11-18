@@ -11,7 +11,7 @@ import {
 } from "../../database/quills/schema/visitor-analytics";
 import { defineQuillsRoute } from "../framework/define-route";
 import { signInLinkAvailable } from "../framework/sign-in-link";
-import { parseJson } from "../settings/area";
+import { portalOn } from "../settings/area";
 
 // The widget session itself and the visitor device it runs on. Both act on the session's own
 // principal only.
@@ -58,7 +58,7 @@ const getSession = defineQuillsRoute({
         ? { id: row.id, name: row.name, email: row.email, avatarUrl: row.image }
         : null,
       canPortalHandoff: identified
-        ? signInLinkAvailable() && parseJson(row.portalConfig).enabled === true
+        ? signInLinkAvailable() && portalOn(row.portalConfig)
         : false,
     };
   },

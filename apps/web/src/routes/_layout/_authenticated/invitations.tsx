@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { SettingsRowsSkeleton } from "@/components/settings/settings-rows-skeleton";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   CheckCircle,
@@ -173,8 +174,12 @@ function InvitationsPage() {
           </div>
 
           {isLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <div
+              role="status"
+              aria-label={t("common:empty.loading")}
+              className="delayed-reveal"
+            >
+              <SettingsRowsSkeleton rows={3} withDescription />
             </div>
           ) : invitations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">

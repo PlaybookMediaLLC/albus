@@ -4,10 +4,16 @@ import { useTranslation } from "react-i18next";
 import { useGetPortalSettings } from "../../hooks/team/use-get-portal-settings";
 import { useListCustomDomains } from "../../hooks/team/use-list-custom-domains";
 import { useListSettings } from "../../hooks/team/use-list-settings";
+import { useUpdatePortalSettings } from "../../hooks/team/use-update-portal-settings";
 import { useTeamRuntime } from "../../team/runtime";
 import { TeamStateView } from "../../team/team-state-view";
 import { PageFrame } from "../../ui/page-frame";
-import { authClient, SettingsPage, SettingsSection } from "../../ui/upstream";
+import {
+  authClient,
+  SettingsPage,
+  SettingsSection,
+  toast,
+} from "../../ui/upstream";
 import { CollectCard } from "./parts/collect-card";
 import { EmailSignature } from "./parts/email-signature";
 import { ReadyMessages } from "./parts/ready-messages";
@@ -39,6 +45,7 @@ export function TeamSharePage({ workspaceId }: TeamSharePageProps) {
   const managed = { param: { workspaceId: manage ? workspaceId : "" } };
   const portal = useGetPortalSettings(managed, team.viewer);
   const domains = useListCustomDomains(managed, team.viewer);
+  const update = useUpdatePortalSettings(team.viewer);
   const session = authClient.useSession();
   const origin = window.location.origin;
   const url = portalUrl(workspaceId, origin, domains.data?.domains);
@@ -62,7 +69,21 @@ export function TeamSharePage({ workspaceId }: TeamSharePageProps) {
                 title={t("team-share.collect.title")}
                 description={t("team-share.collect.text", { name })}
               >
-                <CollectCard workspace={name} url={url} />
+                <CollectCard
+                  workspace={name}
+                  url={url}
+                  live={portal.data?.enabled}
+                  turningOn={update.isPending}
+                  onTurnOn={() =>
+                    update.mutate(
+                      { param: { workspaceId }, json: { enabled: true } },
+                      {
+                        onError: () =>
+                          toast.error(t("team-share.collect.turnOnFailed")),
+                      },
+                    )
+                  }
+                />
               </SettingsSection>
               <SettingsSection
                 title={label(t("team-share.social.title"))}

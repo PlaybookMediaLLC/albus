@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { SettingsRowsSkeleton } from "@/components/settings/settings-rows-skeleton";
 import { ArrowLeft, Loader2, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -107,13 +108,12 @@ function SearchComponent() {
           {hasQuery ? (
             <div>
               {showLoading && results.length === 0 ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="text-center space-y-4">
-                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mx-auto" />
-                    <p className="text-sm text-muted-foreground">
-                      {t("workspace:search.searching")}
-                    </p>
-                  </div>
+                <div
+                  role="status"
+                  aria-label={t("workspace:search.searching")}
+                  className="delayed-reveal"
+                >
+                  <SettingsRowsSkeleton rows={3} withDescription />
                 </div>
               ) : results.length > 0 ? (
                 <div className="space-y-1">

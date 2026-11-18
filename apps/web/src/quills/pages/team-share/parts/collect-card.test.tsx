@@ -19,4 +19,19 @@ describe("CollectCard", () => {
     fireEvent.click(view.getByRole("button", { name: "Copy link" }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(url));
   });
+
+  it("says the board is off and offers to turn it on", () => {
+    const onTurnOn = vi.fn();
+    const view = renderComponent(
+      <CollectCard
+        workspace="Acme"
+        url="https://feedback.acme.test"
+        live={false}
+        onTurnOn={onTurnOn}
+      />,
+    );
+    expect(view.getByText("The Acme board is off")).toBeInTheDocument();
+    fireEvent.click(view.getByRole("button", { name: "Turn on" }));
+    expect(onTurnOn).toHaveBeenCalledOnce();
+  });
 });

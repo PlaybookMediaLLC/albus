@@ -14,5 +14,10 @@ describe("SocialLinks", () => {
       expect(link.getAttribute("href")).toContain("feedback.acme.test");
     }
     expect(view.getByRole("link", { name: /LinkedIn/ })).toBeInTheDocument();
+    expect(
+      [...view.container.querySelectorAll("svg[data-brand]")].map((svg) =>
+        svg.getAttribute("data-brand"),
+      ),
+    ).toEqual(["x", "linkedin", "facebook", "reddit"]);
   });
 });

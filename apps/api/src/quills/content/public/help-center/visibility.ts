@@ -30,8 +30,7 @@ import {
   widgetEnabled,
   type QuillsCaller,
 } from "../../../framework/audience";
-import { parseBag } from "../../../feedback/settings-json";
-import { parseJson } from "../../../settings/area";
+import { parseJson, portalOn } from "../../../settings/area";
 import { resolveFlags } from "../../../settings/labs";
 import { normalizeLocale } from "../../../widget/config";
 import {
@@ -168,7 +167,7 @@ export async function openHelpCenter(
   const open =
     resolveFlags(parseJson(row?.featureFlags ?? null)).helpCenter &&
     (surface === "portal"
-      ? parseBag(row?.portalConfig ?? null)?.enabled === true &&
+      ? portalOn(row?.portalConfig ?? null) &&
         (
           await evaluatePortalAccess(
             db,

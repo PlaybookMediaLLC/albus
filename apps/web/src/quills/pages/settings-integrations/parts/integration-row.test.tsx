@@ -8,6 +8,7 @@ import { IntegrationRow } from "./integration-row";
 const render = (
   connection: { id: string; status: string } | undefined,
   manageSettings = true,
+  provider = { id: "slack", name: "Slack", description: "Chat" },
 ) =>
   renderComponent(
     <TeamRuntimeProvider
@@ -25,7 +26,7 @@ const render = (
     >
       <IntegrationRow
         workspaceId="workspace_1"
-        provider={{ id: "slack", name: "Slack", description: "Chat" }}
+        provider={provider}
         connection={connection}
         onConnected={() => undefined}
       />
@@ -37,6 +38,22 @@ describe("IntegrationRow", () => {
     mockApi();
     const view = render(undefined);
     expect(view.getByRole("button", { name: "Connect Slack" })).toBeVisible();
+  });
+
+  it("shows the provider's logo, or its initial when there is no logo", () => {
+    mockApi();
+    const slack = render(undefined);
+    expect(
+      slack.container.querySelector("svg[data-brand=slack]"),
+    ).not.toBeNull();
+    slack.unmount();
+    const freshdesk = render(undefined, true, {
+      id: "freshdesk",
+      name: "Freshdesk",
+      description: "Help desk",
+    });
+    expect(freshdesk.container.querySelector("svg[data-brand]")).toBeNull();
+    expect(freshdesk.getByText("F")).toBeInTheDocument();
   });
 
   it("disconnects after a confirmation", async () => {

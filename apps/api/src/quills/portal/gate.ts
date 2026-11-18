@@ -2,12 +2,12 @@ import { HTTPException } from "hono/http-exception";
 import { settings } from "../../database/quills/schema/auth";
 import { evaluatePortalAccess, type QuillsCaller } from "../framework/audience";
 import type { Database } from "../framework/define-route";
-import { parseJson } from "../settings/area";
+import { portalOn } from "../settings/area";
 
 // Route-module helper: the portal on/off switch and the private-portal gate.
 
 /**
- * 404 while the portal is off. Portals are opt-in: the portal settings key `enabled` must be true.
+ * 404 while a teammate has the portal off (the portal settings key `enabled`; on by default).
  * The portal settings routes own that key; this module only reads it.
  */
 export async function requirePortalEnabled(db: Database) {
@@ -15,7 +15,7 @@ export async function requirePortalEnabled(db: Database) {
     .select({ portalConfig: settings.portalConfig })
     .from(settings)
     .limit(1);
-  if (parseJson(row?.portalConfig ?? null).enabled !== true)
+  if (!portalOn(row?.portalConfig ?? null))
     throw new HTTPException(404, { message: "Portal not found" });
 }
 

@@ -108,7 +108,9 @@ describe("NotificationsButton", () => {
     api.reply(listNotificationsFixture.ok({ notifications: [] }));
     const view = render();
     fireEvent.click(await view.findByRole("button", { name: "Notifications" }));
-    expect(await view.findByRole("status")).toHaveTextContent("All caught up");
+    await waitFor(() =>
+      expect(view.getByRole("status")).toHaveTextContent("All caught up"),
+    );
     expect(view.getByText("Activity")).toBeVisible();
   });
 

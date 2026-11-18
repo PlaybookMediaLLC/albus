@@ -10,7 +10,6 @@ import {
   EmptyHeader,
   EmptyMedia,
   Skeleton,
-  Spinner,
 } from "./upstream";
 
 const problemKeys: Record<PortalProblemKind, string> = {
@@ -65,15 +64,14 @@ export function StateView({
         ))}
       </div>
     );
-  // The spinner shows only after 250 ms (Kaneo's delayed-reveal), so a fast answer does not flash.
+  // The placeholder shows only after 250 ms (Kaneo's delayed-reveal), so a fast answer does not flash.
   if (loading)
     return (
-      <div
-        className="delayed-reveal flex items-center gap-3 py-8"
-        role="status"
-      >
-        <Spinner />
-        <p>{t("core.loading")}</p>
+      <div className="delayed-reveal grid gap-3 py-2" role="status">
+        <span className="sr-only">{t("core.loading")}</span>
+        <Skeleton className="h-5 w-1/3" />
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-32 rounded-xl" />
       </div>
     );
   if (problem)

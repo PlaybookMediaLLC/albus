@@ -24,7 +24,7 @@ export interface SettingsFeedbackPageProps {
 const first = { offset: "0", limit: "100" };
 
 /**
- * Settings › Feedback (settings spec B5): the public roadmap tab, the boards, the post tags and the
+ * Settings › Feedback (settings spec B5): the public board switch, the public roadmap tab, the boards, the post tags and the
  * team's scoring factors (#79).
  */
 export function SettingsFeedbackPage({
@@ -63,6 +63,15 @@ export function SettingsFeedbackPage({
         >
           <SettingsSection title={t("settings-product.behavior")}>
             <SettingsCard>
+              <SettingSwitchRow
+                title={t("settings-product.feedback.portal")}
+                description={t("settings-product.feedback.portalText")}
+                checked={portal.data?.enabled ?? false}
+                disabled={!team.permissions.manageSettings}
+                onCheckedChange={async (next) => {
+                  await update.mutateAsync({ param, json: { enabled: next } });
+                }}
+              />
               <SettingSwitchRow
                 title={t("settings-product.feedback.roadmap")}
                 description={t("settings-product.feedback.roadmapText")}
