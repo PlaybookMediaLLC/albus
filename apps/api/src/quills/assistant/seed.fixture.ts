@@ -5,6 +5,10 @@ import {
   assistantDocuments,
   assistantSnippets,
 } from "../../database/quills/schema/assistant";
+import {
+  knowledgeQuestions,
+  knowledgeSuggestions,
+} from "../../database/quills/schema/knowledge-suggestions";
 import { assistantGuidanceRules } from "../../database/quills/schema/assistant-guidance";
 import { assistantPendingActions } from "../../database/quills/schema/assistant-pending-actions";
 import { assistantWebSources } from "../../database/quills/schema/assistant-web-sources";
@@ -83,6 +87,40 @@ const parts = {
       })
       .returning({ id: assistantGuidanceRules.id });
     return { ruleId: row!.id };
+  },
+  knowledge: async (db: Db) => {
+    const [row] = await db
+      .insert(knowledgeSuggestions)
+      .values({
+        topic: "Refund window",
+        topicFingerprint: `contract-${crypto.randomUUID()}`,
+        candidateTitle: "Refunds",
+        candidateContent: "Refunds take five days.",
+        questionCount: 1,
+      })
+      .returning({ id: knowledgeSuggestions.id });
+    await db.insert(knowledgeQuestions).values({
+      suggestionId: row!.id,
+      position: 0,
+      question: "Which plans does this cover?",
+      suggestedAnswers: ["All plans"],
+    });
+    return { suggestionId: row!.id };
+  },
+  knowledgeDraft: async (db: Db) => {
+    const [row] = await db
+      .insert(knowledgeSuggestions)
+      .values({
+        status: "draft_ready",
+        topic: "Export schedule",
+        topicFingerprint: `contract-${crypto.randomUUID()}`,
+        candidateTitle: "Exports",
+        candidateContent: "Exports run nightly.",
+        title: "Exports",
+        content: "Exports run every night.",
+      })
+      .returning({ id: knowledgeSuggestions.id });
+    return { draftId: row!.id };
   },
   snippet: async (db: Db) => {
     const [row] = await db
