@@ -1,9 +1,21 @@
 {
+	"allBoards": "All boards",
 	"cancelled": "You cancelled the move of {{name}}.",
+	"clearBoard": "Clear the {{name}} filter",
 	"collapse": "Hide column",
+	"columnEmpty": "No requests",
 	"created": "Created {{date}}",
+	"display": {
+		"author": "Author",
+		"board": "Board",
+		"counts": "Votes and comments",
+		"created": "Created date",
+		"label": "Display options",
+		"properties": "Card details"
+	},
 	"dropped": "You dropped {{name}} on {{column}}.",
 	"expand": "Show {{name}}",
+	"filterBoard": "Board",
 	"hidden": "Hidden columns",
 	"instructions": "Press Space to pick up a card or a column. Use the arrow keys to move it. Press Space again to drop it. Press Escape to cancel.",
 	"move": "Move {{title}}",

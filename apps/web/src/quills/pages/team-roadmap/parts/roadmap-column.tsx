@@ -28,6 +28,8 @@ export interface RoadmapColumnProps {
   count: number;
   /** Board names by ID. */
   boards: ReadonlyMap<string, string>;
+  /** Shows only the posts of this board. */
+  boardId?: string | null;
   /** Every status, for the Move to menu of the cards. */
   statuses: readonly Status[];
   moves: ReadonlyMap<string, PendingMove>;
@@ -120,7 +122,7 @@ export function RoadmapColumn({ status, ...props }: RoadmapColumnProps) {
       ref={drag.setNodeRef}
       aria-labelledby={id}
       className={cn(
-        "group/column flex w-96 shrink-0 flex-col rounded-xl ring-ring/40 transition-shadow",
+        "group/column flex w-[min(24rem,calc(100vw-3rem))] shrink-0 flex-col rounded-xl ring-ring/40 transition-shadow",
         props.dropTarget && "ring-2",
         // The lifted column follows the pointer; its place shows as a dashed outline.
         drag.isDragging &&
@@ -159,7 +161,7 @@ export function RoadmapColumn({ status, ...props }: RoadmapColumnProps) {
           ) : null}
         </span>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-xl bg-foreground/2 p-1.5">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-xl bg-foreground/3 p-1.5">
         <Cards
           workspaceId={props.workspaceId}
           statusId={status.id}
@@ -167,6 +169,7 @@ export function RoadmapColumn({ status, ...props }: RoadmapColumnProps) {
           statuses={props.statuses}
           moves={props.moves}
           slot={props.slot}
+          boardId={props.boardId}
           focusId={props.focusId}
           onFocused={props.onFocused}
           onMove={props.onMove}

@@ -35,6 +35,8 @@ export interface RoadmapBoardProps {
   boards: ReadonlyMap<string, string>;
   /** The post counts by status ID. */
   counts: ReadonlyMap<string, number>;
+  /** Shows only the posts of this board. */
+  boardId?: string | null;
   /** The statuses that the current tab shows; the rest stay in the saved column order. */
   show?: (status: Status) => boolean;
   /** Opens New request in a status. Left out without the create permission. */
@@ -130,6 +132,7 @@ export function RoadmapBoard({ workspaceId, ...props }: RoadmapBoardProps) {
       progress={statusProgress(columns, status.id)}
       count={columnCount(props.counts.get(status.id) ?? 0, moves, status.id)}
       boards={props.boards}
+      boardId={props.boardId}
       statuses={columns}
       moves={moves}
       focusId={focusId}

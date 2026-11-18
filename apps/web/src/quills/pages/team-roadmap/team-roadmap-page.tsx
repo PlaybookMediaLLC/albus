@@ -1,4 +1,4 @@
-import { ExternalLink, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { portalHref } from "../../core/portal-href";
@@ -7,7 +7,6 @@ import { useListBoards } from "../../hooks/team/use-list-boards";
 import { useListStatuses } from "../../hooks/team/use-list-statuses";
 import { useTeamRuntime } from "../../team/runtime";
 import { TeamStateView } from "../../team/team-state-view";
-import { IconButton } from "../../ui/inbox/icon-button";
 import { ListHeader } from "../../ui/inbox/list-header";
 import { PageFrame } from "../../ui/page-frame";
 import { Button } from "../../ui/upstream";
@@ -19,8 +18,10 @@ import {
 } from "./parts/roadmap-task-dialog";
 import { EmptyState } from "../../ui/empty-state";
 import { RoadmapArt } from "../../ui/illustrations/roadmap-art";
-import { StatusTabs } from "../../ui/inbox/status-tabs";
 import { inView, ROADMAP_VIEWS, type RoadmapView } from "./roadmap-view";
+import { CardDisplayContext, useCardDisplay } from "./card-display";
+import { RoadmapBoardFilter } from "./parts/roadmap-board-filter";
+import { RoadmapToolbar } from "./parts/roadmap-toolbar";
 
 export interface TeamRoadmapPageProps {
   workspaceId: string;
@@ -36,6 +37,8 @@ export function TeamRoadmapPage({ workspaceId }: TeamRoadmapPageProps) {
   const [creating, setCreating] = useState<string | null>(null);
   const [task, setTask] = useState<RoadmapTaskDialogProps["target"]>(null);
   const [view, setView] = useState<RoadmapView>("all");
+  const [boardId, setBoardId] = useState<string | null>(null);
+  const [display, toggleDisplay] = useCardDisplay(workspaceId);
   const viewLabels = {
     active: t("team-roadmap.views.active"),
     done: t("team-roadmap.views.done"),
@@ -55,11 +58,18 @@ export function TeamRoadmapPage({ workspaceId }: TeamRoadmapPageProps) {
     { param, query: { offset: "0", limit: "100" } },
     team.viewer,
   );
-  const counts = useGetPostFilterCounts({ param, query: {} }, team.viewer);
+  const counts = useGetPostFilterCounts(
+    { param, query: boardId ? { boardIds: boardId } : {} },
+    team.viewer,
+  );
   // Stable maps: the memoized card lists render again only when the data changes.
   const boardNames = useMemo(
     () => new Map(boards.data?.items.map((board) => [board.id, board.name])),
     [boards.data],
+  );
+  const boardCounts = useMemo(
+    () => new Map(counts.data?.boards.map((row) => [row.id, row.count])),
+    [counts.data],
   );
   const statusCounts = useMemo(
     () => new Map(counts.data?.statuses.map((row) => [row.id, row.count])),
@@ -70,6 +80,14 @@ export function TeamRoadmapPage({ workspaceId }: TeamRoadmapPageProps) {
     <PageFrame titleKey="team-roadmap.title" landmark={false} variant="app">
       <ListHeader
         title={t("team-roadmap.title")}
+        filters={
+          <RoadmapBoardFilter
+            boards={boards.data?.items ?? []}
+            counts={boardCounts}
+            value={boardId}
+            onChange={setBoardId}
+          />
+        }
         actions={
           team.permissions.create && statuses.data?.statuses[0] ? (
             <Button
@@ -83,36 +101,27 @@ export function TeamRoadmapPage({ workspaceId }: TeamRoadmapPageProps) {
           ) : null
         }
       />
-      <div className="flex items-start justify-between gap-2 pe-4">
-        <StatusTabs
-          label={t("team-roadmap.views.label")}
-          value={view}
-          onChange={(next) => setView(next as RoadmapView)}
-          tabs={ROADMAP_VIEWS.map((value) => ({
-            value,
-            label: viewLabels[value],
-            count: statuses.data?.statuses
-              .filter((status) => inView(value, status.category))
-              .reduce(
-                (sum, status) => sum + (statusCounts.get(status.id) ?? 0),
-                0,
-              ),
-          }))}
-        />
-        <IconButton
-          variant="outline"
-          label={t("team-roadmap.public")}
-          render={
-            <a
-              href={portalHref(workspaceId, "roadmap")}
-              target="_blank"
-              rel="noreferrer"
-            />
-          }
-        >
-          <ExternalLink aria-hidden="true" />
-        </IconButton>
-      </div>
+      <RoadmapToolbar
+        view={view}
+        onView={setView}
+        tabs={ROADMAP_VIEWS.map((value) => ({
+          value,
+          label: viewLabels[value],
+          count: statuses.data?.statuses
+            .filter((status) => inView(value, status.category))
+            .reduce(
+              (sum, status) => sum + (statusCounts.get(status.id) ?? 0),
+              0,
+            ),
+        }))}
+        board={
+          boardId ? { id: boardId, name: boardNames.get(boardId) ?? "" } : null
+        }
+        onClearBoard={() => setBoardId(null)}
+        display={display}
+        onDisplay={toggleDisplay}
+        publicHref={portalHref(workspaceId, "roadmap")}
+      />
       {/* The right edge fades, so a cut column reads as "scroll for more". */}
       <div className="min-h-0 flex-1 overflow-x-auto mask-r-from-[calc(100%-3rem)] px-4 pb-4">
         <TeamStateView
@@ -132,15 +141,18 @@ export function TeamRoadmapPage({ workspaceId }: TeamRoadmapPageProps) {
             void counts.refetch();
           }}
         >
-          <RoadmapBoard
-            workspaceId={workspaceId}
-            statuses={statuses.data?.statuses ?? []}
-            show={(status) => inView(view, status.category)}
-            boards={boardNames}
-            counts={statusCounts}
-            onCreate={team.permissions.create ? setCreating : undefined}
-            onTask={team.permissions.update ? openTask : undefined}
-          />
+          <CardDisplayContext.Provider value={display}>
+            <RoadmapBoard
+              workspaceId={workspaceId}
+              boardId={boardId}
+              statuses={statuses.data?.statuses ?? []}
+              show={(status) => inView(view, status.category)}
+              boards={boardNames}
+              counts={statusCounts}
+              onCreate={team.permissions.create ? setCreating : undefined}
+              onTask={team.permissions.update ? openTask : undefined}
+            />
+          </CardDisplayContext.Provider>
         </TeamStateView>
       </div>
       {creating && statuses.data && boards.data ? (

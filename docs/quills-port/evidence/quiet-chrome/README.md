@@ -92,3 +92,7 @@ Retake them with `pnpm dev:demo`. Phone and portal shots are not in this set yet
 ![roadmap hidden columns light](602-roadmap-light-hidden-columns.jpg)
 ![roadmap dark](601-roadmap-dark.jpg)
 ![roadmap hidden columns dark](602-roadmap-dark-hidden-columns.jpg)
+![display menu](603-roadmap-light-display-menu.jpg)
+![board filter](604-roadmap-light-board-filter.jpg)
+![filtered by board](605-roadmap-light-filtered.jpg)
+![roadmap on a phone](606-roadmap-phone.jpg)

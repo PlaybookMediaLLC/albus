@@ -10,14 +10,17 @@ import {
   type RoadmapPost,
 } from "../roadmap-moves";
 import { RoadmapCard } from "./roadmap-card";
+import type { RoadmapCardBodyProps } from "./roadmap-card-body";
 
 export interface RoadmapCardsProps {
   workspaceId: string;
   statusId: string;
   /** Board names by ID. */
   boards: ReadonlyMap<string, string>;
-  /** Every status, for the Move to menu of the cards. */
-  statuses: readonly { id: string; name: string }[];
+  /** Every status, for the Move to menu and the status icon of the cards. */
+  statuses: RoadmapCardBodyProps["statuses"];
+  /** Shows only the posts of this board. */
+  boardId?: string | null;
   moves: ReadonlyMap<string, PendingMove>;
   /** A card from another column that would land here: a dashed slot shows its place. */
   slot?: RoadmapPost | null;
@@ -41,7 +44,12 @@ export function RoadmapCards({ statusId, ...props }: RoadmapCardsProps) {
   const posts = useListPosts(
     {
       param: { workspaceId: props.workspaceId },
-      query: { statusIds: statusId, sort: "votes", limit: "50" },
+      query: {
+        statusIds: statusId,
+        sort: "votes",
+        limit: "50",
+        ...(props.boardId ? { boardIds: props.boardId } : {}),
+      },
     },
     team.viewer,
   );
@@ -64,11 +72,17 @@ export function RoadmapCards({ statusId, ...props }: RoadmapCardsProps) {
   return (
     <TeamStateView
       loading={posts.isPending}
+      rows={3}
       problem={posts.error}
       onRetry={() => void posts.refetch()}
     >
       <SortableContext items={cards.map((post) => post.id)}>
-        <ul className="flex flex-col gap-2">
+        {!cards.length && !props.slot ? (
+          <p className="px-2 py-3 text-sm text-faint-foreground">
+            {t("team-roadmap.columnEmpty")}
+          </p>
+        ) : null}
+        <ul className="flex flex-col gap-2 empty:hidden">
           {cards.map((post, index) => (
             <li key={post.id}>
               {index === slotIndex ? slotBox : null}

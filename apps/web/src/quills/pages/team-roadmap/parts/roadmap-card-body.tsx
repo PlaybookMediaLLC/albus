@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUp, Ellipsis, MessageCircle } from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { plainText } from "../../../core/plain-text";
 import { statusProgress } from "../../../core/status-progress";
@@ -20,6 +20,7 @@ import {
   MenuSeparator,
   MenuTrigger,
 } from "../../../ui/upstream";
+import { CardDisplayContext } from "../card-display";
 import type { RoadmapPost } from "../roadmap-moves";
 
 export interface RoadmapCardBodyProps {
@@ -62,6 +63,8 @@ export function RoadmapCardBody({
   const { t, i18n } = useTranslation("quills");
   const title = plainText(post.title);
   const status = props.statuses.find((item) => item.id === statusId);
+  const show = useContext(CardDisplayContext);
+  const board = show.board ? props.board : null;
   const chip = (key: string, value: number, icon: ReactNode) => (
     <span className="inline-flex h-6 shrink-0 items-center gap-1 rounded-full border border-border px-2 text-xs text-muted-foreground tabular-nums">
       {icon}
@@ -75,21 +78,25 @@ export function RoadmapCardBody({
   });
   return (
     <>
-      <div className="flex h-5 items-center gap-2 text-xs text-faint-foreground">
-        {props.board ? (
-          <span className="flex min-w-0 items-center gap-1.5">
-            <BoardDot boardId={post.boardId} />
-            <span className="truncate">{props.board}</span>
-          </span>
-        ) : null}
-        <PersonAvatar
-          colored
-          name={post.authorName ?? null}
-          avatarUrl={post.authorAvatarUrl}
-          className="ms-auto"
-        />
-      </div>
-      <h3 className="mt-1.5 flex items-start gap-2 text-sm font-medium leading-snug">
+      {board || show.author ? (
+        <div className="mb-1.5 flex h-5 items-center gap-2 text-xs text-muted-foreground">
+          {board ? (
+            <span className="flex min-w-0 items-center gap-1.5">
+              <BoardDot boardId={post.boardId} />
+              <span className="truncate">{board}</span>
+            </span>
+          ) : null}
+          {show.author ? (
+            <PersonAvatar
+              colored
+              name={post.authorName ?? null}
+              avatarUrl={post.authorAvatarUrl}
+              className="ms-auto"
+            />
+          ) : null}
+        </div>
+      ) : null}
+      <h3 className="flex items-start gap-2 text-sm font-medium leading-snug">
         <span className="flex h-5 shrink-0 items-center">
           <PostStatusIcon
             color={status?.color}
@@ -111,21 +118,25 @@ export function RoadmapCardBody({
           )}
         </span>
       </h3>
-      <div className="mt-2.5 flex flex-wrap gap-1.5">
-        {chip(
-          "inbox.votes",
-          post.voteCount,
-          <ArrowUp aria-hidden="true" className="size-3.5" />,
-        )}
-        {chip(
-          "inbox.comments",
-          post.commentCount,
-          <MessageCircle aria-hidden="true" className="size-3.5" />,
-        )}
-      </div>
-      <p className="mt-2.5 text-xs text-faint-foreground">
-        {t("team-roadmap.created", { date: created })}
-      </p>
+      {show.counts ? (
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          {chip(
+            "inbox.votes",
+            post.voteCount,
+            <ArrowUp aria-hidden="true" className="size-3.5" />,
+          )}
+          {chip(
+            "inbox.comments",
+            post.commentCount,
+            <MessageCircle aria-hidden="true" className="size-3.5" />,
+          )}
+        </div>
+      ) : null}
+      {show.created ? (
+        <p className="mt-2.5 text-xs text-faint-foreground">
+          {t("team-roadmap.created", { date: created })}
+        </p>
+      ) : null}
       {onMove && !props.preview ? (
         <Menu>
           <MenuTrigger
