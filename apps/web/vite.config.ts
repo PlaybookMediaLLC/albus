@@ -76,6 +76,15 @@ export default defineConfig({
         await packageOutput("apps/web/public", "apps/web/dist");
       },
     },
+    {
+      // The Quills barrel only re-exports. Without this, one eager import of it
+      // loads every re-exported module (settings, billing, team pages) up front.
+      name: "quills-upstream-side-effect-free",
+      transform(code, id) {
+        if (id.split("?")[0]?.endsWith("/src/quills/ui/upstream.ts"))
+          return { code, map: null, moduleSideEffects: false };
+      },
+    },
     tanstackRouter({
       autoCodeSplitting: true,
       // Keep co-located route tests out of the generated route tree.

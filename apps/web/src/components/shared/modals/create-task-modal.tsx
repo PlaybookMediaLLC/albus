@@ -13,7 +13,15 @@ import {
   TagIcon,
   SquarePlusIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { CustomFieldChip } from "@/components/custom-fields/custom-field-chip";
 import {
@@ -21,7 +29,6 @@ import {
   isCustomFieldValueEmpty,
 } from "@/components/custom-fields/missing-required-fields";
 import type { CustomFieldDefinition } from "@/components/project/custom-fields/types";
-import TaskDescriptionEditor from "@/components/task/task-description-editor";
 import TaskDueDatePicker from "@/components/task/task-due-date-picker";
 import { TaskRecurrenceBadge } from "@/components/task/task-recurrence-badge";
 import {
@@ -81,6 +88,12 @@ import useProjectStore from "@/store/project";
 import type Task from "@/types/task";
 import type { TaskRecurrence } from "@/types/task/recurrence";
 import { getInitialTaskColumn } from "./initial-task-column";
+
+// The editor (tiptap) is heavy and only needed once the modal opens; every
+// layout renders this modal closed.
+const TaskDescriptionEditor = lazy(
+  () => import("@/components/task/task-description-editor"),
+);
 
 type CreateTaskModalProps = {
   open: boolean;
@@ -827,16 +840,18 @@ function CreateTaskModalContent({
             />
 
             <div className="min-h-[200px]">
-              <TaskDescriptionEditor
-                key={editorVersion}
-                value={description}
-                onChange={setDescription}
-                placeholder={t(
-                  "common:modals.createTask.descriptionPlaceholder",
-                )}
-                projectId={resolvedProjectId || undefined}
-                uploadAsset={stageAsset}
-              />
+              <Suspense fallback={null}>
+                <TaskDescriptionEditor
+                  key={editorVersion}
+                  value={description}
+                  onChange={setDescription}
+                  placeholder={t(
+                    "common:modals.createTask.descriptionPlaceholder",
+                  )}
+                  projectId={resolvedProjectId || undefined}
+                  uploadAsset={stageAsset}
+                />
+              </Suspense>
             </div>
 
             {labels.length > 0 && (

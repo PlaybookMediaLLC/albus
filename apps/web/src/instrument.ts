@@ -40,12 +40,12 @@ if (dsn && !dsn.startsWith("KANEO_")) {
       if (event.tags?.area === "auth.session") return null;
       return event;
     },
-    integrations: [
-      Sentry.browserTracingIntegration(),
-      Sentry.replayIntegration(),
-    ],
+    integrations: [Sentry.browserTracingIntegration()],
     tracesSampleRate: 0.1,
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
   });
+  void import("./lib/sentry-replay").then(({ replayIntegration }) =>
+    Sentry.addIntegration(replayIntegration()),
+  );
 }
