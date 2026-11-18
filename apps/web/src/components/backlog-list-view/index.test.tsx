@@ -56,8 +56,8 @@ vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navigate,
   useRouter: () => ({ preloadRoute: () => Promise.resolve() }),
 }));
-vi.mock("@/hooks/mutations/task/use-update-task", () => ({
-  useUpdateTask: () => ({ mutate: vi.fn() }),
+vi.mock("@/hooks/mutations/task/use-reorder-tasks", () => ({
+  useReorderTasks: () => ({ mutate: vi.fn() }),
 }));
 vi.mock("../shared/modals/create-task-modal", () => ({
   default: ({ open, status }: { open: boolean; status: string }) =>

@@ -33,6 +33,7 @@ const m = vi.hoisted(() => ({
     taskCount?: number;
   },
   mutate: vi.fn(),
+  archiveTasks: vi.fn(),
   setProject: vi.fn(),
   relations: { data: [] as unknown[], isLoading: false, isError: false },
   refetchRelations: vi.fn(),
@@ -48,8 +49,11 @@ vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => vi.fn(),
   useRouter: () => ({ preloadRoute: () => Promise.resolve() }),
 }));
-vi.mock("@/hooks/mutations/task/use-update-task", () => ({
-  useUpdateTask: () => ({ mutate: m.mutate }),
+vi.mock("@/hooks/mutations/task/use-reorder-tasks", () => ({
+  useReorderTasks: () => ({ mutate: m.mutate }),
+}));
+vi.mock("@/hooks/mutations/task/use-archive-column-tasks", () => ({
+  useArchiveColumnTasks: () => m.archiveTasks,
 }));
 vi.mock("@/store/project", () => ({
   default: () => ({ setProject: m.setProject }),
@@ -142,12 +146,13 @@ it("blocks archive-all during pagination or errors, including an already-open co
   );
   expect(m.archive.disabled).toBe(true);
   act(() => m.archive.onConfirm?.());
-  expect(m.mutate).not.toHaveBeenCalled();
+  expect(m.archiveTasks).not.toHaveBeenCalled();
   expect(m.setProject).not.toHaveBeenCalled();
   rerender(<ListView project={complete} />);
   expect(m.archive.taskCount).toBe(2);
   act(() => m.archive.onConfirm?.());
-  expect(m.mutate).toHaveBeenCalledTimes(2);
+  // One atomic request for the whole column, not one per task.
+  expect(m.archiveTasks).toHaveBeenCalledExactlyOnceWith(["a", "b"]);
   expect(m.setProject).toHaveBeenCalledOnce();
 });
 

@@ -18,8 +18,8 @@ const m = vi.hoisted(() => ({
   mutate: vi.fn(),
   setProject: vi.fn(),
 }));
-vi.mock("@/hooks/mutations/task/use-update-task", () => ({
-  useUpdateTask: () => ({ mutate: m.mutate }),
+vi.mock("@/hooks/mutations/task/use-archive-column-tasks", () => ({
+  useArchiveColumnTasks: () => m.mutate,
 }));
 vi.mock("@/hooks/use-workspace-permission", () => ({
   useWorkspacePermission: () => ({
@@ -70,6 +70,7 @@ it("prevents archive confirmation while the board is partial and uses the comple
   rerender(<ColumnHeader column={complete} />);
   expect(m.archive.taskCount).toBe(2);
   act(() => m.archive.onConfirm?.());
-  expect(m.mutate).toHaveBeenCalledTimes(2);
+  // One atomic request for the whole column, not one per task.
+  expect(m.mutate).toHaveBeenCalledExactlyOnceWith(["a", "b"]);
   expect(m.setProject).toHaveBeenCalledOnce();
 });

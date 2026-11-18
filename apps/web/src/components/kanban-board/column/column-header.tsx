@@ -3,7 +3,7 @@ import { Archive, Plus, ArchiveIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import CreateTaskModal from "@/components/shared/modals/create-task-modal";
-import { useUpdateTask } from "@/hooks/mutations/task/use-update-task";
+import { useArchiveColumnTasks } from "@/hooks/mutations/task/use-archive-column-tasks";
 import { useWorkspacePermission } from "@/hooks/use-workspace-permission";
 import { getColumnIcon } from "@/lib/column";
 import { toast } from "@/lib/toast";
@@ -22,7 +22,7 @@ export function ColumnHeader({
 }: ColumnHeaderProps) {
   const { t } = useTranslation();
   const { project, setProject } = useProjectStore();
-  const { mutate: updateTask } = useUpdateTask();
+  const archiveTasks = useArchiveColumnTasks();
   const { canUpdateTasks, canCreateTasks } = useWorkspacePermission();
   const canTask = canUpdateTasks();
   const canCreate = canCreateTasks();
@@ -33,21 +33,17 @@ export function ColumnHeader({
   const handleConfirmArchive = () => {
     if (disableCollectionActions || !column.isFinal || !project) return;
 
+    const archivedTaskIds: string[] = [];
     const updatedProject = produce(project, (draft) => {
       const archivedColumn = draft?.columns?.find(
         (col) => col.id === column.id,
       );
       if (!archivedColumn) return;
 
-      for (const task of archivedColumn.tasks) {
-        updateTask({
-          ...task,
-          status: "archived",
-        });
-      }
-
+      archivedTaskIds.push(...archivedColumn.tasks.map((task) => task.id));
       archivedColumn.tasks = [];
     });
+    if (archivedTaskIds.length > 0) archiveTasks(archivedTaskIds);
 
     setProject(updatedProject);
     toast.success(t("tasks:archive.success", { count: column.tasks.length }), {

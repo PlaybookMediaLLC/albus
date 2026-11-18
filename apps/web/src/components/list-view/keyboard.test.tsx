@@ -22,8 +22,8 @@ vi.mock("@tanstack/react-router", () => ({
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-vi.mock("@/hooks/mutations/task/use-update-task", () => ({
-  useUpdateTask: () => ({ mutate: mocks.mutate }),
+vi.mock("@/hooks/mutations/task/use-reorder-tasks", () => ({
+  useReorderTasks: () => ({ mutate: mocks.mutate }),
 }));
 vi.mock("@/store/project", () => ({
   default: () => ({ setProject: mocks.setProject }),
@@ -160,15 +160,15 @@ it("reorders a repeated child within its own status group and retains its occurr
   )!;
   act(() => row.focus());
   press("ArrowDown", "ArrowDown", true);
-  expect(
-    mocks.mutate.mock.calls.map(([task]) => ({
-      id: task.id,
-      status: task.status,
-    })),
-  ).toEqual([
-    { id: "last", status: "doing" },
-    { id: "child", status: "doing" },
-  ]);
+  // One reorder request with only the moved positions; the status is unchanged.
+  expect(mocks.mutate).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({
+      tasks: [
+        { id: "last", position: 0 },
+        { id: "child", position: 1 },
+      ],
+    }),
+  );
   await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
   expect(row).toHaveFocus();
 });

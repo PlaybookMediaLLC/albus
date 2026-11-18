@@ -9,12 +9,9 @@ import {
   type DragStartEvent,
   type DropAnimation,
   defaultDropAnimationSideEffects,
-  MouseSensor,
-  TouchSensor,
   type UniqueIdentifier,
-  useSensor,
-  useSensors,
 } from "@dnd-kit/core";
+import { useTaskDragSensors } from "@/hooks/use-task-drag-sensors";
 import { useIsFetching, useQueryClient } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
 import reorderTasks, { type TaskReorder } from "@/fetchers/task/reorder-tasks";
@@ -139,17 +136,10 @@ function KanbanBoard({
     clearFocus();
   }, [clearFocus]);
 
-  const sensors = useSensors(
-    useSensor(MouseSensor, {
-      activationConstraint: { distance: disableDragDrop ? 999999 : 8 },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: disableDragDrop ? 999999 : 250,
-        tolerance: 10,
-      },
-    }),
-  );
+  const sensors = useTaskDragSensors(disableDragDrop, {
+    delay: 250,
+    tolerance: 10,
+  });
 
   const reduceMotion = useReducedMotion();
   const dropAnimation: DropAnimation = {

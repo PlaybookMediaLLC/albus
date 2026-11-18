@@ -91,8 +91,12 @@ function TaskRow({
     transition: { duration: 200, easing: EASE_OUT_CSS },
   });
 
-  const { project } = useProjectStore();
-  const taskIsCompleted = isTaskCompleted(task.status, project?.columns);
+  // Narrow selectors: a row re-renders when its own state changes, not on
+  // every board update.
+  const projectId = useProjectStore((state) => state.project?.id);
+  const taskIsCompleted = useProjectStore((state) =>
+    isTaskCompleted(task.status, state.project?.columns),
+  );
   const { data: workspace } = useActiveWorkspace();
   const [isDeleteTaskModalOpen, setIsDeleteTaskModalOpen] = useState<
     boolean | null
@@ -154,7 +158,7 @@ function TaskRow({
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    if (!project || !task || !isOwnDomEvent(e)) return;
+    if (!projectId || !task || !isOwnDomEvent(e)) return;
     if (e.defaultPrevented) return;
 
     if (e.shiftKey) {
@@ -310,11 +314,11 @@ function TaskRow({
           </div>
         </ContextMenuTrigger>
 
-        {hasOpenedMenu && project && workspace && (
+        {hasOpenedMenu && projectId && workspace && (
           <TaskCardContextMenuContent
             task={task}
             taskCardContext={{
-              projectId: project.id,
+              projectId,
               worskpaceId: workspace.id,
               workspaceSlug: workspace.slug,
             }}

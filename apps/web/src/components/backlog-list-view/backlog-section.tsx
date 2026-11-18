@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { ChevronRight, type Clock, Plus } from "lucide-react";
 import { memo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useStableIds } from "@/hooks/use-stable-ids";
 import { cn } from "@/lib/cn";
 import { EASE_OUT } from "@/lib/motion";
 import type Task from "@/types/task";
@@ -33,6 +34,7 @@ const BacklogSection = memo(function BacklogSection({
 }) {
   const { t } = useTranslation();
   const [animateExpand, setAnimateExpand] = useState(false);
+  const sortableIds = useStableIds(tasks);
   const { setNodeRef } = useDroppable({
     id: sectionId,
     data: {
@@ -103,7 +105,10 @@ const BacklogSection = memo(function BacklogSection({
               "transition-[translate,opacity] duration-150 ease-out starting:-translate-y-1 starting:opacity-0 motion-reduce:starting:translate-y-0",
           )}
         >
-          <SortableContext items={tasks} strategy={verticalListSortingStrategy}>
+          <SortableContext
+            items={sortableIds}
+            strategy={verticalListSortingStrategy}
+          >
             <AnimatePresence initial={false} mode="popLayout">
               {tasks.map((task) => (
                 <motion.div

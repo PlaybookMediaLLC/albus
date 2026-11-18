@@ -5,12 +5,9 @@ import {
   type DragOverEvent,
   DragOverlay,
   type DragStartEvent,
-  MouseSensor,
-  TouchSensor,
   type UniqueIdentifier,
-  useSensor,
-  useSensors,
 } from "@dnd-kit/core";
+import { useTaskDragSensors } from "@/hooks/use-task-drag-sensors";
 import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import { produce } from "immer";
 import { Archive, Clock, Flag } from "lucide-react";
@@ -18,7 +15,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { priorityColorsTaskCard } from "@/constants/priority-colors";
-import { useUpdateTask } from "@/hooks/mutations/task/use-update-task";
+import { useReorderTasks } from "@/hooks/mutations/task/use-reorder-tasks";
+import { changedTaskPositions } from "@/lib/changed-task-positions";
 import { useTaskViewShortcuts } from "@/components/project/task-view-keys/use-task-view-shortcuts";
 import { useCollapsedSections } from "@/hooks/use-collapsed-sections";
 import { cn } from "@/lib/cn";
@@ -40,7 +38,7 @@ function BacklogListView({
 }: BacklogListViewProps) {
   const { t } = useTranslation();
   const reduceMotion = useReducedMotion();
-  const { mutate: updateTask } = useUpdateTask();
+  const { mutate: reorder } = useReorderTasks();
   const setProject = useProjectStore((state) => state.setProject);
   const setAvailableTasks = useBacklogBulkSelectionStore(
     (state) => state.setAvailableTasks,
@@ -76,17 +74,10 @@ function BacklogListView({
     clearFocus();
   }, [clearFocus]);
 
-  const sensors = useSensors(
-    useSensor(MouseSensor, {
-      activationConstraint: { distance: disableDragDrop ? 999999 : 8 },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: disableDragDrop ? 999999 : 200,
-        tolerance: 8,
-      },
-    }),
-  );
+  const sensors = useTaskDragSensors(disableDragDrop, {
+    delay: 200,
+    tolerance: 8,
+  });
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id);
@@ -186,10 +177,7 @@ function BacklogListView({
             : draft.archivedTasks || [];
 
         finalTasks.forEach((t, index) => {
-          updateTask({
-            ...t,
-            position: index,
-          });
+          t.position = index;
         });
       } else {
         task.status = targetSection;
@@ -206,11 +194,8 @@ function BacklogListView({
             : draft.archivedTasks || [];
 
         updatedTasks.forEach((t, index) => {
-          updateTask({
-            ...t,
-            status: targetSection,
-            position: index,
-          });
+          t.status = targetSection;
+          t.position = index;
         });
 
         const sourceTasks =
@@ -219,15 +204,21 @@ function BacklogListView({
             : draft.archivedTasks || [];
 
         sourceTasks.forEach((t, index) => {
-          updateTask({
-            ...t,
-            position: index,
-          });
+          t.position = index;
         });
       }
     });
 
     setProject(updatedProject);
+    const backlog = (board: typeof project) => [
+      ...(board.plannedTasks ?? []),
+      ...(board.archivedTasks ?? []),
+    ];
+    const tasks = changedTaskPositions(
+      backlog(project),
+      backlog(updatedProject),
+    );
+    if (tasks.length > 0) reorder({ projectId: project.id, tasks });
   };
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {

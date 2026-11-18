@@ -5,6 +5,7 @@ import {
 } from "@dnd-kit/sortable";
 import { AnimatePresence, useReducedMotion } from "motion/react";
 import { memo } from "react";
+import { useStableIds } from "@/hooks/use-stable-ids";
 import type { ProjectWithTasks } from "@/types/project";
 import DropzoneCard from "./dropzone-card";
 import { VirtualCardList } from "./virtual-card-list";
@@ -30,10 +31,11 @@ function ColumnDropzone({
   scrollElement,
 }: ColumnDropzoneProps) {
   const reduceMotion = Boolean(useReducedMotion());
+  const sortableIds = useStableIds(column.tasks);
 
   return (
     <SortableContext
-      items={column.tasks}
+      items={sortableIds}
       strategy={disableSorting ? keepOrder : verticalListSortingStrategy}
     >
       {column.tasks.length > VIRTUALIZE_AFTER ? (

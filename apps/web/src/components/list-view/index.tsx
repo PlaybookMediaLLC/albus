@@ -5,12 +5,9 @@ import {
   type DragOverEvent,
   DragOverlay,
   type DragStartEvent,
-  MouseSensor,
-  TouchSensor,
   type UniqueIdentifier,
-  useSensor,
-  useSensors,
 } from "@dnd-kit/core";
+import { NO_SENSORS, useTaskDragSensors } from "@/hooks/use-task-drag-sensors";
 import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import { produce } from "immer";
 import { Flag, ArchiveIcon } from "lucide-react";
@@ -19,10 +16,12 @@ import { useReducedMotion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { priorityColorsTaskCard } from "@/constants/priority-colors";
-import { useUpdateTask } from "@/hooks/mutations/task/use-update-task";
+import { useArchiveColumnTasks } from "@/hooks/mutations/task/use-archive-column-tasks";
+import { useReorderTasks } from "@/hooks/mutations/task/use-reorder-tasks";
 import useGetProjectTaskRelations from "@/hooks/queries/task-relation/use-get-project-task-relations";
 import { useTaskViewShortcuts } from "@/components/project/task-view-keys/use-task-view-shortcuts";
 import { useCollapsedSections } from "@/hooks/use-collapsed-sections";
+import { changedTaskPositions } from "@/lib/changed-task-positions";
 import { cn } from "@/lib/cn";
 import {
   readExpandedRows,
@@ -56,7 +55,8 @@ function ListView({
     (state) => state.setAvailableTasks,
   );
   const clearFocus = useBulkSelectionStore((state) => state.clearFocus);
-  const { mutate: updateTask } = useUpdateTask();
+  const { mutate: reorder } = useReorderTasks();
+  const archiveTasks = useArchiveColumnTasks();
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [overColumnId, setOverColumnId] = useState<string | null>(null);
   const { isExpanded, toggleSection, toggleAllSections } = useCollapsedSections(
@@ -171,17 +171,13 @@ function ListView({
     clearFocus();
   }, [clearFocus]);
 
-  const sensors = useSensors(
-    useSensor(MouseSensor, {
-      activationConstraint: { distance: disableDragDrop ? 999999 : 8 },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: disableDragDrop ? 999999 : 200,
-        tolerance: 8,
-      },
-    }),
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
+    null,
   );
+  const sensors = useTaskDragSensors(disableDragDrop, {
+    delay: 200,
+    tolerance: 8,
+  });
 
   const handleDragStart = (event: DragStartEvent) => {
     if (disableDragDrop) return;
@@ -243,14 +239,6 @@ function ListView({
           destinationIndex += 1;
         }
         destinationColumn.tasks.splice(destinationIndex, 0, task);
-
-        destinationColumn.tasks.forEach((t, index) => {
-          updateTask({
-            ...t,
-            status: destinationColumn.slug,
-            position: index,
-          });
-        });
       } else {
         // A task's status is a column slug. The column id is only the
         // droppable identity here, and the two are interchangeable only
@@ -262,25 +250,20 @@ function ListView({
             : destinationColumn.tasks.findIndex((t) => t.id === overId) + 1;
 
         destinationColumn.tasks.splice(destinationIndex, 0, task);
-
-        destinationColumn.tasks.forEach((t, index) => {
-          updateTask({
-            ...t,
-            status: destinationColumn.slug,
-            position: index,
-          });
-        });
-
-        sourceColumn.tasks.forEach((t, index) => {
-          updateTask({
-            ...t,
-            position: index,
-          });
-        });
       }
+      for (const column of [sourceColumn, destinationColumn])
+        column.tasks.forEach((t, index) => {
+          t.status = column.slug;
+          t.position = index;
+        });
     });
 
     setProject(updatedProject);
+    const tasks = changedTaskPositions(
+      project.columns.flatMap((column) => column.tasks),
+      updatedProject.columns.flatMap((column) => column.tasks),
+    );
+    if (tasks.length > 0) reorder({ projectId: project.id, tasks });
   };
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
@@ -353,15 +336,9 @@ function ListView({
       );
       if (!archivedColumn) return;
 
-      for (const task of archivedColumn.tasks) {
-        updateTask({
-          ...task,
-          status: "archived",
-        });
-      }
-
       archivedColumn.tasks = [];
     });
+    archiveTasks(archiveColumn.tasks.map((task) => task.id));
 
     setProject(updatedProject);
     toast.success(
@@ -385,7 +362,7 @@ function ListView({
 
   return (
     <DndContext
-      sensors={disableDragDrop ? [] : sensors}
+      sensors={disableDragDrop ? NO_SENSORS : sensors}
       accessibility={{
         screenReaderInstructions: {
           draggable: t("tasks:board.keyboardInstructions"),
@@ -398,7 +375,10 @@ function ListView({
       onDragCancel={handleDragCancel}
       modifiers={[snapCenterToCursor]}
     >
-      <div className="w-full h-full overflow-auto bg-muted/20">
+      <div
+        ref={setScrollElement}
+        className="w-full h-full overflow-auto bg-muted/20"
+      >
         {relationsFailed && (
           // Without relations every task renders as a top-level row, which
           // reads exactly like a project with no subtasks; this says it isn't.
@@ -434,6 +414,7 @@ function ListView({
               onToggleTaskExpanded={toggleTaskExpanded}
               relationsLoading={relationsLoading}
               draggingTaskId={activeId === null ? null : String(activeId)}
+              scrollElement={scrollElement}
             />
           ))}
         </div>

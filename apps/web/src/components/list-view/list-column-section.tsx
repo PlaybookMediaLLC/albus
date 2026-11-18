@@ -11,8 +11,13 @@ import { cn } from "@/lib/cn";
 import { getColumnIcon } from "@/lib/column";
 import { EASE_OUT } from "@/lib/motion";
 import type { SubtaskRow } from "@/lib/subtask-tree";
+import { useStableIds } from "@/hooks/use-stable-ids";
 import type { ProjectWithTasks } from "@/types/project";
 import TaskRow from "./task-row";
+import { VirtualTaskRows } from "./virtual-task-rows";
+
+// Long sections mount only the rows near the viewport, as board columns do.
+const VIRTUALIZE_AFTER = 40;
 
 type Column = ProjectWithTasks["columns"][number];
 type ColumnTask = Column["tasks"][number];
@@ -34,6 +39,7 @@ type ListColumnSectionProps = {
   onToggleTaskExpanded: (rowId: string) => void;
   relationsLoading: boolean;
   draggingTaskId: string | null;
+  scrollElement: HTMLElement | null;
 };
 
 const ListColumnSection = memo(function ListColumnSection({
@@ -49,9 +55,11 @@ const ListColumnSection = memo(function ListColumnSection({
   onToggleTaskExpanded,
   relationsLoading,
   draggingTaskId,
+  scrollElement,
 }: ListColumnSectionProps) {
   const { t } = useTranslation();
   const [animateExpand, setAnimateExpand] = useState(false);
+  const sortableIds = useStableIds(column.tasks);
   const { setNodeRef } = useDroppable({
     id: column.id,
     data: { type: "column", column },
@@ -63,6 +71,19 @@ const ListColumnSection = memo(function ListColumnSection({
   // appear in place instead of shifting every title sideways.
   const groupHasSubtasks =
     relationsLoading || rows.some((row) => row.childCount > 0 || row.depth > 0);
+  const renderRow = (row: SubtaskRow<ColumnTask>) => (
+    <TaskRow
+      task={row.task}
+      projectSlug={projectSlug}
+      depth={row.depth}
+      rowId={row.rowId}
+      childCount={row.childCount}
+      isExpanded={row.isExpanded}
+      onToggleExpanded={onToggleTaskExpanded}
+      reserveToggleSpace={groupHasSubtasks}
+      isTaskDragging={draggingTaskId === row.task.id}
+    />
+  );
 
   return (
     <div
@@ -136,32 +157,31 @@ const ListColumnSection = memo(function ListColumnSection({
           {/* Only the top-level rows are sortable; the nested repeats share
               their task id with one of them. */}
           <SortableContext
-            items={column.tasks}
+            items={sortableIds}
             strategy={verticalListSortingStrategy}
           >
-            <AnimatePresence initial={false} mode="popLayout">
-              {rows.map((row) => (
-                <motion.div
-                  key={row.rowId}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15, ease: EASE_OUT }}
-                >
-                  <TaskRow
-                    task={row.task}
-                    projectSlug={projectSlug}
-                    depth={row.depth}
-                    rowId={row.rowId}
-                    childCount={row.childCount}
-                    isExpanded={row.isExpanded}
-                    onToggleExpanded={onToggleTaskExpanded}
-                    reserveToggleSpace={groupHasSubtasks}
-                    isTaskDragging={draggingTaskId === row.task.id}
-                  />
-                </motion.div>
-              ))}
-            </AnimatePresence>
+            {rows.length > VIRTUALIZE_AFTER && scrollElement ? (
+              <VirtualTaskRows
+                rows={rows}
+                draggingTaskId={draggingTaskId}
+                scrollElement={scrollElement}
+                renderRow={renderRow}
+              />
+            ) : (
+              <AnimatePresence initial={false} mode="popLayout">
+                {rows.map((row) => (
+                  <motion.div
+                    key={row.rowId}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15, ease: EASE_OUT }}
+                  >
+                    {renderRow(row)}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            )}
           </SortableContext>
 
           {column.tasks.length === 0 && (
