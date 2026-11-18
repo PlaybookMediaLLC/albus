@@ -90,7 +90,7 @@ describe("SupportPage", () => {
       const view = renderPage(SupportPage, meta, {
         viewer: { kind: "user", id: "account_test_1" },
       });
-      expect(await view.findByText("Nothing is here yet.")).toBeInTheDocument();
+      expect(await view.findByText("No conversations yet")).toBeInTheDocument();
       fill("How can we help?", "Please help");
       press("Send message");
       expect(await view.findByText("Conversation started")).toBeInTheDocument();

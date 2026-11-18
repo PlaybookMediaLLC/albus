@@ -69,4 +69,14 @@ describe("StateView", () => {
     expect(view.getByText("Submit the first one.")).toBeVisible();
     expect(view.container.querySelector("[data-icon=empty]")).not.toBeNull();
   });
+
+  it("shows a full empty state in place of the line", () => {
+    const view = renderComponent(
+      <StateView empty emptyState={<p>Nothing yet</p>}>
+        {null}
+      </StateView>,
+    );
+    expect(view.getByText("Nothing yet")).toBeVisible();
+    expect(view.queryByText("Nothing is here yet.")).toBeNull();
+  });
 });

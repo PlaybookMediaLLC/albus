@@ -1,7 +1,8 @@
 import { ListFilter } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, Menu, MenuPopup, MenuTrigger } from "../upstream";
+import { Menu, MenuPopup, MenuTrigger } from "../upstream";
+import { IconButton } from "./icon-button";
 import { useKeyShortcuts } from "./use-key-shortcuts";
 
 export interface ListHeaderProps {
@@ -29,10 +30,10 @@ export function ListHeader({
   const openFilters = filters ? () => setOpen(true) : onFilters;
   useKeyShortcuts({ f: openFilters });
   const Heading = headingLevel === 1 ? "h1" : "h2";
+  // A bordered square, as the toolbar buttons of the list views.
   const button = {
-    variant: "ghost",
-    size: "icon-sm",
-    "aria-label": t("inbox.filters"),
+    variant: "outline",
+    label: t("inbox.filters"),
     "aria-keyshortcuts": "F",
   } as const;
   const icon = <ListFilter aria-hidden="true" />;
@@ -47,13 +48,15 @@ export function ListHeader({
       <div className="flex min-w-0 flex-wrap items-center gap-1.5">
         {filters ? (
           <Menu open={open} onOpenChange={setOpen}>
-            <MenuTrigger render={<Button {...button} />}>{icon}</MenuTrigger>
+            <MenuTrigger render={<IconButton {...button} />}>
+              {icon}
+            </MenuTrigger>
             <MenuPopup align="end">{filters}</MenuPopup>
           </Menu>
         ) : onFilters ? (
-          <Button {...button} onClick={onFilters}>
+          <IconButton {...button} onClick={onFilters}>
             {icon}
-          </Button>
+          </IconButton>
         ) : null}
         {actions}
       </div>

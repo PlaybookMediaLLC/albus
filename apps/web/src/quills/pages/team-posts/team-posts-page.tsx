@@ -17,6 +17,7 @@ import { useListNavigation } from "../../ui/inbox/use-list-navigation";
 import { PageFrame } from "../../ui/page-frame";
 import { Button } from "../../ui/upstream";
 import { DeletedRequest } from "./parts/deleted-request";
+import { RequestsEmpty } from "./parts/requests-empty";
 import { NewRequestDialog } from "../../team/new-request/new-request-dialog";
 import { groupPosts, postRow, rowContext, statusIcon } from "./post-list";
 import {
@@ -135,6 +136,7 @@ export function TeamPostsPage({
           }
           problem={statuses.error ?? boards.error ?? posts.error}
           empty={!ids.length}
+          emptyState={<RequestsEmpty search={search} onSearch={setSearch} />}
           onRetry={() => {
             void statuses.refetch();
             void boards.refetch();

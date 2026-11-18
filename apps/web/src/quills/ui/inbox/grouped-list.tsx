@@ -26,12 +26,17 @@ export function GroupedList<Item>({
             role="group"
             aria-labelledby={`${id}-${group.id}`}
           >
+            {/* An opaque sticky header holds the light band, so rows never show through it. */}
             <h2
               id={`${id}-${group.id}`}
-              className="sticky top-0 z-10 flex items-center gap-2 bg-background/90 px-3 pt-3 pb-1 text-xs font-medium text-muted-foreground backdrop-blur"
+              className="sticky top-0 z-10 bg-background pt-2 pb-1"
             >
-              {group.label}{" "}
-              <span className="tabular-nums">{group.items.length}</span>
+              <span className="flex items-center gap-2 rounded-md bg-foreground/3 px-3 py-1.5 text-xs font-medium text-foreground">
+                {group.label}{" "}
+                <span className="tabular-nums text-faint-foreground">
+                  {group.items.length}
+                </span>
+              </span>
             </h2>
             <ul className="grid grid-cols-1 gap-0.5">
               {group.items.map((item) => (

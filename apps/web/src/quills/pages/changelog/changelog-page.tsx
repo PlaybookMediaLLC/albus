@@ -15,6 +15,8 @@ import { ShareActions } from "../../ui/share-actions";
 import { StateView } from "../../ui/state-view";
 import { Button } from "../../ui/upstream";
 import { meta } from "./meta";
+import { EmptyState } from "../../ui/empty-state";
+import { ChangelogArt } from "../../ui/illustrations/changelog-art";
 
 type Emoji = SetPortalChangelogReactionRequest["json"]["emoji"];
 
@@ -120,6 +122,13 @@ export function ChangelogPage(props: ChangelogPageProps) {
           <StateView
             loading={changelog.isLoading}
             empty={changelog.isSuccess && entries.length === 0}
+            emptyState={
+              <EmptyState
+                art={<ChangelogArt />}
+                title={t("empty.portalChangelog.title")}
+                description={t("empty.portalChangelog.body")}
+              />
+            }
             problem={changelog.error ?? null}
             onRetry={() => {
               void changelog.refetch();

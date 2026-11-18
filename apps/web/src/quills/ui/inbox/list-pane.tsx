@@ -22,6 +22,8 @@ export interface ListPaneProps {
   loading?: boolean;
   problem?: PortalProblem | null;
   empty?: boolean;
+  /** The empty state with a drawing, such as an EmptyState. */
+  emptyState?: ReactNode;
   onRetry?: () => void;
   /** The rows (ConversationRow or RequestRow items) and a "Load more" button. */
   children: ReactNode;
@@ -64,6 +66,7 @@ export function ListPane(props: ListPaneProps) {
           loading={props.loading}
           problem={props.problem}
           empty={props.empty}
+          emptyState={props.emptyState}
           onRetry={props.onRetry}
           rows={8}
         >

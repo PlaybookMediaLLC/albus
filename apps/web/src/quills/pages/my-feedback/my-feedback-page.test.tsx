@@ -92,7 +92,7 @@ describe("MyFeedbackPage", () => {
       const view = renderPage(MyFeedbackPage, meta, signedIn);
       await view.findByRole("link", { name: "Dark mode" });
       press("Following");
-      expect(await view.findByText("Nothing is here yet.")).toBeInTheDocument();
+      expect(await view.findByText("No feedback yet")).toBeInTheDocument();
       expect(api.calls("listQuillsPortalMyFeedback").at(-1)?.url).toContain(
         "filter=following",
       );

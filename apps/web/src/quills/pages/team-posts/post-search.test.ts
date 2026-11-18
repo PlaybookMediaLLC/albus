@@ -4,6 +4,8 @@ import {
   checkedStatuses,
   detailSearch,
   facetPatch,
+  isFiltered,
+  noFilters,
   postListInput,
   postSearch,
   requestListTitle,
@@ -222,6 +224,21 @@ describe("requestListTitle", () => {
     );
     expect(requestListTitle({ statusId: "gone", status: "all" }, list, t)).toBe(
       "t:team.nav.allRequests",
+    );
+  });
+});
+
+describe("isFiltered", () => {
+  it("is false only for the plain Active list", () => {
+    expect(isFiltered({})).toBe(false);
+    expect(isFiltered({ status: "active", sort: "votes" })).toBe(false);
+    expect(isFiltered({ q: "dark" })).toBe(true);
+    expect(isFiltered({ board: "board_1" })).toBe(true);
+    expect(isFiltered({ statusId: "status_1" })).toBe(true);
+    expect(isFiltered({ tags: "tag_1" })).toBe(true);
+    expect(isFiltered({ status: "deleted" })).toBe(true);
+    expect(isFiltered({ ...{ q: "dark", status: "all" }, ...noFilters })).toBe(
+      false,
     );
   });
 });

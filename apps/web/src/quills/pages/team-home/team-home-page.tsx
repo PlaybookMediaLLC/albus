@@ -10,6 +10,7 @@ import { TeamStateView } from "../../team/team-state-view";
 import { ListHeader } from "../../ui/inbox/list-header";
 import { RequestRow } from "../../ui/inbox/request-row";
 import { PageFrame } from "../../ui/page-frame";
+import { GetStarted } from "./parts/get-started";
 import { ViewLinks } from "./parts/view-links";
 
 export interface TeamHomePageProps {
@@ -99,6 +100,7 @@ export function TeamHomePage({ workspaceId }: TeamHomePageProps) {
       <ListHeader title={t("team.nav.home")} />
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="grid w-full max-w-5xl gap-8 px-4 pt-2 pb-6">
+          <GetStarted workspaceId={workspaceId} />
           <ViewLinks workspaceId={workspaceId} counts={counts.data} />
           <TeamStateView
             loading={overview.isLoading || boards.isLoading}

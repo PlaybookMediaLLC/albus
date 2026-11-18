@@ -16,6 +16,8 @@ import {
   RoadmapTaskDialog,
   type RoadmapTaskDialogProps,
 } from "./parts/roadmap-task-dialog";
+import { EmptyState } from "../../ui/empty-state";
+import { RoadmapArt } from "../../ui/illustrations/roadmap-art";
 
 export interface TeamRoadmapPageProps {
   workspaceId: string;
@@ -83,6 +85,13 @@ export function TeamRoadmapPage({ workspaceId }: TeamRoadmapPageProps) {
           loading={statuses.isLoading || boards.isLoading || counts.isLoading}
           problem={statuses.error ?? boards.error ?? counts.error}
           empty={!statuses.data?.statuses.length}
+          emptyState={
+            <EmptyState
+              art={<RoadmapArt />}
+              title={t("empty.roadmap.title")}
+              description={t("empty.roadmap.body")}
+            />
+          }
           onRetry={() => {
             void statuses.refetch();
             void boards.refetch();

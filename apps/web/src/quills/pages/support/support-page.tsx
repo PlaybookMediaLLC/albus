@@ -13,6 +13,8 @@ import { Button } from "../../ui/upstream";
 import { meta } from "./meta";
 import { ConversationList } from "./parts/conversation-list";
 import { NewConversationForm } from "./parts/new-conversation-form";
+import { EmptyState } from "../../ui/empty-state";
+import { ConversationsArt } from "../../ui/illustrations/conversations-art";
 
 export interface SupportPageProps {
   workspaceId: string;
@@ -108,7 +110,11 @@ export function SupportPage(props: SupportPageProps) {
                 conversations={items}
               />
             ) : (
-              <StateView empty>{null}</StateView>
+              <EmptyState
+                art={<ConversationsArt />}
+                title={t("empty.portalConversations.title")}
+                description={t("empty.portalConversations.body")}
+              />
             )}
             {conversations.hasNextPage ? (
               <Button

@@ -13,6 +13,8 @@ import { Button } from "../../ui/upstream";
 import { meta } from "./meta";
 import { NewTicketForm } from "./parts/new-ticket-form";
 import { TicketList } from "./parts/ticket-list";
+import { EmptyState } from "../../ui/empty-state";
+import { TicketsArt } from "../../ui/illustrations/tickets-art";
 
 export interface TicketsPageProps {
   workspaceId: string;
@@ -101,7 +103,11 @@ export function TicketsPage(props: TicketsPageProps) {
             {items.length ? (
               <TicketList workspaceId={props.workspaceId} tickets={items} />
             ) : (
-              <StateView empty>{null}</StateView>
+              <EmptyState
+                art={<TicketsArt />}
+                title={t("empty.portalTickets.title")}
+                description={t("empty.portalTickets.body")}
+              />
             )}
             {tickets.hasNextPage ? (
               <Button

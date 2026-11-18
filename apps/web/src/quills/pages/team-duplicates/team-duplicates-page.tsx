@@ -16,6 +16,8 @@ import type { Suggestion } from "./parts/suggestion-detail";
 import { SuggestionList, type SuggestionFilter } from "./parts/suggestion-list";
 import { SuggestionListRow } from "./parts/suggestion-list-row";
 import { SuggestionView } from "./parts/suggestion-view";
+import { EmptyState } from "../../ui/empty-state";
+import { DuplicatesArt } from "../../ui/illustrations/duplicates-art";
 
 export interface TeamDuplicatesPageProps {
   workspaceId: string;
@@ -139,6 +141,13 @@ export function TeamDuplicatesPage({ workspaceId }: TeamDuplicatesPageProps) {
             loading={list.isLoading}
             problem={list.error ?? null}
             empty={!items.length}
+            emptyState={
+              <EmptyState
+                art={<DuplicatesArt />}
+                title={t("empty.duplicates.title")}
+                description={t("empty.duplicates.body")}
+              />
+            }
             onRetry={() => void list.refetch()}
           >
             <GroupedList

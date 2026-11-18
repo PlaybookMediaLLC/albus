@@ -25,7 +25,7 @@ export function MemberRow({ member, href, onOpen }: MemberRowProps) {
     <a
       {...link}
       href={href}
-      className="flex items-center gap-3 ps-4 outline-none hover:bg-muted/60 focus-visible:bg-muted"
+      className="flex items-center gap-3 ps-4 outline-none hover:bg-accent focus-visible:bg-foreground/6"
     >
       <PersonAvatar
         name={member.name}

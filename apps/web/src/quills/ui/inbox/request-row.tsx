@@ -89,7 +89,7 @@ export function RequestRow(props: RequestRowProps) {
     <RowBadge key={badge.id} badge={badge} />
   ));
   const className =
-    "relative min-w-0 rounded-lg px-3 py-2.5 text-sm outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring aria-[current]:bg-muted";
+    "relative min-w-0 rounded-lg px-3 py-2.5 text-sm outline-none transition-colors duration-150 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring aria-[current]:bg-foreground/6";
   if (props.compact)
     return (
       <a href={props.href} {...link} className={cn("block", className)}>
@@ -102,7 +102,7 @@ export function RequestRow(props: RequestRowProps) {
           ) : null}
         </span>
         {detail}
-        <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-faint-foreground">
           {props.person ? (
             <span className="flex min-w-0 items-center gap-1.5">
               {avatar}
@@ -128,7 +128,7 @@ export function RequestRow(props: RequestRowProps) {
         {detail}
       </span>
       {/* Fixed-width slots keep the counts, board and date in columns down the list. */}
-      <span className="flex shrink-0 items-center gap-2.5 text-xs text-muted-foreground">
+      <span className="flex shrink-0 items-center gap-2.5 text-xs text-faint-foreground">
         {badges}
         {votes ? <span className="flex w-14 justify-end">{votes}</span> : null}
         {comments ? (
@@ -137,12 +137,12 @@ export function RequestRow(props: RequestRowProps) {
           </span>
         ) : null}
         {props.board === undefined ? null : (
-          <span className="hidden w-32 items-center gap-1.5 text-xs font-medium uppercase tracking-wide sm:inline-flex">
+          <span className="hidden w-32 sm:flex">
             {props.board ? (
-              <>
+              <span className="inline-flex h-5.5 max-w-full items-center gap-1.5 rounded-full border border-border px-2 text-muted-foreground">
                 <BoardDot boardId={props.boardId} />
                 <span className="min-w-0 truncate">{props.board}</span>
-              </>
+              </span>
             ) : null}
           </span>
         )}

@@ -33,6 +33,8 @@ export interface StateViewProps {
   /** The empty state: an icon and a line (the generic line by default). */
   emptyIcon?: ReactNode;
   emptyDescription?: string;
+  /** A full empty state, such as an EmptyState with a drawing. It replaces the icon and line. */
+  emptyState?: ReactNode;
   /** Placeholder rows for the first load of a list, so the rows do not jump in. */
   rows?: number;
 }
@@ -45,6 +47,7 @@ export function StateView({
   onRetry,
   emptyIcon,
   emptyDescription,
+  emptyState,
   rows,
 }: StateViewProps) {
   const { t } = useTranslation("quills");
@@ -92,6 +95,7 @@ export function StateView({
         ) : null}
       </Alert>
     );
+  if (empty && emptyState) return emptyState;
   if (empty)
     return (
       <Empty role="status">

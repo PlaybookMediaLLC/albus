@@ -160,7 +160,7 @@ describe("TeamAutopilotPage", () => {
       expect(
         await view.findByRole("heading", { level: 1, name: "Autopilot" }),
       ).toBeInTheDocument();
-      expect(view.getByText("Nothing is here yet.")).toBeInTheDocument();
+      expect(view.getByText("No signals here")).toBeInTheDocument();
     });
 
     it("dismisses a pending signal and shows a failed decision", async () => {
@@ -187,7 +187,7 @@ describe("TeamAutopilotPage", () => {
       api.reply(restoreFeedbackSignalFixture.ok());
       api.reply(listFeedbackSignalsFixture.ok());
       const view = renderPage(TeamAutopilotPage, meta);
-      await view.findByText("Nothing is here yet.");
+      await view.findByText("No signals here");
       press("Filters");
       fireEvent.click(
         await view.findByRole("menuitemradio", { name: "Dismissed" }),
