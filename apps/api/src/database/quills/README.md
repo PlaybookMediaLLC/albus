@@ -592,5 +592,7 @@ Without `QUILLS_AI_BASE_URL` and `QUILLS_AI_MODEL`, every AI route returns 409
 finishes with no work. Provider calls run outside every database transaction and time out
 after 60 seconds. A failure returns a fixed message; the provider's text and the key never
 reach a response, a log row or a run. Each call writes one `ai_usage_log` row in its
-workspace. The `quills.ai` queue (migration `0017_assistant_queue`) runs the background work;
+workspace. The duplicate check and the tag backfill also send up to 3,000 characters of earlier,
+teammate-decided posts from the same workspace with each call (examples; see `ROUTES.md`). They
+read them live, so a deleted post is never sent. The `quills.ai` queue (migration `0017_assistant_queue`) runs the background work;
 `apps/api/src/quills/assistant/ROUTES.md` lists the routes and the work for each event.

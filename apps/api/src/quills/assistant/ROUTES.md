@@ -355,6 +355,37 @@ job was lost or ran out of attempts). The copilot is not streamed.
 | `requestQuillsPostTagBackfill` | `POST /posts/ai-tags/backfill` (≤ 30 posts) | update | `post.tags_backfill_requested` |
 | `requestQuillsEmbeddingBackfill` | `POST /assistant/embeddings/backfill` | manage_settings | `assistant.embeddings_requested` |
 
+### Examples from teammate decisions
+
+The duplicate check and the tag backfill add earlier teammate decisions to their prompts as
+examples (`@quills/ai/learning`, read by `engine/learning-store.ts`; design: issue #275).
+
+- **Duplicate check:** up to 4 examples, at most 2 with the same answer when both answers exist. An
+  example is a suggestion that a teammate resolved and that still holds: `accepted` while its posts
+  are merged, in either direction ("duplicate"), or `dismissed` while they are not ("not
+  duplicate"). An undone merge, or a dismissal followed by a manual merge, is not an example.
+- **Tag backfill:** up to 5 examples per batch of 10 posts, from one query per batch that ranks by
+  the closest post of the batch. An example is a live post with tags that a teammate chose
+  (`auto_tagged = false`). Only those tags are shown, by name. Posts with a vector of an older
+  embedding model get no examples.
+- **Ranking:** 80 % similarity and 20 % freshness, where a decision 90 days old counts half as
+  fresh as one made today, so recent team habits win a near tie.
+- **Scope:** the job's workspace, vectors of the same embedding model, cosine similarity of at least
+  0.78, and visible boards only: the post's board (duplicates) or the requested board (tags), and
+  boards without project links. The duplicate check stores the model's reasoning, which teammates
+  read, so a pair from another project-linked board must never reach its prompt.
+- **Prompt:** the examples open the final user message, before the real question, so the request
+  keeps one user turn (some local chat templates reject two in a row). Each example is wrapped by
+  `untrusted()` and cut to 500 characters, with 3,000 characters at most per call. Without examples,
+  the request is the same as before.
+- **Known limit:** visibility is decided when the job runs. If the subject later moves to a board
+  without project links (or its board loses its link), teammates who could not see the example's
+  board may read reasoning written with it. The prompt tells the model not to quote examples.
+- **Usage:** `ai_usage_log.metadata` holds `examples` (used) and `exampleCandidates` (rows that the
+  store returned before the threshold) for `merge_check` and `tag_backfill`. No text is logged.
+- **Build:** the API loads `@quills/ai` from its `dist`. `pnpm --filter @kaneo/api typecheck`,
+  `test` and `build` build it first; run `pnpm --filter @quills/ai build` before `test:quills`.
+
 ## Support and help-center AI
 
 | operationId | Route | Action | Event |

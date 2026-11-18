@@ -12,6 +12,13 @@ import {
 } from "drizzle-orm";
 import { z } from "zod";
 import {
+  findExamples,
+  renderExamples,
+  selectExamples,
+  TASKS,
+  type Example,
+} from "@quills/ai/learning";
+import {
   withQuillsSystemWorkspace,
   type Database,
 } from "../../../database/quills/client";
@@ -34,7 +41,15 @@ import { tickets } from "../../../database/quills/schema/tickets";
 import { recordQuillsChange } from "../../events";
 import { readConfig as readHelpCenterConfig } from "../../content/help-center/shared";
 import { aiConfig, chatJson, embed, untrusted, type Usage } from "../provider";
-import { exactDistance } from "./distance";
+import { exactDistance, storedPostVector, vectorParam } from "./distance";
+import { createLearningStore } from "./learning-store";
+import {
+  DUPLICATE_CONFIDENCE,
+  duplicateMessages,
+  duplicateVerdict as verdict,
+  tagAnswer,
+  tagMessages,
+} from "./prompts";
 import { logUsage, type UsageEntry } from "../runs";
 import {
   failedUsage,
@@ -49,7 +64,6 @@ import {
 // Each reads, calls the provider with no transaction open, then returns its write. A provider
 // failure throws, so the worker retries the job; the usage log keeps successful calls only.
 
-const vector = (values: number[]) => sql`${JSON.stringify(values)}::vector`;
 const embeddingsOn = () => Boolean(aiConfig()?.embeddingModel);
 const BATCH = 32;
 /**
@@ -92,7 +106,7 @@ async function embedRows<T extends { id: string; text: string }>(
 const postText = (post: { title: string; content: string }) =>
   `${post.title}\n${post.content}`.slice(0, 8000);
 const embeddingSet = (values: number[]) => ({
-  embedding: vector(values) as never,
+  embedding: vectorParam(values) as never,
   embeddingModel: aiConfig()!.embeddingModel,
   embeddingUpdatedAt: new Date(),
 });
@@ -157,11 +171,6 @@ export const backfillEmbeddings: Work = async (workspaceId) => {
 };
 
 const SIMILARITY = 0.85;
-const verdict = z.object({
-  duplicate: z.boolean(),
-  confidence: z.number().min(0).max(1),
-  reasoning: z.string().max(500),
-});
 
 /**
  * post.created and post.merge_check_requested: embeds the post when needed, then asks the model
@@ -174,10 +183,12 @@ export const checkDuplicates: Work = async (workspaceId, event) => {
     db
       .select({
         id: posts.id,
+        boardId: posts.boardId,
         title: posts.title,
         content: posts.content,
         voteCount: posts.voteCount,
         embedded: sql<boolean>`${posts.embedding} IS NOT NULL`,
+        embeddingModel: posts.embeddingModel,
       })
       .from(posts)
       .where(
@@ -202,33 +213,59 @@ export const checkDuplicates: Work = async (workspaceId, event) => {
         )
       )[0]!;
   const target = embedded
-    ? vector(embedded.values)
-    : sql`(SELECT embedding FROM quills.posts WHERE id = ${sql.param(post.id, posts.id)})`;
+    ? vectorParam(embedded.values)
+    : storedPostVector(post.id);
   const distance = exactDistance(posts.embedding, target);
-  const candidates = await withQuillsSystemWorkspace(workspaceId, (db) =>
-    db
-      .select({
-        id: posts.id,
-        title: posts.title,
-        content: posts.content,
-        voteCount: posts.voteCount,
-        similarity: sql<number>`(1 - ${distance})::float8`,
-      })
-      .from(posts)
-      .innerJoin(boards, eq(boards.id, posts.boardId))
-      .where(
-        and(
-          ne(posts.id, post.id),
-          isNotNull(posts.embedding),
-          isNull(posts.deletedAt),
-          isNull(posts.canonicalPostId),
-          isNull(boards.deletedAt),
-          sql`(1 - ${distance}) >= ${SIMILARITY}`,
-        ),
-      )
-      .orderBy(distance)
-      .limit(3),
-  );
+  const embeddingModel = embedded
+    ? aiConfig()!.embeddingModel
+    : post.embeddingModel;
+  const { candidates, examples, exampleCandidates } =
+    await withQuillsSystemWorkspace(workspaceId, async (db) => {
+      const candidates = await db
+        .select({
+          id: posts.id,
+          title: posts.title,
+          content: posts.content,
+          voteCount: posts.voteCount,
+          similarity: sql<number>`(1 - ${distance})::float8`,
+        })
+        .from(posts)
+        .innerJoin(boards, eq(boards.id, posts.boardId))
+        .where(
+          and(
+            ne(posts.id, post.id),
+            isNotNull(posts.embedding),
+            isNull(posts.deletedAt),
+            isNull(posts.canonicalPostId),
+            isNull(boards.deletedAt),
+            sql`(1 - ${distance}) >= ${SIMILARITY}`,
+          ),
+        )
+        .orderBy(distance)
+        .limit(3);
+      // Earlier teammate decisions near this post, from the boards that anyone who sees a
+      // suggestion for it can read (learning-store.ts).
+      const rows =
+        candidates.length && embeddingModel
+          ? await findExamples(createLearningStore(db, workspaceId), {
+              task: "duplicate",
+              scopeId: workspaceId,
+              subjects: [{ key: post.id, embedding: embedded?.values ?? null }],
+              embeddingModel,
+              visibility: {
+                boardIds: [post.boardId],
+                includeUnlinkedBoards: true,
+              },
+              excludeKeys: candidates.map((candidate) => candidate.id),
+            })
+          : [];
+      return {
+        candidates,
+        examples: selectExamples(rows, TASKS.duplicate),
+        exampleCandidates: rows.length,
+      };
+    });
+  const examplesBlock = renderExamples("duplicate", examples, untrusted);
   const found: {
     other: (typeof candidates)[number];
     verdict: z.infer<typeof verdict>;
@@ -236,21 +273,18 @@ export const checkDuplicates: Work = async (workspaceId, event) => {
   }[] = [];
   for (const other of candidates) {
     if (!left()) break;
-    const answer = await chatJson(verdict, [
-      {
-        role: "system",
-        content:
-          'Decide whether two feedback posts ask for the same thing. Answer with one JSON object: {"duplicate": boolean, "confidence": number between 0 and 1, "reasoning": string}.',
-      },
-      {
-        role: "user",
-        content: `${untrusted("first", postText(post))}\n${untrusted("second", postText(other))}`,
-      },
-    ]);
-    usage.push(
-      usageEntry("merge_check", "chat_completion", answer.usage, post.id),
+    const answer = await chatJson(
+      verdict,
+      duplicateMessages(postText(post), postText(other), examplesBlock),
     );
-    if (answer.value.duplicate && answer.value.confidence >= 0.7)
+    usage.push({
+      ...usageEntry("merge_check", "chat_completion", answer.usage, post.id),
+      metadata: { examples: examples.length, exampleCandidates },
+    });
+    if (
+      answer.value.duplicate &&
+      answer.value.confidence >= DUPLICATE_CONFIDENCE
+    )
       found.push({ other, verdict: answer.value, model: answer.usage.model });
   }
   return async (db) => {
@@ -467,15 +501,21 @@ export const backfillTags: Work = async (workspaceId, event) => {
     return nothing;
   const payload = event.payload as { boardId?: string; limit?: string };
   const limit = Math.min(30, Math.max(1, Number(payload.limit) || 25));
-  const context = await withQuillsSystemWorkspace(workspaceId, async (db) => ({
-    tags: await db
+  const context = await withQuillsSystemWorkspace(workspaceId, async (db) => {
+    const tags = await db
       .select({ id: postTags.id, name: postTags.name })
       .from(postTags)
       .where(isNull(postTags.deletedAt))
       .orderBy(asc(postTags.name))
-      .limit(100),
-    posts: await db
-      .select({ id: posts.id, title: posts.title, content: posts.content })
+      .limit(100);
+    const batchPosts = await db
+      .select({
+        id: posts.id,
+        title: posts.title,
+        content: posts.content,
+        embedded: sql<boolean>`${posts.embedding} IS NOT NULL`,
+        embeddingModel: posts.embeddingModel,
+      })
       .from(posts)
       .innerJoin(boards, eq(boards.id, posts.boardId))
       .where(
@@ -499,8 +539,39 @@ export const backfillTags: Work = async (workspaceId, event) => {
         ),
       )
       .orderBy(desc(posts.createdAt))
-      .limit(limit),
-  }));
+      .limit(limit);
+    // Posts that a teammate tagged by hand near the posts of each batch of 10, from the boards
+    // this job reads plus the boards every teammate can see (learning-store.ts). One query per
+    // batch; only vectors of the configured model compare, so older vectors get no examples.
+    const examples = new Map<number, Example[]>();
+    const model = aiConfig()?.embeddingModel;
+    if (tags.length && model) {
+      const store = createLearningStore(db, workspaceId);
+      const ids = batchPosts.map((post) => post.id);
+      for (let i = 0; i < batchPosts.length; i += 10) {
+        const subjects = batchPosts
+          .slice(i, i + 10)
+          .filter((post) => post.embedded && post.embeddingModel === model)
+          .map((post) => ({ key: post.id, embedding: null }));
+        if (subjects.length)
+          examples.set(
+            i,
+            await findExamples(store, {
+              task: "tags",
+              scopeId: workspaceId,
+              subjects,
+              embeddingModel: model,
+              visibility: {
+                boardIds: payload.boardId ? [payload.boardId] : [],
+                includeUnlinkedBoards: true,
+              },
+              excludeKeys: ids,
+            }),
+          );
+      }
+    }
+    return { tags, posts: batchPosts, examples };
+  });
   if (!context.tags.length || !context.posts.length) return nothing;
   const tagIds = new Set<string>(context.tags.map((tag) => tag.id));
   const usage: UsageEntry[] = [];
@@ -509,39 +580,26 @@ export const backfillTags: Work = async (workspaceId, event) => {
   const left = budget();
   for (let i = 0; i < context.posts.length && left(); i += 10) {
     const batch = context.posts.slice(i, i + 10);
+    const candidates = context.examples.get(i) ?? [];
+    const picked = selectExamples(candidates, TASKS.tags);
     const answer = await chatJson(
-      z.object({
-        posts: z
-          .array(
-            z.object({
-              postId: z.string(),
-              tagIds: z.array(z.string()).max(3),
-            }),
-          )
-          .max(10),
-      }),
-      [
-        {
-          role: "system",
-          content: [
-            "Choose up to three existing tags for each feedback post, or none when no tag fits.",
-            ...context.tags.map((tag) => `- ${tag.id}: ${tag.name}`),
-            'Answer with one JSON object: {"posts": [{"postId": string, "tagIds": string[]}]}.',
-          ].join("\n"),
-        },
-        {
-          role: "user",
-          content: untrusted(
-            "posts",
-            batch
-              .map((post) => `${post.id}: ${postText(post).slice(0, 1000)}`)
-              .join("\n\n"),
-          ),
-        },
-      ],
+      tagAnswer,
+      tagMessages(
+        context.tags,
+        batch
+          .map((post) => `${post.id}: ${postText(post).slice(0, 1000)}`)
+          .join("\n\n"),
+        renderExamples("tags", picked, untrusted),
+      ),
       1500,
     );
-    usage.push(usageEntry("tag_backfill", "chat_completion", answer.usage));
+    usage.push({
+      ...usageEntry("tag_backfill", "chat_completion", answer.usage),
+      metadata: {
+        examples: picked.length,
+        exampleCandidates: candidates.length,
+      },
+    });
     const ids = new Set<string>(batch.map((post) => post.id));
     for (const entry of answer.value.posts)
       if (ids.has(entry.postId)) {
