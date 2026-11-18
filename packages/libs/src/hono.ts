@@ -1,6 +1,7 @@
 /// <reference types="vite/types/importMeta.d.ts" />
 
 import type { AppType } from "@kaneo/api";
+import { brandText } from "@kaneo/branding";
 import { hc } from "hono/client";
 import { resolveApiBaseUrl } from "./api-url";
 
@@ -8,6 +9,8 @@ const apiUrl = resolveApiBaseUrl(import.meta.env.VITE_API_URL);
 
 // Generate once per tab load
 export const windowId = Math.random().toString(36).substring(2, 11);
+// Must match the API's header name, or every change echoes back to its own window.
+const windowIdHeader = brandText("X-Kaneo-Window-Id");
 
 // Named type: the inferred client type is too large to emit inline (TS7056).
 export const client: ReturnType<typeof hc<AppType>> = hc<AppType>(apiUrl, {
@@ -17,7 +20,7 @@ export const client: ReturnType<typeof hc<AppType>> = hc<AppType>(apiUrl, {
       headers: {
         ...init?.headers,
         "Content-Type": "application/json",
-        "X-Kaneo-Window-Id": windowId,
+        [windowIdHeader]: windowId,
       },
       credentials: "include",
     }).catch((error) => {
