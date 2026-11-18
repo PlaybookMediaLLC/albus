@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ChevronsUpDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -26,8 +27,11 @@ export default function TaskCrumbSelect({
   onSelectTask,
 }: TaskCrumbSelectProps) {
   const { t } = useTranslation();
+  // The task list is only a pick list: load the board when it opens.
+  const [open, setOpen] = useState(false);
   const { data: project } = useGetTasks(projectId, {
     refetchOnMount: false,
+    enabled: open,
   });
   const tasks = [
     ...(project?.columns?.flatMap((column) => column.tasks) ?? []),
@@ -36,7 +40,7 @@ export default function TaskCrumbSelect({
   ];
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger
         render={
           <Button

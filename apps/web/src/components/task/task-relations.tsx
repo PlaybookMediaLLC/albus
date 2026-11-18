@@ -41,6 +41,7 @@ import useGetTaskRelations from "@/hooks/queries/task-relation/use-get-task-rela
 import useActiveWorkspace from "@/hooks/queries/workspace/use-active-workspace";
 import { useGetActiveWorkspaceUsers } from "@/hooks/queries/workspace-users/use-get-active-workspace-users";
 import { useWorkspacePermission } from "@/hooks/use-workspace-permission";
+import { useGetColumns } from "@/hooks/queries/column/use-get-columns";
 import { getColumnIcon } from "@/lib/column";
 import { toast } from "@/lib/toast";
 import type Task from "@/types/task";
@@ -93,9 +94,12 @@ export default function TaskRelations({
   const clearRelationRequest = useRelationPickerStore((state) => state.clear);
 
   const { data: relations = [] } = useGetTaskRelations(taskId);
+  // The project's tasks are only the picker's options: load them when it opens.
   const { data: projectData } = useGetTasks(projectId, {
     refetchOnMount: false,
+    enabled: commandOpen,
   });
+  const { data: columns } = useGetColumns(projectId);
   const { data: project } = useGetProject({ id: projectId, workspaceId });
   const { data: workspace } = useActiveWorkspace();
   const { data: workspaceUsers } = useGetActiveWorkspaceUsers(
@@ -165,31 +169,21 @@ export default function TaskRelations({
     return tasks;
   }, [projectData]);
 
-  const finalStatusSlugs = useMemo(() => {
-    if (!projectData) return new Set<string>();
-    if ("columns" in projectData && Array.isArray(projectData.columns)) {
-      return new Set(
-        (projectData.columns as Array<{ id: string; isFinal?: boolean }>)
-          .filter((col) => col.isFinal)
-          .map((col) => col.id),
-      );
-    }
-    return new Set<string>();
-  }, [projectData]);
+  const finalStatusSlugs = useMemo(
+    () =>
+      new Set(
+        (columns ?? []).filter((col) => col.isFinal).map((col) => col.slug),
+      ),
+    [columns],
+  );
 
-  const columnIconBySlug = useMemo(() => {
-    const icons = new Map<string, string | null | undefined>();
-    if (!projectData) return icons;
-    if ("columns" in projectData && Array.isArray(projectData.columns)) {
-      for (const col of projectData.columns as Array<{
-        id: string;
-        icon?: string | null;
-      }>) {
-        icons.set(col.id, col.icon);
-      }
-    }
-    return icons;
-  }, [projectData]);
+  const columnIconBySlug = useMemo(
+    () =>
+      new Map<string, string | null | undefined>(
+        (columns ?? []).map((col) => [col.slug, col.icon]),
+      ),
+    [columns],
+  );
 
   const filteredTasks = allTasks.filter(
     (t) => !existingRelatedTaskIds.has(t.id),

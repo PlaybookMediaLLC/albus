@@ -4,14 +4,17 @@ import { tasksQueryOptions } from "./tasks-query-options";
 
 export function useGetTasks(
   projectId: string,
-  { refetchOnMount = true }: { refetchOnMount?: boolean } = {},
+  {
+    refetchOnMount = true,
+    enabled = true,
+  }: { refetchOnMount?: boolean; enabled?: boolean } = {},
 ) {
   const queryClient = useQueryClient();
   const progress = useBoardProgress(projectId);
   const query = useQuery({
     ...tasksQueryOptions(queryClient, projectId),
     refetchOnMount,
-    enabled: !!projectId,
+    enabled: enabled && !!projectId,
   });
   return {
     ...query,
