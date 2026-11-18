@@ -208,6 +208,7 @@ describe.skipIf(!url)("Quills file lifecycle", () => {
     expect(verifyTaskAssetUpload).toHaveBeenCalledWith(
       res.body.key,
       expect.objectContaining({ size: 5, contentType: "text/plain" }),
+      expect.anything(),
     );
     const [row] = await env.scoped(env.a, (db) =>
       db.select().from(files).where(eq(files.id, created.body.id)),
@@ -278,8 +279,11 @@ describe.skipIf(!url)("Quills file lifecycle", () => {
 
       await expireLease(first);
       await drain([first]);
-      expect(deleteS3Object).toHaveBeenCalledWith(first);
-      expect(deleteS3Object).not.toHaveBeenCalledWith(second);
+      expect(deleteS3Object).toHaveBeenCalledWith(first, expect.anything());
+      expect(deleteS3Object).not.toHaveBeenCalledWith(
+        second,
+        expect.anything(),
+      );
 
       expect((await call("DELETE", path)).body).toEqual({ changed: true });
       expect(await current()).toBeNull();
@@ -287,7 +291,7 @@ describe.skipIf(!url)("Quills file lifecycle", () => {
       expect((await call("DELETE", path)).body).toEqual({ changed: false });
       await expireLease(second);
       await drain([second]);
-      expect(deleteS3Object).toHaveBeenCalledWith(second);
+      expect(deleteS3Object).toHaveBeenCalledWith(second, expect.anything());
     },
   );
 
@@ -471,14 +475,14 @@ describe.skipIf(!url)("Quills file lifecycle", () => {
     const pending = register(key);
     await verifying;
     await retryStorageCleanup();
-    expect(deleteS3Object).not.toHaveBeenCalledWith(key);
+    expect(deleteS3Object).not.toHaveBeenCalledWith(key, expect.anything());
     expect(await queued(key)).toBe(true);
     finish();
     expect((await pending).status).toBe(200);
 
     await expireLease(key);
     await drain([key]);
-    expect(deleteS3Object).not.toHaveBeenCalledWith(key);
+    expect(deleteS3Object).not.toHaveBeenCalledWith(key, expect.anything());
   });
 
   it("keeps an object that another workspace still references", async () => {
@@ -489,13 +493,13 @@ describe.skipIf(!url)("Quills file lifecycle", () => {
     expect(await queued(key)).toBe(true);
     await expireLease(key);
     await drain([key]);
-    expect(deleteS3Object).not.toHaveBeenCalledWith(key);
+    expect(deleteS3Object).not.toHaveBeenCalledWith(key, expect.anything());
 
     await env.scoped(env.b, (db) =>
       db.delete(files).where(eq(files.storageKey, key)),
     );
     await drain([key]);
-    expect(deleteS3Object).toHaveBeenCalledWith(key);
+    expect(deleteS3Object).toHaveBeenCalledWith(key, expect.anything());
   });
 
   it("releases the lease when verification fails", async () => {

@@ -39,7 +39,10 @@ vi.mock("../index", () => ({
     },
   ),
 }));
-vi.mock("../../storage/s3", () => ({ deleteS3Object: vi.fn(async () => {}) }));
+vi.mock("../../storage/s3", async (original) => ({
+  ...(await original<typeof import("../../storage/s3")>()),
+  deleteS3Object: vi.fn(async () => {}),
+}));
 const url = process.env.QUILLS_TEST_DATABASE_URL;
 const suffix = `platform_${Date.now().toString(36)}`;
 const a = `${suffix}_a`,

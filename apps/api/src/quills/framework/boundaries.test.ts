@@ -69,6 +69,8 @@ const allowedImport = (file: string, specifier: string) => {
         "portal/paths",
         // Pure RFC 4180 CSV text helpers; never the database.
         "transfer/runs/csv",
+        // The stable avatar URL and limits, from the bucket settings; never the database.
+        "files/customer-avatar",
         // Pure: the widget tab defaults of a stored settings blob; never the database.
         "settings/widget-tabs",
         // Website branding: a guarded site fetch, a logo upload and the personal email domain list;

@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { user as customer } from "../../database/quills/schema/auth";
+import { principal, user as customer } from "../../database/quills/schema/auth";
 import { files } from "../../database/quills/schema/files";
 import { fixture, type ContractEnv } from "../framework/contract";
 import { createUpload } from "../framework/files";
@@ -8,6 +8,7 @@ import { image } from "./seed.fixture";
 
 type Purpose = "customer_file" | "customer_image" | "customer_avatar";
 type CustomerId = typeof customer.$inferSelect.id;
+type PrincipalId = typeof principal.$inferSelect.id;
 const request = (purpose: Purpose) => ({
   purpose,
   filename: "image.png",
@@ -32,13 +33,16 @@ async function portalUploads(env: ContractEnv, purpose: Purpose) {
 }
 
 /** A widget visitor of A and an upload of it; a visitor's upload in B. */
-async function widgetUploads(env: ContractEnv) {
+async function widgetUploads(
+  env: ContractEnv,
+  purpose: Purpose = "customer_file",
+) {
   const a = await env.widgetVisitor(env.a);
   const b = await env.widgetVisitor(env.b);
   return {
     ...a,
-    key: await keyFor(env.a, a.customerId, "customer_file"),
-    foreignKey: await keyFor(env.b, b.customerId, "customer_file"),
+    key: await keyFor(env.a, a.customerId, purpose),
+    foreignKey: await keyFor(env.b, b.customerId, purpose),
   };
 }
 
@@ -84,7 +88,7 @@ export const createQuillsWidgetUpload = fixture({
 });
 
 export const createQuillsWidgetFiles = fixture({
-  seed: widgetUploads,
+  seed: (env) => widgetUploads(env),
   valid: (ids) => ({
     bearer: ids.token,
     body: { key: ids.key, name: "image.png", ...image },
@@ -131,4 +135,52 @@ export const prepareQuillsPortalUpload = fixture({
         .from(customer)
         .where(eq(customer.kaneoUserId, env.customerA)),
     ),
+});
+
+export const saveQuillsWidgetAvatar = fixture({
+  seed: (env) => widgetUploads(env, "customer_avatar"),
+  valid: (ids) => ({ bearer: ids.token, body: { key: ids.key, ...image } }),
+  foreign: (ids) => ({ key: ids.foreignKey }),
+  own: (ids) => [ids.principalId, ids.key],
+  probe: avatarOf,
+});
+
+export const deleteQuillsWidgetAvatar = fixture({
+  seed: async (env) => {
+    const ids = await widgetUploads(env, "customer_avatar");
+    await env.scoped(env.a, (db) =>
+      db
+        .update(customer)
+        .set({ imageKey: ids.key })
+        .where(eq(customer.id, ids.customerId as CustomerId)),
+    );
+    return ids;
+  },
+  valid: (ids) => ({ bearer: ids.token }),
+  own: (ids) => [ids.principalId],
+  probe: avatarOf,
+});
+
+/** A widget visitor of the workspace with an uploaded avatar on its principal. */
+const withAvatar = async (env: ContractEnv, workspaceId: string) => {
+  const person = await env.widgetVisitor(workspaceId);
+  const key = await keyFor(workspaceId, person.customerId, "customer_avatar");
+  await env.scoped(workspaceId, (db) =>
+    db
+      .update(principal)
+      .set({ avatarKey: key })
+      .where(eq(principal.id, person.principalId as PrincipalId)),
+  );
+  return person;
+};
+
+export const getQuillsAvatarImage = fixture({
+  seed: async (env) => {
+    const a = await withAvatar(env, env.a);
+    const b = await withAvatar(env, env.b);
+    return { ...a, foreignId: b.principalId };
+  },
+  valid: (ids) => ({ params: { principalId: ids.principalId } }),
+  foreign: (ids) => ({ principalId: ids.foreignId }),
+  hidden: (ids) => [ids.customerId],
 });
