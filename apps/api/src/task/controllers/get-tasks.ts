@@ -178,13 +178,18 @@ async function getTasksPage(
 
   const total = Number(taskCount?.count ?? 0);
 
+  // Continuation pages repeat this page's tasks only to carry more labels and
+  // links; clients keep the descriptions from the first one.
+  const continuation = relatedPage > 1;
   const taskSelection = {
     id: taskTable.id,
     isSubtask: options.publicOnly ? sql<boolean>`false` : isSubtask,
     title: taskTable.title,
     number: taskTable.number,
-    description: boardDescription,
-    descriptionDeferred,
+    description: continuation ? sql<string | null>`null` : boardDescription,
+    descriptionDeferred: continuation
+      ? sql<boolean>`true`
+      : descriptionDeferred,
     status: taskTable.status,
     priority: taskTable.priority,
     startDate: taskTable.startDate,

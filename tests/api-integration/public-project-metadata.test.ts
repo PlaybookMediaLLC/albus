@@ -100,7 +100,10 @@ describe("public project link metadata", () => {
         expect(publicTasks).toHaveLength(3);
         for (const task of publicTasks) {
           expect(task.title).toContain("Current");
-          expect(task.description).toBe("Current description");
+          // Continuation pages omit descriptions; the first page has them.
+          expect(task.description).toBe(
+            relatedPage === 1 ? "Current description" : null,
+          );
           for (const link of task.externalLinks) {
             expect(link.metadata).toEqual({
               state: "closed",

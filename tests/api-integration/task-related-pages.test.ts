@@ -95,6 +95,8 @@ describe("bounded board related pages", () => {
           (column: {
             tasks: {
               id: string;
+              description: string | null;
+              descriptionDeferred: boolean;
               labels: { id: string }[];
               externalLinks: { id: string }[];
             }[];
@@ -102,6 +104,12 @@ describe("bounded board related pages", () => {
         );
         expect(tasks).toHaveLength(1);
         expect(tasks[0].id).toBe(task.id);
+        // Continuation pages carry labels and links, not the description again.
+        expect(tasks[0]).toMatchObject(
+          relatedPage === 1
+            ? { description: "Body", descriptionDeferred: false }
+            : { description: null, descriptionDeferred: true },
+        );
         expect(tasks[0].labels.length).toBeLessThanOrEqual(100);
         expect(tasks[0].externalLinks.length).toBeLessThanOrEqual(100);
         for (const value of tasks[0].labels) labels.add(value.id);
