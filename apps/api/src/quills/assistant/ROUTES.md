@@ -56,14 +56,23 @@ and the key never reach a response, a run or `ai_usage_log`. Each call writes on
 3. A read tool returns only what a teammate may read: `search_help_center` reads published
    articles; `search_knowledge` reads snippets with audience `public` or `team`, and documents
    and fetched web pages when the copilot's `documents` knowledge setting is on.
-4. A write tool never runs in the worker. It becomes a pending action only when the requester
-   holds the tool's action (`update`) now; otherwise the call is recorded `denied`. A viewer's
-   copilot therefore proposes nothing and changes nothing (`assistant.test.ts`).
+   `search_conversations` uses the inbox list's search (`listConversations`), at most 5.
+4. The model sees a built-in tool only while the requester holds its action (`read` or `update`),
+   the tool fits the turn (write tools need a conversation) and no admin turned it off
+   (`tools/index.ts`). A call to any other tool never runs and is recorded `denied`. A viewer's
+   copilot therefore proposes nothing and changes nothing (`assistant.test.ts`). The turn runs on
+   the AI SDK tool loop (`ai/agent.ts`): at most 4 model calls, the last without tools, and at most
+   5 tool calls in a call, one at a time.
+4a. A write tool follows its approval policy (`ai/tool.ts`). `required` (every built-in tool
+   except `add_private_note`): it never runs in the worker; it becomes a pending action. `auto`: it runs as the
+   requester in the job's transaction when the answer is stored, after a fresh permission check
+   (`engine/tool-writes.ts`), with its own change event and tool-call record.
 5. `approveQuillsAssistantAction` declares `action: "update"`, so the framework checks the
    approver's `quills:update` and API-key scope. Every write tool's action is `update`; a test
    fails if a tool needs another permission. Approval runs the tool in the approver's request
    through the same support functions (`setStatus` with `requireClosable`, `setPriority`,
-   `resolveLiveTag` and `attachTag`) and records the same change event, named for the approver.
+   `resolveLiveTag` and `attachTag`, `resolveTeam` and `assignTeam`, `writeAttributeValue`) and
+   records the same change event, named for the approver.
    A rejected, expired or decided action returns 409 and never runs.
 
 ## Configuration (manage_settings)
@@ -89,9 +98,11 @@ and the key never reach a response, a run or `ai_usage_log`. Each call writes on
 | `listQuillsWebSources` | `GET /assistant/web-sources` (status pending, ready or failed) | - |
 | `addQuillsWebSource` | `POST /assistant/web-sources` (fetched by the worker) | `assistant_web_source.added` |
 | `setQuillsWebSourceEnabled` | `PATCH /assistant/web-sources/{webSourceId}` | `assistant_web_source.updated` |
+| `refreshQuillsWebSource` | `POST /assistant/web-sources/{webSourceId}/refresh` (fetched again by the worker) | `assistant_web_source.updated` (`refresh`) |
 | `deleteQuillsWebSource` | `DELETE /assistant/web-sources/{webSourceId}` | `assistant_web_source.deleted` |
 | `listQuillsAssistantDocuments` | `GET /assistant/documents` | - |
 | `uploadQuillsAssistantDocument` | `POST /assistant/documents` (text or Markdown ≤ 100,000 characters) | `assistant_document.created` |
+| `uploadQuillsAssistantPdfDocument` | `POST /assistant/documents/pdf` (an upload of purpose `file`, PDF ≤ 10 MB and 200 pages; its text layer, ≤ 100,000 characters, becomes the document; the PDF is not kept; 400 for an unreadable or scanned PDF; 409 for a key that a file already uses) | `assistant_document.created` |
 | `deleteQuillsAssistantDocument` | `DELETE /assistant/documents/{documentId}` (soft delete) | `assistant_document.deleted` |
 | `listQuillsConnectors` | `GET /assistant/connectors` (no credentials) | - |
 | `deleteQuillsConnector` | `DELETE /assistant/connectors/{connectorId}` | `assistant_connector.deleted` |
@@ -180,10 +191,10 @@ route), `engine/connector-calls.ts` (the calls, their records and the approved-a
 
 | Surface | Tools today | Connector tools |
 |---|---|---|
-| Teammate copilot (`engine/copilot.ts`) | The only tool loop: built-in read tools run, write tools propose. | Yes: connectors with `assignments.copilot`, in conversation and ticket turns. |
-| Other runs (translation, attribute preview, ticket fields, widget answer) | One provider call, no tools. | No. |
+| Teammate copilot (`engine/copilot.ts`) | Tool loop: built-in read tools run; write tools propose, except `add_private_note`, which runs. | Yes: connectors with `assignments.copilot`, in conversation and ticket turns. |
+| Other runs (translation, attribute preview, ticket fields, widget answer, reply suggestion) | One provider call, no tools. | No. |
 | Slack answers (`engine/slack.ts`) | One provider call, no tools. | No. |
-| Customer-facing agent | Not ported. | No. `assignments.agent` stays stored only. |
+| Customer agent (`engine/customer-agent.ts`) | Tool loop (at most 3 model calls): `search_knowledge` at the public audience. Follows its guidance rules (`agent`) and skills (`assignments.agent`). | Read tools that an admin set to `always` by name (not through the read default) on connectors with `assignments.agent`. |
 | Workflows | No provider call. | No. |
 
 ### Boundary map
@@ -385,9 +396,55 @@ examples (`@quills/ai/learning`, read by `engine/learning-store.ts`; design: iss
   store returned before the threshold) for `merge_check` and `tag_backfill`. No text is logged.
 - **Offline replay:** `scripts/ai-learning-eval/replay.ts duplicates|tags` replays labelled items
   (no production data) in time order against a development provider and compares the shipped
-  requests with and without examples (`engine/prompts.ts`). It is never in CI or the image.
+  requests with and without examples (the `judgeDuplicate` and `chooseTags` capabilities in `@quills/ai/learning`). It is never in CI or the image.
 - **Build:** the API loads `@quills/ai` from its `dist`. `pnpm --filter @kaneo/api typecheck`,
   `test` and `build` build it first; run `pnpm --filter @quills/ai build` before `test:quills`.
+
+### Teach the AI (knowledge suggestions)
+
+Each closed conversation with a teammate reply can become a knowledge suggestion (`engine/teach.ts`,
+`@quills/ai/teach`; design: issue #275). A teammate answers the AI's questions, edits the draft and
+approves it into a snippet, or dismisses it. Every route needs `manage_settings`.
+
+| operationId | Route | Event |
+|---|---|---|
+| `listQuillsKnowledgeSuggestions` | `GET /assistant/knowledge-suggestions?status=open\|approved\|dismissed` (≤ 200; gaps first, then evidence, then the newest) | - |
+| `getQuillsKnowledgeSuggestion` | `GET /assistant/knowledge-suggestions/{suggestionId}` (with its questions) | - |
+| `answerQuillsKnowledgeSuggestion` | `POST /assistant/knowledge-suggestions/{suggestionId}/answer` (`stepIndex` of the question on screen, and `answer` ≤ 1,000 characters or `skip: true`; 409 unless `awaiting_answer` at that step) | `knowledge_suggestion.answered` after the last question, otherwise `knowledge_suggestion.updated` |
+| `updateQuillsKnowledgeSuggestion` | `PATCH /assistant/knowledge-suggestions/{suggestionId}` (409 unless `draft_ready`) | `knowledge_suggestion.updated` |
+| `approveQuillsKnowledgeSuggestion` | `POST /assistant/knowledge-suggestions/{suggestionId}/approve` (`audience` required; 409 at 500 snippets) | `knowledge_suggestion.approved`, `assistant_snippet.created` |
+| `dismissQuillsKnowledgeSuggestion` | `POST /assistant/knowledge-suggestions/{suggestionId}/dismiss` (409 after a decision) | `knowledge_suggestion.dismissed` |
+
+- **Review:** on `conversation.status_changed` for a closed conversation that did not end as spam
+  and whose customer is not a teammate's test customer. The job reads the newest 100 messages that
+  are not deleted, keeps customer and teammate replies (never a note or an assistant reply), removes
+  emails, links, phone numbers and long digit runs, and sends at most 8,000 characters (1,000 per
+  message, the newest kept) to the provider. Without a teammate reply, or when the provider finds no
+  reusable answer, it records the outcome `none` and stops.
+- **Best effort:** the feedback autopilot shares the job. A provider failure, or a review that would
+  start a provider call after 90 seconds, skips the review without failing the job; the calls that
+  succeeded are still logged. With no source row, a later close reviews the conversation again.
+- **Gaps first:** a conversation that the customer agent handed off for `low_confidence` or
+  `capability_limit` marks its suggestion as a gap. The list shows gaps first.
+- **One suggestion per topic:** the topic gets a fingerprint and an embedding. An exact fingerprint
+  match, or a suggestion or snippet with similarity ≥ 0.85 that the model judges the same (at most
+  3 checks), routes the candidate: an open suggestion gets one more piece of evidence, and an
+  approved or dismissed topic is discarded, so a dismissed topic does not come back. Otherwise the
+  job asks for up to 3 questions with suggested answers and stores a new suggestion.
+- **Documents:** a new knowledge document (`engine/document-faq.ts`, `assistant_document.created`)
+  gives up to 3 FAQ items from its first 12,000 characters. Each goes through the same matching;
+  a new topic becomes a `draft_ready` suggestion with no questions, because the document states
+  the answer. Its evidence rows carry `document_id`, which reads each document once. Best effort,
+  like the conversation review: a failure keeps the document's embedding from the same job.
+- **Draft:** without questions, the job drafts at once. After the last answer or skip,
+  `knowledge_suggestion.answered` starts the draft job, which writes the draft and records
+  `knowledge_suggestion.drafted`. Without a provider, or when the draft call fails, the draft is the
+  AI's first text, so the teammate can still edit and approve it. Approve can send the edited
+  `title` and `content`; the page sends the text on screen, saved or not.
+- **Once per conversation:** `ai_knowledge_sources` keeps one row per conversation, so a retry or a
+  second close never reviews it again. Each provider call writes an `ai_usage_log` row
+  (`knowledge_review`, `knowledge_embedding`, `knowledge_match`, `knowledge_questions`,
+  `knowledge_draft`). No transcript text is logged.
 
 ## Support and help-center AI
 
@@ -397,6 +454,7 @@ examples (`@quills/ai/learning`, read by `engine/learning-store.ts`; design: iss
 | `requestQuillsTicketSummary` | `POST /tickets/{ticketId}/summary` | update | `ticket.summary_requested` |
 | `getQuillsTicketSummary` | `GET /tickets/{ticketId}/summary` | read | - |
 | `translateQuillsConversationMessages` | `POST /conversations/{conversationId}/messages/{messageId}/translate` (run) | read | `assistant_run.requested` |
+| `suggestQuillsConversationReply` | `POST /conversations/{conversationId}/reply-suggestion` (run; public messages and public knowledge only, nothing is sent) | read | `assistant_run.requested` |
 | `draftQuillsAttributeDescriptions` | `POST /conversation-attributes/description-draft` (provider call in `load`) | manage_settings | none: usage row only |
 | `previewQuillsAttributeDetection` | `POST /conversation-attributes/{attributeId}/detection-preview` (run; writes nothing to the conversation) | manage_settings | `assistant_run.requested` |
 | `suggestQuillsTicketFieldValues` | `POST /tickets/{ticketId}/field-suggestions` (run; writes nothing to the ticket) | read | `assistant_run.requested` |
@@ -432,9 +490,11 @@ pass that the scheduler awaits never claims it, so a slow provider does not dela
 
 | Event | Work |
 |---|---|
-| `assistant_run.requested` | Answers the run (copilot, translation, attribute preview, ticket fields, widget answer). |
-| `assistant_web_source.added` | Fetches the page through `createGuardedFetch` (1 MB, 10 seconds) and stores its text. |
-| `assistant.embeddings_requested` | Embeds up to 32 posts and 32 articles without an embedding. |
+| `assistant_run.requested` | Answers the run (copilot, translation, attribute preview, ticket fields, widget answer, reply suggestion). |
+| `assistant_web_source.added` | Fetches the page through `createGuardedFetch` (1 MB, 10 seconds) and stores its text. With `crawl`, adds the page's links under its folder as sources (one level, at most 20, within the 100-source limit); each one is fetched by its own job. |
+| `assistant_web_source.updated` | With `refresh` only: fetches the page again; a failure keeps the old text and the last fetch time. The sweep `refreshStaleWebSources` (`jobs/handlers/sweeps.ts`, migration 0043) records it for an enabled source whose last successful fetch is 7 days old and that nothing touched for a day, so a failing source is tried once a day. |
+| `assistant_snippet.created`, `assistant_snippet.updated`, `assistant_document.created` | Embeds the snippet or document (`engine/embed-knowledge.ts`); a snippet edited meanwhile keeps its newer text unembedded until its own event. A new document also gives FAQ suggestions (see "Teach the AI"). |
+| `assistant.embeddings_requested` | Embeds up to 32 posts, articles, snippets and documents each without an embedding. |
 | `post.created`, `post.merge_check_requested` | Embeds the post and stores pending suggestions for likely duplicates (similarity ≥ 0.85, model confidence ≥ 0.7); a pair that already has a suggestion in any status is skipped. |
 | `post.sentiment_requested` | Stores the post's sentiment. |
 | `post.tags_backfill_requested` | Adds existing tags (`auto_tagged`) and records `post.tags_changed` as the requester, who must still hold `update`. |
@@ -442,6 +502,8 @@ pass that the scheduler awaits never claims it, so a slow provider does not dela
 | `help_center.article_translation_requested` | Writes a draft translation. A published translation is never replaced; protected terms stay as they are. |
 | `help_center.article_published` | Embeds the article; translates into every enabled locale when the publish recorded `autoTranslate: requested`. A failed locale is skipped and the others are kept. |
 | `conversation.status_changed`, `ticket.status_changed` | Feedback autopilot (`jobs/handlers/signals.ts`, RFC 0003). Only for a closed conversation (not ended as spam) or a resolved, live ticket. Reads the last 50 customer messages (1,000 characters each; never a team note, an agent reply, a teammate or a test customer), asks for feature requests and bug reports, matches each one to the most similar live post (similarity ≥ 0.8, embeddings only) and stores at most 10 pending `feedback_signals` with `signal.created`. The ledger key `signals:<newest customer message>` makes a retry or a second close call the provider once; the unique source message keeps one signal for each message. Without a provider it does nothing. |
+| `conversation.status_changed` | Teach the AI (`engine/teach.ts`): reviews a closed conversation once and stores, extends or discards a knowledge suggestion. See "Teach the AI" above. |
+| `knowledge_suggestion.answered` | Writes the draft of a suggestion in `drafting` and records `knowledge_suggestion.drafted`. |
 
 The write and the job's completion share one transaction. A background provider failure
 retries (three attempts); a run's failure is stored on the run. Each job starts no provider
@@ -517,7 +579,7 @@ No table changes.
 | Copilot streaming (AG-UI SSE) | Not ported | A provider call cannot run inside the request transaction, and the framework has one transaction per request. The copilot is a run that the worker answers. A two-phase declaration (read, call, write) is a framework change. |
 | Workspace assistant threads | Not ported | The source retired them (`workspace-assistant.ts`: nothing creates or reads these threads). |
 | Customer-facing agent (Quinn in conversations), involvements | Not ported | Needs the conversation reply pipeline and channel delivery; the analytics routes, the inbox assistant counts and the conversation activity read the existing tables (`support/CONVERSATIONS.md`). |
-| Connector tools outside the copilot | Not ported | Only the copilot has a tool loop (see "Connector tools"). `assignments.agent` is stored only. The result of an approved connector call is not shown: the run already ended. |
+| Connector tools outside the copilot | Partial | The customer agent calls the read tools of connectors assigned to it (`assignments.agent`) that an admin set to `always` by name; the read group's default `always` does not count, because the result reaches an anonymous visitor through the workspace's credentials. It is never offered a write or approval tool (`connector-offer.test.ts`). The result of an approved copilot connector call is not shown: the run already ended. |
 | Imported connector secrets | Unreadable | The source sealed them with its own key. A refresh then answers `Authorization required`: enter the bearer token again, or authorize again. |
 | Document upload of an original file, PDF text extraction | Not ported | Needs a PDF parser dependency and a new `framework/files.ts` purpose. Documents take text or Markdown. |
 | Widget assistant deployment | Not ported | Widget slice. |
