@@ -1,3 +1,4 @@
+import type { Active, Over } from "@dnd-kit/core";
 import type { ListPostsResponse } from "../../api/team/list-posts";
 
 export type RoadmapPost = ListPostsResponse["items"][number];
@@ -70,3 +71,7 @@ export function landingCard(
     ? dragged.post
     : null;
 }
+
+/** The drag item of a dnd-kit node: a card or a column. */
+export const itemOf = (node: Active | Over | null) =>
+  node?.data.current as DragItem | undefined;

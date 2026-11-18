@@ -6,6 +6,7 @@ import {
   columnCount,
   columnPosts,
   type PendingMove,
+  itemOf,
 } from "./roadmap-moves";
 
 const [exportPost, ssoPost] = inboxPosts.items;
@@ -70,5 +71,17 @@ describe("roadmap moves", () => {
       ),
     ).toBeNull();
     expect(landingCard(null, "planned", "planned")).toBeNull();
+  });
+});
+
+describe("itemOf", () => {
+  it("reads the drag item of a node, or nothing", () => {
+    const item = {
+      type: "column",
+      statusId: "status_open",
+      label: "Open",
+    } as const;
+    expect(itemOf({ data: { current: item } } as never)).toBe(item);
+    expect(itemOf(null)).toBeUndefined();
   });
 });

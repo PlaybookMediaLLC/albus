@@ -39,14 +39,14 @@ const render = (
   );
 
 describe("RoadmapCard", () => {
-  it("shows the title link, a plain-text excerpt, the board and the counts", () => {
+  it("shows the board, the plain-text title link, the counts and the creation month", () => {
     const view = render();
     expect(view.getByRole("link", { name: "Export to CSV" })).toHaveAttribute(
       "href",
       "/feedback/workspace_test_1/posts/post_export",
     );
     const card = view.getByRole("article");
-    expect(card).toHaveTextContent("Bulk export");
+    expect(card).toHaveTextContent(/Created \w{3} \d{4}/);
     expect(card).not.toHaveTextContent("**");
     expect(card).toHaveTextContent("Ideas");
     expect(card).toHaveTextContent("3 votes");

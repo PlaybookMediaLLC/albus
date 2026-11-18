@@ -85,3 +85,10 @@ Retake them with `pnpm dev:demo`. Phone and portal shots are not in this set yet
 ![empty tickets q zzqx no match](037-team-light-empty-tickets-q-zzqx-no-match.jpg)
 ![empty conversations no match](505-team-light-empty-conversations-no-match.jpg)
 ![empty conversations no match](510-team-dark-empty-conversations-no-match.jpg)
+
+## Roadmap board
+
+![roadmap light](601-roadmap-light.jpg)
+![roadmap hidden columns light](602-roadmap-light-hidden-columns.jpg)
+![roadmap dark](601-roadmap-dark.jpg)
+![roadmap hidden columns dark](602-roadmap-dark-hidden-columns.jpg)

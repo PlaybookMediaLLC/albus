@@ -1,16 +1,17 @@
 import { useSortable } from "@dnd-kit/sortable";
-import {
-  FoldHorizontal,
-  GripVertical,
-  Plus,
-  UnfoldHorizontal,
-} from "lucide-react";
+import { Ellipsis, Eye, GripVertical, Plus } from "lucide-react";
 import { memo, useId } from "react";
 import { useTranslation } from "react-i18next";
 import type { ListStatusesResponse } from "../../../api/team/list-statuses";
 import { IconButton } from "../../../ui/inbox/icon-button";
 import { PostStatusIcon } from "../../../ui/inbox/post-status-icon";
-import { Button, cn } from "../../../ui/upstream";
+import {
+  cn,
+  Menu,
+  MenuItem,
+  MenuPopup,
+  MenuTrigger,
+} from "../../../ui/upstream";
 import type { DragItem, PendingMove, RoadmapPost } from "../roadmap-moves";
 import { RoadmapCards } from "./roadmap-cards";
 
@@ -48,7 +49,10 @@ export interface RoadmapColumnProps {
   onTask?: (post: RoadmapPost, kind: "create" | "link") => void;
 }
 
-/** A roadmap column of one status. A collapsed column is a narrow strip that loads nothing. */
+/**
+ * A roadmap column of one status: a header with the count, a menu and New request over a light
+ * lane of cards. A hidden column is a row in the Hidden columns panel that loads nothing.
+ */
 export function RoadmapColumn({ status, ...props }: RoadmapColumnProps) {
   const { t } = useTranslation("quills");
   const id = useId();
@@ -65,39 +69,15 @@ export function RoadmapColumn({ status, ...props }: RoadmapColumnProps) {
   const icon = (
     <PostStatusIcon color={status.color} progress={props.progress} />
   );
-  const panel = cn(
-    "group/column flex shrink-0 flex-col rounded-xl bg-muted/50 ring-ring/40 transition-shadow",
-    props.dropTarget && "ring-2",
-    // The lifted column follows the pointer; its place shows as a dashed outline.
-    drag.isDragging &&
-      "bg-transparent outline-2 outline-dashed outline-ring/40 *:invisible",
-  );
   const name = (
-    <h2 id={id} className="truncate text-sm font-semibold">
+    <h2 id={id} className="truncate text-sm font-medium">
       {status.name}
     </h2>
   );
   const total = (
-    <span className="text-xs text-muted-foreground tabular-nums">
+    <span className="text-sm text-faint-foreground tabular-nums">
       {props.count}
     </span>
-  );
-  const toggle = (
-    <IconButton
-      label={t(
-        props.collapsed ? "team-roadmap.expand" : "team-roadmap.collapse",
-        { name: status.name },
-      )}
-      // The board focuses this button after a menu move into the collapsed column.
-      data-roadmap-toggle={status.id}
-      onClick={props.onToggle}
-    >
-      {props.collapsed ? (
-        <UnfoldHorizontal aria-hidden="true" />
-      ) : (
-        <FoldHorizontal aria-hidden="true" />
-      )}
-    </IconButton>
   );
   const handle = props.reorderable ? (
     <IconButton
@@ -116,27 +96,59 @@ export function RoadmapColumn({ status, ...props }: RoadmapColumnProps) {
       <section
         ref={drag.setNodeRef}
         aria-labelledby={id}
-        className={cn(panel, "w-11 items-center gap-2 py-2")}
+        className={cn(
+          "group/hidden flex h-11 items-center gap-2.5 rounded-lg border border-border bg-card ps-3 pe-1.5 ring-ring/40 transition-[box-shadow,border-color] duration-150 hover:border-foreground/15",
+          props.dropTarget && "ring-2",
+        )}
       >
-        {toggle}
-        {handle}
         {icon}
-        <div className="[writing-mode:vertical-rl]">{name}</div>
-        {total}
+        {name}
+        <span className="ms-auto pe-1.5">{total}</span>
+        <IconButton
+          label={t("team-roadmap.expand", { name: status.name })}
+          // The board focuses this button after a menu move into the hidden column.
+          data-roadmap-toggle={status.id}
+          className="opacity-0 transition-opacity group-hover/hidden:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100 motion-reduce:transition-none"
+          onClick={props.onToggle}
+        >
+          <Eye aria-hidden="true" />
+        </IconButton>
       </section>
     );
   return (
     <section
       ref={drag.setNodeRef}
       aria-labelledby={id}
-      className={cn(panel, "w-80")}
+      className={cn(
+        "group/column flex w-96 shrink-0 flex-col rounded-xl ring-ring/40 transition-shadow",
+        props.dropTarget && "ring-2",
+        // The lifted column follows the pointer; its place shows as a dashed outline.
+        drag.isDragging &&
+          "outline-2 outline-dashed outline-ring/40 *:invisible",
+      )}
     >
-      <div className="flex items-center gap-1.5 p-2">
-        {handle}
+      <div className="flex h-11 shrink-0 items-center gap-2 ps-2.5 pe-1">
         {icon}
         {name}
         {total}
-        <span className="ms-auto flex">
+        <span className="ms-auto flex items-center">
+          {handle}
+          <Menu>
+            <MenuTrigger
+              render={
+                <IconButton
+                  label={t("team-roadmap.options", { name: status.name })}
+                />
+              }
+            >
+              <Ellipsis aria-hidden="true" />
+            </MenuTrigger>
+            <MenuPopup align="end">
+              <MenuItem onClick={props.onToggle}>
+                {t("team-roadmap.collapse", { name: status.name })}
+              </MenuItem>
+            </MenuPopup>
+          </Menu>
           {props.onCreate ? (
             <IconButton
               label={t("team-roadmap.newIn", { name: status.name })}
@@ -145,10 +157,9 @@ export function RoadmapColumn({ status, ...props }: RoadmapColumnProps) {
               <Plus aria-hidden="true" />
             </IconButton>
           ) : null}
-          {toggle}
         </span>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-xl bg-foreground/2 p-1.5">
         <Cards
           workspaceId={props.workspaceId}
           statusId={status.id}
@@ -161,17 +172,6 @@ export function RoadmapColumn({ status, ...props }: RoadmapColumnProps) {
           onMove={props.onMove}
           onTask={props.onTask}
         />
-        {props.onCreate ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="justify-start text-muted-foreground"
-            onClick={props.onCreate}
-          >
-            <Plus aria-hidden="true" />
-            {t("team.newRequest")}
-          </Button>
-        ) : null}
       </div>
     </section>
   );

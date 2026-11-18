@@ -1,4 +1,4 @@
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Plus } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { portalHref } from "../../core/portal-href";
@@ -7,6 +7,7 @@ import { useListBoards } from "../../hooks/team/use-list-boards";
 import { useListStatuses } from "../../hooks/team/use-list-statuses";
 import { useTeamRuntime } from "../../team/runtime";
 import { TeamStateView } from "../../team/team-state-view";
+import { IconButton } from "../../ui/inbox/icon-button";
 import { ListHeader } from "../../ui/inbox/list-header";
 import { PageFrame } from "../../ui/page-frame";
 import { Button } from "../../ui/upstream";
@@ -18,6 +19,8 @@ import {
 } from "./parts/roadmap-task-dialog";
 import { EmptyState } from "../../ui/empty-state";
 import { RoadmapArt } from "../../ui/illustrations/roadmap-art";
+import { StatusTabs } from "../../ui/inbox/status-tabs";
+import { inView, ROADMAP_VIEWS, type RoadmapView } from "./roadmap-view";
 
 export interface TeamRoadmapPageProps {
   workspaceId: string;
@@ -32,6 +35,12 @@ export function TeamRoadmapPage({ workspaceId }: TeamRoadmapPageProps) {
   // The status of the open New request dialog.
   const [creating, setCreating] = useState<string | null>(null);
   const [task, setTask] = useState<RoadmapTaskDialogProps["target"]>(null);
+  const [view, setView] = useState<RoadmapView>("all");
+  const viewLabels = {
+    active: t("team-roadmap.views.active"),
+    done: t("team-roadmap.views.done"),
+    all: t("team-roadmap.views.all"),
+  };
   // Stable: the memoized card bodies must not render again on each page render.
   const openTask = useCallback<
     NonNullable<Parameters<typeof RoadmapBoard>[0]["onTask"]>
@@ -62,23 +71,48 @@ export function TeamRoadmapPage({ workspaceId }: TeamRoadmapPageProps) {
       <ListHeader
         title={t("team-roadmap.title")}
         actions={
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-full"
-            render={
-              <a
-                href={portalHref(workspaceId, "roadmap")}
-                target="_blank"
-                rel="noreferrer"
-              />
-            }
-          >
-            <ExternalLink aria-hidden="true" />
-            {t("team-roadmap.public")}
-          </Button>
+          team.permissions.create && statuses.data?.statuses[0] ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setCreating(statuses.data.statuses[0]!.id)}
+            >
+              <Plus aria-hidden="true" />
+              {t("team.newRequest")}
+            </Button>
+          ) : null
         }
       />
+      <div className="flex items-start justify-between gap-2 pe-4">
+        <StatusTabs
+          label={t("team-roadmap.views.label")}
+          value={view}
+          onChange={(next) => setView(next as RoadmapView)}
+          tabs={ROADMAP_VIEWS.map((value) => ({
+            value,
+            label: viewLabels[value],
+            count: statuses.data?.statuses
+              .filter((status) => inView(value, status.category))
+              .reduce(
+                (sum, status) => sum + (statusCounts.get(status.id) ?? 0),
+                0,
+              ),
+          }))}
+        />
+        <IconButton
+          variant="outline"
+          label={t("team-roadmap.public")}
+          render={
+            <a
+              href={portalHref(workspaceId, "roadmap")}
+              target="_blank"
+              rel="noreferrer"
+            />
+          }
+        >
+          <ExternalLink aria-hidden="true" />
+        </IconButton>
+      </div>
       {/* The right edge fades, so a cut column reads as "scroll for more". */}
       <div className="min-h-0 flex-1 overflow-x-auto mask-r-from-[calc(100%-3rem)] px-4 pb-4">
         <TeamStateView
@@ -101,6 +135,7 @@ export function TeamRoadmapPage({ workspaceId }: TeamRoadmapPageProps) {
           <RoadmapBoard
             workspaceId={workspaceId}
             statuses={statuses.data?.statuses ?? []}
+            show={(status) => inView(view, status.category)}
             boards={boardNames}
             counts={statusCounts}
             onCreate={team.permissions.create ? setCreating : undefined}
