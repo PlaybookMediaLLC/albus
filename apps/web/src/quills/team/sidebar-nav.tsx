@@ -1,6 +1,7 @@
 import { type ReactNode, useId } from "react";
 import { useTranslation } from "react-i18next";
 import type { TeamNavSection } from "./nav";
+import { cn } from "../ui/upstream";
 import { SidebarItem } from "./sidebar-item";
 
 export interface SidebarNavProps {
@@ -13,6 +14,7 @@ export interface SidebarNavProps {
   children?: ReactNode;
   /** Keeps the section labels for screen readers only, when a heading above names the list. */
   hideLabels?: boolean;
+  className?: string;
 }
 
 /** The sections of a sidebar. Each list takes its name from its small label. */
@@ -22,13 +24,17 @@ export function SidebarNav({
   onNavigate,
   children,
   hideLabels = false,
+  className,
 }: SidebarNavProps) {
   const { t } = useTranslation("quills");
   const id = useId();
   return (
     <nav
       aria-label={label}
-      className="-mx-1 grid min-h-0 flex-1 content-start gap-4 overflow-y-auto px-1"
+      className={cn(
+        "-mx-1 grid min-h-0 flex-1 content-start gap-4 overflow-y-auto px-1",
+        className,
+      )}
     >
       {sections.map((section) => (
         <div key={section.id} className="grid gap-0.5">

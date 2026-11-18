@@ -1,11 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { SquarePen } from "lucide-react";
+import { SquarePen, Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { GetTeamCountsResponse } from "../api/team/get-team-counts";
 import { IconButton } from "../ui/inbox/icon-button";
 import { teamSections } from "./nav";
 import { useTeamRuntime } from "./runtime";
 import type { ShellSection } from "./shell-section";
+import type { Favorite } from "./favorites";
 import { SidebarNav } from "./sidebar-nav";
 import { teamHref } from "./team-href";
 
@@ -14,6 +15,8 @@ export interface TeamSidebarProps {
   /** The rail section whose views the sidebar lists. */
   section: ShellSection;
   counts?: GetTeamCountsResponse;
+  /** The starred views, listed above the section's views. */
+  favorites?: readonly Favorite[];
   /** Runs after a view is chosen, for example to close the sheet on small screens. */
   onNavigate?: () => void;
 }
@@ -26,6 +29,7 @@ export function TeamSidebar({
   workspaceId,
   section,
   counts,
+  favorites = [],
   onNavigate,
 }: TeamSidebarProps) {
   const { t } = useTranslation("quills");
@@ -58,6 +62,30 @@ export function TeamSidebar({
           </IconButton>
         ) : null}
       </div>
+      {favorites.length ? (
+        <SidebarNav
+          label={t("team.favorites")}
+          className="flex-none"
+          sections={[
+            {
+              id: "favorites",
+              labelKey: "team.favorites",
+              items: favorites.map((item) => ({
+                id: item.path,
+                label: item.label,
+                icon: Star,
+                // A starred address with a search matches only that search.
+                to: item.path.split("?")[0]!,
+                search: Object.fromEntries(
+                  new URLSearchParams(item.path.split("?")[1] ?? ""),
+                ),
+                exact: true,
+              })),
+            },
+          ]}
+          onNavigate={onNavigate}
+        />
+      ) : null}
       <SidebarNav
         label={t("team.navigation")}
         sections={[views]}

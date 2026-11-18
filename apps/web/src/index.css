@@ -547,6 +547,44 @@ html.dark[data-quills-shell] {
   --sidebar-accent: --alpha(var(--color-white) / 3.5%);
 }
 
+/* Pop-ups in the feedback app (menus, selects, popovers render in portals under body, so the
+   html attribute still scopes them): rounded 6px rows, quiet group labels and a soft, deep
+   shadow. Kaneo's own pages keep the shared look. */
+html[data-quills-shell] :is([data-slot="menu-popup"], [data-slot="select-popup"]) {
+  border-radius: 10px;
+  box-shadow:
+    0 1px 2px --alpha(var(--color-black) / 4%),
+    0 8px 24px -4px --alpha(var(--color-black) / 12%);
+}
+
+html.dark[data-quills-shell] :is([data-slot="menu-popup"], [data-slot="select-popup"]) {
+  box-shadow:
+    0 1px 2px --alpha(var(--color-black) / 40%),
+    0 12px 32px -6px --alpha(var(--color-black) / 60%);
+}
+
+html[data-quills-shell]
+  :is(
+    [data-slot="menu-item"],
+    [data-slot="menu-checkbox-item"],
+    [data-slot="menu-radio-item"],
+    [data-slot="select-item"]
+  ) {
+  min-height: 1.875rem;
+  border-radius: 6px;
+  transition: background-color 80ms ease-out;
+}
+
+html[data-quills-shell] [data-slot="menu-label"] {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--faint-foreground);
+}
+
+html[data-quills-shell] [data-slot="menu-separator"] {
+  margin-inline: 0;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

@@ -6,6 +6,8 @@
 		"text": "Show new activity while this tab is in the background.",
 		"title": "Browser notifications"
 	},
+	"favorite": "Add to favorites",
+	"favorites": "Favorites",
 	"home": {
 		"announce_one": "{{count}} shipped idea is not in the changelog",
 		"announce_other": "{{count}} shipped ideas are not in the changelog",
@@ -76,5 +78,6 @@
 	},
 	"support": "Support",
 	"switcher": "Workspaces",
-	"title": "Feedback"
+	"title": "Feedback",
+	"unfavorite": "Remove from favorites"
 }

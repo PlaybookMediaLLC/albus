@@ -22,7 +22,11 @@ const permissions = {
 
 function render(
   section: ShellSection,
-  { onNavigate = vi.fn(), create = true } = {},
+  {
+    onNavigate = vi.fn(),
+    create = true,
+    favorites = [] as { path: string; label: string }[],
+  } = {},
 ) {
   return renderComponent(
     <RouterContextProvider
@@ -42,6 +46,7 @@ function render(
           workspaceId="workspace_1"
           section={section}
           counts={getTeamCountsFixture.ok()}
+          favorites={favorites}
           onNavigate={onNavigate}
         />
       </TeamRuntimeProvider>
@@ -82,5 +87,25 @@ describe("TeamSidebar", () => {
     expect(within(nav).getByRole("link", { name: "Overview" })).toBeVisible();
     expect(within(nav).queryByRole("link", { name: "Settings" })).toBeNull();
     expect(view.queryByRole("link", { name: "New request" })).toBeNull();
+  });
+
+  it("lists the starred views above the section's views", () => {
+    const view = render("workspace", {
+      favorites: [
+        {
+          path: "/feedback/workspace_1/posts?statusId=status_1",
+          label: "Planned",
+        },
+      ],
+    });
+    const favorites = view.getByRole("navigation", { name: "Favorites" });
+    expect(
+      within(favorites).getByRole("link", { name: "Planned" }),
+    ).toHaveAttribute("href", "/feedback/workspace_1/posts?statusId=status_1");
+  });
+
+  it("leaves out Favorites when nothing is starred", () => {
+    const view = render("workspace");
+    expect(view.queryByRole("navigation", { name: "Favorites" })).toBeNull();
   });
 });
